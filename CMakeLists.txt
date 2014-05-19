@@ -89,6 +89,9 @@ include_directories(include)
 set(state_filtering_HEADERS
     include/${PROJECT_NAME}/FilterContext.hpp
     include/${PROJECT_NAME}/EstimateDescriptor.hpp
+
+    include/${PROJECT_NAME}/kalman_filter/KalmanFilter.hpp
+    include/${PROJECT_NAME}/kalman_filter/KalmanFilterContext.hpp
 )
 
 set(state_filtering_SOURCES
