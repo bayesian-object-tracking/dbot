@@ -1,13 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED)
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -88,12 +84,23 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 
-## Declare a cpp library
-# add_library(state_filtering
-#   src/${PROJECT_NAME}/state_filtering.cpp
-# )
+set(state_filtering_HEADERS
+    include/${PROJECT_NAME}/FilterContext.hpp
+    include/${PROJECT_NAME}/EstimateDescriptor.hpp
+)
+
+set(state_filtering_SOURCES
+#    include/${PROJECT_NAME}/FilterContext.cpp
+)
+
+add_library(state_filtering
+   ${state_filtering_HEADERS}
+   ${state_filtering_SOURCES}
+)
+
+set_target_properties(state_filtering PROPERTIES LINKER_LANGUAGE CXX)
 
 ## Declare a cpp executable
 # add_executable(state_filtering_node src/state_filtering_node.cpp)
