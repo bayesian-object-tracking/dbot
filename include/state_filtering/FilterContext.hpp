@@ -44,12 +44,36 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
+#ifndef STATE_FILTERING_FILTER_CONTEXT_HPP
+#define STATE_FILTERING_FILTER_CONTEXT_HPP
+
 #include <state_filtering/EstimateDescriptor.hpp>
 
+/**
+ * @brief State filtering namespace
+ */
 namespace filter
 {
-    class Measurement;
+    /**
+     * @brief The Measurement struct can be anything
+     */
+    struct Measurement { };
 
+    /**
+     * @brief FilterContext is a generic interface of a context containing a filter algorithm
+     *
+     * FilterContext is a generic interface of a filter algorithm context. A specialization of this
+     * may run any type of filter with its own interface. Each filter must be able to provide at
+     * least the three functions this interface provides. The underlying algorithm and may use any
+     * representation for its data and may have any interface it requires.
+     *
+     * The Filter context layer provides a simple and minimal interface for the client. It also
+     * provides the possibility to use stateless and stateful filters. Stateless filters are a clean
+     * way to implement an algorithm, however the client has to maintain the state. In this case
+     * FilterContext takes care of this matter. A stateful filter is a filter which stores and
+     * manages the state internally. This may due to performance reasons such as in the case of
+     * GPU implementations. Both, stateless and stateful filter can be used in the same fashion.
+     */
     template <typename FilterType>
     class FilterContext
     {
@@ -66,7 +90,7 @@ namespace filter
         /**
          * @return Copy of the current state.
          */
-        virtual EstimateDescriptor state() = 0;
+        virtual const EstimateDescriptor::Ptr state() = 0;
 
         /**
          * @return Accesses the filter algorithm
@@ -74,3 +98,5 @@ namespace filter
         virtual FilterType filter() = 0;
     };
 }
+
+#endif

@@ -44,16 +44,32 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
+#ifndef STATE_FILTERING_ESTIMATE_DESCRIPTOR_HPP
+#define STATE_FILTERING_ESTIMATE_DESCRIPTOR_HPP
+
+// boost
+#include <boost/shared_ptr.hpp>
+
 namespace filter
 {
-    class DynamicVector;
-    class DynamicMatrix;
+    /**
+     * @brief The DynamicVector struct can be anything
+     */
+    struct DynamicVector {};
+
+    /**
+     * @brief The DynamicMatrix struct can be anything
+     */
+    struct DynamicMatrix {};
 
     /**
      * @brief The EstimateDescriptor class
      */
     class EstimateDescriptor
     {
+    public:
+        typedef boost::shared_ptr<EstimateDescriptor> Ptr;
+
     public:
         virtual ~EstimateDescriptor() { }
 
@@ -90,14 +106,14 @@ namespace filter
          *
          * @param _estimate     The new estimate
          */
-        virtual estimate(const DynamicVector& _estimate) = 0;
+        virtual void estimate(const DynamicVector& _estimate) = 0;
 
         /**
          * @brief Sets the estimate covariance
          *
          * @param _covariance   The new covariance
          */
-        virtual covariance(const DynamicMatrix& covariance) = 0;
+        virtual void covariance(const DynamicMatrix& covariance) = 0;
 
         /**
          * @brief Updates the state timestamp
@@ -107,3 +123,5 @@ namespace filter
         virtual void timestamp(double _time) = 0;
     };
 }
+
+#endif

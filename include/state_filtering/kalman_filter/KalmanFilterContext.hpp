@@ -44,6 +44,9 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
+#ifndef STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_CONTEXT_HPP
+#define STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_CONTEXT_HPP
+
 #include <state_filtering/EstimateDescriptor.hpp>
 #include <state_filtering/FilterContext.hpp>
 
@@ -51,13 +54,14 @@
 
 namespace filter
 {
-    class Measurement;
-
+    /**
+     * @brief KalmanFilterContext is specialization of @ref filter::FilterContext for Kalman filters
+     */
     class KalmanFilterContext:
             public FilterContext<KalmanFilter::Ptr>
     {
     public:
-        virtual ~FilterContext() { }
+        virtual ~KalmanFilterContext() { }
 
         /**
          * Propagates the current state and updates it using the measurement
@@ -69,7 +73,7 @@ namespace filter
         /**
          * @return Copy of the current state.
          */
-        virtual EstimateDescriptor state();
+        virtual const EstimateDescriptor::Ptr state();
 
         /**
          * @return Accesses the filter algorithm
@@ -77,6 +81,8 @@ namespace filter
         virtual KalmanFilter::Ptr filter();
 
     protected:
-        KalmanFilter::Ptr kanman_filter_;
+        KalmanFilter::Ptr kalman_filter_;
     };
 }
+
+#endif

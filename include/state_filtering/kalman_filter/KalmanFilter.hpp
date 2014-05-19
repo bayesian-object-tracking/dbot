@@ -44,16 +44,20 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
+#ifndef STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
+#define STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
+
 // boost
 #include <boost/shared_ptr.hpp>
 
 #include <state_filtering/EstimateDescriptor.hpp>
 #include <state_filtering/FilterContext.hpp>
 
-#include <state_filtering/kalman_filter/KalmanFilter.hpp>
-
 namespace filter
 {
+    /**
+     * @brief The KalmanFilter interface
+     */
     class KalmanFilter
     {
     public:
@@ -71,7 +75,7 @@ namespace filter
          */
         virtual void predict(const EstimateDescriptor& prior_desc,
                              double delta_time,
-                             EstimateDescriptor& prediction_desc) = 0;
+                             EstimateDescriptor& prediction_desc);
 
         /**
          * @brief Updates the prediction given a new measurement
@@ -82,6 +86,8 @@ namespace filter
          */
         virtual void update(const Measurement& measurement,
                             const EstimateDescriptor& prediction_desc,
-                            EstimateDescriptor& posterior_desc) = 0;
+                            EstimateDescriptor& posterior_desc);
     };
 }
+
+#endif

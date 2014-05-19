@@ -95,7 +95,8 @@ set(state_filtering_HEADERS
 )
 
 set(state_filtering_SOURCES
-#    include/${PROJECT_NAME}/FilterContext.cpp
+    src/${PROJECT_NAME}/kalman_filter/KalmanFilter.cpp
+    src/${PROJECT_NAME}/kalman_filter/KalmanFilterContext.cpp
 )
 
 add_library(state_filtering
