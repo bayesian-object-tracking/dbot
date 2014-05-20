@@ -87,16 +87,17 @@ catkin_package(
 include_directories(include)
 
 set(state_filtering_HEADERS
-    include/${PROJECT_NAME}/FilterContext.hpp
-    include/${PROJECT_NAME}/EstimateDescriptor.hpp
+    include/${PROJECT_NAME}/distribution/EstimateDescriptor.hpp
 
-    include/${PROJECT_NAME}/kalman_filter/KalmanFilter.hpp
-    include/${PROJECT_NAME}/kalman_filter/KalmanFilterContext.hpp
+    include/${PROJECT_NAME}/filter/FilterContext.hpp
+
+    include/${PROJECT_NAME}/filter/kalman/KalmanFilter.hpp
+    include/${PROJECT_NAME}/filter/kalman/KalmanFilterContext.hpp
 )
 
 set(state_filtering_SOURCES
-    src/${PROJECT_NAME}/kalman_filter/KalmanFilter.cpp
-    src/${PROJECT_NAME}/kalman_filter/KalmanFilterContext.cpp
+    src/${PROJECT_NAME}/filter/kalman/KalmanFilter.cpp
+    src/${PROJECT_NAME}/filter/kalman/KalmanFilterContext.cpp
 )
 
 add_library(state_filtering

@@ -44,22 +44,22 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#include <state_filtering/kalman_filter/KalmanFilterContext.hpp>
 
-using namespace filter;
+#include <state_filtering/filter/kalman/KalmanFilter.hpp>
 
-void KalmanFilterContext::propagateAndUpdate(const Measurement &measurement)
+namespace filter
 {
 
-}
-
-const EstimateDescriptor::Ptr KalmanFilterContext::state()
+void KalmanFilter::predict(const EstimateDescriptor &prior_desc,
+                           double delta_time,
+                           EstimateDescriptor &prediction_desc)
 {
-
 }
 
-KalmanFilter::Ptr KalmanFilterContext::filter()
+void KalmanFilter::update(const Measurement &measurement,
+                          const EstimateDescriptor &prediction_desc,
+                          EstimateDescriptor &posterior_desc)
 {
-
 }
 
+}
