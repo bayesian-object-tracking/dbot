@@ -38,90 +38,18 @@
  */
 
 /**
- * @date 05/19/2014
+ * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_ESTIMATE_DESCRIPTOR_HPP
-#define STATE_FILTERING_ESTIMATE_DESCRIPTOR_HPP
-
-// boost
-#include <boost/shared_ptr.hpp>
+#ifndef STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
+#define STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
 
 namespace filter
 {
-    /**
-     * @brief The DynamicVector struct can be anything
-     */
-    struct DynamicVector {};
 
-    /**
-     * @brief The DynamicMatrix struct can be anything
-     */
-    struct DynamicMatrix {};
-
-    /**
-     * @brief The EstimateDescriptor class
-     */
-    class EstimateDescriptor
-    {
-    public:
-        typedef boost::shared_ptr<EstimateDescriptor> Ptr;
-
-    public:
-        virtual ~EstimateDescriptor() { }
-
-        /**
-         * @brief Accesses the state as a vector.
-         *
-         * @return Estimate vector, e.g. mean
-         */
-        virtual const DynamicVector& estimate() const = 0;
-
-        /**
-         * @brief Accesses the covariance of the estimate
-         *
-         * @return Covariance of the estimate
-         */
-        virtual const DynamicMatrix& covariance() const = 0;
-
-        /**
-         * @brief Returns the time at which the state was updated
-         *
-         * @return timestamp of update in seconds
-         */
-        virtual double timestamp() const = 0;
-
-        /**
-         * @brief Returns the state dimension
-         *
-         * @return state dimension
-         */
-        virtual int dimension() const = 0;
-
-        /**
-         * @brief Sets the estimate
-         *
-         * @param _estimate     The new estimate
-         */
-        virtual void estimate(const DynamicVector& _estimate) = 0;
-
-        /**
-         * @brief Sets the estimate covariance
-         *
-         * @param _covariance   The new covariance
-         */
-        virtual void covariance(const DynamicMatrix& covariance) = 0;
-
-        /**
-         * @brief Updates the state timestamp
-         *
-         * @param _time         New update timestamp in seconds
-         */
-        virtual void timestamp(double _time) = 0;
-    };
 }
 
 #endif

@@ -38,57 +38,17 @@
  */
 
 /**
- * @date 05/19/2014
+ * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
-#define STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
-
-// boost
-#include <boost/shared_ptr.hpp>
-
-#include <state_filtering/distribution/EstimateDescriptor.hpp>
-#include <state_filtering/filter/FilterContext.hpp>
+#ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
+#define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 
 namespace filter
 {
-
-/**
- * @brief The KalmanFilter interface
- */
-class KalmanFilter
-{
-public:
-    typedef boost::shared_ptr<KalmanFilter> Ptr;
-
-public:
-    virtual ~KalmanFilter() { }
-
-    /**
-     * @brief Predicts the state given a delta t and the prior
-     *
-     * @param [in]  prior_desc        Current prior
-     * @param [in]  delta_time        Delta t since the past measurement
-     * @param [out] prediction_desc   Predicted state
-     */
-    virtual void predict(const EstimateDescriptor& prior_desc,
-                         double delta_time,
-                         EstimateDescriptor& prediction_desc);
-
-    /**
-     * @brief Updates the prediction given a new measurement
-     *
-     * @param [in]  measurement       New measurement
-     * @param [in]  prediction_desc   Current predicted state
-     * @param [out] posterior_desc    State posterior, i.e the updated prediction
-     */
-    virtual void update(const Measurement& measurement,
-                        const EstimateDescriptor& prediction_desc,
-                        EstimateDescriptor& posterior_desc);
-};
 
 }
 

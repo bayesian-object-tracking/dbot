@@ -44,59 +44,50 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_FILTER_CONTEXT_HPP
-#define STATE_FILTERING_FILTER_CONTEXT_HPP
+#ifndef STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
+#define STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_HPP
 
-#include <state_filtering/distribution/EstimateDescriptor.hpp>
+// boost
+#include <boost/shared_ptr.hpp>
 
-/**
- * @brief State filtering namespace
- */
+#include <state_filtering/filter/estimate.hpp>
+#include <state_filtering/filter/filter_context.hpp>
+
 namespace filter
 {
 
 /**
- * @brief The Measurement struct can be anything
+ * @brief The KalmanFilter interface
  */
-struct Measurement { };
-
-/**
- * @brief FilterContext is a generic interface of a context containing a filter algorithm
- *
- * FilterContext is a generic interface of a filter algorithm context. A specialization of this
- * may run any type of filter with its own interface. Each filter must be able to provide at
- * least the three functions this interface provides. The underlying algorithm and may use any
- * representation for its data and may have any interface it requires.
- *
- * The Filter context layer provides a simple and minimal interface for the client. It also
- * provides the possibility to use stateless and stateful filters. Stateless filters are a clean
- * way to implement an algorithm, however the client has to maintain the state. In this case
- * FilterContext takes care of this matter. A stateful filter is a filter which stores and
- * manages the state internally. This may due to performance reasons such as in the case of
- * GPU implementations. Both, stateless and stateful filter can be used in the same fashion.
- */
-template <typename FilterType>
-class FilterContext
+class KalmanFilter
 {
 public:
-    virtual ~FilterContext() { }
+    typedef boost::shared_ptr<KalmanFilter> Ptr;
+
+public:
+    virtual ~KalmanFilter() { }
 
     /**
-     * Propagates the current state and updates it using the measurement
+     * @brief Predicts the state given a delta t and the prior
      *
-     * @param [in] measurement  Most recent measurement used to update the state
+     * @param [in]  prior_desc        Current prior
+     * @param [in]  delta_time        Delta t since the past measurement
+     * @param [out] prediction_desc   Predicted state
      */
-    virtual void propagateAndUpdate(const Measurement& measurement) = 0;
+    virtual void predict(const EstimateDescriptor& prior_desc,
+                         double delta_time,
+                         EstimateDescriptor& prediction_desc);
 
     /**
-     * @return Copy of the current state.
+     * @brief Updates the prediction given a new measurement
+     *
+     * @param [in]  measurement       New measurement
+     * @param [in]  prediction_desc   Current predicted state
+     * @param [out] posterior_desc    State posterior, i.e the updated prediction
      */
-    virtual const EstimateDescriptor::Ptr state() = 0;
-
-    /**
-     * @return Accesses the filter algorithm
-     */
-    virtual FilterType filter() = 0;
+    virtual void update(const Measurement& measurement,
+                        const EstimateDescriptor& prediction_desc,
+                        EstimateDescriptor& posterior_desc);
 };
 
 }

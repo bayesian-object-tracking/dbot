@@ -87,17 +87,29 @@ catkin_package(
 include_directories(include)
 
 set(state_filtering_HEADERS
-    include/${PROJECT_NAME}/distribution/EstimateDescriptor.hpp
+    include/${PROJECT_NAME}/distribution/distribution.hpp
+    include/${PROJECT_NAME}/distribution/sampleable.hpp
+    include/${PROJECT_NAME}/distribution/probability_density_function.hpp
+    include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp
+    include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp
+    include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
 
-    include/${PROJECT_NAME}/filter/FilterContext.hpp
+    include/${PROJECT_NAME}/filter/filter.hpp
+    include/${PROJECT_NAME}/filter/estimate.hpp
+    include/${PROJECT_NAME}/filter/filter_context.hpp
 
-    include/${PROJECT_NAME}/filter/kalman/KalmanFilter.hpp
-    include/${PROJECT_NAME}/filter/kalman/KalmanFilterContext.hpp
+    include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
+    include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
+
+    include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
+
+    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/kalman_filter_context.hpp
 )
 
 set(state_filtering_SOURCES
-    src/${PROJECT_NAME}/filter/kalman/KalmanFilter.cpp
-    src/${PROJECT_NAME}/filter/kalman/KalmanFilterContext.cpp
+    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
+    src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
 )
 
 add_library(state_filtering
