@@ -47,6 +47,8 @@
 #ifndef STATE_FILTERING_FILTER_FILTER_HPP
 #define STATE_FILTERING_FILTER_FILTER_HPP
 
+#include <state_filtering/filter/types.hpp>
+
 namespace filter
 {
 

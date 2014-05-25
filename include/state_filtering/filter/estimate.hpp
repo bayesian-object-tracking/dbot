@@ -50,28 +50,20 @@
 // boost
 #include <boost/shared_ptr.hpp>
 
+#include <state_filtering/filter/types.hpp>
+
 namespace filter
 {
     /**
-     * @brief The DynamicVector struct can be anything
-     */
-    struct DynamicVector {};
-
-    /**
-     * @brief The DynamicMatrix struct can be anything
-     */
-    struct DynamicMatrix {};
-
-    /**
      * @brief The EstimateDescriptor class
      */
-    class EstimateDescriptor
+    class Estimate
     {
     public:
-        typedef boost::shared_ptr<EstimateDescriptor> Ptr;
+        typedef boost::shared_ptr<Estimate> Ptr;
 
     public:
-        virtual ~EstimateDescriptor() { }
+        virtual ~Estimate() { }
 
         /**
          * @brief Accesses the state as a vector.

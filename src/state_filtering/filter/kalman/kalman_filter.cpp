@@ -45,20 +45,20 @@
  */
 
 
-#include <state_filtering/filter/kalman/KalmanFilter.hpp>
+#include <state_filtering/filter/kalman/kalman_filter.hpp>
 
 namespace filter
 {
 
-void KalmanFilter::predict(const EstimateDescriptor &prior_desc,
+void KalmanFilter::predict(const Estimate &prior_desc,
                            double delta_time,
-                           EstimateDescriptor &prediction_desc)
+                           Estimate &prediction_desc)
 {
 }
 
 void KalmanFilter::update(const Measurement &measurement,
-                          const EstimateDescriptor &prediction_desc,
-                          EstimateDescriptor &posterior_desc)
+                          const Estimate &prediction_desc,
+                          Estimate &posterior_desc)
 {
 }
 

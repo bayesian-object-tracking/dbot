@@ -44,22 +44,26 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
+#ifndef STATE_FILTERING_FILTER_TYPES_HPP
+#define STATE_FILTERING_FILTER_TYPES_HPP
 
 namespace filter
 {
 
-class Distribution
-{
-public:
-    /**
-     * @brief Virtual destructor
-     */
-    virtual ~Distribution() { }
+/**
+ * @brief The DynamicVector struct can be anything
+ */
+typedef struct { int dummy; } DynamicVector;
 
+/**
+ * @brief The DynamicMatrix struct can be anything
+ */
+typedef struct { double dummy; } DynamicMatrix;
 
-};
+/**
+ * @brief The Measurement struct can be anything
+ */
+typedef struct { float dummy; } Measurement;
 
 }
 

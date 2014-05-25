@@ -94,6 +94,7 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp
     include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
 
+    include/${PROJECT_NAME}/filter/types.hpp
     include/${PROJECT_NAME}/filter/filter.hpp
     include/${PROJECT_NAME}/filter/estimate.hpp
     include/${PROJECT_NAME}/filter/filter_context.hpp

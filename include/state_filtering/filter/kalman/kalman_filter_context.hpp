@@ -73,7 +73,7 @@ public:
     /**
      * @return Copy of the current state.
      */
-    virtual const EstimateDescriptor::Ptr state();
+    virtual const Estimate::Ptr state();
 
     /**
      * @return Accesses the filter algorithm

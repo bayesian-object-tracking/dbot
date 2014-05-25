@@ -44,13 +44,9 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING__HPP
-#define STATE_FILTERING__HPP
+#ifndef STATE_FILTERING_FILTER_PARTICLE_FILTER_CONTEXT_HPP
+#define STATE_FILTERING_FILTER_PARTICLE_FILTER_CONTEXT_HPP
 
-
-/**
- * @brief State filtering namespace
- */
 namespace filter
 {
 

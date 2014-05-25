@@ -47,6 +47,7 @@
 #ifndef STATE_FILTERING_FILTER_FILTER_CONTEXT_HPP
 #define STATE_FILTERING_FILTER_FILTER_CONTEXT_HPP
 
+#include <state_filtering/filter/types.hpp>
 #include <state_filtering/filter/estimate.hpp>
 
 /**
@@ -54,11 +55,6 @@
  */
 namespace filter
 {
-
-/**
- * @brief The Measurement struct can be anything
- */
-struct Measurement { };
 
 /**
  * @brief FilterContext is a generic interface of a context containing a filter algorithm
@@ -91,7 +87,7 @@ public:
     /**
      * @return Copy of the current state.
      */
-    virtual const EstimateDescriptor::Ptr state() = 0;
+    virtual const Estimate::Ptr state() = 0;
 
     /**
      * @return Accesses the filter algorithm

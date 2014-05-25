@@ -44,7 +44,7 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#include <state_filtering/filter/kalman/KalmanFilterContext.hpp>
+#include <state_filtering/filter/kalman/kalman_filter_context.hpp>
 
 namespace filter
 {
@@ -54,7 +54,7 @@ void KalmanFilterContext::propagateAndUpdate(const Measurement &measurement)
 
 }
 
-const EstimateDescriptor::Ptr KalmanFilterContext::state()
+const Estimate::Ptr KalmanFilterContext::state()
 {
 
 }

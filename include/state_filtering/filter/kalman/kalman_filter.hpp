@@ -74,9 +74,9 @@ public:
      * @param [in]  delta_time        Delta t since the past measurement
      * @param [out] prediction_desc   Predicted state
      */
-    virtual void predict(const EstimateDescriptor& prior_desc,
+    virtual void predict(const Estimate& prior_desc,
                          double delta_time,
-                         EstimateDescriptor& prediction_desc);
+                         Estimate& prediction_desc);
 
     /**
      * @brief Updates the prediction given a new measurement
@@ -86,8 +86,8 @@ public:
      * @param [out] posterior_desc    State posterior, i.e the updated prediction
      */
     virtual void update(const Measurement& measurement,
-                        const EstimateDescriptor& prediction_desc,
-                        EstimateDescriptor& posterior_desc);
+                        const Estimate& prediction_desc,
+                        Estimate& posterior_desc);
 };
 
 }
