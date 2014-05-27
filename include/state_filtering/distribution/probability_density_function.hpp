@@ -52,12 +52,12 @@
 namespace filter
 {
 
-template <typename DistributionTraits_>
+template <typename DistributionType>
 class ProbabilityDensityFunction
 {
 public:
-    typedef typename DistributionTraits_::ScalarType ScalarType;
-    typedef typename DistributionTraits_::SampleType SampleType;
+    typedef typename DistributionType::ScalarType ScalarType;
+    typedef typename DistributionType::VariableType VariableType;
 
     /**
      * @brief Returns the probability of the given sample
@@ -66,7 +66,7 @@ public:
      *
      * @return Probability of the sample
      */
-    virtual ScalarType probability(const SampleType& sample) const
+    virtual ScalarType probability(const VariableType& sample) const
     {
         std::exp(logProbability(sample));
     }
@@ -78,7 +78,7 @@ public:
      *
      * @return Log of sample probability
      */
-    virtual ScalarType logProbability(const SampleType& sample) const = 0;
+    virtual ScalarType logProbability(const VariableType& sample) const = 0;
 };
 
 }

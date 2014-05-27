@@ -50,38 +50,40 @@
 
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/sampleable.hpp>
-#include <state_filtering/distribution/gaussian_mappable.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
 
 namespace filter
 {
 
-template <typename Traits>
+template <typename ScalarType_, int size>
 class DampedBrownianMotion:
-        public Distribution<Traits>,
-        public Sampleable<Traits>,
-        public GaussianMappable<Traits>
+        public Distribution< ScalarType_, size>,
+        public GaussianMappable< Distribution<ScalarType_, size>, size >,
+        public GaussianSampleable< GaussianMappable<Distribution<ScalarType_, size>, size > >
 {
-public:
-    typedef typename Traits::ScalarType ScalarType;
-    typedef typename Traits::SampleType SampleType;
-    typedef typename Traits::CovarianceType CovarianceType;
+public: /* distribution traits */
+    typedef Distribution<ScalarType_, size> BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, size>, size > BasenMappableType;
 
+    enum { VariableSize = BaseType::VariableSize };
+    typedef typename BaseType::ScalarType                           ScalarType;
+    typedef typename BaseType::VariableType                         VariableType;
+    typedef typename BasenMappableType::RandomType                  RandomType;
+    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
+
+public:
     virtual ~DampedBrownianMotion() { }
 
-    virtual SampleType sample()
-    {
-        return SampleType();
-    }
-
-    virtual SampleType mapFromGaussian(const SampleType& sample) const
+    virtual VariableType mapFromGaussian(const RandomType& sample) const
     {
         return distribution_.mapFromGaussian(sample);
     }
 
     virtual void conditionals(const double& delta_time,
-                              const SampleType& velocity,
-                              const SampleType& acceleration)
+                              const VariableType& velocity,
+                              const VariableType& acceleration)
     {
         // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
         // covariance matrices which are not full rank, which is the case for time equal to zero
@@ -98,13 +100,18 @@ public:
         acceleration_covariance_ = acceleration_covariance;
     }
 
+    virtual int variableSize() const
+    {
+        return distribution_.variableSize();
+    }
+
 private:
-    SampleType Expectation(
-            const SampleType& velocity,
-            const SampleType& acceleration,
+    VariableType Expectation(
+            const VariableType& velocity,
+            const VariableType& acceleration,
             const double& delta_time)
     {
-        SampleType velocity_expectation =
+        VariableType velocity_expectation =
                 (1.0 - exp(-damping_*delta_time))
                 / damping_ * acceleration + exp(-damping_*delta_time)*velocity;
 
@@ -127,7 +134,7 @@ private:
 
 private:
     // conditionals
-    GaussianDistribution<Traits> distribution_;
+    GaussianDistribution<ScalarType, VariableSize, VariableSize> distribution_;
 
     // parameters
     double damping_;

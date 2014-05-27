@@ -47,8 +47,17 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 #define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 
+// boost
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+
 #include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/distribution.hpp>
+
+
+#define RANDOM_SEED 1
+// #define RANDOM_SEED (unsigned int) time(0)
 
 namespace filter
 {
@@ -56,11 +65,11 @@ namespace filter
 /**
  * Sampleable interface of a distribution
  */
-template <typename DistributionTraits_>
+template <typename DistributionType>
 class Sampleable
 {
 public:
-    typedef typename DistributionTraits_::SampleType SampleType;
+    typedef typename DistributionType::VariableType VariableType;
 
     /**
      * @brief Virtual destructor
@@ -72,7 +81,7 @@ public:
      *
      * @return random sample from underlying distribution
      */
-    virtual SampleType sample() = 0;
+    virtual VariableType sample() = 0;
 };
 
 }

@@ -40,66 +40,77 @@
 /**
  * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
+#define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 
-// eigen
-#include <Eigen/Dense>
+// boost
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
 
-/*
- * Enable and disable functions macros for fixed and dynamic sized distributions
- */
-#define DISABLE_CONSTRUCTOR_IF_DYNAMIC_SIZE(VariableType) \
-            if (filter::internals::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
-                ::YOU_CALLED_A_FIXED_SIZE_CONSTRUCTOR_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
+#include <state_filtering/filter/types.hpp>
+#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
 
-#define DISABLE_CONSTRUCTOR_IF_FIXED_SIZE(VariableType) \
-    if (filter::internals::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
-        ::YOU_CALLED_A_DYNAMIC_SIZE_CONSTRUCTOR_ON_A_FIXED_SIZE_DISTRIBUTION) { }
 
+#define RANDOM_SEED 1
+// #define RANDOM_SEED (unsigned int) time(0)
 
 namespace filter
 {
-namespace internals
-{
-template <bool condition> struct Invalidate { };
 
-template <>
-struct Invalidate<true>
+template <typename GaussianMappableType>
+class GaussianSampleable
 {
-    enum
+public:
+    typedef typename GaussianMappableType::DistributionType DistributionType;
+    typedef typename GaussianMappableType::VariableType VariableType;
+
+    GaussianSampleable():
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        YOU_CALLED_A_FIXED_SIZE_CONSTRUCTOR_ON_A_DYNAMIC_SIZE_DISTRIBUTION,
-        YOU_CALLED_A_DYNAMIC_SIZE_CONSTRUCTOR_ON_A_FIXED_SIZE_DISTRIBUTION
-    };
-};
-}
 
-template <typename ScalarType_, int size>
-class Distribution
-{
-public:    
-    enum { VariableSize = size };
-    typedef ScalarType_ ScalarType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, 1> VariableType;
-
+    }
 
     /**
-     * @brief Overridable virtual destructor
+     * @brief Virtual destructor
      */
-    virtual ~Distribution() { }
+    virtual ~GaussianSampleable() { }
 
     /**
-     * @brief Returns current variable size ()
+     * @brief Returns a random sample from the underlying distribution
      *
-     * @return variable size for dynamic and fixed size (dimensional) distributions
+     * Returns a random sample from the underlying distribution by gaussian sample mapping
+     *
+     * @return random sample from underlying distribution
      */
-    virtual int variableSize() const = 0;
+    virtual VariableType sample()
+    {
+        typedef typename GaussianMappableType::DistributionType DistributionType;
+
+        int size = dynamic_cast<DistributionType*>(this)->variableSize();
+
+        VariableType iso_sample(size, 1);
+        for (int i = 0; i < size; i++)
+        {
+            iso_sample(i) = gaussian_generator_();
+        }        
+
+        return dynamic_cast<GaussianMappableType*>(this)->mapFromGaussian(iso_sample);
+    }
+
+protected:
+    boost::mt19937 generator_;
+    boost::normal_distribution<> gaussian_distribution_;
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > gaussian_generator_;
 };
+
 
 }
 

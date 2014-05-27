@@ -53,6 +53,9 @@
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
 #include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
+#include <state_filtering/distribution/brownian/integrated_damped_brownian_motion.hpp>
+
+#include <state_filtering/process_model/brownian_process_model.hpp>
 
 namespace filter
 {
@@ -61,19 +64,40 @@ void KalmanFilter::predict(const Estimate &prior_desc,
                            double delta_time,
                            Estimate &prediction_desc)
 {    
-    typedef GaussianDistributionTraits<double, 13> MyGaussianDistributionTraits;
-
-
-    typedef GaussianDistributionTraits<double, 13> DampedBrownianMotionTraits;
-
-    GaussianDistribution<MyGaussianDistributionTraits> gaussian;
-
-
-
-    DampedBrownianMotion<DampedBrownianMotionTraits> damped_brownian_motion;
-
-    gaussian.setNormal();
+    DampedBrownianMotion<double, 15> damped_brownian_motion;
     damped_brownian_motion.sample();
+
+    IntegratedDampedBrownianMotion<double, 17> integrated_damped_brownian_motion;
+    integrated_damped_brownian_motion.sample();
+
+    GaussianDistribution<double, 13, 13> gaussian;
+    GaussianDistribution<double, Eigen::Dynamic, Eigen::Dynamic> dynamic_gaussian(7);
+
+    BrownianProcessModel<double, 13, 6, 13> brownian_process_model;
+    brownian_process_model.sample();
+
+//    //gaussian.setNormal();
+
+//    std::cout << "gaussian.variableSize() = " << gaussian.variableSize() << std::endl;
+//    std::cout << "dynamic_gaussian.variableSize() = " << dynamic_gaussian.variableSize() << std::endl;
+
+//    std::cout << "gaussian.mean() = " << gaussian.mean().transpose() << std::endl;
+//    std::cout << "gaussian.covariance() = " << gaussian.covariance() << std::endl;
+
+//    std::cout << "dynamic_gaussian.mean() = " << dynamic_gaussian.mean().transpose() << std::endl;
+//    std::cout << "dynamic_gaussian.covariance() = " << dynamic_gaussian.covariance() << std::endl;
+
+//    gaussian.setNormal();
+//    dynamic_gaussian.setNormal();
+
+//    std::cout << "gaussian.mean() = " << gaussian.mean().transpose() << std::endl;
+//    std::cout << "gaussian.covariance() = " << gaussian.covariance() << std::endl;
+
+//    std::cout << "dynamic_gaussian.mean() = " << dynamic_gaussian.mean().transpose() << std::endl;
+//    std::cout << "dynamic_gaussian.covariance() = " << dynamic_gaussian.covariance() << std::endl;
+
+    std::cout << "gaussian.sample() = " << gaussian.sample().transpose() << std::endl;
+    std::cout << "dynamic_gaussian.sample() = " << dynamic_gaussian.sample().transpose() << std::endl;
 }
 
 void KalmanFilter::update(const Measurement &measurement,

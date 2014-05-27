@@ -47,47 +47,46 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_BROWNIAN_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_BROWNIAN_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 
-#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
-
+// boost
 #include <boost/math/special_functions/gamma.hpp>
+
+// state_filtering
+#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType, int size, int conditional_size>
-class IntegratedDampedBrownianMotionTraits:
-        public GaussianDistributionTraits<ScalarType, size>
+template <typename ScalarType_, int size>
+class IntegratedDampedBrownianMotion:
+        public Distribution<ScalarType_, size>,
+        public GaussianMappable<Distribution<ScalarType_, size>, size>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, size>, size > >
 {
+public: /* distribution traits */
+    typedef Distribution< ScalarType_, size > BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, size>, size > BasenMappableType;
+
+    enum { VariableSize = BaseType::VariableSize };
+    typedef typename BaseType::ScalarType                           ScalarType;
+    typedef typename BaseType::VariableType                         VariableType;
+    typedef typename BasenMappableType::RandomType                  RandomType;
+    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
+
 public:
-    typedef Eigen::Matrix<ScalarType, conditional_size, 1> ConditionalType;
-};
-
-
-template <typename Traits>
-class IntegratedDampedBrownianMotion
-{
-public:
-    typedef typename Traits::ScalarType ScalarType;
-    typedef typename Traits::SampleType SampleType;
-    typedef typename Traits::CovarianceType CovarianceType;
-    typedef typename Traits::ConditionalType ConditionalType;
-
-    virtual SampleType sample()
-    {
-        return SampleType();
-    }
-
     virtual ~IntegratedDampedBrownianMotion() { }
 
-    virtual SampleType mapFromGaussian(const SampleType& sample) const
+    virtual VariableType mapFromGaussian(const RandomType& sample) const
     {
         return distribution_.mapFromGaussian(sample);
     }
 
     virtual void conditionals(const double& delta_time,
-                              const SampleType& state,
-                              const SampleType& velocity,
-                              const SampleType& acceleration)
+                              const VariableType& state,
+                              const VariableType& velocity,
+                              const VariableType& acceleration)
     {
         // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
         // covariance matrices which are not full rank, which is the case for time equal to zero
@@ -107,13 +106,18 @@ public:
         acceleration_covariance_ = acceleration_covariance;
     }
 
+    virtual int variableSize() const
+    {
+        return distribution_.variableSize();
+    }
+
 private:
-    SampleType Expectation(const SampleType& state,
-                           const SampleType& velocity,
-                           const SampleType& acceleration,
+    VariableType Expectation(const VariableType& state,
+                           const VariableType& velocity,
+                           const VariableType& acceleration,
                            const double& delta_time)
     {
-        SampleType expectation;
+        VariableType expectation;
         expectation = state +
                 (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
                 * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
@@ -146,7 +150,7 @@ private:
 private:
     size_t n_variables_;
     // conditionals
-    GaussianDistribution<Traits> distribution_;
+    GaussianDistribution<ScalarType, VariableSize, VariableSize> distribution_;
     // parameters
     double damping_;
     CovarianceType acceleration_covariance_;

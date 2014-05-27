@@ -47,6 +47,8 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
 #define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
 
+#include <Eigen/Dense>
+
 #include <state_filtering/filter/types.hpp>
 
 namespace filter
@@ -55,11 +57,15 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename Derived>
+template <typename DistributionType_, int random_size>
 class GaussianMappable
 {
 public:
-    typedef typename DistributionTraits_::SampleType SampleType;
+    typedef DistributionType_ DistributionType;
+
+    typedef typename DistributionType::ScalarType       ScalarType;
+    typedef typename DistributionType::VariableType     VariableType;
+    typedef Eigen::Matrix<ScalarType, random_size, 1>   RandomType;
 
     /**
      * @brief Virtual destructor
@@ -73,7 +79,7 @@ public:
      *
      * @return
      */
-    template SampleType mapFrom(const SampleType& sample) const;
+    virtual VariableType mapFromGaussian(const RandomType& sample) const = 0;
 };
 
 }

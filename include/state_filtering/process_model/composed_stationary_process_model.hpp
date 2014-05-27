@@ -44,8 +44,14 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
-#define STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
+#ifndef STATE_FILTERING_PROCESS_MODEL_COMPOSED_STATIONARY_PROCESS_MODEL_HPP
+#define STATE_FILTERING_PROCESS_MODEL_COMPOSED_STATIONARY_PROCESS_MODEL_HPP
+
+// boost
+#include <boost/shared_ptr.hpp>
+
+// c++/std
+#include <vector>
 
 // eigen
 #include <Eigen/Dense>
@@ -56,21 +62,17 @@
 #include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
 
+#include <state_filtering/process_model/stationary_process_model.hpp>
+
 namespace filter
 {
 
-template <typename ScalarType_ = double,
-          int size = Eigen::Dynamic,
-          int control_input_size = Eigen::Dynamic,
-          int random_size = Eigen::Dynamic>
-class StationaryProcessModel:
-        public Distribution<ScalarType_, size >,
-        public GaussianMappable<Distribution<ScalarType_, size>, random_size>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, size>, random_size > >
+template <>
+class ComposedStationaryProcessModel:
+        StationaryProcessModel<>
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, size> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, size>, random_size > BasenMappableType;
+    typedef StationaryProcessModel<> BaseType;
 
     enum
     {
@@ -84,16 +86,31 @@ public: /* distribution traits */
     typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
     typedef Eigen::Matrix<ScalarType, ControlInputSize, 1>          ControlInputType;
 
-    virtual ~StationaryProcessModel() { }
+    virtual ~ComposedStationaryProcessModel() {}
 
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const ControlInputType& control) = 0;
-
-    virtual void conditionals(const double& delta_time, const VariableType& state)
+    virtual VariableType mapFromGaussian(const RandomType& randoms) const
     {
-        conditionals(delta_time, state, ControlInputType::Zero(ControlInputSize));
+        VariableType variables(variableSize());
+
+        size_t variable_index = 0;
+        size_t random_index = 0;
+        for(size_t i = 0; i < process_models_.size(); i++)
+        {
+            variables.middleRows(variable_index, process_models_[i]->variableSize()) =
+                    process_models_[i]->mapFromGaussian(randoms.middleRows(random_index, process_models_[i]->count_randoms_));
+            variable_index += process_models_[i]->variableSize();
+            random_index += process_models_[i]->count_randoms_;
+        }
+        return variables;
     }
+
+    virtual int variableSize() const
+    {
+
+    }
+
+protected:
+    const std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models_;
 };
 
 }

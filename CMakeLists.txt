@@ -92,9 +92,11 @@ include_directories(include)
 
 set(state_filtering_HEADERS
     include/${PROJECT_NAME}/distribution/distribution.hpp
-    include/${PROJECT_NAME}/distribution/sampleable.hpp
-    include/${PROJECT_NAME}/distribution/gaussian_mappable.hpp
+    include/${PROJECT_NAME}/distribution/sampleable.hpp    
     include/${PROJECT_NAME}/distribution/probability_density_function.hpp
+
+    include/${PROJECT_NAME}/distribution/gaussian/gaussian_mappable.hpp
+    include/${PROJECT_NAME}/distribution/gaussian/gaussian_sampleable.hpp
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp
     include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp
     include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
@@ -105,6 +107,7 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/filter/filter_context.hpp
 
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
+#    include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
 
     include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
