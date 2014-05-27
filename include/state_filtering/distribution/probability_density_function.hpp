@@ -47,8 +47,39 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
 
+#include <cmath>
+
 namespace filter
 {
+
+template <typename DistributionTraits_>
+class ProbabilityDensityFunction
+{
+public:
+    typedef typename DistributionTraits_::ScalarType ScalarType;
+    typedef typename DistributionTraits_::SampleType SampleType;
+
+    /**
+     * @brief Returns the probability of the given sample
+     *
+     * @param sample    Probability sample
+     *
+     * @return Probability of the sample
+     */
+    virtual ScalarType probability(const SampleType& sample) const
+    {
+        std::exp(logProbability(sample));
+    }
+
+    /**
+     * @brief Returns the probability log of the given sample
+     *
+     * @param sample    Probability sample
+     *
+     * @return Log of sample probability
+     */
+    virtual ScalarType logProbability(const SampleType& sample) const = 0;
+};
 
 }
 

@@ -47,18 +47,29 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
 
+#include <Eigen/Dense>
+
 namespace filter
 {
 
+template <typename ScalarType_, int size>
+class DistributionTraits
+{
+public:
+    typedef ScalarType_ ScalarType;
+    enum { Size = size };
+
+    typedef Eigen::Matrix<ScalarType, Size, 1> SampleType;
+};
+
+template <typename Traits>
 class Distribution
 {
 public:
     /**
-     * @brief Virtual destructor
+     * @brief Overridable virtual destructor
      */
     virtual ~Distribution() { }
-
-
 };
 
 }

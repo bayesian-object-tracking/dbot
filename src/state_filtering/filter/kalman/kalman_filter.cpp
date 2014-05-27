@@ -44,8 +44,15 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
+#include <Eigen/Dense>
+
+#include <boost/static_assert.hpp>
 
 #include <state_filtering/filter/kalman/kalman_filter.hpp>
+
+#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+#include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
 
 namespace filter
 {
@@ -53,7 +60,20 @@ namespace filter
 void KalmanFilter::predict(const Estimate &prior_desc,
                            double delta_time,
                            Estimate &prediction_desc)
-{
+{    
+    typedef GaussianDistributionTraits<double, 13> MyGaussianDistributionTraits;
+
+
+    typedef GaussianDistributionTraits<double, 13> DampedBrownianMotionTraits;
+
+    GaussianDistribution<MyGaussianDistributionTraits> gaussian;
+
+
+
+    DampedBrownianMotion<DampedBrownianMotionTraits> damped_brownian_motion;
+
+    gaussian.setNormal();
+    damped_brownian_motion.sample();
 }
 
 void KalmanFilter::update(const Measurement &measurement,
@@ -62,4 +82,14 @@ void KalmanFilter::update(const Measurement &measurement,
 {
 }
 
+}
+
+int main(int nargs, char** vargs)
+{
+    filter::KalmanFilter kf;
+    filter::Estimate temp;
+
+    kf.predict(temp, 0, temp);
+
+    return 0;
 }

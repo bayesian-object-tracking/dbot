@@ -57,13 +57,13 @@ namespace filter
     /**
      * @brief The EstimateDescriptor class
      */
-    class Estimate
+    class Estimate_
     {
     public:
-        typedef boost::shared_ptr<Estimate> Ptr;
+        typedef boost::shared_ptr<Estimate_> Ptr;
 
     public:
-        virtual ~Estimate() { }
+        virtual ~Estimate_() { }
 
         /**
          * @brief Accesses the state as a vector.

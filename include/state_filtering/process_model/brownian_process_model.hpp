@@ -47,8 +47,51 @@
 #ifndef STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 #define STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 
+#include <state_filtering/process_model/stationary_process_model.hpp>
+#include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
+#include <state_filtering/distribution/brownian/integrated_damped_brownian_motion.hpp>
+
 namespace filter
 {
+
+template <typename Traits>
+class BrownianProcessModel:
+        public StationaryProcessModel<Traits>
+{
+public:
+    typedef IntegratedDampedBrownianMotionTraits<double, 3, 3> BrownianMotionTraits;
+
+    virtual SampleType sample()
+    {
+        return mean_;
+    }
+
+    virtual SampleType mapFromGaussian(const SampleType& sample) const
+    {
+        return mean_ + L_ * sample;
+    }
+
+private:
+    // conditionals
+    double delta_time_;
+    Eigen::Matrix<double, 3, 1> initial_linear_pose_;
+    Eigen::Matrix<double, 4, 1> initial_angular_pose_;
+    Eigen::Matrix<double, 4, 3> initial_quaternion_matrix_;
+    Eigen::Matrix<double, 3, 1> initial_linear_velocity_;
+    Eigen::Matrix<double, 3, 1> initial_angular_velocity_;
+
+    Eigen::Matrix<double, 3, 1> linear_acceleration_control_;
+    Eigen::Matrix<double, 3, 1> angular_acceleration_control_;
+
+    // parameters
+    Eigen::Matrix<double, 3, 1> rotation_center_;
+
+    // distributions
+    IntegratedDampedBrownianMotion<BrownianMotionTraits> delta_linear_pose_distribution_;
+    IntegratedDampedBrownianMotion<BrownianMotionTraits> delta_angular_pose_distribution_;
+    DampedBrownianMotion<BrownianMotionTraits> linear_velocity_distribution_;
+    DampedBrownianMotion<BrownianMotionTraits> angular_velocity_distribution_;
+};
 
 }
 

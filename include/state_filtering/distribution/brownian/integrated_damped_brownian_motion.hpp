@@ -47,8 +47,112 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_BROWNIAN_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_BROWNIAN_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 
+#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+
+#include <boost/math/special_functions/gamma.hpp>
+
 namespace filter
 {
+
+template <typename ScalarType, int size, int conditional_size>
+class IntegratedDampedBrownianMotionTraits:
+        public GaussianDistributionTraits<ScalarType, size>
+{
+public:
+    typedef Eigen::Matrix<ScalarType, conditional_size, 1> ConditionalType;
+};
+
+
+template <typename Traits>
+class IntegratedDampedBrownianMotion
+{
+public:
+    typedef typename Traits::ScalarType ScalarType;
+    typedef typename Traits::SampleType SampleType;
+    typedef typename Traits::CovarianceType CovarianceType;
+    typedef typename Traits::ConditionalType ConditionalType;
+
+    virtual SampleType sample()
+    {
+        return SampleType();
+    }
+
+    virtual ~IntegratedDampedBrownianMotion() { }
+
+    virtual SampleType mapFromGaussian(const SampleType& sample) const
+    {
+        return distribution_.mapFromGaussian(sample);
+    }
+
+    virtual void conditionals(const double& delta_time,
+                              const SampleType& state,
+                              const SampleType& velocity,
+                              const SampleType& acceleration)
+    {
+        // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
+        // covariance matrices which are not full rank, which is the case for time equal to zero
+        double bounded_delta_time = delta_time;
+        if(bounded_delta_time < 0.00001) bounded_delta_time = 0.00001;
+
+        distribution_.mean(Expectation(state, velocity, acceleration, bounded_delta_time));
+        distribution_.covariance(Covariance(bounded_delta_time));
+
+        n_variables_ = state.rows();
+    }
+    virtual void parameters(
+            const double& damping,
+            const CovarianceType& acceleration_covariance)
+    {
+        damping_ = damping;
+        acceleration_covariance_ = acceleration_covariance;
+    }
+
+private:
+    SampleType Expectation(const SampleType& state,
+                           const SampleType& velocity,
+                           const SampleType& acceleration,
+                           const double& delta_time)
+    {
+        SampleType expectation;
+        expectation = state +
+                (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
+                * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
+
+        if(!std::isfinite(expectation.norm()))
+            expectation = state +
+                    0.5*delta_time*delta_time*acceleration +
+                    delta_time*velocity;
+
+        return expectation;
+    }
+
+    CovarianceType Covariance(const double& delta_time)
+    {
+        // the first argument to the gamma function should be equal to zero, which would not cause
+        // the gamma function to diverge as long as the second argument is not zero, which will not
+        // be the case. boost however does not accept zero therefore we set it to a very small
+        // value, which does not make a bit difference for any realistic delta_time
+        double factor =
+                (-1.0 + exp(-2.0*damping_*delta_time))/(8.0*pow(damping_, 3)) +
+                (2.0 - exp(-2.0*damping_*delta_time))/(4.0*pow(damping_,2)) * delta_time +
+                (-1.5 + gamma_ + boost::math::tgamma(0.00000000001, 2.0*damping_*delta_time) +
+                 log(2.0*damping_*delta_time))/(2.0*damping_)*pow(delta_time, 2);
+        if(!std::isfinite(factor))
+            factor = 1.0/3.0 * pow(delta_time, 3);
+
+        return factor * acceleration_covariance_;
+    }
+
+private:
+    size_t n_variables_;
+    // conditionals
+    GaussianDistribution<Traits> distribution_;
+    // parameters
+    double damping_;
+    CovarianceType acceleration_covariance_;
+    // euler-mascheroni constant
+    static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
+};
 
 }
 

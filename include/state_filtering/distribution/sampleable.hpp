@@ -47,8 +47,33 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 #define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 
+#include <state_filtering/filter/types.hpp>
+#include <state_filtering/distribution/distribution.hpp>
+
 namespace filter
 {
+
+/**
+ * Sampleable interface of a distribution
+ */
+template <typename DistributionTraits_>
+class Sampleable
+{
+public:
+    typedef typename DistributionTraits_::SampleType SampleType;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~Sampleable() { }
+
+    /**
+     * @brief Returns a random sample from the underlying distribution
+     *
+     * @return random sample from underlying distribution
+     */
+    virtual SampleType sample() = 0;
+};
 
 }
 

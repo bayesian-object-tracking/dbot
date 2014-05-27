@@ -14,6 +14,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>eigen</build_depend>
+
+  <run_depend>eigen</run_depend>
+
   <export>
     <!-- <metapackage/> -->
   </export>

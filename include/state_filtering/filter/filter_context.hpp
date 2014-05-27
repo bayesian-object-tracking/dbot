@@ -56,6 +56,8 @@
 namespace filter
 {
 
+struct Estimate {typedef boost::shared_ptr<Estimate> Ptr;};
+
 /**
  * @brief FilterContext is a generic interface of a context containing a filter algorithm
  *

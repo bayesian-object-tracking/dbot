@@ -1,10 +1,8 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
- *    Jan Issac (jan.issac@gmail.com)
+ *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -38,17 +36,106 @@
  */
 
 /**
- * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
 
+#include <Eigen/Dense>
+
+#include <boost/assert.hpp>
+
+#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/sampleable.hpp>
+#include <state_filtering/distribution/gaussian_mappable.hpp>
+#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+
 namespace filter
 {
+
+template <typename Traits>
+class DampedBrownianMotion:
+        public Distribution<Traits>,
+        public Sampleable<Traits>,
+        public GaussianMappable<Traits>
+{
+public:
+    typedef typename Traits::ScalarType ScalarType;
+    typedef typename Traits::SampleType SampleType;
+    typedef typename Traits::CovarianceType CovarianceType;
+
+    virtual ~DampedBrownianMotion() { }
+
+    virtual SampleType sample()
+    {
+        return SampleType();
+    }
+
+    virtual SampleType mapFromGaussian(const SampleType& sample) const
+    {
+        return distribution_.mapFromGaussian(sample);
+    }
+
+    virtual void conditionals(const double& delta_time,
+                              const SampleType& velocity,
+                              const SampleType& acceleration)
+    {
+        // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
+        // covariance matrices which are not full rank, which is the case for time equal to zero
+        double bounded_delta_time = delta_time;
+        if(bounded_delta_time < 0.00001) bounded_delta_time = 0.00001;
+
+        distribution_.mean(Expectation(velocity, acceleration, bounded_delta_time));
+        distribution_.covariance(Covariance(bounded_delta_time));
+    }
+
+    virtual void parameters(const double& damping, const CovarianceType& acceleration_covariance)
+    {
+        damping_ = damping;
+        acceleration_covariance_ = acceleration_covariance;
+    }
+
+private:
+    SampleType Expectation(
+            const SampleType& velocity,
+            const SampleType& acceleration,
+            const double& delta_time)
+    {
+        SampleType velocity_expectation =
+                (1.0 - exp(-damping_*delta_time))
+                / damping_ * acceleration + exp(-damping_*delta_time)*velocity;
+
+        // if the damping_ is too small, the result might be nan, we thus return the limit for
+        // damping_ -> 0
+        if(!std::isfinite(velocity_expectation.norm()))
+            velocity_expectation = velocity + delta_time * acceleration;
+
+        return velocity_expectation;
+    }
+
+    CovarianceType Covariance(const double& delta_time)
+    {
+        double factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
+        if(!std::isfinite(factor))
+            factor = delta_time;
+
+        return factor * acceleration_covariance_;
+    }
+
+private:
+    // conditionals
+    GaussianDistribution<Traits> distribution_;
+
+    // parameters
+    double damping_;
+    CovarianceType acceleration_covariance_;
+
+    /** @brief euler-mascheroni constant */
+    static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
+};
 
 }
 

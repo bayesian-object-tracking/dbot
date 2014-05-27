@@ -44,48 +44,36 @@
  *   Karlsruhe Institute of Technology (KIT)
  */
 
-#ifndef STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
-#define STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
+#define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
 
-#include <Eigen/Dense>
-
-#include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/sampleable.hpp>
-
-#include
+#include <state_filtering/filter/types.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType, int size, int control_size>
-class StationaryProcessModelTraits:
-        public DistributionTraits<ScalarType, size>
+/**
+ * Mappable interface of a distribution
+ */
+template <typename Derived>
+class GaussianMappable
 {
 public:
-    typedef Eigen::Matrix<ScalarType, control_size, 1> ControlInputType;
-};
+    typedef typename DistributionTraits_::SampleType SampleType;
 
-template <typename Traits>
-class StationaryProcessModel:
-        public Distribution<Traits>,
-        public Sampleable<Traits>
-{
-public:
-    enum { Size = Traits::Size };
-    typedef typename Traits::ScalarType ScalarType;
-    typedef typename Traits::SampleType SampleType;
-    typedef typename Traits::ControlInputType ControlInputType;
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~GaussianMappable() { }
 
-    virtual ~StationaryProcessModel() { }
-
-    virtual void conditionals(const double& delta_time,
-                              const SampleType& state,
-                              const ControlInputType& control) = 0;
-
-    virtual void conditionals(const double& delta_time, const SampleType& state)
-    {
-        conditionals(delta_time, state, SampleType::Zero(Size));
-    }
+    /**
+     * @brief Maps a sample from gaussian into the underlying distribution
+     *
+     * @param sample    Sample from the a gaussian distribution
+     *
+     * @return
+     */
+    template SampleType mapFrom(const SampleType& sample) const;
 };
 
 }

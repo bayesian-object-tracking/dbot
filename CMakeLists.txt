@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED
+    pcl)
 
 find_package(Boost REQUIRED)
+
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -89,6 +93,7 @@ include_directories(include)
 set(state_filtering_HEADERS
     include/${PROJECT_NAME}/distribution/distribution.hpp
     include/${PROJECT_NAME}/distribution/sampleable.hpp
+    include/${PROJECT_NAME}/distribution/gaussian_mappable.hpp
     include/${PROJECT_NAME}/distribution/probability_density_function.hpp
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp
     include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp
@@ -113,12 +118,16 @@ set(state_filtering_SOURCES
     src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
 )
 
-add_library(state_filtering
+add_executable(state_filtering
    ${state_filtering_HEADERS}
    ${state_filtering_SOURCES}
 )
 
 set_target_properties(state_filtering PROPERTIES LINKER_LANGUAGE CXX)
+
+target_link_libraries(state_filtering
+  ${catkin_LIBRARIES}
+)
 
 ## Declare a cpp executable
 # add_executable(state_filtering_node src/state_filtering_node.cpp)
