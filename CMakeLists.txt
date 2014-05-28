@@ -1,20 +1,21 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
-find_package(catkin REQUIRED pcl)
+find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
 find_package(Boost REQUIRED)
 
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
+find_package(PCL 1.3 REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-
-
 
 find_package(CUDA)
 cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
@@ -30,7 +31,7 @@ if(NOT OPENGL_FOUND)
     message(" OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
-# gpu stuff ---------------------------------------------------------------------------------------------------
+# gpu stuff ----------------------------------------------------------------------------------------
 set(GLEW_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 find_package(GLEW REQUIRED)
@@ -46,90 +47,23 @@ endif(NOT GLEW_FOUND)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
 
-
-
 link_directories(${PROJECT_SOURCE_DIR}/local_install/lib)
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependencies might have been
-##     pulled in transitively but can be declared for certainty nonetheless:
-##     * add a build_depend tag for "message_generation"
-##     * add a run_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
-
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
-
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
-
 ###################################
 ## catkin specific configuration ##
 ###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-    #  CATKIN_DEPENDS
-  DEPENDS OpenCV Eigen
+  CATKIN_DEPENDS roscpp roslib sensor_msgs
+  DEPENDS OpenCV eigen
 )
 
 ###########
 ## Build ##
 ###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
 include_directories(include)
 
 set(state_filtering_HEADERS
@@ -195,15 +129,18 @@ set(state_filtering_SOURCES
 
 
 ## state_filtering
-add_library(${PROJECT_NAME}
-    ${state_filtering_HEADERS}
-    ${state_filtering_SOURCES}
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(${PROJECT_NAME}
+add_library(${PROJECT_NAME} ${state_filtering_HEADERS} ${state_filtering_SOURCES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
+## run_cpu_coordinate_filter
+add_executable(run_cpu_coordinate_filter
+    src/${PROJECT_NAME}/run_cpu_coordinate_filter.cpp)
+target_link_libraries(run_cpu_coordinate_filter
+    ${PROJECT_NAME}
     ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
-)
+    ${OpenCV_LIBS}
+    ${PCL_LIBRARIES}
+    yaml-cpp)
 
 if(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
     set(state_filtering_gpu_HEADERS
@@ -246,20 +183,6 @@ if(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
 else(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
 endif(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
-
-
-
-### run_cpu_coordinate_filter
-#add_executable(run_cpu_coordinate_filter
-#    src/${PROJECT_NAME}/run_cpu_coordinate_filter.cpp
-#)
-#target_link_libraries(run_cpu_coordinate_filter
-#    ${catkin_LIBRARIES}
-#    ${OpenCV_LIBS}
-#    ${PCL_LIBRARIES}
-#yaml-cpp
-#)
-
 
 
 ## Declare a cpp executable

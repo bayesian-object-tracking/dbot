@@ -27,54 +27,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //#define PROFILING_ON
-#include "image_visualizer.hpp"
+#include <state_filtering/tools/image_visualizer.hpp>
 
-#include "boost/thread/mutex.hpp"
+#include <boost/thread/mutex.hpp>
 
 // ros stuff
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <pcl/ros/conversions.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#include <pcl-1.6/pcl/ros/conversions.h>
+#include <pcl-1.6/pcl/point_cloud.h>
+#include <pcl-1.6/pcl/point_types.h>
 // filter
-#include "coordinate_filter.hpp"
+#include <state_filtering/filter/particle/coordinate_filter.hpp>
 // observation model
-#include "gaussian_pixel_observation_model.hpp"
-#include "image_observation_model.hpp"
-#include "cpu_image_observation_model.hpp"
+#include <state_filtering/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp>
+#include <state_filtering/observation_models/image_observation_model.hpp>
+#include <state_filtering/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp>
 // tools
-#include "object_file_reader.hpp"
-#include "helper_functions.hpp"
-#include "pcl_interface.hpp"
-#include "ros_interface.hpp"
-#include "cloud_visualizer.hpp"
-#include "macros.hpp"
+#include <state_filtering/tools/object_file_reader.hpp>
+#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/tools/pcl_interface.hpp>
+#include <state_filtering/tools/ros_interface.hpp>
+#include <state_filtering/tools/macros.hpp>
+//#include "cloud_visualizer.hpp"
+
 // distributions
 #include <state_filtering/distribution/distribution.hpp>
-#include "gaussian_distribution.hpp"
-#include "composed_distribution.hpp"
-#include "stationary_process_model.hpp"
-#include "composed_stationary_process_model.hpp"
-#include "gaussian_process_model.hpp"
-#include "brownian_process_model.hpp"
+#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+#include <state_filtering/process_model/stationary_process_model.hpp>
+#include <state_filtering/process_model/composed_stationary_process_model.hpp>
+#include <state_filtering/process_model/brownian_process_model.hpp>
 
-#include "rigid_body_system.hpp"
-#include "full_rigid_body_system.hpp"
-
-
-
-
+#include <state_filtering/system_states/rigid_body_system.hpp>
+#include <state_filtering/system_states/full_rigid_body_system.hpp>
 
 using namespace boost;
 using namespace std;
 using namespace Eigen;
-
-
-
+using namespace filter;
 
 template<typename T>
 void ReadParam(const string& path, T& parameter, ros::NodeHandle node_handle)
@@ -217,25 +210,25 @@ public:
         MatrixXd free_angular_acceleration_covariance =
                 MatrixXd::Identity(3, 3) * pow(double(free_angular_acceleration_sigma), 2);
 
-        vector<boost::shared_ptr<distr::StationaryProcessModel<> > > partial_process_models(object_names_.size());
+        vector<boost::shared_ptr<StationaryProcessModel<> > > partial_process_models(object_names_.size());
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
-            boost::shared_ptr<distr::BrownianProcessModel<> > partial_process_model(new distr::BrownianProcessModel<>);
+            boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
             partial_process_model->parameters(
                         object_renderer->get_coms(i).cast<double>(),
                         free_damping,
                         free_linear_acceleration_covariance,
                         free_angular_acceleration_covariance);
-            partial_process_models[i] = partial_process_model;
+            partial_process_models[i] = boost::dynamic_pointer_cast<StationaryProcessModel<> >(partial_process_model);
         }
 
-        boost::shared_ptr<distr::ComposedStationaryProcessModel> process_model
-                (new distr::ComposedStationaryProcessModel(partial_process_models));
+        boost::shared_ptr<ComposedStationaryProcessModel> process_model
+                (new ComposedStationaryProcessModel(partial_process_models));
 
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        cpu_filter_ = boost::shared_ptr<fil::CoordinateFilter>
-                (new fil::CoordinateFilter(cpu_observation_model, process_model, dependencies_));
+        cpu_filter_ = boost::shared_ptr<filter::CoordinateFilter>
+                (new filter::CoordinateFilter(cpu_observation_model, process_model, dependencies_));
 
 
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -327,8 +320,8 @@ private:
 
     boost::mutex mutex_;
 
-    //	fil::StateFilter standard_filter_;
-    boost::shared_ptr<fil::CoordinateFilter> cpu_filter_;
+    //	filter::StateFilter standard_filter_;
+    boost::shared_ptr<filter::CoordinateFilter> cpu_filter_;
 
     // parameters
     vector<string> object_names_;
@@ -393,9 +386,9 @@ int main (int argc, char **argv)
     // create gaussian for sampling
     double standard_deviation_translation = 0.03;
     double standard_deviation_rotation = 100.0;
-    distr::GaussianDistribution<1> unit_gaussian;
-    unit_gaussian.mean(Eigen::Matrix<double, 1, 1>::Zero());
-    unit_gaussian.covariance(Eigen::Matrix<double, 1, 1>::Identity());
+    GaussianDistribution<double, 1> unit_gaussian;
+    unit_gaussian.mean(GaussianDistribution<double, 1>::VariableType::Zero());
+    unit_gaussian.covariance(GaussianDistribution<double, 1>::CovarianceType::Identity());
 
     cout << "found " << clusters.size() << " clusters on table, we will sample around each cluster" 	<< endl;
     for(size_t cluster_index = 0; cluster_index < clusters.size(); cluster_index++)
@@ -416,10 +409,10 @@ int main (int argc, char **argv)
             FullRigidBodySystem<-1> state(1);
             state.translation() =
                     t_mean +
-                    standard_deviation_translation * unit_gaussian.Sample()(0) * table_vector_a +
-                    standard_deviation_translation * unit_gaussian.Sample()(0) * table_vector_b;
+                    standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
+                    standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;
             state.orientation() = Quaterniond(
-                        AngleAxisd(standard_deviation_rotation * unit_gaussian.Sample()(0), table_normal) * R_mean).coeffs();
+                        AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean).coeffs();
 
             initial_states.push_back(state);
         }

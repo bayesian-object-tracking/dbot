@@ -56,6 +56,7 @@
 
 // state_filtering
 #include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/probability_density_function.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
@@ -65,21 +66,20 @@
 namespace filter
 {
 
-template <>
 class ComposedStationaryProcessModel:
-        StationaryProcessModel<>
+        public StationaryProcessModel<>
 {
 public: /* distribution traits */
     typedef StationaryProcessModel<> BaseType;
 
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BaseMappableType::RandomsType                   RandomsType;
-    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
-    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlInputType;
+    typedef typename BaseType::ScalarType       ScalarType;
+    typedef typename BaseType::VariableType     VariableType;
+    typedef typename BaseType::RandomsType      RandomsType;
+    typedef typename BaseType::CovarianceType   CovarianceType;
+    typedef typename BaseType::ControlInputType ControlInputType;
 
-    typedef boost::shared_ptr<StationaryProcessModel<>  > StationaryProcessModelPtr;
-    typedef std::vector<StationaryProcessModelPtr > ProcessModelList;
+    typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
+    typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
 
     ComposedStationaryProcessModel(ProcessModelList process_models_)
     {
@@ -102,6 +102,25 @@ public: /* distribution traits */
             random_index += process_models_[i]->randomsSize();
         }
         return variables;
+    }
+
+    // set functions with arguments specific to stationary process models ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    virtual void conditionals(
+            const double& delta_time,
+            const VariableType& state,
+            const ControlInputType& control)
+    {
+        size_t state_index = 0;
+        size_t control_index = 0;
+        for(size_t i = 0; i < process_models_.size(); i++)
+        {
+            process_models_[i]->conditionals(
+                        delta_time,
+                        state.middleRows(state_index, process_models_[i]->variableSize()),
+                        control.middleRows(control_index, process_models_[i]->controlSize()));
+            state_index += process_models_[i]->variableSize();
+            control_index += process_models_[i]->controlSize();
+        }
     }
 
     virtual int variableSize() const
@@ -145,15 +164,6 @@ private:
         for(size_t i = 0; i < process_models.size(); i++)
             total_count_randoms += process_models[i]->randomsSize();
         return total_count_randoms;
-    }
-
-    std::vector<boost::shared_ptr<Distribution<> > >
-    upcast(const std::vector<boost::shared_ptr<StationaryProcessModel<>  > >& process_models)
-    {
-        std::vector<boost::shared_ptr<Distribution<> > > distributions(process_models.size());
-        for(size_t i = 0; i < distributions.size(); i++)
-            distributions[i] = process_models[i]; // implicit cast
-        return distributions;
     }
 };
 
