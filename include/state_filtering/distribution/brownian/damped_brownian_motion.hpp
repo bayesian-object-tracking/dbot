@@ -58,25 +58,38 @@
 namespace filter
 {
 
-template <typename ScalarType_, int VariableSize>
+template <typename ScalarType_, int SIZE>
 class DampedBrownianMotion:
-        public Distribution<ScalarType_, VariableSize>,
-        public GaussianMappable<Distribution<ScalarType_, VariableSize>, VariableSize >,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, VariableSize>, VariableSize > >
+        public Distribution<ScalarType_, SIZE>,
+        public GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE> >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, VariableSize> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, VariableSize > BasenMappableType;
+    typedef Distribution<ScalarType_, SIZE>     BaseType;
+    typedef GaussianMappable<BaseType, SIZE>    BaseMappableType;
 
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BasenMappableType::RandomType                  RandomType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VariableType         VariableType;
+    typedef typename BaseMappableType::RandomsType  RandomsType;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
 
 public:
+
+    DampedBrownianMotion():
+        distribution_()
+    {
+        DISABLE_IF_DYNAMIC_SIZE(VariableType);
+    }
+
+    explicit DampedBrownianMotion(int size):
+        distribution_(size)
+    {
+        DISABLE_IF_FIXED_SIZE(VariableType);
+    }
+
     virtual ~DampedBrownianMotion() { }
 
-    virtual VariableType mapFromGaussian(const RandomType& sample) const
+    virtual VariableType mapFromGaussian(const RandomsType& sample) const
     {
         return distribution_.mapFromGaussian(sample);
     }
@@ -103,6 +116,11 @@ public:
     virtual int variableSize() const
     {
         return distribution_.variableSize();
+    }
+
+    virtual int randomsSize() const
+    {
+        return variableSize();
     }
 
 private:
@@ -134,7 +152,7 @@ private:
 
 private:
     // conditionals
-    GaussianDistribution<ScalarType, VariableSize, VariableSize> distribution_;
+    GaussianDistribution<ScalarType, SIZE> distribution_;
 
     // parameters
     double damping_;

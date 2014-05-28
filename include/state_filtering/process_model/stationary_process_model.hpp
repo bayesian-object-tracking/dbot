@@ -60,23 +60,23 @@ namespace filter
 {
 
 template <typename ScalarType_ = double,
-          int VariableSize = Eigen::Dynamic,
-          int ControlSize = Eigen::Dynamic,
-          int RandomSize = Eigen::Dynamic>
+          int VARIABLE_SIZE = Eigen::Dynamic,
+          int CONTROL_SIZE = Eigen::Dynamic,
+          int RANDOMS_SIZE = Eigen::Dynamic>
 class StationaryProcessModel:
-        public Distribution<ScalarType_, VariableSize >,
-        public GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize > >
+        public Distribution<ScalarType_, VARIABLE_SIZE >,
+        public GaussianMappable<Distribution<ScalarType_, VARIABLE_SIZE>, RANDOMS_SIZE>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, VARIABLE_SIZE>, RANDOMS_SIZE> >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, VariableSize> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize > BasenMappableType;
+    typedef Distribution<ScalarType_, VARIABLE_SIZE> BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, VARIABLE_SIZE>, RANDOMS_SIZE> BaseMappableType;
 
     typedef typename BaseType::ScalarType                           ScalarType;
     typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BasenMappableType::RandomType                  RandomType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
-    typedef Eigen::Matrix<ScalarType, ControlSize, 1>               ControlInputType;
+    typedef typename BaseMappableType::RandomsType                  RandomsType;
+    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
+    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlInputType;
 
     virtual ~StationaryProcessModel() { }
 
@@ -86,8 +86,10 @@ public: /* distribution traits */
 
     virtual void conditionals(const double& delta_time, const VariableType& state)
     {
-        conditionals(delta_time, state, ControlInputType::Zero(ControlSize));
+        conditionals(delta_time, state, ControlInputType::Zero(CONTROL_SIZE));
     }
+
+    virtual int controlSize() const = 0;
 };
 
 }

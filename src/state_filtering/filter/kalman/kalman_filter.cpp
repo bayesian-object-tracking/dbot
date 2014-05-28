@@ -64,40 +64,23 @@ void KalmanFilter::predict(const Estimate &prior_desc,
                            double delta_time,
                            Estimate &prediction_desc)
 {    
+    GaussianDistribution<double, 13> gaussian;
     DampedBrownianMotion<double, 15> damped_brownian_motion;
-    damped_brownian_motion.sample();
-
     IntegratedDampedBrownianMotion<double, 17> integrated_damped_brownian_motion;
-    integrated_damped_brownian_motion.sample();
-
-    GaussianDistribution<double, 13, 13> gaussian;
-    GaussianDistribution<double, Eigen::Dynamic, Eigen::Dynamic> dynamic_gaussian(7);
-
-    BrownianProcessModel<double, 13, 6, 13> brownian_process_model;
-    brownian_process_model.sample();
-
-//    //gaussian.setNormal();
-
-//    std::cout << "gaussian.variableSize() = " << gaussian.variableSize() << std::endl;
-//    std::cout << "dynamic_gaussian.variableSize() = " << dynamic_gaussian.variableSize() << std::endl;
-
-//    std::cout << "gaussian.mean() = " << gaussian.mean().transpose() << std::endl;
-//    std::cout << "gaussian.covariance() = " << gaussian.covariance() << std::endl;
-
-//    std::cout << "dynamic_gaussian.mean() = " << dynamic_gaussian.mean().transpose() << std::endl;
-//    std::cout << "dynamic_gaussian.covariance() = " << dynamic_gaussian.covariance() << std::endl;
-
-//    gaussian.setNormal();
-//    dynamic_gaussian.setNormal();
-
-//    std::cout << "gaussian.mean() = " << gaussian.mean().transpose() << std::endl;
-//    std::cout << "gaussian.covariance() = " << gaussian.covariance() << std::endl;
-
-//    std::cout << "dynamic_gaussian.mean() = " << dynamic_gaussian.mean().transpose() << std::endl;
-//    std::cout << "dynamic_gaussian.covariance() = " << dynamic_gaussian.covariance() << std::endl;
+    BrownianProcessModel<double> brownian_process_model;
 
     std::cout << "gaussian.sample() = " << gaussian.sample().transpose() << std::endl;
+    std::cout << "brownian_process_model.sample() = " << brownian_process_model.sample().transpose() << std::endl;
+    std::cout << "damped_brownian_motion.sample() = " << damped_brownian_motion.sample().transpose() << std::endl;
+    std::cout << "integrated_damped_brownian_motion.sample() = " << integrated_damped_brownian_motion.sample().transpose() << std::endl;
+
+    GaussianDistribution<double, Eigen::Dynamic> dynamic_gaussian(6);
+    DampedBrownianMotion<double, Eigen::Dynamic> dynamic_damped_brownian_motion(6);
+    IntegratedDampedBrownianMotion<double, Eigen::Dynamic> dynamic_integrated_damped_brownian_motion(5);
+
     std::cout << "dynamic_gaussian.sample() = " << dynamic_gaussian.sample().transpose() << std::endl;
+    std::cout << "dynamic_damped_brownian_motion.sample() = " << dynamic_damped_brownian_motion.sample().transpose() << std::endl;
+    std::cout << "dynamic_integrated_damped_brownian_motion.sample() = " << dynamic_integrated_damped_brownian_motion.sample().transpose() << std::endl;
 }
 
 void KalmanFilter::update(const Measurement &measurement,

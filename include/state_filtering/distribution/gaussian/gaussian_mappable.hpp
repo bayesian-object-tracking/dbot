@@ -50,6 +50,7 @@
 #include <Eigen/Dense>
 
 #include <state_filtering/filter/types.hpp>
+#include <state_filtering/distribution/distribution.hpp>
 
 namespace filter
 {
@@ -57,7 +58,7 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename DistributionType_, int RandomSize>
+template <typename DistributionType_, int RANDOMS_SIZE>
 class GaussianMappable
 {
 public:
@@ -65,7 +66,7 @@ public:
 
     typedef typename DistributionType::ScalarType       ScalarType;
     typedef typename DistributionType::VariableType     VariableType;
-    typedef Eigen::Matrix<ScalarType, RandomSize, 1>    RandomType;
+    typedef Eigen::Matrix<ScalarType, RANDOMS_SIZE, 1>  RandomsType;
 
     /**
      * @brief Virtual destructor
@@ -79,7 +80,9 @@ public:
      *
      * @return
      */
-    virtual VariableType mapFromGaussian(const RandomType& sample) const = 0;
+    virtual VariableType mapFromGaussian(const RandomsType& sample) const = 0;
+
+    virtual int randomsSize() const = 0;
 };
 
 }

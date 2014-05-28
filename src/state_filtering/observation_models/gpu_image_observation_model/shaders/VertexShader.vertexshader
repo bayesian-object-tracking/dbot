@@ -1,0 +1,15 @@
+#version 330
+
+// tell OpenGL which buffer corresponds to which input
+layout(location = 0) in vec3 vertexPosition_modelspace;
+out float depth;
+uniform mat4 MV;
+uniform mat4 P;
+
+void main() {
+    vec4 v = vec4(vertexPosition_modelspace, 1); // makes it homogenous
+    vec4 tmp_position  = MV * v;
+    depth = tmp_position.z;
+    gl_Position = P * tmp_position;
+}
+

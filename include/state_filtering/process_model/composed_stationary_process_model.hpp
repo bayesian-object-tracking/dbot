@@ -74,35 +74,87 @@ public: /* distribution traits */
 
     typedef typename BaseType::ScalarType                           ScalarType;
     typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BasenMappableType::RandomType                  RandomType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
-    typedef Eigen::Matrix<ScalarType, ControlSize, 1>               ControlInputType;
+    typedef typename BaseMappableType::RandomsType                   RandomsType;
+    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
+    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlInputType;
+
+    typedef boost::shared_ptr<StationaryProcessModel<>  > StationaryProcessModelPtr;
+    typedef std::vector<StationaryProcessModelPtr > ProcessModelList;
+
+    ComposedStationaryProcessModel(ProcessModelList process_models_)
+    {
+
+    }
 
     virtual ~ComposedStationaryProcessModel() {}
 
-    virtual VariableType mapFromGaussian(const RandomType& randoms) const
+    virtual VariableType mapFromGaussian(const RandomsType& randoms) const
     {
         VariableType variables(variableSize());
 
         size_t variable_index = 0;
         size_t random_index = 0;
-        for(size_t i = 0; i < process_models_.VariableSize(); i++)
+        for(size_t i = 0; i < process_models_.size(); i++)
         {
             variables.middleRows(variable_index, process_models_[i]->variableSize()) =
-                    process_models_[i]->mapFromGaussian(randoms.middleRows(random_index, process_models_[i]->count_randoms_));
+                    process_models_[i]->mapFromGaussian(randoms.middleRows(random_index, process_models_[i]->randomsSize()));
             variable_index += process_models_[i]->variableSize();
-            random_index += process_models_[i]->count_randoms_;
+            random_index += process_models_[i]->randomsSize();
         }
         return variables;
     }
 
     virtual int variableSize() const
     {
+        return total_count_state(process_models_);
+    }
 
+    virtual int randomsSize() const
+    {
+        return total_count_randoms(process_models_);
+    }
+
+    virtual int controlSize() const
+    {
+        return total_count_control(process_models_);
     }
 
 protected:
-    const std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models_;
+    const ProcessModelList process_models_;
+
+private:
+    // silly counting functions ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    static unsigned total_count_state(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    {
+        unsigned total_count_state = 0;
+        for(size_t i = 0; i < process_models.size(); i++)
+            total_count_state += process_models[i]->variableSize();
+        return total_count_state;
+    }
+    static unsigned total_count_control(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    {
+        unsigned total_count_control = 0;
+        for(size_t i = 0; i < process_models.size(); i++)
+            total_count_control += process_models[i]->controlSize();
+        return total_count_control;
+    }
+
+    static unsigned total_count_randoms(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    {
+        unsigned total_count_randoms = 0;
+        for(size_t i = 0; i < process_models.size(); i++)
+            total_count_randoms += process_models[i]->randomsSize();
+        return total_count_randoms;
+    }
+
+    std::vector<boost::shared_ptr<Distribution<> > >
+    upcast(const std::vector<boost::shared_ptr<StationaryProcessModel<>  > >& process_models)
+    {
+        std::vector<boost::shared_ptr<Distribution<> > > distributions(process_models.size());
+        for(size_t i = 0; i < distributions.size(); i++)
+            distributions[i] = process_models[i]; // implicit cast
+        return distributions;
+    }
 };
 
 }

@@ -53,10 +53,6 @@
 #include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/distribution.hpp>
 
-
-#define RANDOM_SEED 1
-// #define RANDOM_SEED (unsigned int) time(0)
-
 namespace filter
 {
 

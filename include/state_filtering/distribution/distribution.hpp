@@ -53,14 +53,13 @@
 /*
  * Enable and disable functions macros for fixed and dynamic sized distributions
  */
-#define DISABLE_CONSTRUCTOR_IF_DYNAMIC_SIZE(VariableType) \
+#define DISABLE_IF_DYNAMIC_SIZE(VariableType) \
             if (filter::internals::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
-                ::YOU_CALLED_A_FIXED_SIZE_CONSTRUCTOR_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
+                ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
 
-#define DISABLE_CONSTRUCTOR_IF_FIXED_SIZE(VariableType) \
+#define DISABLE_IF_FIXED_SIZE(VariableType) \
     if (filter::internals::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
-        ::YOU_CALLED_A_DYNAMIC_SIZE_CONSTRUCTOR_ON_A_FIXED_SIZE_DISTRIBUTION) { }
-
+        ::YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION) { }
 
 namespace filter
 {
@@ -73,18 +72,18 @@ struct Invalidate<true>
 {
     enum
     {
-        YOU_CALLED_A_FIXED_SIZE_CONSTRUCTOR_ON_A_DYNAMIC_SIZE_DISTRIBUTION,
-        YOU_CALLED_A_DYNAMIC_SIZE_CONSTRUCTOR_ON_A_FIXED_SIZE_DISTRIBUTION
+        YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION,
+        YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION
     };
 };
 }
 
-template <typename ScalarType_, int VariableSize>
+template <typename ScalarType_, int VARIABLE_SIZE>
 class Distribution
 {
 public:    
-    typedef ScalarType_                         ScalarType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, 1>  VariableType;
+    typedef ScalarType_ ScalarType;
+    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, 1> VariableType;
 
 
     /**
@@ -93,9 +92,9 @@ public:
     virtual ~Distribution() { }
 
     /**
-     * @brief Returns current variable VariableSize ()
+     * @brief Returns current variable size
      *
-     * @return variable VariableSize for dynamic and fixed VariableSize (dimensional) distributions
+     * @return variable size for dynamic and fixed size (dimensional) distributions
      */
     virtual int variableSize() const = 0;
 };

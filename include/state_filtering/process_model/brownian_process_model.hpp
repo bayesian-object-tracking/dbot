@@ -46,6 +46,7 @@
 #ifndef STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 #define STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 
+#include <state_filtering/tools/helper_functions.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
 #include <state_filtering/distribution/brownian/integrated_damped_brownian_motion.hpp>
@@ -53,17 +54,26 @@
 namespace filter
 {
 
-template <typename ScalarType_, int VariableSize, int ControlSize, int RandomSize>
+namespace internals
+{
+template <typename ScalarType_ = double>
+struct BrownianProcessModelBase
+{
+    typedef StationaryProcessModel<ScalarType_, 13, 6, 6> Type;
+};
+}
+
+template <typename ScalarType_ = double>
 class BrownianProcessModel:
-        public StationaryProcessModel<ScalarType_, VariableSize, ControlSize, RandomSize>
+        public internals::BrownianProcessModelBase<ScalarType_>::Type
 {
 public: /* model traits */
-    typedef StationaryProcessModel<ScalarType_, VariableSize, ControlSize, RandomSize> BaseType;
+    typedef typename internals::BrownianProcessModelBase<ScalarType_>::Type BaseType;
 
     typedef typename BaseType::ScalarType       ScalarType;
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::CovarianceType   CovarianceType;
-    typedef typename BaseType::RandomType       RandomType;
+    typedef typename BaseType::RandomsType      RandomsType;
     typedef typename BaseType::ControlInputType ControlInputType;
 
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
@@ -71,14 +81,13 @@ public: /* model traits */
 
 public:
 
-    BrownianProcessModel()
-        //variable_size_(VariableSize)
-    {
-    }
 
-    virtual VariableType mapFromGaussian(const RandomType& randoms) const
+    ~BrownianProcessModel() { }
+
+    virtual VariableType mapFromGaussian(const RandomsType& randoms) const
     {
-        VariableType state(variableSize());
+//        VariableType state(varibaleSize());
+        VariableType state;
 
         state.topRows(3) = initial_linear_pose_ +
                 delta_linear_pose_distribution_.mapFromGaussian(randoms.topRows(3));
@@ -90,8 +99,6 @@ public:
         // transform to external representation
         state.middleRows(7, 3) -= state.template middleRows<3>(10).cross(state.template topRows<3>());
         state.topRows(3) -= Eigen::Quaterniond(state.template middleRows<4>(3)).toRotationMatrix()*rotation_center_;
-
-       // variable_size_ = state.rows();
 
         return state;
     }
@@ -112,7 +119,7 @@ public:
 
         initial_linear_pose_ = state.topRows(3);
         initial_angular_pose_ = state.middleRows(3, 4);
-//        initial_quaternion_matrix_ = hf::QuaternionMatrix(initial_angular_pose_);
+        initial_quaternion_matrix_ = hf::QuaternionMatrix(initial_angular_pose_);
         initial_linear_velocity_ = state.middleRows(7, 3);
         initial_angular_velocity_ = state.middleRows(10, 3);
 
@@ -160,12 +167,20 @@ public:
 
     virtual int variableSize() const
     {
-        return VariableSize;
+        return VariableType::SizeAtCompileTime;
+    }
+
+    virtual int randomsSize() const
+    {
+        return RandomsType::SizeAtCompileTime;
+    }
+
+    virtual int controlSize() const
+    {
+        return ControlInputType::SizeAtCompileTime;
     }
 
 private:
-    //int variable_size_;
-
     // conditionals
     double delta_time_;
     Eigen::Matrix<ScalarType, 3, 1> initial_linear_pose_;

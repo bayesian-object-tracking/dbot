@@ -1,0 +1,8 @@
+#version 330 core
+
+in float depth;
+layout (location = 0) out float log_likelihood;
+
+void main() {
+   log_likelihood = -depth;
+}

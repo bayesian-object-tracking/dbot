@@ -15,8 +15,12 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>eigen</build_depend>
+  <build_depend>VTK</build_depend>
+  <build_depend>OpenCV</build_depend>
 
   <run_depend>eigen</run_depend>
+  <run_depend>VTK</run_depend>
+  <run_depend>OpenCV</run_depend>
 
   <export>
     <!-- <metapackage/> -->

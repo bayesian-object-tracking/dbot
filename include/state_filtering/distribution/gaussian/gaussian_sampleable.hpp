@@ -52,13 +52,10 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/variate_generator.hpp>
 
+#include <state_filtering/tools/macros.hpp>
 #include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
-
-
-#define RANDOM_SEED 1
-// #define RANDOM_SEED (unsigned int) time(0)
 
 namespace filter
 {
@@ -67,8 +64,8 @@ template <typename GaussianMappableType>
 class GaussianSampleable
 {
 public:
-    typedef typename GaussianMappableType::DistributionType DistributionType;
-    typedef typename GaussianMappableType::VariableType VariableType;
+    typedef typename GaussianMappableType::VariableType  VariableType;
+    typedef typename GaussianMappableType::RandomsType   RandomsType;
 
     GaussianSampleable():
         generator_(RANDOM_SEED),
@@ -92,17 +89,16 @@ public:
      */
     virtual VariableType sample()
     {
-        typedef typename GaussianMappableType::DistributionType DistributionType;
+        GaussianMappableType* mappable_this = dynamic_cast<GaussianMappableType*>(this);
 
-        int VariableSize = dynamic_cast<DistributionType*>(this)->variableSize();
+        RandomsType iso_sample(mappable_this->randomsSize());
 
-        VariableType iso_sample(VariableSize, 1);
-        for (int i = 0; i < VariableSize; i++)
+        for (int i = 0; i < mappable_this->randomsSize(); i++)
         {
             iso_sample(i) = gaussian_generator_();
         }        
 
-        return dynamic_cast<GaussianMappableType*>(this)->mapFromGaussian(iso_sample);
+        return mappable_this->mapFromGaussian(iso_sample);
     }
 
 protected:

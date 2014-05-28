@@ -66,33 +66,33 @@ namespace filter
 /**
  * @brief GaussianDistribution is a parametrized distribution
  */
-template <typename ScalarType_, int VariableSize, int RandomSize>
+template <typename ScalarType_, int SIZE>
 class GaussianDistribution:
-        public Distribution< ScalarType_, VariableSize>,
-        public ProbabilityDensityFunction< Distribution<ScalarType_, VariableSize> >,
-        public GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize >,
-        public GaussianSampleable< GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize > >
+        public Distribution<ScalarType_, SIZE>,
+        public ProbabilityDensityFunction<Distribution<ScalarType_, SIZE> >,
+        public GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE> >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, VariableSize> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize > BasenMappableType;
+    typedef Distribution<ScalarType_, SIZE>     BaseType;
+    typedef GaussianMappable<BaseType, SIZE>    BaseMappableType;
 
-    typedef typename BaseType::ScalarType               ScalarType;
-    typedef typename BaseType::VariableType             VariableType;
-    typedef typename BasenMappableType::RandomType      RandomType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>       CovarianceType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VariableType         VariableType;
+    typedef typename BaseMappableType::RandomsType  RandomsType;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
 
 public:
     GaussianDistribution()
     {
-        DISABLE_CONSTRUCTOR_IF_DYNAMIC_SIZE(VariableType);
+        DISABLE_IF_DYNAMIC_SIZE(VariableType);
 
         setNormal();
     }
 
     explicit GaussianDistribution(int variable_size)
     {
-        DISABLE_CONSTRUCTOR_IF_FIXED_SIZE(VariableType);
+        DISABLE_IF_FIXED_SIZE(VariableType);
 
         mean_.resize(variable_size, 1);
         covariance_.resize(variable_size, variable_size);
@@ -104,18 +104,18 @@ public:
 
     virtual ~GaussianDistribution() { }
 
-    virtual VariableType mapFromGaussian(const RandomType& sample) const
+    virtual VariableType mapFromGaussian(const RandomsType& sample) const
     {
         return mean_ + L_ * sample;
     }
 
-    inline virtual void setNormal()
+    virtual void setNormal()
     {
         mean(VariableType::Zero(variableSize()));
         covariance(CovarianceType::Identity(variableSize(), variableSize()));
     }
 
-    inline virtual void mean(const VariableType& mean)
+    virtual void mean(const VariableType& mean)
     {
         mean_ = mean;
     }
@@ -140,12 +140,12 @@ public:
                 * ( log(covariance_.determinant()) + double(covariance.rows()) * log(2.0 * M_PI) );
     }
 
-    inline virtual VariableType mean() const
+    virtual VariableType mean() const
     {
         return mean_;
     }
 
-    inline virtual CovarianceType covariance() const
+    virtual CovarianceType covariance() const
     {
         return covariance_;
     }
@@ -158,6 +158,11 @@ public:
     virtual int variableSize() const
     {
         return mean_.rows();
+    }
+
+    virtual int randomsSize() const
+    {
+        return variableSize();
     }
 
 protected:
