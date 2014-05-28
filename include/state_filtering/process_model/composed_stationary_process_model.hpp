@@ -2,9 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
- *    Jan Issac (jan.issac@gmail.com)
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -39,9 +38,8 @@
 
 /**
  * @date 05/25/2014
- * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_PROCESS_MODEL_COMPOSED_STATIONARY_PROCESS_MODEL_HPP
@@ -74,17 +72,11 @@ class ComposedStationaryProcessModel:
 public: /* distribution traits */
     typedef StationaryProcessModel<> BaseType;
 
-    enum
-    {
-        VariableSize = BaseType::VariableSize,
-        ControlInputSize = control_input_size,
-        RandomSize = random_size
-    };
     typedef typename BaseType::ScalarType                           ScalarType;
     typedef typename BaseType::VariableType                         VariableType;
     typedef typename BasenMappableType::RandomType                  RandomType;
     typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
-    typedef Eigen::Matrix<ScalarType, ControlInputSize, 1>          ControlInputType;
+    typedef Eigen::Matrix<ScalarType, ControlSize, 1>               ControlInputType;
 
     virtual ~ComposedStationaryProcessModel() {}
 
@@ -94,7 +86,7 @@ public: /* distribution traits */
 
         size_t variable_index = 0;
         size_t random_index = 0;
-        for(size_t i = 0; i < process_models_.size(); i++)
+        for(size_t i = 0; i < process_models_.VariableSize(); i++)
         {
             variables.middleRows(variable_index, process_models_[i]->variableSize()) =
                     process_models_[i]->mapFromGaussian(randoms.middleRows(random_index, process_models_[i]->count_randoms_));

@@ -2,9 +2,9 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
  *    Jan Issac (jan.issac@gmail.com)
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -40,8 +40,8 @@
 /**
  * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
- *   Karlsruhe Institute of Technology (KIT)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_DISTRIBUTION_HPP
@@ -66,7 +66,7 @@ namespace filter
 {
 namespace internals
 {
-template <bool condition> struct Invalidate { };
+template <bool Condition> struct Invalidate { };
 
 template <>
 struct Invalidate<true>
@@ -79,13 +79,12 @@ struct Invalidate<true>
 };
 }
 
-template <typename ScalarType_, int size>
+template <typename ScalarType_, int VariableSize>
 class Distribution
 {
 public:    
-    enum { VariableSize = size };
-    typedef ScalarType_ ScalarType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, 1> VariableType;
+    typedef ScalarType_                         ScalarType;
+    typedef Eigen::Matrix<ScalarType, VariableSize, 1>  VariableType;
 
 
     /**
@@ -94,9 +93,9 @@ public:
     virtual ~Distribution() { }
 
     /**
-     * @brief Returns current variable size ()
+     * @brief Returns current variable VariableSize ()
      *
-     * @return variable size for dynamic and fixed size (dimensional) distributions
+     * @return variable VariableSize for dynamic and fixed VariableSize (dimensional) distributions
      */
     virtual int variableSize() const = 0;
 };

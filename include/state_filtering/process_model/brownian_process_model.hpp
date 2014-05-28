@@ -2,9 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
- *    Jan Issac (jan.issac@gmail.com)
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -39,10 +38,10 @@
 
 /**
  * @date 05/25/2014
- * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
+
 
 #ifndef STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 #define STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
@@ -54,32 +53,26 @@
 namespace filter
 {
 
-template <typename ScalarType_, int size, int control_input_size, int random_size>
+template <typename ScalarType_, int VariableSize, int ControlSize, int RandomSize>
 class BrownianProcessModel:
-        public StationaryProcessModel<ScalarType_, size, control_input_size, random_size>
+        public StationaryProcessModel<ScalarType_, VariableSize, ControlSize, RandomSize>
 {
 public: /* model traits */
-    typedef StationaryProcessModel<ScalarType_, size, control_input_size, random_size> BaseType;
+    typedef StationaryProcessModel<ScalarType_, VariableSize, ControlSize, RandomSize> BaseType;
 
-    enum
-    {
-        VariableSize = BaseType::VariableSize,
-        ControlInputSize = control_input_size,
-        RandomSize = random_size
-    };
     typedef typename BaseType::ScalarType       ScalarType;
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::CovarianceType   CovarianceType;
     typedef typename BaseType::RandomType       RandomType;
     typedef typename BaseType::ControlInputType ControlInputType;
 
-    typedef IntegratedDampedBrownianMotion<ScalarType_, 3> AccelerationDistribution;
-    typedef DampedBrownianMotion<ScalarType_, 3> VelocityDistribution;
+    typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
+    typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
 
 public:
 
     BrownianProcessModel()
-        //variable_size_(size)
+        //variable_size_(VariableSize)
     {
     }
 

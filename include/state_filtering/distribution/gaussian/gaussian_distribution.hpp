@@ -1,7 +1,8 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems
+ *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
+ *                     University of Southern California
  *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
@@ -40,7 +41,7 @@
  * @date 05/25/2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_GAUSSIAN_DISTRIBUTION_HPP
@@ -65,22 +66,21 @@ namespace filter
 /**
  * @brief GaussianDistribution is a parametrized distribution
  */
-template <typename ScalarType_, int size, int random_size>
+template <typename ScalarType_, int VariableSize, int RandomSize>
 class GaussianDistribution:
-        public Distribution< ScalarType_, size>,
-        public ProbabilityDensityFunction< Distribution<ScalarType_, size> >,
-        public GaussianMappable< Distribution<ScalarType_, size>, random_size >,
-        public GaussianSampleable< GaussianMappable<Distribution<ScalarType_, size>, random_size > >
+        public Distribution< ScalarType_, VariableSize>,
+        public ProbabilityDensityFunction< Distribution<ScalarType_, VariableSize> >,
+        public GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize >,
+        public GaussianSampleable< GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize > >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, size> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, size>, random_size > BasenMappableType;
+    typedef Distribution<ScalarType_, VariableSize> BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize > BasenMappableType;
 
-    enum { VariableSize = BaseType::VariableSize };
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BasenMappableType::RandomType                  RandomType;
-    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
+    typedef typename BaseType::ScalarType               ScalarType;
+    typedef typename BaseType::VariableType             VariableType;
+    typedef typename BasenMappableType::RandomType      RandomType;
+    typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>       CovarianceType;
 
 public:
     GaussianDistribution()

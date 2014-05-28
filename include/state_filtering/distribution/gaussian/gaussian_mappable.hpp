@@ -2,8 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -39,9 +39,9 @@
 
 /**
  * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
@@ -57,7 +57,7 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename DistributionType_, int random_size>
+template <typename DistributionType_, int RandomSize>
 class GaussianMappable
 {
 public:
@@ -65,7 +65,7 @@ public:
 
     typedef typename DistributionType::ScalarType       ScalarType;
     typedef typename DistributionType::VariableType     VariableType;
-    typedef Eigen::Matrix<ScalarType, random_size, 1>   RandomType;
+    typedef Eigen::Matrix<ScalarType, RandomSize, 1>    RandomType;
 
     /**
      * @brief Virtual destructor

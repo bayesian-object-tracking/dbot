@@ -2,8 +2,7 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -40,8 +39,7 @@
 /**
  * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP

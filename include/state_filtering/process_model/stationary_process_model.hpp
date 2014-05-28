@@ -2,8 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -39,9 +39,9 @@
 
 /**
  * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
@@ -60,29 +60,23 @@ namespace filter
 {
 
 template <typename ScalarType_ = double,
-          int size = Eigen::Dynamic,
-          int control_input_size = Eigen::Dynamic,
-          int random_size = Eigen::Dynamic>
+          int VariableSize = Eigen::Dynamic,
+          int ControlSize = Eigen::Dynamic,
+          int RandomSize = Eigen::Dynamic>
 class StationaryProcessModel:
-        public Distribution<ScalarType_, size >,
-        public GaussianMappable<Distribution<ScalarType_, size>, random_size>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, size>, random_size > >
+        public Distribution<ScalarType_, VariableSize >,
+        public GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, VariableSize>, RandomSize > >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, size> BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, size>, random_size > BasenMappableType;
+    typedef Distribution<ScalarType_, VariableSize> BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, RandomSize > BasenMappableType;
 
-    enum
-    {
-        VariableSize = BaseType::VariableSize,
-        ControlInputSize = control_input_size,
-        RandomSize = random_size
-    };
     typedef typename BaseType::ScalarType                           ScalarType;
     typedef typename BaseType::VariableType                         VariableType;
     typedef typename BasenMappableType::RandomType                  RandomType;
     typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
-    typedef Eigen::Matrix<ScalarType, ControlInputSize, 1>          ControlInputType;
+    typedef Eigen::Matrix<ScalarType, ControlSize, 1>               ControlInputType;
 
     virtual ~StationaryProcessModel() { }
 
@@ -92,7 +86,7 @@ public: /* distribution traits */
 
     virtual void conditionals(const double& delta_time, const VariableType& state)
     {
-        conditionals(delta_time, state, ControlInputType::Zero(ControlInputSize));
+        conditionals(delta_time, state, ControlInputType::Zero(ControlSize));
     }
 };
 

@@ -2,8 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -39,9 +39,9 @@
 
 /**
  * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
@@ -94,10 +94,10 @@ public:
     {
         typedef typename GaussianMappableType::DistributionType DistributionType;
 
-        int size = dynamic_cast<DistributionType*>(this)->variableSize();
+        int VariableSize = dynamic_cast<DistributionType*>(this)->variableSize();
 
-        VariableType iso_sample(size, 1);
-        for (int i = 0; i < size; i++)
+        VariableType iso_sample(VariableSize, 1);
+        for (int i = 0; i < VariableSize; i++)
         {
             iso_sample(i) = gaussian_generator_();
         }        

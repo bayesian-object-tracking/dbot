@@ -2,9 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
- *    Jan Issac (jan.issac@gmail.com)
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -39,9 +38,8 @@
 
 /**
  * @date 05/25/2014
- * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_BROWNIAN_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
@@ -59,20 +57,19 @@
 namespace filter
 {
 
-template <typename ScalarType_, int size>
+template <typename ScalarType_, int VariableSize>
 class IntegratedDampedBrownianMotion:
-        public Distribution<ScalarType_, size>,
-        public GaussianMappable<Distribution<ScalarType_, size>, size>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, size>, size > >
+        public Distribution<ScalarType_, VariableSize>,
+        public GaussianMappable<Distribution<ScalarType_, VariableSize>, VariableSize>,
+        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, VariableSize>, VariableSize > >
 {
 public: /* distribution traits */
-    typedef Distribution< ScalarType_, size > BaseType;
-    typedef GaussianMappable< Distribution<ScalarType_, size>, size > BasenMappableType;
+    typedef Distribution< ScalarType_, VariableSize > BaseType;
+    typedef GaussianMappable< Distribution<ScalarType_, VariableSize>, VariableSize > BasenMappableType;
 
-    enum { VariableSize = BaseType::VariableSize };
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BasenMappableType::RandomType                  RandomType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VariableType         VariableType;
+    typedef typename BasenMappableType::RandomType  RandomType;
     typedef Eigen::Matrix<ScalarType, VariableSize, VariableSize>   CovarianceType;
 
 public:

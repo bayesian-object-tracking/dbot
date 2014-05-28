@@ -2,8 +2,8 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
- *                     University of Southern California,
- *                     Karlsruhe Institute of Technology
+ *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -39,10 +39,11 @@
 
 /**
  * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
- *   Karlsruhe Institute of Technology (KIT)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
+
 
 #ifndef STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
 #define STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
@@ -56,7 +57,7 @@ template <typename DistributionType>
 class ProbabilityDensityFunction
 {
 public:
-    typedef typename DistributionType::ScalarType ScalarType;
+    typedef typename DistributionType::ScalarType   ScalarType;
     typedef typename DistributionType::VariableType VariableType;
 
     /**
