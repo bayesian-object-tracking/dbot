@@ -81,9 +81,9 @@ public: /* distribution traits */
     typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
 
-    ComposedStationaryProcessModel(ProcessModelList process_models_)
+    ComposedStationaryProcessModel(ProcessModelList process_models):
+        process_models_(process_models)
     {
-
     }
 
     virtual ~ComposedStationaryProcessModel() {}

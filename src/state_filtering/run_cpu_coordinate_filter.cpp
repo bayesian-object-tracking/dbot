@@ -219,7 +219,7 @@ public:
                         free_damping,
                         free_linear_acceleration_covariance,
                         free_angular_acceleration_covariance);
-            partial_process_models[i] = boost::dynamic_pointer_cast<StationaryProcessModel<> >(partial_process_model);
+            partial_process_models[i] = partial_process_model;
         }
 
         boost::shared_ptr<ComposedStationaryProcessModel> process_model
@@ -267,7 +267,7 @@ public:
 
     void Filter(sensor_msgs::PointCloud2 ros_cloud)
     {
-        boost::mutex::scoped_lock lock(mutex_);
+        boost::mutex::scoped_lock lock(mutex_);        
 
         // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if(is_first_iteration_)
@@ -275,7 +275,8 @@ public:
             start_time_ = ros_cloud.header.stamp.toSec();
             is_first_iteration_ = false;
         }
-        double time_since_start = ros_cloud.header.stamp.toSec() - start_time_;
+
+        double time_since_start = ros_cloud.header.stamp.toSec() - start_time_;        
 
         // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         vector<float> observations; size_t n_rows, n_cols;

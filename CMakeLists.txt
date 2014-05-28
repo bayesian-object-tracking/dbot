@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
+add_definitions(-DUSE_UNTESTED_FUNCTIONS -DPROFILING_ON -DCMAKE_BUILD_TYPE=Release)
+
 find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
 find_package(Boost REQUIRED)

@@ -231,7 +231,7 @@ void CoordinateFilter::Propagate(
 {
     // we propagate the states to the current time, appying the control input ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     for(size_t state_index = 0; state_index < parents_.size(); state_index++)
-    {
+    {        
         process_model_->conditionals(current_time - parent_times_[state_index], parents_[state_index], control);
 
         Eigen::VectorXd iso_sample(dof_count_);
@@ -239,6 +239,7 @@ void CoordinateFilter::Propagate(
             iso_sample(i) = unit_gaussian_.sample()(0);
 
         parents_[state_index] = process_model_->mapFromGaussian(iso_sample);
+
         parent_times_[state_index] = current_time;
     }
 }

@@ -86,7 +86,7 @@ public: /* distribution traits */
 
     virtual void conditionals(const double& delta_time, const VariableType& state)
     {
-        conditionals(delta_time, state, ControlInputType::Zero(CONTROL_SIZE));
+        conditionals(delta_time, state, ControlInputType::Zero(controlSize()));
     }
 
     virtual int controlSize() const = 0;

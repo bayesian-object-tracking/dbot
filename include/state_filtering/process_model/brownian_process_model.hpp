@@ -56,19 +56,40 @@ namespace filter
 
 namespace internals
 {
-template <typename ScalarType_ = double>
+template <typename ScalarType_, bool IS_DYNAMIC>
 struct BrownianProcessModelBase
 {
-    typedef StationaryProcessModel<ScalarType_, 13, 6, 6> Type;
+    enum
+    {
+        VariableSize = 13,
+        RandomsSize = 6,
+        ControlSize = 6
+    };
+
+    typedef StationaryProcessModel<> Type;
+};
+
+template <typename ScalarType_>
+struct BrownianProcessModelBase<ScalarType_, false>
+{
+    enum
+    {
+        VariableSize = BrownianProcessModelBase<ScalarType_, true>::VariableSize,
+        RandomsSize = BrownianProcessModelBase<ScalarType_, true>::RandomsSize,
+        ControlSize = BrownianProcessModelBase<ScalarType_, true>::ControlSize
+    };
+
+    typedef StationaryProcessModel<ScalarType_, VariableSize, RandomsSize, ControlSize> Type;
 };
 }
 
-template <typename ScalarType_ = double>
+template <typename ScalarType_ = double, bool IS_DYNAMIC = true>
 class BrownianProcessModel:
-        public internals::BrownianProcessModelBase<ScalarType_>::Type
+        public internals::BrownianProcessModelBase<ScalarType_, IS_DYNAMIC>::Type
 {
 public: /* model traits */
-    typedef typename internals::BrownianProcessModelBase<ScalarType_>::Type BaseType;
+    typedef internals::BrownianProcessModelBase<ScalarType_, IS_DYNAMIC> Base;
+    typedef typename Base::Type BaseType;
 
     typedef typename BaseType::ScalarType       ScalarType;
     typedef typename BaseType::VariableType     VariableType;
@@ -80,14 +101,11 @@ public: /* model traits */
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
 
 public:
-
-
     ~BrownianProcessModel() { }
 
     virtual VariableType mapFromGaussian(const RandomsType& randoms) const
     {
-//        VariableType state(varibaleSize());
-        VariableType state;
+        VariableType state(variableSize());
 
         state.topRows(3) = initial_linear_pose_ +
                 delta_linear_pose_distribution_.mapFromGaussian(randoms.topRows(3));
@@ -167,17 +185,17 @@ public:
 
     virtual int variableSize() const
     {
-        return VariableType::SizeAtCompileTime;
+        return Base::VariableSize;
     }
 
     virtual int randomsSize() const
     {
-        return RandomsType::SizeAtCompileTime;
+        return Base::RandomsSize;
     }
 
     virtual int controlSize() const
     {
-        return ControlInputType::SizeAtCompileTime;
+        return Base::ControlSize;
     }
 
 private:

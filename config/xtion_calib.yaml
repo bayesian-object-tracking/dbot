@@ -1,0 +1,12 @@
+camera_matrix_rgb:
+  rows: 3
+  cols: 3
+  data: [536.203, 0, 311.986, 0, 534.837, 245.607, 0, 0, 1]
+camera_matrix_ir:
+  rows: 3
+  cols: 3
+  data: [580, 0, 320, 0, 580, 240, 0, 0, 1]
+camera_rgb_to_ir:
+  rows: 1
+  cols: 6
+  data: [-0.0184, -0.0017, -0.0019, -0.4681, -0.5396, 0.1095]
