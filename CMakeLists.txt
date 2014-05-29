@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
-add_definitions(-DUSE_UNTESTED_FUNCTIONS -DPROFILING_ON -DCMAKE_BUILD_TYPE=Release)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
@@ -83,6 +83,7 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/filter/filter.hpp
     include/${PROJECT_NAME}/filter/estimate.hpp
     include/${PROJECT_NAME}/filter/filter_context.hpp
+#    include/${PROJECT_NAME}/filter/state_distribution.hpp
 
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
@@ -123,6 +124,7 @@ set(state_filtering_SOURCES
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.cpp
 
+#    src/${PROJECT_NAME}/filter/state_distribution.cpp
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
     src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp

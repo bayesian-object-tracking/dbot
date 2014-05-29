@@ -59,11 +59,12 @@ namespace filter
 /**
  * Sampleable interface of a distribution
  */
-template <typename DistributionType>
-class Sampleable
+template <typename ScalarType_, int SIZE>
+class Sampleable:
+        public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef typename DistributionType::VariableType VariableType;
+    typedef typename Distribution<ScalarType_, SIZE>::VariableType VariableType;
 
     /**
      * @brief Virtual destructor

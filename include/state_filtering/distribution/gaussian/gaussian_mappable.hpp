@@ -58,14 +58,15 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename DistributionType_, int RANDOMS_SIZE>
-class GaussianMappable
+template <typename ScalarType_, int SIZE, int RANDOMS_SIZE>
+class GaussianMappable:
+        public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef DistributionType_ DistributionType;
+    typedef Distribution<ScalarType_, SIZE> BaseType;
 
-    typedef typename DistributionType::ScalarType       ScalarType;
-    typedef typename DistributionType::VariableType     VariableType;
+    typedef typename BaseType::ScalarType               ScalarType;
+    typedef typename BaseType::VariableType             VariableType;
     typedef Eigen::Matrix<ScalarType, RANDOMS_SIZE, 1>  RandomsType;
 
     /**

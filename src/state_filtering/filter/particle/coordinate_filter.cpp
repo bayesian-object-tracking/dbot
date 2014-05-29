@@ -253,7 +253,9 @@ void CoordinateFilter::Evaluate(
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     observation_model_->set_observation(observation, observation_time);
+    INIT_PROFILING
     family_loglikes_ = observation_model_->Evaluate(parents_, parent_occlusion_indices_, update_occlusions);
+    MEASURE("observation_model_->Evaluate")
 }
 
 

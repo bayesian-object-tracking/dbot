@@ -60,17 +60,15 @@ namespace filter
 
 template <typename ScalarType_, int SIZE>
 class DampedBrownianMotion:
-        public Distribution<ScalarType_, SIZE>,
-        public GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE> >
+        public GaussianMappable<ScalarType_, SIZE, SIZE>,
+        public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, SIZE>     BaseType;
-    typedef GaussianMappable<BaseType, SIZE>    BaseMappableType;
+    typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;
 
     typedef typename BaseType::ScalarType           ScalarType;
     typedef typename BaseType::VariableType         VariableType;
-    typedef typename BaseMappableType::RandomsType  RandomsType;
+    typedef typename BaseType::RandomsType          RandomsType;
     typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
 
 public:

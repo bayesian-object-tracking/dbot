@@ -49,16 +49,19 @@
 #define STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
 
 #include <cmath>
+#include <state_filtering/distribution/distribution.hpp>
 
 namespace filter
 {
 
-template <typename DistributionType>
-class ProbabilityDensityFunction
+template <typename ScalarType_, int SIZE>
+class ProbabilityDensityFunction:
+        public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef typename DistributionType::ScalarType   ScalarType;
-    typedef typename DistributionType::VariableType VariableType;
+    typedef Distribution<ScalarType_, SIZE> BaseType;
+    typedef typename BaseType::ScalarType   ScalarType;
+    typedef typename BaseType::VariableType VariableType;
 
     /**
      * @brief Returns the probability of the given sample

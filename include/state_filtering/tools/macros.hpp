@@ -33,6 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/current_function.hpp>
 #include <time.h>
 
+#define PROFILING_ON
+
 #ifdef PROFILING_ON
 	#define INIT_PROFILING struct timeval profiling_start_time, profiling_end_time; gettimeofday(&profiling_start_time, NULL);
 	#define RESET gettimeofday(&profiling_start_time, NULL);
