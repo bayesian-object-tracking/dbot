@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/tools/rigid_body_renderer.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
+#include <state_filtering/distribution/implementations/sum_of_deltas.hpp>
 
 
 /// this namespace contains all the filters
@@ -51,6 +52,7 @@ class CoordinateFilter
 public:
     typedef StationaryProcessModel< > ProcessModel;
     typedef obs_mod::ImageObservationModel MeasurementModel;
+    typedef SumOfDeltas<double, -1> StateDistribution;
 
     typedef boost::shared_ptr<CoordinateFilter> Ptr;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
@@ -121,7 +123,14 @@ public:
     void set(const ProcessModelPtr& process_model);
 
 
+    virtual StateDistribution& stateDistribution();
+
+
 private:
+    // TODO this is not used properly yet
+    StateDistribution state_distribution_;
+
+
     // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     std::vector<Eigen::VectorXd > parents_;
     std::vector<double> parent_times_;

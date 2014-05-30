@@ -76,9 +76,6 @@ public:
 
     virtual VariableType mean() const = 0;
     virtual CovarianceType covariance() const = 0;
-
-    virtual void mean(const VariableType& mean) = 0;
-    virtual void covariance(const CovarianceType& covariance) = 0;
 };
 
 }

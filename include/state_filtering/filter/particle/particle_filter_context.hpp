@@ -104,9 +104,9 @@ public:
     /**
      * @return @ref FilterContext::stateDistribution()
      */
-    virtual StateDistribution& stateDistribution() const
+    virtual StateDistribution& stateDistribution()
     {
-
+        return filter_->stateDistribution();
     }
 
 protected:

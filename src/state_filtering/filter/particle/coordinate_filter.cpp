@@ -44,13 +44,13 @@ using namespace Eigen;
 using namespace filter;
 using namespace boost;
 
-
 CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
                                    const ProcessModelPtr process_model,
                                    const std::vector<std::vector<size_t> >& independent_blocks):
     observation_model_(observation_model),
     process_model_(process_model),
-    independent_blocks_(independent_blocks)
+    independent_blocks_(independent_blocks),
+    state_distribution_(process_model->variableSize())
 {
     // count the degrees of freedom --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     dof_count_ = 0;
@@ -304,6 +304,18 @@ void CoordinateFilter::Resample(const int &new_state_count)
     parent_multiplicities_ = new_multiplicities;
     family_loglikes_= new_loglikes;
     parent_occlusion_indices_ = new_occlusion_indices;
+
+
+
+
+    // TODO: all of this is disgusting. i have to make sure that there is a consistent
+    // representation of the hyperstate at all times!
+    CoordinateFilter::StateDistribution::Weights weights(parents_.size());
+    for(size_t i = 0; i < parents_.size(); i++)
+        weights(i) = parent_multiplicities_[i];
+    weights /= weights.sum();
+
+    state_distribution_.setDeltas(parents_, weights);
 }
 
 
@@ -331,6 +343,15 @@ void CoordinateFilter::Sort()
     family_loglikes_= sorted_loglikes;
     parent_occlusion_indices_ = sorted_occlusion_indices;
 }
+
+
+
+
+CoordinateFilter::StateDistribution &CoordinateFilter::stateDistribution()
+{
+    return state_distribution_;
+}
+
 
 
 // set and get fcts ==========================================================================================================================================================================================================================================================================================================================================================================================

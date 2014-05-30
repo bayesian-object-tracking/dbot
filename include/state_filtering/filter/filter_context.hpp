@@ -92,7 +92,7 @@ public:
     /**
      * @return Accesses the filtered state
      */
-    virtual StateDistribution& stateDistribution() const = 0;
+    virtual StateDistribution& stateDistribution() = 0;
 };
 
 }

@@ -81,6 +81,7 @@ set(state_filtering_headers
 
     # distribution implementations
     include/${PROJECT_NAME}/distribution/implementations/gaussian_distribution.hpp
+    include/${PROJECT_NAME}/distribution/implementations/sum_of_deltas.hpp
     include/${PROJECT_NAME}/distribution/implementations/damped_brownian_motion.hpp
     include/${PROJECT_NAME}/distribution/implementations/integrated_damped_brownian_motion.hpp
 

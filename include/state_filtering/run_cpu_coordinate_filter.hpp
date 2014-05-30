@@ -129,6 +129,11 @@ class TestFilter
     }
 
 public:
+    typedef filter::ParticleFilterContext<double, -1>   FilterContext;
+    typedef boost::shared_ptr<FilterContext>            FilterContextPtr;
+
+
+
     TestFilter(Matrix3d camera_matrix):
         node_handle_("~"),
         is_first_iteration_(true)
@@ -278,12 +283,9 @@ public:
         // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if(is_first_iteration_)
         {
-            start_time_ = ros_cloud.header.stamp.toSec();
             previous_time_ = ros_cloud.header.stamp.toSec();
             is_first_iteration_ = false;
         }
-
-        double time_since_start = ros_cloud.header.stamp.toSec() - start_time_;
 
         // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         vector<float> observations; size_t n_rows, n_cols;
@@ -291,14 +293,6 @@ public:
 
         // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         INIT_PROFILING;
-        // for propagation the arguments are the control, which is zero here since we are not using the robot, and the time since start
-//        cpu_filter_->Propagate(VectorXd::Zero(object_names_.size()*6), time_since_start);
-//        cpu_filter_->Evaluate(observations, time_since_start, true);
-//        cpu_filter_->Resample(cpu_sample_count_);
-
-
-        cout << "context enchilada" << endl;
-
         filter_context_->predictAndUpdate(observations,
                                           ros_cloud.header.stamp.toSec() - previous_time_,
                                           VectorXd::Zero(object_names_.size()*6));
@@ -307,33 +301,26 @@ public:
         previous_time_ = ros_cloud.header.stamp.toSec();
 
         // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        vector<float> cpu_loglikes; cpu_filter_->get(cpu_loglikes);
-        FullRigidBodySystem<> cpu_likeliest_state = cpu_filter_->get_state(hf::BoundIndex(cpu_loglikes, true));
+        FullRigidBodySystem<> mean = filter_context_->stateDistribution().emiricalMean();
         // 3d models
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-            ri::PublishMarker(cpu_likeliest_state.get_homogeneous_matrix(i).cast<float>(),
+            ri::PublishMarker(mean.get_homogeneous_matrix(i).cast<float>(),
                               ros_cloud.header, object_model_path, object_publisher_,
                               i,
                               1, 0, 0);
         }
-        // occlusions
-        vector<float> cpu_occlusions = cpu_filter_->get_occlusions(hf::BoundIndex(cpu_loglikes, true));
-        vis::ImageVisualizer cpu_vis(n_rows, n_cols);
-        cpu_vis.set_image(cpu_occlusions);
-        cpu_vis.show_image("occlusions 1", 640, 480, 1);
     }
 
 
 
 private:
 
-    boost::shared_ptr<filter::ParticleFilterContext<double, -1> > filter_context_;
+    FilterContextPtr filter_context_;
 
     ros::NodeHandle node_handle_;
     bool is_first_iteration_;
-    double start_time_;
     double previous_time_;
 
     ros::Publisher object_publisher_;
