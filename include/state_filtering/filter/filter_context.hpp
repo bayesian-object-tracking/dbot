@@ -48,15 +48,13 @@
 #define STATE_FILTERING_FILTER_FILTER_CONTEXT_HPP
 
 #include <state_filtering/filter/types.hpp>
-#include <state_filtering/filter/estimate.hpp>
+#include <state_filtering/distribution/empirical_moments.hpp>
 
 /**
  * @brief State filtering namespace
  */
 namespace filter
 {
-
-struct Estimate {typedef boost::shared_ptr<Estimate> Ptr;};
 
 /**
  * @brief FilterContext is a generic interface of a context containing a filter algorithm
@@ -73,28 +71,28 @@ struct Estimate {typedef boost::shared_ptr<Estimate> Ptr;};
  * manages the state internally. This may due to performance reasons such as in the case of
  * GPU implementations. Both, stateless and stateful filter can be used in the same fashion.
  */
-template <typename FilterType>
+template <typename ScalarType_, int SIZE, typename MeasurementType, typename ControlType>
 class FilterContext
 {
 public:
+    typedef EmpiricalMoments<ScalarType_, SIZE> EmpiricalMoments;
+
     virtual ~FilterContext() { }
 
     /**
-     * Propagates the current state and updates it using the measurement
+     * @brief Propagates the current state and updates it using the measurement
      *
-     * @param [in] measurement  Most recent measurement used to update the state
+     * @param measurement   Most recent measurement used to update the state
+     * @param time          Current timestamp
      */
-    virtual void propagateAndUpdate(const Measurement& measurement) = 0;
+    virtual void predictAndUpdate(const MeasurementType& measurement,
+                                  double time,
+                                  const ControlType& control) = 0;
 
     /**
-     * @return Copy of the current state.
+     * @return Accesses the filtered state
      */
-    virtual const Estimate::Ptr state() = 0;
-
-    /**
-     * @return Accesses the filter algorithm
-     */
-    virtual FilterType filter() = 0;
+    virtual EmpiricalMoments& stateDistribution() const = 0;
 };
 
 }
