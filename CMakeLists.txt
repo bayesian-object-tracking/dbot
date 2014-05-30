@@ -75,7 +75,6 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/distribution/features/unnormalized_evaluable.hpp
     include/${PROJECT_NAME}/distribution/features/evaluable.hpp
     include/${PROJECT_NAME}/distribution/features/sampleable.hpp
-    include/${PROJECT_NAME}/distribution/features/gaussian_sampleable.hpp
     include/${PROJECT_NAME}/distribution/features/gaussian_mappable.hpp
     include/${PROJECT_NAME}/distribution/features/moments_estimable.hpp
     include/${PROJECT_NAME}/distribution/features/moments_solvable.hpp

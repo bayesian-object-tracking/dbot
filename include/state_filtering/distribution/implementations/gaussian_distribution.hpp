@@ -59,7 +59,6 @@
 #include <state_filtering/distribution/features/moments_solvable.hpp>
 #include <state_filtering/distribution/features/evaluable.hpp>
 #include <state_filtering/distribution/features/gaussian_mappable.hpp>
-#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
 
 namespace filter
 {
@@ -69,13 +68,12 @@ namespace filter
  */
 template <typename ScalarType_, int SIZE>
 class GaussianDistribution:
-        public AnalyticalMoments<ScalarType_, SIZE>,
+        public MomentsSolvable<ScalarType_, SIZE>,
         public Evaluable<ScalarType_, SIZE>,
         public GaussianMappable<ScalarType_, SIZE, SIZE>
-        //public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
-    typedef AnalyticalMoments<ScalarType_, SIZE>        MomentsBaseType;
+    typedef MomentsSolvable<ScalarType_, SIZE>        MomentsBaseType;
     typedef GaussianMappable<ScalarType_, SIZE, SIZE>   MappableBaseType;
 
     typedef typename MomentsBaseType::ScalarType        ScalarType;

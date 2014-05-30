@@ -53,7 +53,7 @@ namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class EmpiricalMoments:
+class MomentsEstimable:
     public Distribution<ScalarType_, SIZE>
 {
 public:
@@ -62,7 +62,7 @@ public:
     typedef typename BaseType::VariableType         VariableType;
     typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
 
-    virtual ~EmpiricalMoments() { }
+    virtual ~MomentsEstimable() { }
 
     virtual VariableType emiricalMean() = 0;
     virtual CovarianceType emiricalCovariance() = 0;

@@ -83,7 +83,7 @@ public:
     /**
      * @return @ref FilterContext::stateDistribution()
      */
-    virtual EmpiricalMoments& stateDistribution() const
+    virtual MomentsEstimable& stateDistribution() const
     {
 
     }

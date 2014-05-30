@@ -52,7 +52,6 @@
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/features/sampleable.hpp>
 #include <state_filtering/distribution/features/gaussian_mappable.hpp>
-#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace filter
@@ -61,7 +60,6 @@ namespace filter
 template <typename ScalarType_, int SIZE>
 class DampedBrownianMotion:
         public GaussianMappable<ScalarType_, SIZE, SIZE>
-        //public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
     typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;

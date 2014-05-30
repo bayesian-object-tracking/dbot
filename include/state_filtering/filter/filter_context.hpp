@@ -75,7 +75,7 @@ template <typename ScalarType_, int SIZE, typename MeasurementType, typename Con
 class FilterContext
 {
 public:
-    typedef EmpiricalMoments<ScalarType_, SIZE> StateDistribution;
+    typedef MomentsEstimable<ScalarType_, SIZE> StateDistribution;
 
     virtual ~FilterContext() { }
 

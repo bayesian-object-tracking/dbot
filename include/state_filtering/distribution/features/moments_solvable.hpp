@@ -53,16 +53,16 @@ namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class AnalyticalMoments:
-    public EmpiricalMoments<ScalarType_, SIZE>
+class MomentsSolvable:
+    public MomentsEstimable<ScalarType_, SIZE>
 {
 public:
-    typedef EmpiricalMoments<ScalarType_, SIZE>     BaseType;
+    typedef MomentsEstimable<ScalarType_, SIZE>     BaseType;
     typedef typename BaseType::ScalarType           ScalarType;
     typedef typename BaseType::VariableType         VariableType;
     typedef typename BaseType::CovarianceType       CovarianceType;
 
-    virtual ~AnalyticalMoments() { }
+    virtual ~MomentsSolvable() { }
 
     virtual VariableType emiricalMean()
     {
