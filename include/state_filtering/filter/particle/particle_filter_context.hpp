@@ -54,7 +54,6 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/filter/estimate.hpp>
 #include <state_filtering/filter/filter_context.hpp>
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
 
@@ -62,22 +61,22 @@ namespace filter
 {
 namespace pfc_internal
 {
-typedef typename CoordinateFilter::ProcessModel::ControlType ControlType;
-// TODO adjust to measurement model
-typedef typename CoordinateFilter::MeasurementModel::MeasurementType MeasurementType;
-typedef typename FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType> FilterContext;
+typedef typename CoordinateFilter::ProcessModel::ControlType            ControlType;
+typedef typename CoordinateFilter::MeasurementModel::MeasurementType    MeasurementType;
 }
 
 /**
  * @brief ParticleFilterContext is specialization of @ref filter::FilterContext for particle filters
  */
 template <typename ScalarType_, int SIZE>
-class ParticleFilterContext: public pfc_internal::FilterContext
+class ParticleFilterContext:
+        public FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>
 {
 public:
-    typedef typename pfc_internal::FilterContext    EmpiricalMoments;
-    typedef typename pfc_internal::MeasurementType  MeasurementType;
-    typedef typename pfc_internal::ControlType      ControlType;
+    typedef FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>  Base;
+    typedef typename Base::StateDistribution             StateDistribution;
+    typedef typename pfc_internal::MeasurementType       MeasurementType;
+    typedef typename pfc_internal::ControlType           ControlType;
 
     ParticleFilterContext(CoordinateFilter::Ptr filter):
         filter_(filter),
@@ -105,7 +104,7 @@ public:
     /**
      * @return @ref FilterContext::stateDistribution()
      */
-    virtual EmpiricalMoments& stateDistribution() const
+    virtual StateDistribution& stateDistribution() const
     {
 
     }

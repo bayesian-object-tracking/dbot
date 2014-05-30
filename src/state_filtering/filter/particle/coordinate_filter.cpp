@@ -272,24 +272,24 @@ void CoordinateFilter::Evaluate_test(
 }
 
 
-void CoordinateFilter::Resample(const size_t &new_state_count)
+void CoordinateFilter::Resample(const int &new_state_count)
 {
     size_t state_count;
-    if(std::isnan(new_state_count))
+    if(new_state_count == -1)
         state_count = parents_.size();
     else
         state_count = new_state_count;
 
     // todo we are not taking multiplicity into account
-    std::vector<Eigen::VectorXd > new_states(new_state_count);
-    std::vector<double> new_state_times(new_state_count);
-    std::vector<size_t> new_multiplicities(new_state_count);
-    std::vector<float> new_loglikes(new_state_count);
-    std::vector<size_t> new_occlusion_indices(new_state_count);
+    std::vector<Eigen::VectorXd > new_states(state_count);
+    std::vector<double> new_state_times(state_count);
+    std::vector<size_t> new_multiplicities(state_count);
+    std::vector<float> new_loglikes(state_count);
+    std::vector<size_t> new_occlusion_indices(state_count);
 
     hf::DiscreteSampler sampler(family_loglikes_);
 
-    for(size_t i = 0; i < new_state_count; i++)
+    for(size_t i = 0; i < state_count; i++)
     {
         size_t index = sampler.sample();
         new_states[i] = parents_[index];

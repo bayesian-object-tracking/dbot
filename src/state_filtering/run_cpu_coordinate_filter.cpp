@@ -268,7 +268,6 @@ public:
         filter_context_ =
                 boost::shared_ptr<filter::ParticleFilterContext<double, -1> >
                 (new filter::ParticleFilterContext<double, -1>(cpu_filter_) );
-
     }
 
 

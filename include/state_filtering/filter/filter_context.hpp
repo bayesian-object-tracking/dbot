@@ -75,7 +75,7 @@ template <typename ScalarType_, int SIZE, typename MeasurementType, typename Con
 class FilterContext
 {
 public:
-    typedef EmpiricalMoments<ScalarType_, SIZE> EmpiricalMoments;
+    typedef EmpiricalMoments<ScalarType_, SIZE> StateDistribution;
 
     virtual ~FilterContext() { }
 
@@ -92,7 +92,7 @@ public:
     /**
      * @return Accesses the filtered state
      */
-    virtual EmpiricalMoments& stateDistribution() const = 0;
+    virtual StateDistribution& stateDistribution() const = 0;
 };
 
 }
