@@ -217,7 +217,6 @@ else(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
 endif(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
 
-
 ## Declare a cpp executable
 # add_executable(state_filtering_node src/state_filtering_node.cpp)
 
