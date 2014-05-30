@@ -54,7 +54,6 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/filter/estimate.hpp>
 #include <state_filtering/filter/filter_context.hpp>
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
 
@@ -62,9 +61,8 @@ namespace filter
 {
 namespace pfc_internal
 {
-typedef typename CoordinateFilter::ProcessModel::ControlType ControlType;
-// TODO adjust to measurement model
-typedef typename Eigen::VectorXd MeasurementType;
+typedef typename CoordinateFilter::ProcessModel::ControlType            ControlType;
+typedef typename CoordinateFilter::MeasurementModel::MeasurementType    MeasurementType;
 }
 
 /**
@@ -75,11 +73,12 @@ class ParticleFilterContext:
         public FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>
 {
 public:
-    typedef typename pfc_internal::MeasurementType  MeasurementType;
-    typedef typename pfc_internal::ControlType      ControlType;
+    typedef FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>  Base;
+    typedef typename Base::StateDistribution             StateDistribution;
+    typedef typename pfc_internal::MeasurementType       MeasurementType;
+    typedef typename pfc_internal::ControlType           ControlType;
 
     ParticleFilterContext(CoordinateFilter::Ptr filter):
-        sample_count_(0),
         filter_(filter),
         duration_(0.)
     {
@@ -99,19 +98,18 @@ public:
 
         filter_->Propagate(control, duration_);
         filter_->Evaluate(measurement, duration_, true);
-        filter_->Resample(sample_count_);
+        filter_->Resample();
     }
 
     /**
      * @return @ref FilterContext::stateDistribution()
      */
-    virtual EmpiricalMoments& stateDistribution() const
+    virtual StateDistribution& stateDistribution() const
     {
 
     }
 
 protected:
-    size_t sample_count_;
     double duration_;
     CoordinateFilter::Ptr filter_;
 };

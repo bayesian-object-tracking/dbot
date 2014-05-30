@@ -96,7 +96,7 @@ public:
             std::vector<std::vector<int> > intersect_indices = 0,
             std::vector<std::vector<float> > predictions = 0);
 
-    void Resample(const size_t &new_n_states);
+    void Resample(const int &new_state_count = -1);
 
     void Sort();
 
