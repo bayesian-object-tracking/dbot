@@ -64,22 +64,22 @@ namespace pfc_internal
 {
 typedef typename CoordinateFilter::ProcessModel::ControlType ControlType;
 // TODO adjust to measurement model
-typedef typename Eigen::VectorXd MeasurementType;
+typedef typename CoordinateFilter::MeasurementModel::MeasurementType MeasurementType;
+typedef typename FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType> FilterContext;
 }
 
 /**
  * @brief ParticleFilterContext is specialization of @ref filter::FilterContext for particle filters
  */
 template <typename ScalarType_, int SIZE>
-class ParticleFilterContext:
-        public FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>
+class ParticleFilterContext: public pfc_internal::FilterContext
 {
 public:
+    typedef typename pfc_internal::FilterContext    EmpiricalMoments;
     typedef typename pfc_internal::MeasurementType  MeasurementType;
     typedef typename pfc_internal::ControlType      ControlType;
 
     ParticleFilterContext(CoordinateFilter::Ptr filter):
-        sample_count_(0),
         filter_(filter),
         duration_(0.)
     {
@@ -99,7 +99,7 @@ public:
 
         filter_->Propagate(control, duration_);
         filter_->Evaluate(measurement, duration_, true);
-        filter_->Resample(sample_count_);
+        filter_->Resample();
     }
 
     /**
@@ -111,7 +111,6 @@ public:
     }
 
 protected:
-    size_t sample_count_;
     double duration_;
     CoordinateFilter::Ptr filter_;
 };

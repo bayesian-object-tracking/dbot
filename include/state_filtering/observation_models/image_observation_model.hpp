@@ -43,6 +43,11 @@ namespace obs_mod
 class ImageObservationModel
 {
 public:
+    typedef std::vector<float> MeasurementType;
+
+
+
+
 	ImageObservationModel(
 			const Eigen::Matrix3d& camera_matrix,
 			const size_t& n_rows,
@@ -78,7 +83,7 @@ public:
                                   std::vector<std::vector<float> > &depth) = 0;
     virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
 	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
-	virtual void set_observation(const std::vector<float>& observations, const double& observation_time) = 0;
+    virtual void set_observation(const MeasurementType& observations, const double& observation_time) = 0;
 
 protected:
 	// constant parameters ===========================================================================================================================================================================================================================================================================================================================

@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl-1.6/pcl/point_types.h>
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
+#include <state_filtering/filter/particle/particle_filter_context.hpp>
+
 // observation model
 #include <state_filtering/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp>
 #include <state_filtering/observation_models/image_observation_model.hpp>
@@ -262,6 +264,11 @@ public:
         cpu_filter_->set_states(multi_body_samples);
         cpu_filter_->Evaluate(observations);
         cpu_filter_->Resample(cpu_sample_count_);
+
+        filter_context_ =
+                boost::shared_ptr<filter::ParticleFilterContext<double, -1> >
+                (new filter::ParticleFilterContext<double, -1>(cpu_filter_) );
+
     }
 
 
@@ -273,6 +280,7 @@ public:
         if(is_first_iteration_)
         {
             start_time_ = ros_cloud.header.stamp.toSec();
+            previous_time_ = ros_cloud.header.stamp.toSec();
             is_first_iteration_ = false;
         }
 
@@ -285,10 +293,19 @@ public:
         // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         INIT_PROFILING;
         // for propagation the arguments are the control, which is zero here since we are not using the robot, and the time since start
-        cpu_filter_->Propagate(VectorXd::Zero(object_names_.size()*6), time_since_start);
-        cpu_filter_->Evaluate(observations, time_since_start, true);
-        cpu_filter_->Resample(cpu_sample_count_);
+//        cpu_filter_->Propagate(VectorXd::Zero(object_names_.size()*6), time_since_start);
+//        cpu_filter_->Evaluate(observations, time_since_start, true);
+//        cpu_filter_->Resample(cpu_sample_count_);
+
+
+        cout << "context enchilada" << endl;
+
+        filter_context_->predictAndUpdate(observations,
+                                          ros_cloud.header.stamp.toSec() - previous_time_,
+                                          VectorXd::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
+
+        previous_time_ = ros_cloud.header.stamp.toSec();
 
         // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         vector<float> cpu_loglikes; cpu_filter_->get(cpu_loglikes);
@@ -312,9 +329,14 @@ public:
 
 
 private:
+
+    boost::shared_ptr<filter::ParticleFilterContext<double, -1> > filter_context_;
+
     ros::NodeHandle node_handle_;
     bool is_first_iteration_;
     double start_time_;
+    double previous_time_;
+
     ros::Publisher object_publisher_;
 
     vector<vector<size_t> > dependencies_;
