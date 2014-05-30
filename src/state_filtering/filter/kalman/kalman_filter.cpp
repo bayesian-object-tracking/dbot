@@ -51,9 +51,6 @@
 #include <state_filtering/filter/kalman/kalman_filter.hpp>
 
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
-#include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
-#include <state_filtering/distribution/brownian/integrated_damped_brownian_motion.hpp>
 
 #include <state_filtering/process_model/brownian_process_model.hpp>
 
