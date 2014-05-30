@@ -3,6 +3,7 @@
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
  *                     University of Southern California
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -38,45 +39,50 @@
 
 /**
  * @date 05/25/2014
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
-#define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
 
-// boost
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/variate_generator.hpp>
+#ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_UNNORMALIZED_EVALUABLE_HPP
+#define STATE_FILTERING_DISTRIBUTION_FEATURES_UNNORMALIZED_EVALUABLE_HPP
 
-#include <state_filtering/filter/types.hpp>
+#include <cmath>
 #include <state_filtering/distribution/distribution.hpp>
 
 namespace filter
 {
 
-/**
- * Sampleable interface of a distribution
- */
 template <typename ScalarType_, int SIZE>
-class Sampleable:
+class UnnormalizedEvaluable:
         public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef typename Distribution<ScalarType_, SIZE>::VariableType VariableType;
+    typedef Distribution<ScalarType_, SIZE> BaseType;
+    typedef typename BaseType::ScalarType   ScalarType;
+    typedef typename BaseType::VariableType VariableType;
 
     /**
-     * @brief Virtual destructor
-     */
-    virtual ~Sampleable() { }
-
-    /**
-     * @brief Returns a random sample from the underlying distribution
+     * @brief Returns the probability of the given sample
      *
-     * @return random sample from underlying distribution
+     * @param sample    Probability sample
+     *
+     * @return Probability of the sample
      */
-    virtual VariableType sample() = 0;
+    virtual ScalarType unnormalizedProbability(const VariableType& sample) const
+    {
+        std::exp(logUnnormalizedProbability(sample));
+    }
+
+    /**
+     * @brief Returns the probability log of the given sample
+     *
+     * @param sample    Probability sample
+     *
+     * @return Log of sample probability
+     */
+    virtual ScalarType logUnnormalizedProbability(const VariableType& sample) const = 0;
 };
 
 }

@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
-#define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_MAPPABLE_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_GAUSSIAN_MAPPABLE_HPP
+#define STATE_FILTERING_DISTRIBUTION_FEATURES_GAUSSIAN_MAPPABLE_HPP
 
 #include <Eigen/Dense>
 
@@ -63,8 +63,7 @@ class GaussianMappable:
         public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE> BaseType;
-
+    typedef Distribution<ScalarType_, SIZE>             BaseType;
     typedef typename BaseType::ScalarType               ScalarType;
     typedef typename BaseType::VariableType             VariableType;
     typedef Eigen::Matrix<ScalarType, RANDOMS_SIZE, 1>  RandomsType;

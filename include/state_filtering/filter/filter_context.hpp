@@ -48,7 +48,7 @@
 #define STATE_FILTERING_FILTER_FILTER_CONTEXT_HPP
 
 #include <state_filtering/filter/types.hpp>
-#include <state_filtering/distribution/empirical_moments.hpp>
+#include <state_filtering/distribution/features/moments_estimable.hpp>
 
 /**
  * @brief State filtering namespace

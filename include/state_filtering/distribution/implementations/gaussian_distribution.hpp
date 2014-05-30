@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_GAUSSIAN_DISTRIBUTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_GAUSSIAN_DISTRIBUTION_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_GAUSSIAN_DISTRIBUTION_HPP
+#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_GAUSSIAN_DISTRIBUTION_HPP
 
 // eigen
 #include <Eigen/Dense>
@@ -56,10 +56,10 @@
 
 // state_filtering
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/analytical_moments.hpp>
-#include <state_filtering/distribution/probability_density_function.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
+#include <state_filtering/distribution/features/moments_solvable.hpp>
+#include <state_filtering/distribution/features/evaluable.hpp>
+#include <state_filtering/distribution/features/gaussian_mappable.hpp>
+#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
 
 namespace filter
 {
@@ -70,7 +70,7 @@ namespace filter
 template <typename ScalarType_, int SIZE>
 class GaussianDistribution:
         public AnalyticalMoments<ScalarType_, SIZE>,
-        public ProbabilityDensityFunction<ScalarType_, SIZE>,
+        public Evaluable<ScalarType_, SIZE>,
         public GaussianMappable<ScalarType_, SIZE, SIZE>,
         public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {

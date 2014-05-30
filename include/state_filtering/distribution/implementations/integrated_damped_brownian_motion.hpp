@@ -42,24 +42,23 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
+#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 
-#include <Eigen/Dense>
+// boost
+#include <boost/math/special_functions/gamma.hpp>
 
-#include <boost/assert.hpp>
-
+// state_filtering
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/sampleable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+#include <state_filtering/distribution/features/gaussian_mappable.hpp>
+#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
+#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class DampedBrownianMotion:
+class IntegratedDampedBrownianMotion:
         public GaussianMappable<ScalarType_, SIZE, SIZE>,
         public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
@@ -73,19 +72,19 @@ public: /* distribution traits */
 
 public:
 
-    DampedBrownianMotion():
+    IntegratedDampedBrownianMotion():
         distribution_()
     {
         DISABLE_IF_DYNAMIC_SIZE(VariableType);
     }
 
-    explicit DampedBrownianMotion(int size):
+    IntegratedDampedBrownianMotion(int size):
         distribution_(size)
     {
         DISABLE_IF_FIXED_SIZE(VariableType);
     }
 
-    virtual ~DampedBrownianMotion() { }
+    virtual ~IntegratedDampedBrownianMotion() { }
 
     virtual VariableType mapFromGaussian(const RandomsType& sample) const
     {
@@ -93,6 +92,7 @@ public:
     }
 
     virtual void conditionals(const double& delta_time,
+                              const VariableType& state,
                               const VariableType& velocity,
                               const VariableType& acceleration)
     {
@@ -101,11 +101,14 @@ public:
         double bounded_delta_time = delta_time;
         if(bounded_delta_time < 0.00001) bounded_delta_time = 0.00001;
 
-        distribution_.mean(Expectation(velocity, acceleration, bounded_delta_time));
+        distribution_.mean(Expectation(state, velocity, acceleration, bounded_delta_time));
         distribution_.covariance(Covariance(bounded_delta_time));
-    }
 
-    virtual void parameters(const double& damping, const CovarianceType& acceleration_covariance)
+        n_variables_ = state.rows();
+    }
+    virtual void parameters(
+            const double& damping,
+            const CovarianceType& acceleration_covariance)
     {
         damping_ = damping;
         acceleration_covariance_ = acceleration_covariance;
@@ -122,41 +125,49 @@ public:
     }
 
 private:
-    VariableType Expectation(
-            const VariableType& velocity,
-            const VariableType& acceleration,
-            const double& delta_time)
+    VariableType Expectation(const VariableType& state,
+                           const VariableType& velocity,
+                           const VariableType& acceleration,
+                           const double& delta_time)
     {
-        VariableType velocity_expectation =
-                (1.0 - exp(-damping_*delta_time))
-                / damping_ * acceleration + exp(-damping_*delta_time)*velocity;
+        VariableType expectation;
+        expectation = state +
+                (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
+                * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
 
-        // if the damping_ is too small, the result might be nan, we thus return the limit for
-        // damping_ -> 0
-        if(!std::isfinite(velocity_expectation.norm()))
-            velocity_expectation = velocity + delta_time * acceleration;
+        if(!std::isfinite(expectation.norm()))
+            expectation = state +
+                    0.5*delta_time*delta_time*acceleration +
+                    delta_time*velocity;
 
-        return velocity_expectation;
+        return expectation;
     }
 
     CovarianceType Covariance(const double& delta_time)
     {
-        double factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
+        // the first argument to the gamma function should be equal to zero, which would not cause
+        // the gamma function to diverge as long as the second argument is not zero, which will not
+        // be the case. boost however does not accept zero therefore we set it to a very small
+        // value, which does not make a bit difference for any realistic delta_time
+        double factor =
+                (-1.0 + exp(-2.0*damping_*delta_time))/(8.0*pow(damping_, 3)) +
+                (2.0 - exp(-2.0*damping_*delta_time))/(4.0*pow(damping_,2)) * delta_time +
+                (-1.5 + gamma_ + boost::math::tgamma(0.00000000001, 2.0*damping_*delta_time) +
+                 log(2.0*damping_*delta_time))/(2.0*damping_)*pow(delta_time, 2);
         if(!std::isfinite(factor))
-            factor = delta_time;
+            factor = 1.0/3.0 * pow(delta_time, 3);
 
         return factor * acceleration_covariance_;
     }
 
 private:
+    size_t n_variables_;
     // conditionals
     GaussianDistribution<ScalarType, SIZE> distribution_;
-
     // parameters
     double damping_;
     CovarianceType acceleration_covariance_;
-
-    /** @brief euler-mascheroni constant */
+    // euler-mascheroni constant
     static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 

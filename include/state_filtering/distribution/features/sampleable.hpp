@@ -3,7 +3,6 @@
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
  *                     University of Southern California
- *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
  *  All rights reserved.
@@ -39,74 +38,46 @@
 
 /**
  * @date 05/25/2014
- * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_SAMPLEBALE_HPP
-#define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_SAMPLEBALE_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
+#define STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
 
 // boost
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/variate_generator.hpp>
 
-#include <state_filtering/tools/macros.hpp>
 #include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
 
 namespace filter
 {
 
-template <typename GaussianMappableType>
-class GaussianSampleable
+/**
+ * Sampleable interface of a distribution
+ */
+template <typename ScalarType_, int SIZE>
+class Sampleable:
+        public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef typename GaussianMappableType::VariableType  VariableType;
-    typedef typename GaussianMappableType::RandomsType   RandomsType;
-
-    GaussianSampleable():
-        generator_(RANDOM_SEED),
-        gaussian_distribution_(0.0, 1.0),
-        gaussian_generator_(generator_, gaussian_distribution_)
-    {
-
-    }
+    typedef typename Distribution<ScalarType_, SIZE>::VariableType VariableType;
 
     /**
      * @brief Virtual destructor
      */
-    virtual ~GaussianSampleable() { }
+    virtual ~Sampleable() { }
 
     /**
      * @brief Returns a random sample from the underlying distribution
      *
-     * Returns a random sample from the underlying distribution by gaussian sample mapping
-     *
      * @return random sample from underlying distribution
      */
-    virtual VariableType sample()
-    {
-        GaussianMappableType* mappable_this = dynamic_cast<GaussianMappableType*>(this);
-
-        RandomsType iso_sample(mappable_this->randomsSize());
-
-        for (int i = 0; i < mappable_this->randomsSize(); i++)
-        {
-            iso_sample(i) = gaussian_generator_();
-        }        
-
-        return mappable_this->mapFromGaussian(iso_sample);
-    }
-
-protected:
-    boost::mt19937 generator_;
-    boost::normal_distribution<> gaussian_distribution_;
-    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > gaussian_generator_;
+    virtual VariableType sample() = 0;
 };
-
 
 }
 

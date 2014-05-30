@@ -45,23 +45,23 @@
  */
 
 
-#ifndef STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_EVALUABLE_HPP
+#define STATE_FILTERING_DISTRIBUTION_FEATURES_EVALUABLE_HPP
 
 #include <cmath>
-#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/features/unnormalized_evaluable.hpp>
 
 namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class ProbabilityDensityFunction:
-        public Distribution<ScalarType_, SIZE>
+class Evaluable:
+        public UnnormalizedEvaluable<ScalarType_, SIZE>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE> BaseType;
-    typedef typename BaseType::ScalarType   ScalarType;
-    typedef typename BaseType::VariableType VariableType;
+    typedef UnnormalizedEvaluable<ScalarType_, SIZE>    BaseType;
+    typedef typename BaseType::ScalarType               ScalarType;
+    typedef typename BaseType::VariableType             VariableType;
 
     /**
      * @brief Returns the probability of the given sample
@@ -83,6 +83,18 @@ public:
      * @return Log of sample probability
      */
     virtual ScalarType logProbability(const VariableType& sample) const = 0;
+
+    /**
+     * @brief Returns the probability log of the given sample
+     *
+     * @param sample    Probability sample
+     *
+     * @return Log of sample probability
+     */
+    virtual ScalarType logUnnormalizedProbability(const VariableType& sample) const
+    {
+        return logProbability(sample);
+    }
 };
 
 }

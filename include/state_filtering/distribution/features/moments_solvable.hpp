@@ -44,28 +44,41 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_FILTER_EMPIRICAL_MOMENTS_HPP
-#define STATE_FILTERING_FILTER_EMPIRICAL_MOMENTS_HPP
+#ifndef STATE_FILTERING_FILTER_FEATURES_MOMENTS_SOLVABLE_HPP
+#define STATE_FILTERING_FILTER_FEATURES_MOMENTS_SOLVABLE_HPP
 
-#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/features/moments_estimable.hpp>
 
 namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class EmpiricalMoments:
-    public Distribution<ScalarType_, SIZE>
+class AnalyticalMoments:
+    public EmpiricalMoments<ScalarType_, SIZE>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE>         BaseType;
+    typedef EmpiricalMoments<ScalarType_, SIZE>     BaseType;
     typedef typename BaseType::ScalarType           ScalarType;
     typedef typename BaseType::VariableType         VariableType;
-    typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
+    typedef typename BaseType::CovarianceType       CovarianceType;
 
-    virtual ~EmpiricalMoments() { }
+    virtual ~AnalyticalMoments() { }
 
-    virtual VariableType emiricalMean() = 0;
-    virtual CovarianceType emiricalCovariance() = 0;
+    virtual VariableType emiricalMean()
+    {
+        return mean();
+    }
+
+    virtual CovarianceType emiricalCovariance()
+    {
+        return covariance();
+    }
+
+    virtual VariableType mean() const = 0;
+    virtual CovarianceType covariance() const = 0;
+
+    virtual void mean(const VariableType& mean) = 0;
+    virtual void covariance(const CovarianceType& covariance) = 0;
 };
 
 }
