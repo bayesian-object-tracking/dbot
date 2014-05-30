@@ -5,41 +5,44 @@ set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
-find_package(Boost REQUIRED)
-
-find_package(Eigen REQUIRED)
-include_directories(${Eigen_INCLUDE_DIRS})
-
-find_package(PCL 1.3 REQUIRED)
-include_directories(${PCL_INCLUDE_DIRS})
-
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
-
 find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED)
+find_package(Eigen REQUIRED)
+find_package(PCL 1.3 REQUIRED)
+
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${Eigen_INCLUDE_DIRS})
+include_directories(${PCL_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+#########
+## GPU ##
+#########
+set(GLEW_DIR ${PROJECT_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+
 find_package(CUDA)
+find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
+
+include_directories(${GLEW_INCLUDE_DIRS})
+include_directories(${OpenGL_INCLUDE_DIRS})
 cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
+
+link_directories(${OpenGL_LIBRARY_DIRS})
+link_directories(${GLEW_LIBRARY_DIRS})
+
+add_definitions(${OpenGL_DEFINITIONS})
+add_definitions(${GLEW_DEFINITIONS})
+
 if(NOT CUDA_FOUND)
     message(" CUDA not found!")
 endif(NOT CUDA_FOUND)
 
-find_package(OpenGL REQUIRED)
-include_directories(${OpenGL_INCLUDE_DIRS})
-link_directories(${OpenGL_LIBRARY_DIRS})
-add_definitions(${OpenGL_DEFINITIONS})
 if(NOT OPENGL_FOUND)
     message(" OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
-# gpu stuff ----------------------------------------------------------------------------------------
-set(GLEW_DIR ${PROJECT_SOURCE_DIR})
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
-find_package(GLEW REQUIRED)
-include_directories(${GLEW_INCLUDE_DIRS})
-link_directories(${GLEW_LIBRARY_DIRS})
-add_definitions(${GLEW_DEFINITIONS})
 if(NOT GLEW_FOUND)
     message(" GLEW not found!")
 endif(NOT GLEW_FOUND)
@@ -48,10 +51,6 @@ endif(NOT GLEW_FOUND)
 # use --ptxas-options=-v to see number of registers, local, shared and constant memory used in kernels
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
-
-link_directories(${PROJECT_SOURCE_DIR}/local_install/lib)
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 
 ###################################
 ## catkin specific configuration ##
@@ -68,35 +67,63 @@ catkin_package(
 ###########
 include_directories(include)
 
-set(state_filtering_HEADERS
+set(state_filtering_headers
+    # distribution interface
     include/${PROJECT_NAME}/distribution/distribution.hpp
     include/${PROJECT_NAME}/distribution/sampleable.hpp    
     include/${PROJECT_NAME}/distribution/probability_density_function.hpp
     include/${PROJECT_NAME}/distribution/empirical_moments.hpp
     include/${PROJECT_NAME}/distribution/analytical_moments.hpp
 
+    # distribution specializations
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_mappable.hpp
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_sampleable.hpp
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp    
     include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp    
     include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
 
+    # filter interface
     include/${PROJECT_NAME}/filter/types.hpp
     include/${PROJECT_NAME}/filter/filter.hpp
-    include/${PROJECT_NAME}/filter/estimate.hpp
     include/${PROJECT_NAME}/filter/filter_context.hpp
-#    include/${PROJECT_NAME}/filter/state_distribution.hpp
 
+    # process model interface
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
+
+    # process model specializations
     include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
 
+    # system state interface
+    include/${PROJECT_NAME}/system_states/full_rigid_body_system.hpp
+    include/${PROJECT_NAME}/system_states/rigid_body_system.hpp
+
+    # measurement model interfaces
+    include/${PROJECT_NAME}/observation_models/image_observation_model.hpp
+
+    # measurement model specializations
+    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp
+    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp
+    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.hpp
+    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.hpp
+
+    ## Particle specific implementations ##
     include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
     include/${PROJECT_NAME}/filter/particle/coordinate_filter.hpp
 
-    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
+    ## SPKF specific implementations ##
+#    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
+#    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
+#    include/${PROJECT_NAME}/filters/spkf/sigma_point_matrix.hpp
+#    include/${PROJECT_NAME}/filters/spkf/euclidean_validation_gate.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ellipsoidal_validation_gate.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_transform.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ukf/kappa_unscented_transform.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter_base.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter.hpp
+#    include/${PROJECT_NAME}/filters/spkf/ukf/factorized_unscented_kalman_filter.hpp
 
+    # tools
     include/${PROJECT_NAME}/tools/helper_functions.hpp
     include/${PROJECT_NAME}/tools/image_visualizer.hpp
     include/${PROJECT_NAME}/tools/log_erfc.hpp
@@ -105,37 +132,37 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/tools/pcl_interface.hpp
     include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
     include/${PROJECT_NAME}/tools/ros_interface.hpp
-
-    include/${PROJECT_NAME}/system_states/full_rigid_body_system.hpp
-    include/${PROJECT_NAME}/system_states/rigid_body_system.hpp
-
-    include/${PROJECT_NAME}/observation_models/image_observation_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.hpp
 )
 
-set(state_filtering_SOURCES    
-    src/${PROJECT_NAME}/tools/image_visualizer.cpp
-    src/${PROJECT_NAME}/tools/object_file_reader.cpp
-    src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
-
+set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.cpp
 
-#    src/${PROJECT_NAME}/filter/particle/particle_filter_context.cpp
+    ## Particle specific implementations ##
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
+    ## SPKF specific implementations ##
 #    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
 #    src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
+#    src/${PROJECT_NAME}/filters/spkf/sigma_point_matrix.cpp
+#    src/${PROJECT_NAME}/filters/spkf/euclidean_validation_gate.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ellipsoidal_validation_gate.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_transform.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ukf/kappa_unscented_transform.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter_base.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter.cpp
+#    src/${PROJECT_NAME}/filters/spkf/ukf/factorized_unscented_kalman_filter.cpp
+
+    src/${PROJECT_NAME}/tools/image_visualizer.cpp
+    src/${PROJECT_NAME}/tools/object_file_reader.cpp
+    src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
 )
 
 
 ## state_filtering
-add_library(${PROJECT_NAME} ${state_filtering_HEADERS} ${state_filtering_SOURCES})
+add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## run_cpu_coordinate_filter
