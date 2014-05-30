@@ -145,6 +145,8 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/tools/pcl_interface.hpp
     include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
     include/${PROJECT_NAME}/tools/ros_interface.hpp
+
+    include/${PROJECT_NAME}/run_cpu_coordinate_filter.hpp
 )
 
 set(state_filtering_sources
@@ -170,6 +172,9 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/tools/image_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp
     src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
+
+    # temporary
+    #src/${PROJECT_NAME}/run_cpu_coordinate_filter.cpp
 )
 
 
@@ -179,7 +184,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## run_cpu_coordinate_filter
 add_executable(run_cpu_coordinate_filter
-    src/${PROJECT_NAME}/run_cpu_coordinate_filter.cpp)
+    src/${PROJECT_NAME}/run_cpu_coordinate_filter_node.cpp)
 target_link_libraries(run_cpu_coordinate_filter
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
