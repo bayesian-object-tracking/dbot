@@ -59,8 +59,8 @@ namespace filter
 
 template <typename ScalarType_, int SIZE>
 class IntegratedDampedBrownianMotion:
-        public GaussianMappable<ScalarType_, SIZE, SIZE>,
-        public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
+        public GaussianMappable<ScalarType_, SIZE, SIZE>
+        //public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
     typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;

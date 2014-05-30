@@ -71,8 +71,8 @@ template <typename ScalarType_, int SIZE>
 class GaussianDistribution:
         public AnalyticalMoments<ScalarType_, SIZE>,
         public Evaluable<ScalarType_, SIZE>,
-        public GaussianMappable<ScalarType_, SIZE, SIZE>,
-        public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
+        public GaussianMappable<ScalarType_, SIZE, SIZE>
+        //public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
     typedef AnalyticalMoments<ScalarType_, SIZE>        MomentsBaseType;

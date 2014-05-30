@@ -64,6 +64,7 @@ class Sampleable:
         public Distribution<ScalarType_, SIZE>
 {
 public:
+    typedef ScalarType_ ScalarType;
     typedef typename Distribution<ScalarType_, SIZE>::VariableType VariableType;
 
     /**

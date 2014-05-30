@@ -67,8 +67,8 @@ template <typename ScalarType_ = double,
           int CONTROL_SIZE = Eigen::Dynamic,
           int RANDOMS_SIZE = Eigen::Dynamic>
 class StationaryProcessModel:
-        public GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE>,
-        public GaussianSampleable<GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> >
+        public GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE>
+        //public GaussianSampleable<GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> >
 {
 public: /* distribution traits */
     typedef GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> BaseType;

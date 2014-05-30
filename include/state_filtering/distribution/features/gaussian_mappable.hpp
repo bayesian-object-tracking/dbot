@@ -49,8 +49,14 @@
 
 #include <Eigen/Dense>
 
+// boost
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+
+#include <state_filtering/tools/macros.hpp>
 #include <state_filtering/filter/types.hpp>
-#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/features/sampleable.hpp>
 
 namespace filter
 {
@@ -60,13 +66,21 @@ namespace filter
  */
 template <typename ScalarType_, int SIZE, int RANDOMS_SIZE>
 class GaussianMappable:
-        public Distribution<ScalarType_, SIZE>
+        public Sampleable<ScalarType_, SIZE>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE>             BaseType;
+    typedef Sampleable<ScalarType_, SIZE>               BaseType;
     typedef typename BaseType::ScalarType               ScalarType;
     typedef typename BaseType::VariableType             VariableType;
     typedef Eigen::Matrix<ScalarType, RANDOMS_SIZE, 1>  RandomsType;
+
+    GaussianMappable():
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
+    {
+
+    }
 
     /**
      * @brief Virtual destructor
@@ -83,6 +97,30 @@ public:
     virtual VariableType mapFromGaussian(const RandomsType& sample) const = 0;
 
     virtual int randomsSize() const = 0;
+
+    /**
+     * @brief Returns a random sample from the underlying distribution
+     *
+     * Returns a random sample from the underlying distribution by gaussian sample mapping
+     *
+     * @return random sample from underlying distribution
+     */
+    virtual VariableType sample()
+    {
+        RandomsType normal_sample(RANDOMS_SIZE);
+        for (int i = 0; i < RANDOMS_SIZE; i++)
+        {
+            normal_sample(i) = gaussian_generator_();
+        }
+
+        return mapFromGaussian(normal_sample);
+    }
+
+
+protected:
+    boost::mt19937 generator_;
+    boost::normal_distribution<> gaussian_distribution_;
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > gaussian_generator_;
 };
 
 }
