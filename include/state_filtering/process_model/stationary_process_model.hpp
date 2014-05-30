@@ -50,6 +50,9 @@
 // eigen
 #include <Eigen/Dense>
 
+// boost
+#include <boost/shared_ptr.hpp>
+
 // state_filtering
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
@@ -74,17 +77,17 @@ public: /* distribution traits */
     typedef typename BaseType::VariableType                         VariableType;
     typedef typename BaseType::RandomsType                          RandomsType;
     typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
-    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlInputType;
+    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlType;
 
     virtual ~StationaryProcessModel() { }
 
     virtual void conditionals(const double& delta_time,
                               const VariableType& state,
-                              const ControlInputType& control) = 0;
+                              const ControlType& control) = 0;
 
     virtual void conditionals(const double& delta_time, const VariableType& state)
     {
-        conditionals(delta_time, state, ControlInputType::Zero(controlSize()));
+        conditionals(delta_time, state, ControlType::Zero(controlSize()));
     }
 
     virtual int controlSize() const = 0;

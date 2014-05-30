@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
-#define STATE_FILTERING_DISTRIBUTION_SAMPLEBALE_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_GAUSSIAN_SAMPLEBALE_HPP
+#define STATE_FILTERING_DISTRIBUTION_GAUSSIAN_SAMPLEBALE_HPP
 
 // boost
 #include <boost/random/normal_distribution.hpp>

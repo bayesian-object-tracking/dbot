@@ -78,7 +78,7 @@ public: /* distribution traits */
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::RandomsType      RandomsType;
     typedef typename BaseType::CovarianceType   CovarianceType;
-    typedef typename BaseType::ControlInputType ControlInputType;
+    typedef typename BaseType::ControlType ControlType;
 
     typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
@@ -110,7 +110,7 @@ public: /* distribution traits */
     virtual void conditionals(
             const double& delta_time,
             const VariableType& state,
-            const ControlInputType& control)
+            const ControlType& control)
     {
         size_t state_index = 0;
         size_t control_index = 0;

@@ -97,7 +97,7 @@ public: /* model traits */
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::CovarianceType   CovarianceType;
     typedef typename BaseType::RandomsType      RandomsType;
-    typedef typename BaseType::ControlInputType ControlInputType;
+    typedef typename BaseType::ControlType ControlType;
 
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
@@ -126,7 +126,7 @@ public:
     virtual void conditionals(
                 const double& delta_time,
                 const VariableType& state,
-                const ControlInputType& control)
+                const ControlType& control)
     {
         if(std::isfinite(delta_time))
             delta_time_ = delta_time;
