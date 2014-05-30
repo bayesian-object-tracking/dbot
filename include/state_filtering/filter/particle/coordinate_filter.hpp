@@ -49,11 +49,15 @@ namespace filter
 class CoordinateFilter
 {
 public:
-    typedef boost::shared_ptr<obs_mod::ImageObservationModel> ObservationModel;
-    typedef boost::shared_ptr<StationaryProcessModel< > > ProcessModel;
+    typedef StationaryProcessModel< > ProcessModel;
+    typedef obs_mod::ImageObservationModel MeasurementModel;
 
-    CoordinateFilter(const ObservationModel observation_model,
-                     const ProcessModel process_model,
+    typedef boost::shared_ptr<CoordinateFilter> Ptr;
+    typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
+    typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
+
+    CoordinateFilter(const MeasurementModelPtr observation_model,
+                     const ProcessModelPtr process_model,
                      const std::vector<std::vector<size_t> >& independent_blocks);
 
     ~CoordinateFilter();
@@ -97,8 +101,8 @@ public:
     void Sort();
 
     // set and get fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    void get(ObservationModel& observation_model) const;
-    void get(ProcessModel& process_model) const;
+    void get(MeasurementModelPtr& observation_model) const;
+    void get(ProcessModelPtr& process_model) const;
     void get(std::vector<Eigen::VectorXd >& states) const;
     void get(std::vector<double>& state_times) const;
     void get(std::vector<size_t>& multiplicities) const;
@@ -113,8 +117,8 @@ public:
                     const std::vector<size_t>& multiplicities = std::vector<size_t>(),
                     const std::vector<float>& loglikes = std::vector<float>());
     void set_independence(const std::vector<std::vector<size_t> >& independent_blocks);
-    void set(const ObservationModel& observation_model);
-    void set(const ProcessModel& process_model);
+    void set(const MeasurementModelPtr& observation_model);
+    void set(const ProcessModelPtr& process_model);
 
 
 private:
@@ -135,8 +139,8 @@ private:
     std::vector<float> family_loglikes_;
 
     // process and observation models ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ObservationModel observation_model_;
-    ProcessModel process_model_;
+    MeasurementModelPtr observation_model_;
+    ProcessModelPtr process_model_;
     GaussianDistribution<double, 1> unit_gaussian_;
 
     // parameters ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
