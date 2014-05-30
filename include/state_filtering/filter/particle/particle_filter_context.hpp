@@ -5,6 +5,7 @@
  *                     University of Southern California,
  *                     Karlsruhe Institute of Technology
  *    Jan Issac (jan.issac@gmail.com)
+ *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
  *
@@ -40,6 +41,7 @@
 /**
  * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC),
  *   Karlsruhe Institute of Technology (KIT)
  */
@@ -47,8 +49,72 @@
 #ifndef STATE_FILTERING_FILTER_PARTICLE_FILTER_CONTEXT_HPP
 #define STATE_FILTERING_FILTER_PARTICLE_FILTER_CONTEXT_HPP
 
+#include <limits>
+#include <cmath>
+
+#include <Eigen/Dense>
+
+#include <state_filtering/filter/estimate.hpp>
+#include <state_filtering/filter/filter_context.hpp>
+#include <state_filtering/filter/particle/coordinate_filter.hpp>
+
 namespace filter
 {
+namespace pfc_internal
+{
+typedef typename CoordinateFilter::ProcessModel::ControlType ControlType;
+// TODO adjust to measurement model
+typedef typename Eigen::VectorXd MeasurementType;
+}
+
+/**
+ * @brief ParticleFilterContext is specialization of @ref filter::FilterContext for particle filters
+ */
+template <typename ScalarType_, int SIZE>
+class ParticleFilterContext:
+        public FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>
+{
+public:
+    typedef typename pfc_internal::MeasurementType  MeasurementType;
+    typedef typename pfc_internal::ControlType      ControlType;
+
+    ParticleFilterContext(CoordinateFilter::Ptr filter):
+        sample_count_(0),
+        filter_(filter),
+        duration_(0.)
+    {
+
+    }
+
+    virtual ~ParticleFilterContext() { }
+
+    /**
+     * @brief @ref FilterContext::predictAndUpdate()
+     */
+    virtual void predictAndUpdate(const MeasurementType& measurement,
+                                  double delta_time,
+                                  const ControlType& control)
+    {
+        duration_ += delta_time;
+
+        filter_->Propagate(control, duration_);
+        filter_->Evaluate(measurement, duration_, true);
+        filter_->Resample(sample_count_);
+    }
+
+    /**
+     * @return @ref FilterContext::stateDistribution()
+     */
+    virtual EmpiricalMoments& stateDistribution() const
+    {
+
+    }
+
+protected:
+    size_t sample_count_;
+    double duration_;
+    CoordinateFilter::Ptr filter_;
+};
 
 }
 

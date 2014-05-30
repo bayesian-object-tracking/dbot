@@ -56,6 +56,7 @@
 
 // state_filtering
 #include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/analytical_moments.hpp>
 #include <state_filtering/distribution/probability_density_function.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
 #include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
@@ -68,19 +69,19 @@ namespace filter
  */
 template <typename ScalarType_, int SIZE>
 class GaussianDistribution:
-        public Distribution<ScalarType_, SIZE>,
-        public ProbabilityDensityFunction<Distribution<ScalarType_, SIZE> >,
-        public GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE>,
-        public GaussianSampleable<GaussianMappable<Distribution<ScalarType_, SIZE>, SIZE> >
+        public AnalyticalMoments<ScalarType_, SIZE>,
+        public ProbabilityDensityFunction<ScalarType_, SIZE>,
+        public GaussianMappable<ScalarType_, SIZE, SIZE>,
+        public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
-    typedef Distribution<ScalarType_, SIZE>     BaseType;
-    typedef GaussianMappable<BaseType, SIZE>    BaseMappableType;
+    typedef AnalyticalMoments<ScalarType_, SIZE> MomentsBaseType;
+    typedef GaussianMappable<ScalarType_, SIZE, SIZE> MappableBaseType;
 
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
-    typedef typename BaseMappableType::RandomsType  RandomsType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
+    typedef typename MomentsBaseType::ScalarType        ScalarType;
+    typedef typename MomentsBaseType::VariableType      VariableType;
+    typedef typename MomentsBaseType::CovarianceType    CovarianceType;
+    typedef typename MappableBaseType::RandomsType      RandomsType;
 
 public:
     GaussianDistribution()

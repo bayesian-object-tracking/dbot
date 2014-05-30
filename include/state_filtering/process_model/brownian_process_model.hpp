@@ -3,6 +3,7 @@
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
  *                     University of Southern California
+ *    Jan Issac (jan.issac@gmail.com)
  *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
@@ -38,6 +39,7 @@
 
 /**
  * @date 05/25/2014
+ * @author Jan Issac (jan.issac@gmail.com)
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
@@ -89,13 +91,13 @@ class BrownianProcessModel:
 {
 public: /* model traits */
     typedef internals::BrownianProcessModelBase<ScalarType_, IS_DYNAMIC> Base;
-    typedef typename Base::Type BaseType;
 
+    typedef typename Base::Type                 BaseType;
     typedef typename BaseType::ScalarType       ScalarType;
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::CovarianceType   CovarianceType;
     typedef typename BaseType::RandomsType      RandomsType;
-    typedef typename BaseType::ControlInputType ControlInputType;
+    typedef typename BaseType::ControlType ControlType;
 
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
@@ -124,7 +126,7 @@ public:
     virtual void conditionals(
                 const double& delta_time,
                 const VariableType& state,
-                const ControlInputType& control)
+                const ControlType& control)
     {
         if(std::isfinite(delta_time))
             delta_time_ = delta_time;
@@ -158,16 +160,6 @@ public:
         delta_angular_pose_distribution_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
                                                       initial_angular_velocity_, angular_acceleration_control_);
     }
-
-
-//    virtual void conditionals(const Eigen::Matrix<double, this_type::size_conditionals_, 1>& input)
-//    {
-//        //TO_BE_TESTED;
-//        // the conditional vector consists of the delta_time, then the state and the control
-//        conditionals(input(0),
-//                     input.middleRows(1, this->count_state_),
-//                     input.bottomRows(this->count_control_));
-//    }
 
     virtual void parameters(
                 const Eigen::Matrix<ScalarType, 3, 1>& rotation_center,

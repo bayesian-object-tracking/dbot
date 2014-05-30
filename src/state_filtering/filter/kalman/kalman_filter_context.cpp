@@ -49,17 +49,17 @@
 namespace filter
 {
 
-void KalmanFilterContext::propagateAndUpdate(const Measurement &measurement)
+void SpKalmanFilterContext::propagateAndUpdate(const Measurement &measurement)
 {
 
 }
 
-const Estimate::Ptr KalmanFilterContext::state()
+const Estimate::Ptr SpKalmanFilterContext::state()
 {
 
 }
 
-KalmanFilter::Ptr KalmanFilterContext::filter()
+KalmanFilter::Ptr SpKalmanFilterContext::filter()
 {
 
 }

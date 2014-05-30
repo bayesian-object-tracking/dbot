@@ -45,8 +45,8 @@ using namespace filter;
 using namespace boost;
 
 
-CoordinateFilter::CoordinateFilter(const ObservationModel observation_model,
-                                   const ProcessModel process_model,
+CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
+                                   const ProcessModelPtr process_model,
                                    const std::vector<std::vector<size_t> >& independent_blocks):
     observation_model_(observation_model),
     process_model_(process_model),
@@ -205,6 +205,7 @@ void CoordinateFilter::UpdateOcclusions(const std::vector<float>& observation,
     INIT_PROFILING;
     observation_model_->Evaluate(parents_, parent_occlusion_indices_, true);
     MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
+
 }
 
 
@@ -253,7 +254,9 @@ void CoordinateFilter::Evaluate(
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     observation_model_->set_observation(observation, observation_time);
+    INIT_PROFILING
     family_loglikes_ = observation_model_->Evaluate(parents_, parent_occlusion_indices_, update_occlusions);
+    MEASURE("observation_model_->Evaluate")
 }
 
 
@@ -325,11 +328,11 @@ void CoordinateFilter::Sort()
 
 
 // set and get fcts ==========================================================================================================================================================================================================================================================================================================================================================================================
-void CoordinateFilter::get(ObservationModel &observation_model) const
+void CoordinateFilter::get(MeasurementModelPtr &observation_model) const
 {
     observation_model = observation_model_;
 }
-void CoordinateFilter::get(ProcessModel &process_model) const
+void CoordinateFilter::get(ProcessModelPtr &process_model) const
 {
     process_model = process_model_;
 }
@@ -395,11 +398,11 @@ void CoordinateFilter::set_independence(const std::vector<std::vector<size_t> >&
 {
     independent_blocks_ = independent_blocks;
 }
-void CoordinateFilter::set(const ObservationModel &observation_model)
+void CoordinateFilter::set(const MeasurementModelPtr &observation_model)
 {
     observation_model_ = observation_model;
 }
-void CoordinateFilter::set(const ProcessModel &process_model)
+void CoordinateFilter::set(const ProcessModelPtr &process_model)
 {
     process_model_ = process_model;
 }

@@ -44,45 +44,28 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
+#ifndef STATE_FILTERING_FILTER_EMPIRICAL_MOMENTS_HPP
+#define STATE_FILTERING_FILTER_EMPIRICAL_MOMENTS_HPP
 
-#ifndef STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION_HPP
-
-#include <cmath>
 #include <state_filtering/distribution/distribution.hpp>
 
 namespace filter
 {
 
 template <typename ScalarType_, int SIZE>
-class ProbabilityDensityFunction:
-        public Distribution<ScalarType_, SIZE>
+class EmpiricalMoments:
+    public Distribution<ScalarType_, SIZE>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE> BaseType;
-    typedef typename BaseType::ScalarType   ScalarType;
-    typedef typename BaseType::VariableType VariableType;
+    typedef Distribution<ScalarType_, SIZE>         BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VariableType         VariableType;
+    typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
 
-    /**
-     * @brief Returns the probability of the given sample
-     *
-     * @param sample    Probability sample
-     *
-     * @return Probability of the sample
-     */
-    virtual ScalarType probability(const VariableType& sample) const
-    {
-        std::exp(logProbability(sample));
-    }
+    virtual ~EmpiricalMoments() { }
 
-    /**
-     * @brief Returns the probability log of the given sample
-     *
-     * @param sample    Probability sample
-     *
-     * @return Log of sample probability
-     */
-    virtual ScalarType logProbability(const VariableType& sample) const = 0;
+    virtual VariableType emiricalMean() = 0;
+    virtual CovarianceType emiricalCovariance() = 0;
 };
 
 }

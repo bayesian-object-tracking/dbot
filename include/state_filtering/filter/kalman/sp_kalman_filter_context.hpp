@@ -55,30 +55,40 @@ namespace filter
 {
 
 /**
- * @brief KalmanFilterContext is specialization of @ref filter::FilterContext for Kalman filters
+ * @brief SpKalmanFilterContext is specialization of @ref filter::FilterContext for Sigma Point
+ *        Kalman Filters
  */
-class KalmanFilterContext:
-        public FilterContext<KalmanFilter::Ptr>
+template <typename ScalarType_, int SIZE, typename MeasurementType>
+class SpKalmanFilterContext:
+        public FilterContext<ScalarType_, SIZE, MeasurementType>
 {
 public:
-    virtual ~KalmanFilterContext() { }
+    virtual ~SpKalmanFilterContext() { }
 
     /**
-     * Propagates the current state and updates it using the measurement
-     *
-     * @param [in] measurement  Most recent measurement used to update the state
+     * @brief @ref FilterContext::predict()
      */
-    virtual void propagateAndUpdate(const Measurement& measurement);
+    virtual void predict(double delta_time)
+    {
+
+    }
 
     /**
-     * @return Copy of the current state.
+     * @brief @ref FilterContext::predictAndUpdate()
      */
-    virtual const Estimate::Ptr state();
+    virtual void predictAndUpdate(const MeasurementType& measurement, double delta_time)
+    {
+
+    }
 
     /**
-     * @return Accesses the filter algorithm
+     * @return @ref FilterContext::stateDistribution()
      */
-    virtual KalmanFilter::Ptr filter();
+    virtual EmpiricalMoments& stateDistribution() const
+    {
+
+    }
+
 
 protected:
     KalmanFilter::Ptr kalman_filter_;

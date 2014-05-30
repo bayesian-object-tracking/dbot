@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
-add_definitions(-DUSE_UNTESTED_FUNCTIONS -DPROFILING_ON -DCMAKE_BUILD_TYPE=Release)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
@@ -72,17 +72,20 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/distribution/distribution.hpp
     include/${PROJECT_NAME}/distribution/sampleable.hpp    
     include/${PROJECT_NAME}/distribution/probability_density_function.hpp
+    include/${PROJECT_NAME}/distribution/empirical_moments.hpp
+    include/${PROJECT_NAME}/distribution/analytical_moments.hpp
 
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_mappable.hpp
     include/${PROJECT_NAME}/distribution/gaussian/gaussian_sampleable.hpp
-    include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp
-    include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp
+    include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp    
+    include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp    
     include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
 
     include/${PROJECT_NAME}/filter/types.hpp
     include/${PROJECT_NAME}/filter/filter.hpp
     include/${PROJECT_NAME}/filter/estimate.hpp
     include/${PROJECT_NAME}/filter/filter_context.hpp
+#    include/${PROJECT_NAME}/filter/state_distribution.hpp
 
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
@@ -92,7 +95,7 @@ set(state_filtering_HEADERS
     include/${PROJECT_NAME}/filter/particle/coordinate_filter.hpp
 
     include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/kalman_filter_context.hpp
+    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
 
     include/${PROJECT_NAME}/tools/helper_functions.hpp
     include/${PROJECT_NAME}/tools/image_visualizer.hpp
@@ -123,10 +126,11 @@ set(state_filtering_SOURCES
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.cpp
 
+#    src/${PROJECT_NAME}/filter/particle/particle_filter_context.cpp
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
-    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
-    src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
+#    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
+#    src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
 )
 
 

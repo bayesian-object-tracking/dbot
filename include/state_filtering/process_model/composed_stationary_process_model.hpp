@@ -3,6 +3,7 @@
  *
  *  Copyright (c) 2014 Max-Planck-Institute for Intelligent Systems,
  *                     University of Southern California
+ *    Jan Issac (jan.issac@gmail.com)
  *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *
  *  All rights reserved.
@@ -38,6 +39,7 @@
 
 /**
  * @date 05/25/2014
+ *    Jan Issac (jan.issac@gmail.com)
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
@@ -76,7 +78,7 @@ public: /* distribution traits */
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::RandomsType      RandomsType;
     typedef typename BaseType::CovarianceType   CovarianceType;
-    typedef typename BaseType::ControlInputType ControlInputType;
+    typedef typename BaseType::ControlType ControlType;
 
     typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
@@ -108,7 +110,7 @@ public: /* distribution traits */
     virtual void conditionals(
             const double& delta_time,
             const VariableType& state,
-            const ControlInputType& control)
+            const ControlType& control)
     {
         size_t state_index = 0;
         size_t control_index = 0;
