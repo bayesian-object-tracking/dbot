@@ -4,8 +4,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/validation_gate_base.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/validation_gate_base.hpp>
 
 namespace filter
 {

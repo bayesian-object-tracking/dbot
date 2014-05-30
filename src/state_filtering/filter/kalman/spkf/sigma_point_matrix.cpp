@@ -2,7 +2,7 @@
 #define ROS_ASSERT_ENABLED
 #include <ros/assert.h>
 
-#include "filters/spkf/sigma_point_matrix.hpp"
+#include <state_filtering/filter/kalman/spkf/sigma_point_matrix.hpp>
 
 using namespace filter;
 

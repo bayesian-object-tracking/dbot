@@ -50,20 +50,6 @@
 namespace filter
 {
 
-/**
- * @brief The DynamicVector struct can be anything
- */
-typedef struct { int dummy; } DynamicVector;
-
-/**
- * @brief The DynamicMatrix struct can be anything
- */
-typedef struct { double dummy; } DynamicMatrix;
-
-/**
- * @brief The Measurement struct can be anything
- */
-typedef struct { float dummy; } Measurement;
 
 }
 

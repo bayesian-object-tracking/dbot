@@ -6,9 +6,9 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/sigma_point_matrix.hpp"
-#include "filters/spkf/distribution_descriptor.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/sigma_point_matrix.hpp>
+#include <state_filtering/filter/kalman/spkf/distribution_descriptor.hpp>
 
 namespace filter
 {

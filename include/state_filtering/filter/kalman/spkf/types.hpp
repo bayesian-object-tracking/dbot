@@ -2,15 +2,18 @@
 #ifndef FILTERS_UKF_TYPES_HPP
 #define FILTERS_UKF_TYPES_HPP
 
-#include <Eigen/Eigen>
+#include <Eigen/Dense>
 
-#include "distributions/stationary_process_model.hpp"
-#include "distributions/measurement_model.hpp"
+#include <state_filtering/process_model/stationary_process_model.hpp>
+#include <state_filtering/observation_models/spkf/measurement_model.hpp>
+
+#define DYNAMIC Eigen::Dynamic
 
 namespace filter
 {
-    typedef distr::StationaryProcessModel<DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC> ProcessModel;
-    typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>            MeasurementModel;
+    typedef StationaryProcessModel< > ProcessModel;
+    typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
+    typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>  MeasurementModel;
 
     typedef Eigen::VectorXd                     DynamicVector;
     typedef Eigen::MatrixXd                     DynamicMatrix;

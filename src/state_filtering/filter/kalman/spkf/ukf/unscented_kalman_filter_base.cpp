@@ -6,14 +6,13 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/ukf/ukf_distribution_descriptor.hpp"
-#include "filters/spkf/ukf/unscented_kalman_filter_base.hpp"
+#include <state_filtering/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/unscented_kalman_filter_base.hpp>
 
-#include "tools/macros.hpp"
+#include <state_filtering/tools/macros.hpp>
 
-#include "distributions/gaussian_distribution.hpp"
-//#include "tools/helper_functions.hpp"
-#include "tools/helper_functions2.hpp"
+//#include "distributions/gaussian_distribution.hpp>
+#include <state_filtering/tools/helper_functions.hpp>
 
 using namespace filter;
 using namespace Eigen;
@@ -35,7 +34,7 @@ void UkfInternalsBase::onBeginPredict(const DistributionDescriptor &stateDesc,
 }
 
 void UkfInternalsBase::process(DistributionDescriptor& currentStateDesc,
-                                   const ProcessModel::ControlVector& controlInput,
+                                   const ProcessModel::ControlType &controlInput,
                                    const double deltaTime,
                                    DistributionDescriptor& predictedStateDesc)
 {
@@ -85,6 +84,7 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
     DynamicVector& augmentedState = ukfAugmentedStateDesc.mean();
     CovarianceMatrix& augmentedCovariance = ukfAugmentedStateDesc.covariance();
 
+    /*
     // prepare state gaussian (now considering only the process model)
     switch (processModel_->model_type())
     {
@@ -127,10 +127,44 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
                                   processModel_->noise_dimension(),
                                   processModel_->noise_dimension()).setIdentity();
     }
+    */
+
+    // TODO update. in the mean time assume it's NonLinearNonAdditiveNoise
+    int augmentedDimension = stateDimension + processModel_->randomsSize();
+
+    // NOTE STDCOUT
+    // std::cout << "augmentedDimension = " << augmentedDimension << std::endl;
+
+    augmentedState = DynamicVector(augmentedDimension);
+    augmentedCovariance = CovarianceMatrix(augmentedDimension, augmentedDimension);
+
+    std::vector<int> segmentsDimensions;
+    segmentsDimensions.push_back(stateDimension);
+    segmentsDimensions.push_back(processModel_->randomsSize());
+    ukfAugmentedStateDesc.segmentsDimensions(segmentsDimensions);
+
+    // x' = [x 0]^T
+    augmentedState.segment(0, stateDimension) = stateDesc.mean();
+    augmentedState.segment(stateDimension, processModel_->randomsSize()).setZero();
+
+    //       | P  0 |
+    // P^a = | 0  Q |, with Q = I
+
+    augmentedCovariance.setZero(augmentedDimension, augmentedDimension);
+
+    augmentedCovariance.block(0,
+                              0,
+                              stateDimension,
+                              stateDimension) = stateDesc.covariance();
+
+    augmentedCovariance.block(stateDimension,
+                              stateDimension,
+                              processModel_->randomsSize(),
+                              processModel_->randomsSize()).setIdentity();
 }
 
 void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
-                           const ProcessModel::ControlVector& control,
+                           const ProcessModel::ControlType &control,
                            const double deltaTime,
                            SigmaPointMatrix& processedSigmaPoints,
                            int stateDimension)
@@ -155,12 +189,12 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
 
         // Only for non-additive noise process models. For additive process model noise this
         // is not needed
-        ProcessModel::NoiseVector processNoise =
-                sigmaPoints.col(i).segment(stateDimension, processModel_->noise_dimension());
+        ProcessModel::RandomsType processNoise =
+                sigmaPoints.col(i).segment(stateDimension, processModel_->randomsSize());
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());
 
-        processedSigmaPoints.point(i, processModel_->MapFromGaussian(processNoise),
+        processedSigmaPoints.point(i, processModel_->mapFromGaussian(processNoise),
                                       sigmaPoints.meanWeight(i),
                                       sigmaPoints.covWeight(i));
 

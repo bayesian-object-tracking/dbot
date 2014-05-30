@@ -1,5 +1,5 @@
 
-#include "filters/spkf/ellipsoidal_validation_gate.hpp"
+#include <state_filtering/filter/kalman/spkf/ellipsoidal_validation_gate.hpp>
 
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/inverse_chi_squared.hpp>

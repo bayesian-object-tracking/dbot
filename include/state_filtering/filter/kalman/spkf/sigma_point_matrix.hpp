@@ -6,8 +6,8 @@
 
 #include <vector>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/distribution_descriptor.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/distribution_descriptor.hpp>
 
 namespace filter
 {

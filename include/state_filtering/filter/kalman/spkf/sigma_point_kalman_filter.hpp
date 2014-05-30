@@ -6,10 +6,10 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/sigma_point_transform.hpp"
-#include "filters/spkf/distribution_descriptor.hpp"
-#include "filters/spkf/validation_gate_base.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/sigma_point_transform.hpp>
+#include <state_filtering/filter/kalman/spkf/distribution_descriptor.hpp>
+#include <state_filtering/filter/kalman/spkf/validation_gate_base.hpp>
 
 namespace filter
 {
@@ -20,7 +20,7 @@ namespace filter
 
     public:
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::ControlVector& controlInput,
+                             const ProcessModel::ControlType& controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc) = 0;
 
@@ -64,7 +64,7 @@ namespace filter
          *
          * @param processModel Used process model
          */
-        virtual void processModel(const ProcessModel::Ptr& _processModel)
+        virtual void processModel(const ProcessModelPtr& _processModel)
         {
             processModel_ = _processModel;
         }
@@ -99,7 +99,7 @@ namespace filter
         /**
          * Returns the process model
          */
-        virtual ProcessModel::Ptr processModel()
+        virtual ProcessModelPtr processModel()
         {
             return processModel_;
         }
@@ -129,7 +129,7 @@ namespace filter
 
     protected:
         SpkfInternals::Ptr internalFilter;
-        ProcessModel::Ptr processModel_;
+        ProcessModelPtr processModel_;
         MeasurementModel::Ptr measurementModel_;
         SigmaPointTransform::Ptr sigmaPointTransform_;
         ValidationGate::Ptr validationGate_;

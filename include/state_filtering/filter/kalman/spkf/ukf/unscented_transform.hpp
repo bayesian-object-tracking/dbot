@@ -8,8 +8,8 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/sigma_point_transform.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/sigma_point_transform.hpp>
 
 namespace filter
 {

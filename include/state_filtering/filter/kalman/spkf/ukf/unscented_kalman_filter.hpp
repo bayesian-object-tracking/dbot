@@ -7,9 +7,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "filters/spkf/sigma_point_kalman_filter.hpp"
-#include "filters/spkf/ukf/unscented_kalman_filter_base.hpp"
-#include "filters/spkf/ukf/unscented_transform.hpp"
+#include <state_filtering/filter/kalman/spkf/sigma_point_kalman_filter.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/unscented_kalman_filter_base.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/unscented_transform.hpp>
 
 namespace filter
 {

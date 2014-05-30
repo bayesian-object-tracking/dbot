@@ -7,8 +7,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "filters/spkf/sigma_point_kalman_filter.hpp"
-#include "filters/spkf/ukf/unscented_transform.hpp"
+#include <state_filtering/filter/kalman/spkf/sigma_point_kalman_filter.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/unscented_transform.hpp>
 
 namespace filter
 {
@@ -30,7 +30,7 @@ namespace filter
          * @see SpkfInternals::
          */
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::ControlVector& controlInput,
+                             const ProcessModel::ControlType& controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc);
 
@@ -56,7 +56,7 @@ namespace filter
          *
          */
         virtual void process(const SigmaPointMatrix& sigmaPoints,
-                             const ProcessModel::ControlVector& control,
+                             const ProcessModel::ControlType& control,
                              const double deltaTime,
                              SigmaPointMatrix& processedSigmaPoints,
                              int stateDimension);

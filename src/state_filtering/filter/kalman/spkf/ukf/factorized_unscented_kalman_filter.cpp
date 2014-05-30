@@ -4,8 +4,8 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/ukf/ukf_distribution_descriptor.hpp"
-#include "filters/spkf/ukf/factorized_unscented_kalman_filter.hpp"
+#include <state_filtering/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.hpp>
 
 using namespace filter;
 

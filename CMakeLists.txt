@@ -5,9 +5,9 @@ set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs)
 
-find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(PCL 1.3 REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -106,22 +106,35 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.hpp
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.hpp
+    include/${PROJECT_NAME}/observation_models/spkf/model_types.hpp
+    include/${PROJECT_NAME}/observation_models/spkf/measurement_model.hpp
+    include/${PROJECT_NAME}/observation_models/spkf/depth_measurement_model.hpp
 
-    ## Particle specific implementations ##
+    ## Particle specific implementations
     include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
     include/${PROJECT_NAME}/filter/particle/coordinate_filter.hpp
 
-    ## SPKF specific implementations ##
-#    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
-#    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
-#    include/${PROJECT_NAME}/filters/spkf/sigma_point_matrix.hpp
-#    include/${PROJECT_NAME}/filters/spkf/euclidean_validation_gate.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ellipsoidal_validation_gate.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_transform.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ukf/kappa_unscented_transform.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter_base.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter.hpp
-#    include/${PROJECT_NAME}/filters/spkf/ukf/factorized_unscented_kalman_filter.hpp
+    ## SPKF specific interface
+    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/distribution_descriptor.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/euclidean_validation_gate.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ellipsoidal_validation_gate.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/types.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_matrix.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_transform.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_kalman_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/spkf_state_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/validation_gate_base.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/zero_validation_gate.hpp
+
+    # Spkf specific implementations
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_transform.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/kappa_unscented_transform.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter_base.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.hpp
+    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp
 
     # tools
     include/${PROJECT_NAME}/tools/helper_functions.hpp
@@ -140,20 +153,19 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.cpp
 
-    ## Particle specific implementations ##
+    ## Particle specific implementations
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
-    ## SPKF specific implementations ##
-#    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
-#    src/${PROJECT_NAME}/filter/kalman/kalman_filter_context.cpp
-#    src/${PROJECT_NAME}/filters/spkf/sigma_point_matrix.cpp
-#    src/${PROJECT_NAME}/filters/spkf/euclidean_validation_gate.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ellipsoidal_validation_gate.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_transform.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ukf/kappa_unscented_transform.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter_base.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ukf/unscented_kalman_filter.cpp
-#    src/${PROJECT_NAME}/filters/spkf/ukf/factorized_unscented_kalman_filter.cpp
+    ## SPKF specific implementations
+    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_matrix.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/euclidean_validation_gate.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ellipsoidal_validation_gate.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_transform.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/kappa_unscented_transform.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter_base.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter.cpp
+    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.cpp
 
     src/${PROJECT_NAME}/tools/image_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp

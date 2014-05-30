@@ -50,11 +50,13 @@
 // boost
 #include <boost/shared_ptr.hpp>
 
-#include <state_filtering/filter/estimate.hpp>
 #include <state_filtering/filter/filter_context.hpp>
 
 namespace filter
 {
+
+struct Estimate { };
+struct Measurement { };
 
 /**
  * @brief The KalmanFilter interface

@@ -4,7 +4,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "filters/spkf/types.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
 
 namespace filter
 {

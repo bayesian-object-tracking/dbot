@@ -6,10 +6,10 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/types.hpp"
-#include "filters/spkf/sigma_point_transform.hpp"
-#include "filters/spkf/distribution_descriptor.hpp"
-#include "filters/spkf/sigma_point_kalman_filter.hpp"
+#include <state_filtering/filter/kalman/spkf/types.hpp>
+#include <state_filtering/filter/kalman/spkf/sigma_point_transform.hpp>
+#include <state_filtering/filter/kalman/spkf/distribution_descriptor.hpp>
+#include <state_filtering/filter/kalman/spkf/sigma_point_kalman_filter.hpp>
 
 namespace filter
 {

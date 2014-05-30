@@ -4,8 +4,8 @@
 
 #include <Eigen/Eigen>
 
-#include "filters/spkf/ukf/ukf_distribution_descriptor.hpp"
-#include "filters/spkf/ukf/unscented_kalman_filter.hpp"
+#include <state_filtering/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp>
+#include <state_filtering/filter/kalman/spkf/ukf/unscented_kalman_filter.hpp>
 
 using namespace filter;
 
@@ -93,7 +93,7 @@ void UkfInternals::computeCrossCovariance(const SigmaPointMatrix& predictedState
 {
     measureStateCovariance.setZero(stateMean.rows(), measurementMean.rows());
 
-    ProcessModel::StateVector zeroMeanState;
+    ProcessModel::VariableType zeroMeanState;
     MeasurementModel::MeasurementVector zeroMeanMeasurement;
 
     for (int i = 0; i < predictedStateSigmaPoints.cols(); i++)
