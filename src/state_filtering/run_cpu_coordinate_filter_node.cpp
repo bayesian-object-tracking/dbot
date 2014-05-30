@@ -58,7 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // distributions
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/process_model/composed_stationary_process_model.hpp>
 #include <state_filtering/process_model/brownian_process_model.hpp>

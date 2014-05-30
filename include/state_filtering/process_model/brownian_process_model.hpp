@@ -50,8 +50,8 @@
 
 #include <state_filtering/tools/helper_functions.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
-#include <state_filtering/distribution/brownian/damped_brownian_motion.hpp>
-#include <state_filtering/distribution/brownian/integrated_damped_brownian_motion.hpp>
+#include <state_filtering/distribution/implementations/damped_brownian_motion.hpp>
+#include <state_filtering/distribution/implementations/integrated_damped_brownian_motion.hpp>
 
 namespace filter
 {

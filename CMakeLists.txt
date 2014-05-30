@@ -68,19 +68,22 @@ catkin_package(
 include_directories(include)
 
 set(state_filtering_headers
-    # distribution interface
+    # distribution
     include/${PROJECT_NAME}/distribution/distribution.hpp
-    include/${PROJECT_NAME}/distribution/sampleable.hpp    
-    include/${PROJECT_NAME}/distribution/probability_density_function.hpp
-    include/${PROJECT_NAME}/distribution/empirical_moments.hpp
-    include/${PROJECT_NAME}/distribution/analytical_moments.hpp
 
-    # distribution specializations
-    include/${PROJECT_NAME}/distribution/gaussian/gaussian_mappable.hpp
-    include/${PROJECT_NAME}/distribution/gaussian/gaussian_sampleable.hpp
-    include/${PROJECT_NAME}/distribution/gaussian/gaussian_distribution.hpp    
-    include/${PROJECT_NAME}/distribution/brownian/damped_brownian_motion.hpp    
-    include/${PROJECT_NAME}/distribution/brownian/integrated_damped_brownian_motion.hpp
+    # distribution features
+    include/${PROJECT_NAME}/distribution/features/unnormalized_evaluable.hpp
+    include/${PROJECT_NAME}/distribution/features/evaluable.hpp
+    include/${PROJECT_NAME}/distribution/features/sampleable.hpp
+    include/${PROJECT_NAME}/distribution/features/gaussian_sampleable.hpp
+    include/${PROJECT_NAME}/distribution/features/gaussian_mappable.hpp
+    include/${PROJECT_NAME}/distribution/features/moments_estimable.hpp
+    include/${PROJECT_NAME}/distribution/features/moments_solvable.hpp
+
+    # distribution implementations
+    include/${PROJECT_NAME}/distribution/implementations/gaussian_distribution.hpp
+    include/${PROJECT_NAME}/distribution/implementations/damped_brownian_motion.hpp
+    include/${PROJECT_NAME}/distribution/implementations/integrated_damped_brownian_motion.hpp
 
     # filter interface
     include/${PROJECT_NAME}/filter/types.hpp

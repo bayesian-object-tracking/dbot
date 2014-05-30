@@ -44,42 +44,69 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_FILTER_ANALYTICAl_MOMENTS_HPP
-#define STATE_FILTERING_FILTER_ANALYTICAl_MOMENTS_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_GAUSSIAN_SAMPLEABLE_HPP
+#define STATE_FILTERING_DISTRIBUTION_FEATURES_GAUSSIAN_SAMPLEABLE_HPP
 
-#include <state_filtering/distribution/empirical_moments.hpp>
+// boost
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+
+#include <state_filtering/tools/macros.hpp>
+#include <state_filtering/filter/types.hpp>
+#include <state_filtering/distribution/distribution.hpp>
+#include <state_filtering/distribution/features/gaussian_mappable.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class AnalyticalMoments:
-    public EmpiricalMoments<ScalarType_, SIZE>
+template <typename GaussianMappableType>
+class GaussianSampleable
 {
 public:
-    typedef EmpiricalMoments<ScalarType_, SIZE>     BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
-    typedef typename BaseType::CovarianceType       CovarianceType;
+    typedef typename GaussianMappableType::VariableType  VariableType;
+    typedef typename GaussianMappableType::RandomsType   RandomsType;
 
-    virtual ~AnalyticalMoments() { }
-
-    virtual VariableType emiricalMean()
+    GaussianSampleable():
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        return mean();
+
     }
 
-    virtual CovarianceType emiricalCovariance()
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~GaussianSampleable() { }
+
+    /**
+     * @brief Returns a random sample from the underlying distribution
+     *
+     * Returns a random sample from the underlying distribution by gaussian sample mapping
+     *
+     * @return random sample from underlying distribution
+     */
+    virtual VariableType sample()
     {
-        return covariance();
+        GaussianMappableType* mappable_this = dynamic_cast<GaussianMappableType*>(this);
+
+        RandomsType iso_sample(mappable_this->randomsSize());
+
+        for (int i = 0; i < mappable_this->randomsSize(); i++)
+        {
+            iso_sample(i) = gaussian_generator_();
+        }        
+
+        return mappable_this->mapFromGaussian(iso_sample);
     }
 
-    virtual VariableType mean() const = 0;
-    virtual CovarianceType covariance() const = 0;
-
-    virtual void mean(const VariableType& mean) = 0;
-    virtual void covariance(const CovarianceType& covariance) = 0;
+protected:
+    boost::mt19937 generator_;
+    boost::normal_distribution<> gaussian_distribution_;
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > gaussian_generator_;
 };
+
 
 }
 

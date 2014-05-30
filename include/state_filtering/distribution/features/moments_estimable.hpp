@@ -44,53 +44,28 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
-#define STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
+#ifndef STATE_FILTERING_FILTER_FEATURES_MOMENTS_ESTIMABLE_HPP
+#define STATE_FILTERING_FILTER_FEATURES_MOMENTS_ESTIMABLE_HPP
 
-// eigen
-#include <Eigen/Dense>
-
-// boost
-#include <boost/shared_ptr.hpp>
-
-// state_filtering
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/features/gaussian_mappable.hpp>
-#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
-#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType_ = double,
-          int VARIABLE_SIZE = Eigen::Dynamic,
-          int CONTROL_SIZE = Eigen::Dynamic,
-          int RANDOMS_SIZE = Eigen::Dynamic>
-class StationaryProcessModel:
-        public GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE>,
-        public GaussianSampleable<GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> >
+template <typename ScalarType_, int SIZE>
+class EmpiricalMoments:
+    public Distribution<ScalarType_, SIZE>
 {
-public: /* distribution traits */
-    typedef GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> BaseType;
+public:
+    typedef Distribution<ScalarType_, SIZE>         BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VariableType         VariableType;
+    typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
 
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BaseType::RandomsType                          RandomsType;
-    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
-    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlType;
+    virtual ~EmpiricalMoments() { }
 
-    virtual ~StationaryProcessModel() { }
-
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const ControlType& control) = 0;
-
-    virtual void conditionals(const double& delta_time, const VariableType& state)
-    {
-        conditionals(delta_time, state, ControlType::Zero(controlSize()));
-    }
-
-    virtual int controlSize() const = 0;
+    virtual VariableType emiricalMean() = 0;
+    virtual CovarianceType emiricalCovariance() = 0;
 };
 
 }

@@ -58,10 +58,10 @@
 
 // state_filtering
 #include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/probability_density_function.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_mappable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_sampleable.hpp>
-#include <state_filtering/distribution/gaussian/gaussian_distribution.hpp>
+#include <state_filtering/distribution/features/evaluable.hpp>
+#include <state_filtering/distribution/features/gaussian_mappable.hpp>
+#include <state_filtering/distribution/features/gaussian_sampleable.hpp>
+#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 #include <state_filtering/process_model/stationary_process_model.hpp>
 
