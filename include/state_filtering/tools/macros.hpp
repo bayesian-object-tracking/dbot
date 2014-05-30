@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define RESET gettimeofday(&profiling_start_time, NULL);
 	#define MEASURE(text) 	gettimeofday(&profiling_end_time, NULL); std::cout << "time for " << text << " " \
 	<< ((profiling_end_time.tv_sec - profiling_start_time.tv_sec) * 1000000u + profiling_end_time.tv_usec - profiling_start_time.tv_usec) /1000000. \
-	<< " s" << endl; gettimeofday(&profiling_start_time, NULL);
+    << " s" << std::endl; gettimeofday(&profiling_start_time, NULL);
 #else
 	#define INIT_PROFILING
 	#define RESET

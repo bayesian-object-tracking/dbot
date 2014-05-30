@@ -47,7 +47,6 @@
 #ifndef STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_CONTEXT_HPP
 #define STATE_FILTERING_KALMAN_FILTER_KALMAN_FILTER_CONTEXT_HPP
 
-#include <state_filtering/filter/estimate.hpp>
 #include <state_filtering/filter/filter_context.hpp>
 #include <state_filtering/filter/kalman/kalman_filter.hpp>
 

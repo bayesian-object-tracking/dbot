@@ -42,6 +42,8 @@ namespace obj_mod
 class RigidBodyRenderer
 {
 public:
+    typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
+
     RigidBodyRenderer(
             const std::vector<std::vector<Eigen::Vector3d> >& vertices,
             const std::vector<std::vector<std::vector<int> > >& indices,

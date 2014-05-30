@@ -75,8 +75,8 @@ class GaussianDistribution:
         public GaussianSampleable<GaussianMappable<ScalarType_, SIZE, SIZE> >
 {
 public: /* distribution traits */
-    typedef AnalyticalMoments<ScalarType_, SIZE> MomentsBaseType;
-    typedef GaussianMappable<ScalarType_, SIZE, SIZE> MappableBaseType;
+    typedef AnalyticalMoments<ScalarType_, SIZE>        MomentsBaseType;
+    typedef GaussianMappable<ScalarType_, SIZE, SIZE>   MappableBaseType;
 
     typedef typename MomentsBaseType::ScalarType        ScalarType;
     typedef typename MomentsBaseType::VariableType      VariableType;
