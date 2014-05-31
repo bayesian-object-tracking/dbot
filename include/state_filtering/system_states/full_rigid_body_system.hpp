@@ -39,105 +39,145 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-static const unsigned count_per_object = 13;
 
-enum sub_index{position_index = 0, orientation_index = 3, linear_velocity_index = 7, angular_velocity_index = 10};
+template<int body_size>
+struct FullRigidBodySystemTypes
+{
+    enum
+    {
+        COUNT_PER_BODY = 13,
+        POSITION_INDEX = 0,
+        POSITION_COUNT = 3,
+        ORIENTATION_INDEX = 3,
+        ORIENTATION_COUNT = 4,
+        LINEAR_VELOCITY_INDEX = 7,
+        LINEAR_VELOCITY_COUNT = 3,
+        ANGULAR_VELOCITY_INDEX = 10,
+        ANGULAR_VELOCITY_COUNT = 3
+    };
 
+    typedef RigidBodySystem<body_size == -1 ? -1 : body_size * COUNT_PER_BODY> Base;
+};
 
 template<int body_size = -1>
-class FullRigidBodySystem: public RigidBodySystem<body_size == -1 ? -1 : body_size * count_per_object>
+class FullRigidBodySystem: public FullRigidBodySystemTypes<body_size>::Base
 {
 public:
-    static const int size_bodies_ = body_size;
-
-
-    typedef FullRigidBodySystem<body_size> this_type;
-
-//    static const int sizee_states_ = STATE_SIZE;
-
-
-
-    typedef RigidBodySystem<this_type::size_states_> Base;
-
+    typedef FullRigidBodySystemTypes<body_size> Types;
+    typedef typename Types::Base Base;
+    typedef typename Base::StateVector StateVector;
+    typedef typename Base::Quaternion Quaternion;
+    typedef typename Base::RotationMatrix RotationMatrix;
+    typedef typename Base::HomogeneousMatrix HomogeneousMatrix;
+    typedef typename Base::Position Position;
+    typedef typename Base::LinearVelocity LinearVelocity;
+    typedef typename Base::AngularVelocity AngularVelocity;
 
     enum
     {
-        STATE_SIZE = Base::STATE_SIZE
+        SIZE_BODIES = body_size,
+        SIZE_STATE = Base::SIZE_STATE,
+        COUNT_PER_BODY = Types::COUNT_PER_BODY,
+        POSITION_INDEX = Types::POSITION_INDEX,
+        POSITION_COUNT = Types::POSITION_COUNT,
+        ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
+        ORIENTATION_COUNT = Types::ORIENTATION_COUNT,
+        LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
+        LINEAR_VELOCITY_COUNT = Types::LINEAR_VELOCITY_COUNT,
+        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
+        ANGULAR_VELOCITY_COUNT = Types::ANGULAR_VELOCITY_COUNT
     };
 
-    typedef typename Base::StateVector StateVector;
+    typedef Eigen::VectorBlock<StateVector, POSITION_COUNT>         PositionBlock;
+    typedef Eigen::VectorBlock<StateVector, ORIENTATION_COUNT>      OrientationBlock;
+    typedef Eigen::VectorBlock<StateVector, LINEAR_VELOCITY_COUNT>  LinearVelocityBlock;
+    typedef Eigen::VectorBlock<StateVector, ANGULAR_VELOCITY_COUNT> AngularVelocityBlock;
+    typedef Eigen::VectorBlock<StateVector, COUNT_PER_BODY>         SingleBodyBlock;
+
+
+
 
     // constructor for static size without initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     FullRigidBodySystem():
-        Base (StateVector::Zero(this_type::size_states_), body_size)
+        Base(StateVector::Zero(SIZE_STATE),
+             body_size)
     {
         assert_fixed_size<true>();
         reset_quaternions();
     }
     // constructor for dynamic size without initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    FullRigidBodySystem(unsigned object_count):
-        Base (StateVector::Zero(object_count * count_per_object), object_count)
+    FullRigidBodySystem(unsigned count_bodies):
+        Base(StateVector::Zero(count_bodies * COUNT_PER_BODY),
+             count_bodies)
     {
         assert_dynamic_size<true>();
         reset_quaternions();
     }
     // constructor with initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     template <typename T> FullRigidBodySystem(const Eigen::MatrixBase<T>& state_vector):
-        Base (state_vector, state_vector.rows()/count_per_object){ }
+        Base(state_vector,
+             state_vector.rows()/COUNT_PER_BODY){ }
 
     virtual ~FullRigidBodySystem() {}
 
     // implementation of get fcts from parent class --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    virtual Eigen::Quaterniond get_quaternion(const size_t& object_index = 0) const
+    virtual Position get_position(const size_t& object_index = 0) const
     {
-        return Eigen::Quaterniond(this->template middleRows<4>(object_index * count_per_object + orientation_index));
+        return this->template middleRows<POSITION_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-
-    virtual Eigen::Vector3d get_position(const size_t& object_index = 0) const
+    virtual Quaternion get_quaternion(const size_t& object_index = 0) const
     {
-        return this->template middleRows<3>(object_index * count_per_object + position_index);
+        return Quaternion(this->template middleRows<ORIENTATION_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX));
     }
-    virtual Eigen::Vector3d get_linear_velocity(const size_t& object_index = 0) const
+    virtual LinearVelocity get_linear_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<3>(object_index * count_per_object + linear_velocity_index);
+        return this->template middleRows<LINEAR_VELOCITY_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    virtual Eigen::Vector3d get_angular_velocity(const size_t& object_index = 0) const
+    virtual AngularVelocity get_angular_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<3>(object_index * count_per_object + angular_velocity_index);
+        return this->template middleRows<ANGULAR_VELOCITY_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
 
     // child specific fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    Eigen::VectorBlock<StateVector, 3> position(const size_t& object_index = 0)
+    PositionBlock position(const size_t& object_index = 0)
     {
-      return Eigen::VectorBlock<StateVector, 3>(this->derived(), object_index * count_per_object + position_index);
+      return PositionBlock(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-    Eigen::VectorBlock<StateVector, 4> orientation(const size_t& object_index = 0)
+    OrientationBlock orientation(const size_t& object_index = 0)
     {
-      return Eigen::VectorBlock<StateVector, 4>(this->derived(), object_index * count_per_object + orientation_index);
+      return OrientationBlock(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-    Eigen::VectorBlock<StateVector, 3> linear_velocity(const size_t& object_index = 0)
+    LinearVelocityBlock linear_velocity(const size_t& object_index = 0)
     {
-      return Eigen::VectorBlock<StateVector, 3>(this->derived(), object_index * count_per_object + linear_velocity_index);
+      return LinearVelocityBlock(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    Eigen::VectorBlock<StateVector, 3> angular_velocity(const size_t& object_index = 0)
+    AngularVelocityBlock angular_velocity(const size_t& object_index = 0)
     {
-      return Eigen::VectorBlock<StateVector, 3>(this->derived(), object_index * count_per_object + angular_velocity_index);
-    }
-
-    Eigen::VectorBlock<StateVector, count_per_object> operator [](const size_t& object_index)
-    {
-      return Eigen::VectorBlock<StateVector, count_per_object>(this->derived(), object_index * count_per_object);
+      return AngularVelocityBlock(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
 
+    SingleBodyBlock operator [](const size_t& object_index)
+    {
+      return SingleBodyBlock(this->derived(), object_index * COUNT_PER_BODY);
+    }
 
+    // counts
+    virtual unsigned countState() const
+    {
+        return Base::countState();
+    }
+    virtual unsigned countBodies() const
+    {
+        return Base::countBodies();
+    }
 private:
     template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(body_size > -1);}
     template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(body_size == -1);}
 
     void reset_quaternions()
     {
-        for(size_t object_index = 0; object_index < this->count_bodies_; object_index++)
-            this->template middleRows<4>(object_index * count_per_object +  3) = Eigen::Quaterniond::Identity().coeffs();
+        for(size_t object_index = 0; object_index < countBodies(); object_index++)
+            this->template middleRows<4>(object_index * COUNT_PER_BODY +  3) = Quaternion::Identity().coeffs();
     }
 };
 

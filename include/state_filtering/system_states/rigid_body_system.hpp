@@ -35,11 +35,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-template<int state_size = -1>
-class RigidBodySystem: public Eigen::Matrix<double, state_size, 1>
+template<int size_state = -1>
+class RigidBodySystem: public Eigen::Matrix<double, size_state, 1>
 {
 public:
-    typedef Eigen::Matrix<double, state_size, 1> StateVector;
+    typedef Eigen::Matrix<double, size_state, 1> StateVector;
     typedef Eigen::Quaterniond Quaternion;
     typedef Eigen::Matrix3d RotationMatrix;
     typedef Eigen::Matrix4d HomogeneousMatrix;
@@ -49,17 +49,13 @@ public:
 
     enum
     {
-        STATE_SIZE = state_size
+        SIZE_STATE = size_state
     };
 
-    static const int size_states_ = state_size;
-    const unsigned count_states_;
-    const unsigned count_bodies_;
-
-    // constructor
-    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector, const unsigned& object_count):
-        count_states_(state_vector.rows()),
-        count_bodies_(object_count)
+    // constructor and destructor
+    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector, const unsigned& count_bodies):
+        count_state_(state_vector.rows()),
+        count_bodies_(count_bodies)
     {
         *((StateVector*)(this)) = state_vector;
     }
@@ -71,13 +67,13 @@ public:
         *((StateVector*)(this)) = state_vector;
     }
 
-    // get functions
+    // interfaces
     virtual Quaternion          get_quaternion          (const size_t& object_index = 0) const = 0;
     virtual Position            get_position            (const size_t& object_index = 0) const = 0;
     virtual LinearVelocity      get_linear_velocity     (const size_t& object_index = 0) const = 0;
     virtual AngularVelocity     get_angular_velocity    (const size_t& object_index = 0) const = 0;
 
-
+    // implementations
     virtual RotationMatrix get_rotation_matrix(const size_t& object_index = 0) const
     {
         return RotationMatrix(get_quaternion(object_index));
@@ -90,6 +86,20 @@ public:
 
         return homogeneous_matrix;
     }
+
+    // counts
+    virtual unsigned countState() const
+    {
+        return count_state_;
+    }
+    virtual unsigned countBodies() const
+    {
+        return count_bodies_;
+    }
+
+private:
+    const unsigned count_state_;
+    const unsigned count_bodies_;
 };
 
 
