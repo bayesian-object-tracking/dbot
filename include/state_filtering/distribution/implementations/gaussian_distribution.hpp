@@ -103,7 +103,7 @@ public:
 
     virtual ~GaussianDistribution() { }
 
-    virtual VariableType mapFromGaussian(const RandomsType& sample) const
+    virtual VariableType mapNormal(const RandomsType& sample) const
     {
         return mean_ + L_ * sample;
     }

@@ -39,51 +39,58 @@ template<int state_size = -1>
 class RigidBodySystem: public Eigen::Matrix<double, state_size, 1>
 {
 public:
-    typedef Eigen::Matrix<double, state_size, 1> StateVectorType;
+    typedef Eigen::Matrix<double, state_size, 1> StateVector;
+    typedef Eigen::Quaterniond Quaternion;
+    typedef Eigen::Matrix3d RotationMatrix;
+    typedef Eigen::Matrix4d HomogeneousMatrix;
+    typedef Eigen::Vector3d Position;
+    typedef Eigen::Vector3d LinearVelocity;
+    typedef Eigen::Vector3d AngularVelocity;
+
+    enum
+    {
+        STATE_SIZE = state_size
+    };
 
     static const int size_states_ = state_size;
     const unsigned count_states_;
     const unsigned count_bodies_;
 
-//    // constructor for static size without initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//    RigidBodySystem(const unsigned& object_count): state_count_(state_size), body_count_(object_count)
-//    {
-//        assert_fixed_size<true>();
-//    }
-//    // constructor for dynamic size without initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//    RigidBodySystem(const unsigned& state_count, const unsigned& object_count): state_count_(state_count), body_count_(object_count)
-//    {
-//        assert_dynamic_size<true>();
-//    }
-    // constructor with initial value -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // constructor
     template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector, const unsigned& object_count):
         count_states_(state_vector.rows()),
         count_bodies_(object_count)
     {
-        *((Eigen::Matrix<double, state_size, 1>*)(this)) = state_vector;
+        *((StateVector*)(this)) = state_vector;
     }
     virtual ~RigidBodySystem() {}
 
-
-    virtual void set_state(const Eigen::Matrix<double, state_size, 1>& state_vector)
+    // set state
+    virtual void set_state(const StateVector& state_vector)
     {
-        *((Eigen::Matrix<double, state_size, 1>*)(this)) = state_vector;
+        *((StateVector*)(this)) = state_vector;
     }
-    // get functions ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    virtual Eigen::Quaterniond get_quaternion(const size_t& object_index = 0) const = 0;
-    virtual Eigen::Matrix3d get_rotation_matrix(const size_t& object_index = 0) const = 0;
-    virtual Eigen::Matrix4d get_homogeneous_matrix(const size_t& object_index = 0) const = 0;
-    virtual Eigen::Vector3d get_translation(const size_t& object_index = 0) const = 0;
 
-    virtual Eigen::Vector3d get_linear_velocity(const size_t& object_index = 0) const = 0;
-    virtual Eigen::Vector3d get_angular_velocity(const size_t& object_index = 0) const = 0;
+    // get functions
+    virtual Quaternion          get_quaternion          (const size_t& object_index = 0) const = 0;
+    virtual Position            get_position            (const size_t& object_index = 0) const = 0;
+    virtual LinearVelocity      get_linear_velocity     (const size_t& object_index = 0) const = 0;
+    virtual AngularVelocity     get_angular_velocity    (const size_t& object_index = 0) const = 0;
 
-//private:
-//    template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(state_size > -1);}
-//    template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(state_size == -1);}
+
+    virtual RotationMatrix get_rotation_matrix(const size_t& object_index = 0) const
+    {
+        return RotationMatrix(get_quaternion(object_index));
+    }
+    virtual HomogeneousMatrix get_homogeneous_matrix(const size_t& object_index = 0) const
+    {
+        HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
+        homogeneous_matrix.topLeftCorner(3, 3) = get_rotation_matrix(object_index);
+        homogeneous_matrix.topRightCorner(3, 1) = get_position(object_index);
+
+        return homogeneous_matrix;
+    }
 };
-
-
 
 
 

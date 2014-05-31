@@ -75,7 +75,7 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
     {
         // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         process_model_->conditionals(observation_time - parent_times_[state_index], parents_[state_index], control);
-        zero_children_[state_index] = process_model_->mapFromGaussian(Eigen::VectorXd::Zero(dof_count_));
+        zero_children_[state_index] = process_model_->mapNormal(Eigen::VectorXd::Zero(dof_count_));
 
         // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         partial_noises_[state_index].resize(independent_blocks_.size());
@@ -93,7 +93,7 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
                     partial_noise(independent_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
 
                 partial_noises_[state_index][block_index][mult_index] = partial_noise;
-                partial_children_[state_index][block_index][mult_index] = process_model_->mapFromGaussian(partial_noise);
+                partial_children_[state_index][block_index][mult_index] = process_model_->mapNormal(partial_noise);
                 partial_children_occlusion_indices_[state_index][block_index][mult_index] = parent_occlusion_indices_[state_index];
             }
         }
@@ -174,7 +174,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
             for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
                 noise += partial_noises_[state_index][block_index][mult_indices[child_index][block_index]];
 
-            children.push_back(process_model_->mapFromGaussian(noise));
+            children.push_back(process_model_->mapNormal(noise));
             children_times.push_back(observation_time);
             children_multiplicities.push_back(child_multiplicities[child_index]);
             children_occlusion_indices.push_back(parent_occlusion_indices_[state_index]);
@@ -239,7 +239,7 @@ void CoordinateFilter::Propagate(
         for (int i = 0; i < iso_sample.rows(); i++)
             iso_sample(i) = unit_gaussian_.sample()(0);
 
-        parents_[state_index] = process_model_->mapFromGaussian(iso_sample);
+        parents_[state_index] = process_model_->mapNormal(iso_sample);
 
         parent_times_[state_index] = current_time;
     }

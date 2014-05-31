@@ -241,7 +241,7 @@ public:
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         FullRigidBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
-            default_state.translation(object_index) = Vector3d(0, 0, 1.5); // outside of image
+            default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
         cout << "creating intiial stuff" << endl;
         vector<VectorXd> multi_body_samples(single_body_samples.size());
@@ -308,8 +308,7 @@ public:
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
             ri::PublishMarker(mean.get_homogeneous_matrix(i).cast<float>(),
                               ros_cloud.header, object_model_path, object_publisher_,
-                              i,
-                              1, 0, 0);
+                              i, 1, 0, 0);
         }
     }
 

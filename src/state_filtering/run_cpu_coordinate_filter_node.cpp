@@ -105,7 +105,7 @@ int main (int argc, char **argv)
         for(size_t i = 0; i < size_t(initial_sample_count)/clusters.size(); i++)
         {
             FullRigidBodySystem<-1> state(1);
-            state.translation() =
+            state.position() =
                     t_mean +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;

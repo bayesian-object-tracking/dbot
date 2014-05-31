@@ -66,7 +66,7 @@ public:
         for(size_t part_index = 0; part_index < _rigid_body_system->count_bodies_; part_index++)
         {
             _R[part_index] = _rigid_body_system->get_rotation_matrix(part_index);
-            _t[part_index] = _rigid_body_system->get_translation(part_index);
+            _t[part_index] = _rigid_body_system->get_position(part_index);
         }
     }
 

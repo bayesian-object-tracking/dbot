@@ -89,7 +89,7 @@ public: /* distribution traits */
 
     virtual ~ComposedStationaryProcessModel() {}
 
-    virtual VariableType mapFromGaussian(const RandomsType& randoms) const
+    virtual VariableType mapNormal(const RandomsType& randoms) const
     {
         VariableType variables(variableSize());
 
@@ -98,7 +98,7 @@ public: /* distribution traits */
         for(size_t i = 0; i < process_models_.size(); i++)
         {
             variables.middleRows(variable_index, process_models_[i]->variableSize()) =
-                    process_models_[i]->mapFromGaussian(randoms.middleRows(random_index, process_models_[i]->randomsSize()));
+                    process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->randomsSize()));
             variable_index += process_models_[i]->variableSize();
             random_index += process_models_[i]->randomsSize();
         }

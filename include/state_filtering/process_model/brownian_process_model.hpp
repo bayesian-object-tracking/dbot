@@ -49,6 +49,7 @@
 #define STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 
 #include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/system_states/full_rigid_body_system.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/distribution/implementations/damped_brownian_motion.hpp>
 #include <state_filtering/distribution/implementations/integrated_damped_brownian_motion.hpp>
@@ -76,7 +77,7 @@ struct BrownianProcessModelBase<ScalarType_, false>
 {
     enum
     {
-        VariableSize = BrownianProcessModelBase<ScalarType_, true>::VariableSize,
+        VariableSize =BrownianProcessModelBase<ScalarType_, true>::VariableSize,
         RandomsSize = BrownianProcessModelBase<ScalarType_, true>::RandomsSize,
         ControlSize = BrownianProcessModelBase<ScalarType_, true>::ControlSize
     };
@@ -97,7 +98,11 @@ public: /* model traits */
     typedef typename BaseType::VariableType     VariableType;
     typedef typename BaseType::CovarianceType   CovarianceType;
     typedef typename BaseType::RandomsType      RandomsType;
-    typedef typename BaseType::ControlType ControlType;
+    typedef typename BaseType::ControlType      ControlType;
+
+    typedef FullRigidBodySystem<1> StateType;
+
+
 
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
@@ -105,16 +110,15 @@ public: /* model traits */
 public:
     ~BrownianProcessModel() { }
 
-    virtual VariableType mapFromGaussian(const RandomsType& randoms) const
+    virtual VariableType mapNormal(const RandomsType& randoms) const
     {
-        VariableType state(variableSize());
-
-        state.topRows(3) = initial_linear_pose_ +
-                delta_linear_pose_distribution_.mapFromGaussian(randoms.topRows(3));
-        state.middleRows(3, 4) = (initial_angular_pose_ +
-                                  initial_quaternion_matrix_ * delta_angular_pose_distribution_.mapFromGaussian(randoms.bottomRows(3))).normalized();
-        state.middleRows(7, 3) = linear_velocity_distribution_.mapFromGaussian(randoms.topRows(3));
-        state.middleRows(10, 3) = angular_velocity_distribution_.mapFromGaussian(randoms.bottomRows(3));
+        StateType state;
+        state.position() = initial_position_ +
+                delta_position_.mapNormal(randoms.topRows(3));
+        state.middleRows(3, 4) = (initial_orientation_ +
+                                  initial_quaternion_matrix_ * delta_orientation_.mapNormal(randoms.bottomRows(3))).normalized();
+        state.middleRows(7, 3) = linear_velocity_.mapNormal(randoms.topRows(3));
+        state.middleRows(10, 3) = angular_velocity_.mapNormal(randoms.bottomRows(3));
 
         // transform to external representation
         state.middleRows(7, 3) -= state.template middleRows<3>(10).cross(state.template topRows<3>());
@@ -137,27 +141,27 @@ public:
         if(delta_time_ < 0.00001) delta_time_ = 0.00001;
 
 
-        initial_linear_pose_ = state.topRows(3);
-        initial_angular_pose_ = state.middleRows(3, 4);
-        initial_quaternion_matrix_ = hf::QuaternionMatrix(initial_angular_pose_);
+        initial_position_ = state.topRows(3);
+        initial_orientation_ = state.middleRows(3, 4);
+        initial_quaternion_matrix_ = hf::QuaternionMatrix(initial_orientation_);
         initial_linear_velocity_ = state.middleRows(7, 3);
         initial_angular_velocity_ = state.middleRows(10, 3);
 
         // we transform the state which is the pose and velocity with respecto to the origin into our internal representation,
         // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
-        initial_linear_pose_ +=  Eigen::Quaterniond(initial_angular_pose_).toRotationMatrix()*rotation_center_;
-        initial_linear_velocity_ += initial_angular_velocity_.cross(initial_linear_pose_);
+        initial_position_ +=  Eigen::Quaterniond(initial_orientation_).toRotationMatrix()*rotation_center_;
+        initial_linear_velocity_ += initial_angular_velocity_.cross(initial_position_);
 
 
         // todo: should these change coordintes as well?
         linear_acceleration_control_ = control.topRows(3);
         angular_acceleration_control_ = control.bottomRows(3);
 
-        linear_velocity_distribution_.conditionals(delta_time_, initial_linear_velocity_, linear_acceleration_control_);
-        angular_velocity_distribution_.conditionals(delta_time_, initial_angular_velocity_, angular_acceleration_control_);
-        delta_linear_pose_distribution_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
+        linear_velocity_.conditionals(delta_time_, initial_linear_velocity_, linear_acceleration_control_);
+        angular_velocity_.conditionals(delta_time_, initial_angular_velocity_, angular_acceleration_control_);
+        delta_position_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
                                                      initial_linear_velocity_, linear_acceleration_control_);
-        delta_angular_pose_distribution_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
+        delta_orientation_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
                                                       initial_angular_velocity_, angular_acceleration_control_);
     }
 
@@ -169,10 +173,10 @@ public:
     {
         rotation_center_ = rotation_center;
 
-        delta_linear_pose_distribution_.parameters(damping, linear_acceleration_covariance);
-        delta_angular_pose_distribution_.parameters(damping, angular_acceleration_covariance);
-        linear_velocity_distribution_.parameters(damping, linear_acceleration_covariance);
-        angular_velocity_distribution_.parameters(damping, angular_acceleration_covariance);
+        delta_position_.parameters(damping, linear_acceleration_covariance);
+        delta_orientation_.parameters(damping, angular_acceleration_covariance);
+        linear_velocity_.parameters(damping, linear_acceleration_covariance);
+        angular_velocity_.parameters(damping, angular_acceleration_covariance);
     }
 
     virtual int variableSize() const
@@ -193,8 +197,8 @@ public:
 private:
     // conditionals
     double delta_time_;
-    Eigen::Matrix<ScalarType, 3, 1> initial_linear_pose_;
-    Eigen::Matrix<ScalarType, 4, 1> initial_angular_pose_;
+    Eigen::Matrix<ScalarType, 3, 1> initial_position_;
+    Eigen::Matrix<ScalarType, 4, 1> initial_orientation_;
     Eigen::Matrix<ScalarType, 4, 3> initial_quaternion_matrix_;
     Eigen::Matrix<ScalarType, 3, 1> initial_linear_velocity_;
     Eigen::Matrix<ScalarType, 3, 1> initial_angular_velocity_;
@@ -206,10 +210,10 @@ private:
     Eigen::Matrix<ScalarType, 3, 1> rotation_center_;
 
     // distributions
-    AccelerationDistribution delta_linear_pose_distribution_;
-    AccelerationDistribution delta_angular_pose_distribution_;
-    VelocityDistribution linear_velocity_distribution_;
-    VelocityDistribution angular_velocity_distribution_;
+    AccelerationDistribution delta_position_;
+    AccelerationDistribution delta_orientation_;
+    VelocityDistribution linear_velocity_;
+    VelocityDistribution angular_velocity_;
 };
 
 }

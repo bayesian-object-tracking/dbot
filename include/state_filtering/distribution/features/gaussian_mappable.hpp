@@ -94,7 +94,7 @@ public:
      *
      * @return
      */
-    virtual VariableType mapFromGaussian(const RandomsType& sample) const = 0;
+    virtual VariableType mapNormal(const RandomsType& sample) const = 0;
 
     virtual int randomsSize() const = 0;
 
@@ -113,7 +113,7 @@ public:
             normal_sample(i) = gaussian_generator_();
         }
 
-        return mapFromGaussian(normal_sample);
+        return mapNormal(normal_sample);
     }
 
 

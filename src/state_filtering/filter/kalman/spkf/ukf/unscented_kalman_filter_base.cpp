@@ -194,7 +194,7 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());
 
-        processedSigmaPoints.point(i, processModel_->mapFromGaussian(processNoise),
+        processedSigmaPoints.point(i, processModel_->mapNormal(processNoise),
                                       sigmaPoints.meanWeight(i),
                                       sigmaPoints.covWeight(i));
 

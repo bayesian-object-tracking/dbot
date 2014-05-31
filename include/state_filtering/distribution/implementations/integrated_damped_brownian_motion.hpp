@@ -84,9 +84,9 @@ public:
 
     virtual ~IntegratedDampedBrownianMotion() { }
 
-    virtual VariableType mapFromGaussian(const RandomsType& sample) const
+    virtual VariableType mapNormal(const RandomsType& sample) const
     {
-        return distribution_.mapFromGaussian(sample);
+        return distribution_.mapNormal(sample);
     }
 
     virtual void conditionals(const double& delta_time,
