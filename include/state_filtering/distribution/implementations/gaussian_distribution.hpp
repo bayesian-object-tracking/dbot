@@ -96,7 +96,7 @@ public:
         mean_.resize(variable_size, 1);
         covariance_.resize(variable_size, variable_size);
         precision_.resize(variable_size, variable_size);
-        L_.resize(variable_size, variable_size);
+        cholesky_factor_.resize(variable_size, variable_size);
 
         setNormal();
     }
@@ -105,11 +105,12 @@ public:
 
     virtual VariableType mapNormal(const RandomsType& sample) const
     {
-        return mean_ + L_ * sample;
+        return mean_ + cholesky_factor_ * sample;
     }
 
     virtual void setNormal()
     {
+        full_rank_ = true;
         mean(VariableType::Zero(variableSize()));
         covariance(CovarianceType::Identity(variableSize(), variableSize()));
     }
@@ -121,22 +122,25 @@ public:
 
     virtual void covariance(const CovarianceType& covariance)
     {
-        // TODO: it should be able to deal with SEMI definite matrices as well!!
-        // check the rank
-        BOOST_ASSERT_MSG(covariance.colPivHouseholderQr().rank() == covariance.rows() ||
-                         covariance.rows() == covariance.cols(),
-                         "covariance matrix is not full rank");
-
         covariance_ = covariance;
-        precision_ = covariance_.inverse();
-        L_ = covariance_.llt().matrixL();
 
-        // check the rank
-        BOOST_ASSERT_MSG(covariance_.isApprox(L_*L_.transpose()),
-                         "LLT decomposition went wrong. Matrix might not positive definite!");
+        // we assume that the input matrix is positive semidefinite
+        Eigen::LDLT<CovarianceType> ldlt;
+        ldlt.compute(covariance_);
+        CovarianceType L = ldlt.matrixL();
+        VariableType D_sqrt = ldlt.vectorD();
+        for(size_t i = 0; i < D_sqrt.rows(); i++)
+            D_sqrt(i) = std::sqrt(std::fabs(D_sqrt(i)));
+        cholesky_factor_ = ldlt.transpositionsP().transpose()*L*D_sqrt.asDiagonal();
 
-        log_normalizer_ = -0.5
-                * ( log(covariance_.determinant()) + double(covariance.rows()) * log(2.0 * M_PI) );
+        if(covariance.colPivHouseholderQr().rank() == covariance.rows())
+        {
+            full_rank_ = true;
+            precision_ = covariance_.inverse();
+            log_normalizer_ = -0.5 * ( log(covariance_.determinant()) + double(covariance.rows()) * log(2.0 * M_PI) );
+        }
+        else
+            full_rank_ = false;
     }
 
     virtual VariableType mean() const
@@ -151,7 +155,10 @@ public:
 
     virtual ScalarType logProbability(const VariableType& sample) const
     {
-        return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
+        if(full_rank_)
+            return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
+        else
+            return -std::numeric_limits<ScalarType>::infinity();
     }
 
     virtual int variableSize() const
@@ -167,8 +174,9 @@ public:
 protected:
     VariableType mean_;
     CovarianceType covariance_;
+    bool full_rank_;
     CovarianceType precision_;
-    CovarianceType L_;
+    CovarianceType cholesky_factor_;
     double log_normalizer_;
 };
 

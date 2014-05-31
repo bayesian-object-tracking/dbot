@@ -107,6 +107,12 @@ public:
         weights_ = weights;
     }
 
+    virtual void setDeltas(const Deltas& deltas)
+    {
+        deltas_ = deltas;
+        weights_ = Weights::Ones(deltas_.size())/ScalarType_(deltas_.size());
+    }
+
     virtual void getDeltas(Deltas& deltas, Weights& weights) const
     {
         deltas = deltas_;
@@ -124,7 +130,6 @@ public:
 
     virtual CovarianceType covariance() const
     {
-        TO_BE_TESTED
         VariableType cached_mean = mean();
         CovarianceType covariance(CovarianceType::Zero(variableSize(), variableSize()));
         for(size_t i = 0; i < deltas_.size(); i++)

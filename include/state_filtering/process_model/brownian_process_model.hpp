@@ -101,9 +101,6 @@ public: /* model traits */
     typedef typename BaseType::ControlType      ControlType;
 
     typedef FullRigidBodySystem<1> StateType;
-
-
-
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
 
@@ -113,56 +110,48 @@ public:
     virtual VariableType mapNormal(const RandomsType& randoms) const
     {
         StateType state;
-        state.position() = initial_position_ +
-                delta_position_.mapNormal(randoms.topRows(3));
-        state.middleRows(3, 4) = (initial_orientation_ +
-                                  initial_quaternion_matrix_ * delta_orientation_.mapNormal(randoms.bottomRows(3))).normalized();
-        state.middleRows(7, 3) = linear_velocity_.mapNormal(randoms.topRows(3));
-        state.middleRows(10, 3) = angular_velocity_.mapNormal(randoms.bottomRows(3));
+        state.position() = state_.get_position() + delta_position_.mapNormal(randoms.topRows(3));
+        state.orientation() = state_.get_orientation() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3));
+        state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
+        state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
 
-        // transform to external representation
-        state.middleRows(7, 3) -= state.template middleRows<3>(10).cross(state.template topRows<3>());
-        state.topRows(3) -= Eigen::Quaterniond(state.template middleRows<4>(3)).toRotationMatrix()*rotation_center_;
+        // renormalize quaternion
+        state.orientation().normalize();
+
+        // transform to external coordinate system
+        state.linear_velocity() -= state.angular_velocity().cross(state.position());
+        state.position() -= state.get_rotation_matrix()*rotation_center_;
 
         return state;
     }
 
-    virtual void conditionals(
-                const double& delta_time,
-                const VariableType& state,
-                const ControlType& control)
+    virtual void conditionals(const double& delta_time,
+                              const VariableType& state,
+                              const ControlType& control)
     {
-        if(std::isfinite(delta_time))
-            delta_time_ = delta_time;
-        else
-            delta_time_ = 0;
-        // todo this hack is necessary at the moment because the gaussian distribution cannot deal with
-        // covariance matrices which are not full rank, which is the case for time equal to zero
-        if(delta_time_ < 0.00001) delta_time_ = 0.00001;
+        state_ = state;
+        quaternion_map_ = hf::QuaternionMatrix(state_.orientation());
 
-
-        initial_position_ = state.topRows(3);
-        initial_orientation_ = state.middleRows(3, 4);
-        initial_quaternion_matrix_ = hf::QuaternionMatrix(initial_orientation_);
-        initial_linear_velocity_ = state.middleRows(7, 3);
-        initial_angular_velocity_ = state.middleRows(10, 3);
-
-        // we transform the state which is the pose and velocity with respecto to the origin into our internal representation,
+        // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
         // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
-        initial_position_ +=  Eigen::Quaterniond(initial_orientation_).toRotationMatrix()*rotation_center_;
-        initial_linear_velocity_ += initial_angular_velocity_.cross(initial_position_);
+        state_.position() += state_.get_rotation_matrix()*rotation_center_;
+        state_.linear_velocity() += state_.angular_velocity().cross(state_.position());
 
-
-        // todo: should these change coordintes as well?
-        linear_acceleration_control_ = control.topRows(3);
-        angular_acceleration_control_ = control.bottomRows(3);
-
-        linear_velocity_.conditionals(delta_time_, initial_linear_velocity_, linear_acceleration_control_);
-        angular_velocity_.conditionals(delta_time_, initial_angular_velocity_, angular_acceleration_control_);
-        delta_position_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
-                                                     initial_linear_velocity_, linear_acceleration_control_);
-        delta_orientation_.conditionals(delta_time_, Eigen::Vector3d::Zero(),
-                                                      initial_angular_velocity_, angular_acceleration_control_);
+        // todo: should controls change coordintes as well?
+        linear_velocity_.conditionals(delta_time,
+                                      state_.linear_velocity(),
+                                      control.topRows(3));
+        angular_velocity_.conditionals(delta_time,
+                                       state_.angular_velocity(),
+                                       control.bottomRows(3));
+        delta_position_.conditionals(delta_time,
+                                     Eigen::Vector3d::Zero(),
+                                     state_.linear_velocity(),
+                                     control.topRows(3));
+        delta_orientation_.conditionals(delta_time,
+                                        Eigen::Vector3d::Zero(),
+                                        state_.angular_velocity(),
+                                        control.bottomRows(3));
     }
 
     virtual void parameters(
@@ -183,12 +172,10 @@ public:
     {
         return Base::VariableSize;
     }
-
     virtual int randomsSize() const
     {
         return Base::RandomsSize;
     }
-
     virtual int controlSize() const
     {
         return Base::ControlSize;
@@ -196,15 +183,8 @@ public:
 
 private:
     // conditionals
-    double delta_time_;
-    Eigen::Matrix<ScalarType, 3, 1> initial_position_;
-    Eigen::Matrix<ScalarType, 4, 1> initial_orientation_;
-    Eigen::Matrix<ScalarType, 4, 3> initial_quaternion_matrix_;
-    Eigen::Matrix<ScalarType, 3, 1> initial_linear_velocity_;
-    Eigen::Matrix<ScalarType, 3, 1> initial_angular_velocity_;
-
-    Eigen::Matrix<ScalarType, 3, 1> linear_acceleration_control_;
-    Eigen::Matrix<ScalarType, 3, 1> angular_acceleration_control_;
+    StateType state_;
+    Eigen::Matrix<ScalarType, 4, 3> quaternion_map_;
 
     // parameters
     Eigen::Matrix<ScalarType, 3, 1> rotation_center_;

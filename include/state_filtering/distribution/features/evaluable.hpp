@@ -72,7 +72,7 @@ public:
      */
     virtual ScalarType probability(const VariableType& sample) const
     {
-        std::exp(logProbability(sample));
+        return std::exp(logProbability(sample));
     }
 
     /**

@@ -157,6 +157,36 @@ public:
             vector<VectorXd> single_body_samples,
             sensor_msgs::PointCloud2 ros_cloud)
     {
+//        typedef filter::GaussianDistribution<double, 3> Gaussian;
+//        typedef filter::SumOfDeltas<double, 3> Deltas;
+
+//        typedef Gaussian::CovarianceType Covariance;
+//        typedef Gaussian::VariableType Sample;
+
+//        Gaussian gaussian;
+//        Eigen::Matrix3d R; R = Eigen::AngleAxisd(2.1, Vector3d(1,0,0));
+//        gaussian.covariance(R*Sample(100.2, 10., 3.).asDiagonal()*R.transpose());
+//        gaussian.mean(Sample(2.2, 1, 3.3));
+
+//        vector<Sample> samples;
+//        for(size_t i = 0; i < 100000; i++)
+//            samples.push_back(gaussian.sample());
+
+//        Deltas deltas;
+//        deltas.setDeltas(samples);
+
+//        cout << "mean: " << gaussian.mean().transpose() << endl;
+//        cout << "empirical mean: " << deltas.mean().transpose() << endl;
+//        cout << "covariance: " << endl << gaussian.covariance() << endl;
+//        cout << "empirical covariance: " << endl << deltas.covariance() << endl;
+
+//        cout << "probability: " << gaussian.probability(samples[0]) << endl
+//             << "log probablity: " << gaussian.logProbability(samples[0]) << endl;
+
+//        exit(-1);
+
+
+
         boost::mutex::scoped_lock lock(mutex_);
         vector<float> observations; size_t n_rows, n_cols;
         pi::Ros2Std(ros_cloud, downsampling_factor_, observations, n_rows, n_cols);

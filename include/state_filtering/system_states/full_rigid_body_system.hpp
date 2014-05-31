@@ -70,6 +70,7 @@ public:
     typedef typename Base::RotationMatrix RotationMatrix;
     typedef typename Base::HomogeneousMatrix HomogeneousMatrix;
     typedef typename Base::Position Position;
+    typedef Eigen::Vector4d Orientation;
     typedef typename Base::LinearVelocity LinearVelocity;
     typedef typename Base::AngularVelocity AngularVelocity;
 
@@ -125,9 +126,13 @@ public:
     {
         return this->template middleRows<POSITION_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
+    virtual Orientation get_orientation(const size_t& object_index = 0) const
+    {
+        return this->template middleRows<ORIENTATION_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+    }
     virtual Quaternion get_quaternion(const size_t& object_index = 0) const
     {
-        return Quaternion(this->template middleRows<ORIENTATION_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX));
+        return Quaternion(get_orientation(object_index));
     }
     virtual LinearVelocity get_linear_velocity(const size_t& object_index = 0) const
     {
@@ -160,6 +165,8 @@ public:
     {
       return SingleBodyBlock(this->derived(), object_index * COUNT_PER_BODY);
     }
+
+
 
     // counts
     virtual unsigned countState() const

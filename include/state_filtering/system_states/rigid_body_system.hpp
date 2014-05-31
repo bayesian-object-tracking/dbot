@@ -98,8 +98,8 @@ public:
     }
 
 private:
-    const unsigned count_state_;
-    const unsigned count_bodies_;
+    unsigned count_state_;
+    unsigned count_bodies_;
 };
 
 
