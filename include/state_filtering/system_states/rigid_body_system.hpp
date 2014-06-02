@@ -39,13 +39,16 @@ template<int size_state = -1>
 class RigidBodySystem: public Eigen::Matrix<double, size_state, 1>
 {
 public:
-    typedef Eigen::Matrix<double, size_state, 1> StateVector;
-    typedef Eigen::Quaterniond Quaternion;
-    typedef Eigen::Matrix3d RotationMatrix;
-    typedef Eigen::Matrix4d HomogeneousMatrix;
-    typedef Eigen::Vector3d Position;
-    typedef Eigen::Vector3d LinearVelocity;
-    typedef Eigen::Vector3d AngularVelocity;
+    typedef double Scalar;
+    typedef Eigen::Matrix<Scalar, size_state, 1> State;
+    typedef Eigen::Matrix<Scalar, 3, 1> Vector;
+
+    // rotation types
+    typedef Eigen::AngleAxis<Scalar> AngleAxis;
+    typedef Eigen::Quaternion<Scalar>   Quaternion;
+    typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
+    typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
+
 
     enum
     {
@@ -53,31 +56,46 @@ public:
     };
 
     // constructor and destructor
-    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector, const unsigned& count_bodies):
+    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector,
+                                          const unsigned& count_bodies):
         count_state_(state_vector.rows()),
         count_bodies_(count_bodies)
     {
-        *((StateVector*)(this)) = state_vector;
+        *((State*)(this)) = state_vector;
     }
     virtual ~RigidBodySystem() {}
 
     // set state
-    virtual void set_state(const StateVector& state_vector)
+    virtual void set_state(const State& state_vector)
     {
-        *((StateVector*)(this)) = state_vector;
+        *((State*)(this)) = state_vector;
     }
 
     // interfaces
-    virtual Quaternion          get_quaternion          (const size_t& object_index = 0) const = 0;
-    virtual Position            get_position            (const size_t& object_index = 0) const = 0;
-    virtual LinearVelocity      get_linear_velocity     (const size_t& object_index = 0) const = 0;
-    virtual AngularVelocity     get_angular_velocity    (const size_t& object_index = 0) const = 0;
+    virtual Vector  get_position            (const size_t& object_index = 0) const = 0;
+    virtual Vector  get_euler_vector        (const size_t& object_index = 0) const = 0;
+    virtual Vector  get_linear_velocity     (const size_t& object_index = 0) const = 0;
+    virtual Vector  get_angular_velocity    (const size_t& object_index = 0) const = 0;
 
-    // implementations
+    // other representations for orientation
+    virtual Quaternion get_quaternion(const size_t& object_index = 0) const
+    {
+        Vector euler_vector = get_euler_vector(object_index);
+        Scalar angle = euler_vector.norm();
+        Vector axis = euler_vector.normalized();
+        Quaternion quaternion;
+        if(std::isfinite(axis.norm()))
+            quaternion = AngleAxis(angle, axis);
+        else
+            quaternion = Quaternion::Identity();
+
+        return quaternion;
+    }
     virtual RotationMatrix get_rotation_matrix(const size_t& object_index = 0) const
     {
         return RotationMatrix(get_quaternion(object_index));
     }
+    // homo geneous matrix
     virtual HomogeneousMatrix get_homogeneous_matrix(const size_t& object_index = 0) const
     {
         HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
@@ -101,8 +119,6 @@ private:
     unsigned count_state_;
     unsigned count_bodies_;
 };
-
-
 
 
 #endif

@@ -110,13 +110,22 @@ public:
     virtual VariableType mapNormal(const RandomsType& randoms) const
     {
         StateType state;
+
+
+        state = state_;
+
+
+
         state.position() = state_.get_position() + delta_position_.mapNormal(randoms.topRows(3));
-        state.orientation() = state_.get_orientation() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3));
+        state.set_quaternion(state_.get_quaternion().coeffs() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3)));
+//        state.orientation() = state_.get_orientation() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3));
         state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
         state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
 
         // renormalize quaternion
-        state.orientation().normalize();
+//        state.orientation().normalize();
+
+
 
         // transform to external coordinate system
         state.linear_velocity() -= state.angular_velocity().cross(state.position());
@@ -130,7 +139,7 @@ public:
                               const ControlType& control)
     {
         state_ = state;
-        quaternion_map_ = hf::QuaternionMatrix(state_.orientation());
+        quaternion_map_ = hf::QuaternionMatrix(state_.get_quaternion().coeffs());
 
         // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
         // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center

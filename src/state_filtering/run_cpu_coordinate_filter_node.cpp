@@ -109,8 +109,8 @@ int main (int argc, char **argv)
                     t_mean +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;
-            state.orientation() = Quaterniond(
-                        AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean).coeffs();
+            state.set_quaternion(Quaterniond(
+                        AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean).coeffs());
 
             initial_states.push_back(state);
         }
