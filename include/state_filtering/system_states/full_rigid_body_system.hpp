@@ -46,14 +46,11 @@ struct FullRigidBodySystemTypes
     enum
     {
         COUNT_PER_BODY = 12,
+        BLOCK_COUNT = 3,
         POSITION_INDEX = 0,
-        POSITION_COUNT = 3,
         ORIENTATION_INDEX = 3,
-        ORIENTATION_COUNT = 3,
         LINEAR_VELOCITY_INDEX = 6,
-        LINEAR_VELOCITY_COUNT = 3,
         ANGULAR_VELOCITY_INDEX = 9,
-        ANGULAR_VELOCITY_COUNT = 3
     };
 
     typedef RigidBodySystem<body_size == -1 ? -1 : body_size * COUNT_PER_BODY> Base;
@@ -66,35 +63,29 @@ public:
     typedef FullRigidBodySystemTypes<body_size> Types;
     typedef typename Types::Base Base;
 
-    typedef typename Base::Scalar Scalar;
-    typedef typename Base::State State;
-    typedef typename Base::Vector Vector;
+    typedef typename Base::Scalar   Scalar;
+    typedef typename Base::State    State;
+    typedef typename Base::Vector   Vector;
 
-    typedef typename Base::AngleAxis AngleAxis;
-    typedef typename Base::Quaternion Quaternion;
-    typedef typename Base::RotationMatrix RotationMatrix;
-    typedef typename Base::HomogeneousMatrix HomogeneousMatrix;
+    typedef typename Base::AngleAxis            AngleAxis;
+    typedef typename Base::Quaternion           Quaternion;
+    typedef typename Base::RotationMatrix       RotationMatrix;
+    typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
 
     enum
     {
         SIZE_BODIES = body_size,
         SIZE_STATE = Base::SIZE_STATE,
         COUNT_PER_BODY = Types::COUNT_PER_BODY,
+        BLOCK_COUNT = Types::BLOCK_COUNT,
         POSITION_INDEX = Types::POSITION_INDEX,
-        POSITION_COUNT = Types::POSITION_COUNT,
         ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
-        ORIENTATION_COUNT = Types::ORIENTATION_COUNT,
         LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-        LINEAR_VELOCITY_COUNT = Types::LINEAR_VELOCITY_COUNT,
         ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
-        ANGULAR_VELOCITY_COUNT = Types::ANGULAR_VELOCITY_COUNT
     };
 
-    typedef Eigen::VectorBlock<State, POSITION_COUNT>         PositionBlock;
-    typedef Eigen::VectorBlock<State, ORIENTATION_COUNT>      OrientationBlock;
-    typedef Eigen::VectorBlock<State, LINEAR_VELOCITY_COUNT>  LinearVelocityBlock;
-    typedef Eigen::VectorBlock<State, ANGULAR_VELOCITY_COUNT> AngularVelocityBlock;
-    typedef Eigen::VectorBlock<State, COUNT_PER_BODY>         SingleBodyBlock;
+    typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
+    typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
 
 
 
@@ -105,7 +96,6 @@ public:
              body_size)
     {
         assert_fixed_size<true>();
-//        reset_quaternions();
     }
     // constructor for dynamic size without initial value
     FullRigidBodySystem(unsigned count_bodies):
@@ -113,7 +103,6 @@ public:
              count_bodies)
     {
         assert_dynamic_size<true>();
-//        reset_quaternions();
     }
     // constructor with initial value
     template <typename T> FullRigidBodySystem(const Eigen::MatrixBase<T>& state_vector):
@@ -125,56 +114,51 @@ public:
     // implementation of get fcts from parent class
     virtual Vector get_position(const size_t& object_index = 0) const
     {
-        return this->template middleRows<POSITION_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
     virtual Vector get_euler_vector(const size_t& object_index = 0) const
     {
-        return this->template middleRows<ORIENTATION_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
     virtual Vector get_linear_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<LINEAR_VELOCITY_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
     virtual Vector get_angular_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<ANGULAR_VELOCITY_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
 
 
-    virtual void set_quaternion(Quaternion quaternion, const size_t& object_index = 0)
-    {
-        AngleAxis angle_axis(quaternion);
-        euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
-    }
-    virtual void set_quaternion(Eigen::Vector4d quaternion, const size_t& object_index = 0)
+    virtual void set_quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
     {
         AngleAxis angle_axis(quaternion);
         euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
     }
 
     // child specific fcts
-    PositionBlock position(const size_t& object_index = 0)
+    Block position(const size_t& object_index = 0)
     {
-      return PositionBlock(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
+      return Block(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
 
-    OrientationBlock euler_vector(const size_t& object_index = 0)
+    Block euler_vector(const size_t& object_index = 0)
     {
-      return OrientationBlock(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+      return Block(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
 
-    LinearVelocityBlock linear_velocity(const size_t& object_index = 0)
+    Block linear_velocity(const size_t& object_index = 0)
     {
-      return LinearVelocityBlock(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+      return Block(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    AngularVelocityBlock angular_velocity(const size_t& object_index = 0)
+    Block angular_velocity(const size_t& object_index = 0)
     {
-      return AngularVelocityBlock(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+      return Block(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
 
-    SingleBodyBlock operator [](const size_t& object_index)
+    BodyBlock operator [](const size_t& object_index)
     {
-      return SingleBodyBlock(this->derived(), object_index * COUNT_PER_BODY);
+      return BodyBlock(this->derived(), object_index * COUNT_PER_BODY);
     }
 
 

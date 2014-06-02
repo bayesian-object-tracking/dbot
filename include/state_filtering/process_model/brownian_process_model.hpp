@@ -100,6 +100,9 @@ public: /* model traits */
     typedef typename BaseType::RandomsType      RandomsType;
     typedef typename BaseType::ControlType      ControlType;
 
+    typedef typename Eigen::Quaternion<ScalarType_>      Quaternion;
+
+
     typedef FullRigidBodySystem<1> StateType;
     typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
@@ -111,21 +114,11 @@ public:
     {
         StateType state;
 
-
-        state = state_;
-
-
-
         state.position() = state_.get_position() + delta_position_.mapNormal(randoms.topRows(3));
-        state.set_quaternion(state_.get_quaternion().coeffs() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3)));
-//        state.orientation() = state_.get_orientation() + quaternion_map_ * delta_orientation_.mapNormal(randoms.bottomRows(3));
+        state.set_quaternion(Quaternion(state_.get_quaternion().coeffs()
+                                        + quaternion_map_ * delta_orientation_.mapNormal(randoms.template bottomRows(3))));
         state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
         state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
-
-        // renormalize quaternion
-//        state.orientation().normalize();
-
-
 
         // transform to external coordinate system
         state.linear_velocity() -= state.angular_velocity().cross(state.position());

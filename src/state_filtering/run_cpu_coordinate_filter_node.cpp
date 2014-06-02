@@ -110,7 +110,7 @@ int main (int argc, char **argv)
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;
             state.set_quaternion(Quaterniond(
-                        AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean).coeffs());
+                                     AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean));
 
             initial_states.push_back(state);
         }

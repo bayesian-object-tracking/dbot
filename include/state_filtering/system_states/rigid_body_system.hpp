@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <vector>
 #include <boost/static_assert.hpp>
+#include <iostream>
 
 
 
@@ -80,16 +81,12 @@ public:
     // other representations for orientation
     virtual Quaternion get_quaternion(const size_t& object_index = 0) const
     {
-        Vector euler_vector = get_euler_vector(object_index);
-        Scalar angle = euler_vector.norm();
-        Vector axis = euler_vector.normalized();
-        Quaternion quaternion;
+        Scalar angle = get_euler_vector(object_index).norm();
+        Vector axis = get_euler_vector(object_index).normalized();
         if(std::isfinite(axis.norm()))
-            quaternion = AngleAxis(angle, axis);
+            return Quaternion(AngleAxis(angle, axis));
         else
-            quaternion = Quaternion::Identity();
-
-        return quaternion;
+            return Quaternion::Identity();
     }
     virtual RotationMatrix get_rotation_matrix(const size_t& object_index = 0) const
     {
