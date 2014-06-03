@@ -60,8 +60,8 @@ public:
 
     virtual void set_state(const Eigen::VectorXd& state)
     {
-//        _rigid_body_system = state;
-        _rigid_body_system->set_state(state);
+        *_rigid_body_system = state;
+//        _rigid_body_system->set_state(state);
         _R.resize(_rigid_body_system->count_bodies());
         _t.resize(_rigid_body_system->count_bodies());
         for(size_t part_index = 0; part_index < _rigid_body_system->count_bodies(); part_index++)

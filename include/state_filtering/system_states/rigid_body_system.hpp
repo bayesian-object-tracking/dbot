@@ -25,7 +25,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
 #ifndef RIGID_BODY_SYSTEM_HPP_
 #define RIGID_BODY_SYSTEM_HPP_
 
@@ -50,37 +49,31 @@ public:
     typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
     typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
 
-
     enum
     {
         SIZE_STATE = size_state
     };
 
     // constructor and destructor
-    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector,
-                                          const unsigned& count_bodies):
-        count_state_(state_vector.rows()),
-        count_bodies_(count_bodies)
+    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector)
     {
-        *((State*)(this)) = state_vector;
+        *this = state_vector;
     }
     virtual ~RigidBodySystem() {}
 
-
-
-    // set state
-    virtual void set_state(const State& state_vector)
+    template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
     {
+        count_state_ = state_vector.rows();
         *((State*)(this)) = state_vector;
     }
 
-    // interfaces
+    // read
     virtual Vector  position            (const size_t& object_index = 0) const = 0;
     virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
     virtual Vector  linear_velocity     (const size_t& object_index = 0) const = 0;
     virtual Vector  angular_velocity    (const size_t& object_index = 0) const = 0;
 
-    // other representations for orientation
+    // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const
     {
         Scalar angle = euler_vector(object_index).norm();
@@ -94,7 +87,6 @@ public:
     {
         return RotationMatrix(quaternion(object_index));
     }
-    // homogeneous matrix
     virtual HomogeneousMatrix homogeneous_matrix(const size_t& object_index = 0) const
     {
         HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
@@ -109,14 +101,10 @@ public:
     {
         return count_state_;
     }
-    virtual unsigned count_bodies() const
-    {
-        return count_bodies_;
-    }
+    virtual unsigned count_bodies() const = 0;
 
 private:
     unsigned count_state_;
-    unsigned count_bodies_;
 };
 
 

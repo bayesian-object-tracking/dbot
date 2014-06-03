@@ -34,13 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <boost/static_assert.hpp>
 
-
 #include <vector>
 
 
 
-
-template<int body_size>
+template<int size_bodies>
 struct FullRigidBodySystemTypes
 {
     enum
@@ -53,15 +51,15 @@ struct FullRigidBodySystemTypes
         ANGULAR_VELOCITY_INDEX = 9,
     };
 
-    typedef RigidBodySystem<body_size == -1 ? -1 : body_size * COUNT_PER_BODY> Base;
+    typedef RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
 };
 
 
-template<int body_size = -1>
-class FullRigidBodySystem: public FullRigidBodySystemTypes<body_size>::Base
+template<int size_bodies = -1>
+class FullRigidBodySystem: public FullRigidBodySystemTypes<size_bodies>::Base
 {
 public:
-    typedef FullRigidBodySystemTypes<body_size> Types;
+    typedef FullRigidBodySystemTypes<size_bodies> Types;
     typedef typename Types::Base Base;
 
     typedef typename Base::Scalar   Scalar;
@@ -75,7 +73,7 @@ public:
 
     enum
     {
-        SIZE_BODIES = body_size,
+        SIZE_BODIES = size_bodies,
         SIZE_STATE = Base::SIZE_STATE,
         COUNT_PER_BODY = Types::COUNT_PER_BODY,
         BLOCK_COUNT = Types::BLOCK_COUNT,
@@ -88,33 +86,30 @@ public:
     typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
     typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
 
-
     // give access to base member functions (otherwise it is shadowed)
     using Base::quaternion;
     using Base::count_state;
-    using Base::count_bodies;
 
-
-
-
-    // constructor for static size without initial value
+    // constructor for fixed size without initial value
     FullRigidBodySystem():
-        Base(State::Zero(SIZE_STATE),
-             body_size)
+        Base(State::Zero(SIZE_STATE)),
+        count_bodies_(SIZE_BODIES)
     {
         assert_fixed_size<true>();
     }
+
     // constructor for dynamic size without initial value
     FullRigidBodySystem(unsigned count_bodies):
-        Base(State::Zero(count_bodies * COUNT_PER_BODY),
-             count_bodies)
+        Base(State::Zero(count_bodies * COUNT_PER_BODY)),
+        count_bodies_(count_bodies)
     {
         assert_dynamic_size<true>();
     }
+
     // constructor with initial value
     template <typename T> FullRigidBodySystem(const Eigen::MatrixBase<T>& state_vector):
-        Base(state_vector,
-             state_vector.rows()/COUNT_PER_BODY){ }
+        Base(state_vector),
+        count_bodies_(state_vector.rows()/COUNT_PER_BODY){ }
 
     virtual ~FullRigidBodySystem() {}
 
@@ -137,21 +132,14 @@ public:
     }
 
     // write
-    virtual void quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
-    {
-        AngleAxis angle_axis(quaternion);
-        euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
-    }
     Block position(const size_t& object_index = 0)
     {
       return Block(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-
     Block euler_vector(const size_t& object_index = 0)
     {
       return Block(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-
     Block linear_velocity(const size_t& object_index = 0)
     {
       return Block(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
@@ -160,15 +148,27 @@ public:
     {
       return Block(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
-
     BodyBlock operator [](const size_t& object_index)
     {
       return BodyBlock(this->derived(), object_index * COUNT_PER_BODY);
     }
 
+    // other representations
+    virtual void quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
+    {
+        AngleAxis angle_axis(quaternion);
+        euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
+    }
+
+    virtual unsigned count_bodies() const
+    {
+        return count_bodies_;
+    }
 private:
-    template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(body_size > -1);}
-    template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(body_size == -1);}
+    unsigned count_bodies_;
+
+    template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_bodies > -1);}
+    template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_bodies == -1);}
 };
 
 
