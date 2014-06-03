@@ -41,11 +41,11 @@ class RigidBodySystem: public Eigen::Matrix<double, size_state, 1>
 {
 public:
     typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, size_state, 1> State;
-    typedef Eigen::Matrix<Scalar, 3, 1> Vector;
+    typedef Eigen::Matrix<Scalar, size_state, 1>    State;
+    typedef Eigen::Matrix<Scalar, 3, 1>             Vector;
 
     // rotation types
-    typedef Eigen::AngleAxis<Scalar> AngleAxis;
+    typedef Eigen::AngleAxis<Scalar>    AngleAxis;
     typedef Eigen::Quaternion<Scalar>   Quaternion;
     typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
     typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
@@ -66,6 +66,8 @@ public:
     }
     virtual ~RigidBodySystem() {}
 
+
+
     // set state
     virtual void set_state(const State& state_vector)
     {
@@ -73,41 +75,41 @@ public:
     }
 
     // interfaces
-    virtual Vector  get_position            (const size_t& object_index = 0) const = 0;
-    virtual Vector  get_euler_vector        (const size_t& object_index = 0) const = 0;
-    virtual Vector  get_linear_velocity     (const size_t& object_index = 0) const = 0;
-    virtual Vector  get_angular_velocity    (const size_t& object_index = 0) const = 0;
+    virtual Vector  position            (const size_t& object_index = 0) const = 0;
+    virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
+    virtual Vector  linear_velocity     (const size_t& object_index = 0) const = 0;
+    virtual Vector  angular_velocity    (const size_t& object_index = 0) const = 0;
 
     // other representations for orientation
-    virtual Quaternion get_quaternion(const size_t& object_index = 0) const
+    virtual Quaternion quaternion(const size_t& object_index = 0) const
     {
-        Scalar angle = get_euler_vector(object_index).norm();
-        Vector axis = get_euler_vector(object_index).normalized();
+        Scalar angle = euler_vector(object_index).norm();
+        Vector axis = euler_vector(object_index).normalized();
         if(std::isfinite(axis.norm()))
             return Quaternion(AngleAxis(angle, axis));
         else
             return Quaternion::Identity();
     }
-    virtual RotationMatrix get_rotation_matrix(const size_t& object_index = 0) const
+    virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
     {
-        return RotationMatrix(get_quaternion(object_index));
+        return RotationMatrix(quaternion(object_index));
     }
-    // homo geneous matrix
-    virtual HomogeneousMatrix get_homogeneous_matrix(const size_t& object_index = 0) const
+    // homogeneous matrix
+    virtual HomogeneousMatrix homogeneous_matrix(const size_t& object_index = 0) const
     {
         HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
-        homogeneous_matrix.topLeftCorner(3, 3) = get_rotation_matrix(object_index);
-        homogeneous_matrix.topRightCorner(3, 1) = get_position(object_index);
+        homogeneous_matrix.topLeftCorner(3, 3) = rotation_matrix(object_index);
+        homogeneous_matrix.topRightCorner(3, 1) = position(object_index);
 
         return homogeneous_matrix;
     }
 
     // counts
-    virtual unsigned countState() const
+    virtual unsigned count_state() const
     {
         return count_state_;
     }
-    virtual unsigned countBodies() const
+    virtual unsigned count_bodies() const
     {
         return count_bodies_;
     }

@@ -56,6 +56,7 @@ struct FullRigidBodySystemTypes
     typedef RigidBodySystem<body_size == -1 ? -1 : body_size * COUNT_PER_BODY> Base;
 };
 
+
 template<int body_size = -1>
 class FullRigidBodySystem: public FullRigidBodySystemTypes<body_size>::Base
 {
@@ -88,6 +89,12 @@ public:
     typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
 
 
+    // give access to base member functions (otherwise it is shadowed)
+    using Base::quaternion;
+    using Base::count_state;
+    using Base::count_bodies;
+
+
 
 
     // constructor for static size without initial value
@@ -111,32 +118,30 @@ public:
 
     virtual ~FullRigidBodySystem() {}
 
-    // implementation of get fcts from parent class
-    virtual Vector get_position(const size_t& object_index = 0) const
+    // read
+    virtual Vector position(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-    virtual Vector get_euler_vector(const size_t& object_index = 0) const
+    virtual Vector euler_vector(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-    virtual Vector get_linear_velocity(const size_t& object_index = 0) const
+    virtual Vector linear_velocity(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    virtual Vector get_angular_velocity(const size_t& object_index = 0) const
+    virtual Vector angular_velocity(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
     }
 
-
-    virtual void set_quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
+    // write
+    virtual void quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
     {
         AngleAxis angle_axis(quaternion);
         euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
     }
-
-    // child specific fcts
     Block position(const size_t& object_index = 0)
     {
       return Block(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
@@ -161,17 +166,6 @@ public:
       return BodyBlock(this->derived(), object_index * COUNT_PER_BODY);
     }
 
-
-
-    // counts
-    virtual unsigned countState() const
-    {
-        return Base::countState();
-    }
-    virtual unsigned countBodies() const
-    {
-        return Base::countBodies();
-    }
 private:
     template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(body_size > -1);}
     template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(body_size == -1);}

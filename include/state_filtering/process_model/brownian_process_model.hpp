@@ -114,15 +114,15 @@ public:
     {
         StateType state;
 
-        state.position() = state_.get_position() + delta_position_.mapNormal(randoms.topRows(3));
-        state.set_quaternion(Quaternion(state_.get_quaternion().coeffs()
+        state.position() = state_.position() + delta_position_.mapNormal(randoms.topRows(3));
+        state.quaternion(Quaternion(state_.quaternion().coeffs()
                                         + quaternion_map_ * delta_orientation_.mapNormal(randoms.template bottomRows(3))));
         state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
         state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
 
         // transform to external coordinate system
         state.linear_velocity() -= state.angular_velocity().cross(state.position());
-        state.position() -= state.get_rotation_matrix()*rotation_center_;
+        state.position() -= state.rotation_matrix()*rotation_center_;
 
         return state;
     }
@@ -132,11 +132,11 @@ public:
                               const ControlType& control)
     {
         state_ = state;
-        quaternion_map_ = hf::QuaternionMatrix(state_.get_quaternion().coeffs());
+        quaternion_map_ = hf::QuaternionMatrix(state_.quaternion().coeffs());
 
         // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
         // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
-        state_.position() += state_.get_rotation_matrix()*rotation_center_;
+        state_.position() += state_.rotation_matrix()*rotation_center_;
         state_.linear_velocity() += state_.angular_velocity().cross(state_.position());
 
         // todo: should controls change coordintes as well?

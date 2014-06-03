@@ -60,13 +60,14 @@ public:
 
     virtual void set_state(const Eigen::VectorXd& state)
     {
+//        _rigid_body_system = state;
         _rigid_body_system->set_state(state);
-        _R.resize(_rigid_body_system->countBodies());
-        _t.resize(_rigid_body_system->countBodies());
-        for(size_t part_index = 0; part_index < _rigid_body_system->countBodies(); part_index++)
+        _R.resize(_rigid_body_system->count_bodies());
+        _t.resize(_rigid_body_system->count_bodies());
+        for(size_t part_index = 0; part_index < _rigid_body_system->count_bodies(); part_index++)
         {
-            _R[part_index] = _rigid_body_system->get_rotation_matrix(part_index);
-            _t[part_index] = _rigid_body_system->get_position(part_index);
+            _R[part_index] = _rigid_body_system->rotation_matrix(part_index);
+            _t[part_index] = _rigid_body_system->position(part_index);
         }
     }
 

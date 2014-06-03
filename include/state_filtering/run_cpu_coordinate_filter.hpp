@@ -306,7 +306,7 @@ public:
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-            ri::PublishMarker(mean.get_homogeneous_matrix(i).cast<float>(),
+            ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
                               ros_cloud.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }

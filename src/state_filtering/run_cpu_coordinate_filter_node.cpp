@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/run_cpu_coordinate_filter.hpp>
 
+
+
 int main (int argc, char **argv)
 {
     ros::init(argc, argv, "test_filter");
@@ -109,7 +111,7 @@ int main (int argc, char **argv)
                     t_mean +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
                     standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;
-            state.set_quaternion(Quaterniond(
+            state.quaternion(Quaterniond(
                                      AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean));
 
             initial_states.push_back(state);
