@@ -295,7 +295,7 @@ namespace distr
 
                 std::vector<float> measurementVector;
 
-                object_model->set_state(state);
+                object_model->state(state);
                 object_model->Predict(camera_matrix,
                         n_rows,
                         n_cols,

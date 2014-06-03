@@ -25,54 +25,50 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
 #include <state_filtering/tools/rigid_body_renderer.hpp>
 #include <state_filtering/tools/macros.hpp>
 
-
 #include <limits>
-//#include "image_visualizer.hpp"
-
 
 using namespace std;
 using namespace Eigen;
 
 using namespace obj_mod;
 
-RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
-        const std::vector<std::vector<std::vector<int> > >& indices,
-        const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system)
-:_vertices(vertices), _indices(indices), _rigid_body_system(rigid_body_system)
+RigidBodyRenderer::RigidBodyRenderer(   const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
+                                        const std::vector<std::vector<std::vector<int> > >& indices,
+                                        const boost::shared_ptr<State>&                     state_ptr)
+:vertices_(vertices), indices_(indices), state_(state_ptr)
 {
-    set_state(*_rigid_body_system);
+    state(*state_ptr);
 
 	float total_weight = 0;
-	_coms.resize(vertices.size());
-	_com_weights.resize(vertices.size());
-	for(size_t part_index = 0; part_index < _indices.size(); part_index++)
+    coms_.resize(vertices.size());
+    com_weights_.resize(vertices.size());
+    for(size_t part_index = 0; part_index < indices_.size(); part_index++)
 	{
-		_com_weights[part_index] = vertices[part_index].size();
-		total_weight += _com_weights[part_index];
+        com_weights_[part_index] = vertices[part_index].size();
+        total_weight += com_weights_[part_index];
 
-		_coms[part_index] = Vector3d::Zero();
+        coms_[part_index] = Vector3d::Zero();
 		for(size_t vertex_index = 0; vertex_index < vertices[part_index].size(); vertex_index++)
-			_coms[part_index] += vertices[part_index][vertex_index];
-		_coms[part_index] /= float(vertices[part_index].size());
+            coms_[part_index] += vertices[part_index][vertex_index];
+        coms_[part_index] /= float(vertices[part_index].size());
 	}
-	for(size_t i = 0; i < _com_weights.size(); i++)
-		_com_weights[i] /= total_weight;
+    for(size_t i = 0; i < com_weights_.size(); i++)
+        com_weights_[i] /= total_weight;
 
-	_normals.clear();
-	for(size_t part_index = 0; part_index < _indices.size(); part_index++)
+    normals_.clear();
+    for(size_t part_index = 0; part_index < indices_.size(); part_index++)
 	{
-		vector<Vector3d> par_tnormals(_indices[part_index].size());
+        vector<Vector3d> par_tnormals(indices_[part_index].size());
 		for(int triangle_index = 0; triangle_index < int(par_tnormals.size()); triangle_index++)
 		{
 			//compute the three cross products and make sure that they yield the same normal
 			vector<Vector3d> temp_normals(3);
 			for(int vertex_index = 0; vertex_index < 3; vertex_index++)
-				temp_normals[vertex_index] = ((_vertices[part_index][ _indices[part_index][triangle_index][(vertex_index+1)%3] ]-_vertices[part_index][ _indices[part_index][triangle_index][vertex_index] ]).cross(
-						_vertices[part_index][ _indices[part_index][triangle_index][(vertex_index+2)%3] ]-_vertices[part_index][ _indices[part_index][triangle_index][(vertex_index+1)%3] ])).normalized();
+                temp_normals[vertex_index] = ((vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+1)%3] ]-vertices_[part_index][ indices_[part_index][triangle_index][vertex_index] ]).cross(
+                        vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+2)%3] ]-vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+1)%3] ])).normalized();
 
 			for(int vertex_index = 0; vertex_index < 3; vertex_index++)
 				if(!temp_normals[vertex_index].isApprox(temp_normals[(vertex_index+1)%3]))
@@ -84,33 +80,34 @@ RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector
 				}
 			par_tnormals[triangle_index] = temp_normals[0];
 		}
-		_normals.push_back(par_tnormals);
+        normals_.push_back(par_tnormals);
 	}
 }
 
 RigidBodyRenderer::~RigidBodyRenderer() {}
 
 
+
+
 // todo: does not handle the case properly when the depth is around zero or negative
-void RigidBodyRenderer::PredictObservation(
-		Eigen::Matrix3d camera_matrix,
-		int n_rows, int n_cols,
-		std::vector<int> &intersec_tindices,
-		std::vector<float> &depth) const
+void RigidBodyRenderer::Render( Matrix camera_matrix,
+                                int n_rows, int n_cols,
+                                std::vector<int> &intersec_tindices,
+                                std::vector<float> &depth) const
 {
 	Matrix3d inv_camera_matrix = camera_matrix.inverse();
 
 	// we project all the points into image space --------------------------------------------------------
-	vector<vector<Vector3d> > trans_vertices(_vertices.size());
-	vector<vector<Vector2d> > image_vertices(_vertices.size());
+    vector<vector<Vector3d> > trans_vertices(vertices_.size());
+    vector<vector<Vector2d> > image_vertices(vertices_.size());
 
-	for(int part_index = 0; part_index < int(_vertices.size()); part_index++)
+    for(int part_index = 0; part_index < int(vertices_.size()); part_index++)
 	{
-		image_vertices[part_index].resize(_vertices[part_index].size());
-		trans_vertices[part_index].resize(_vertices[part_index].size());
-		for(int poin_tindex = 0; poin_tindex < int(_vertices[part_index].size()); poin_tindex++)
+        image_vertices[part_index].resize(vertices_[part_index].size());
+        trans_vertices[part_index].resize(vertices_[part_index].size());
+        for(int poin_tindex = 0; poin_tindex < int(vertices_[part_index].size()); poin_tindex++)
 		{
-			trans_vertices[part_index][poin_tindex] = _R[part_index] * _vertices[part_index][poin_tindex] + _t[part_index];
+            trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
 			image_vertices[part_index][poin_tindex] =
 					(camera_matrix * trans_vertices[part_index][poin_tindex]/trans_vertices[part_index][poin_tindex](2)).topRows(2);
 
@@ -120,9 +117,9 @@ void RigidBodyRenderer::PredictObservation(
 	// we find the intersections with the triangles and the depths ---------------------------------------------------
 	vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
 	intersec_tindices.clear(); depth.clear();
-	for(int part_index = 0; part_index < int(_indices.size()); part_index++)
+    for(int part_index = 0; part_index < int(indices_.size()); part_index++)
 	{
-		for(int triangle_index = 0; triangle_index < int(_indices[part_index].size()); triangle_index++)
+        for(int triangle_index = 0; triangle_index < int(indices_[part_index].size()); triangle_index++)
 		{
 			//			// the problem is that we cannot always discard triangles with normals pointing in opposite direction
 			//			// because some of the triangles represent the inner ant the outer surface at the same time
@@ -139,7 +136,7 @@ void RigidBodyRenderer::PredictObservation(
 			int max_col = -numeric_limits<int>::max();
 			for(int i = 0; i < 3; i++)
 			{
-				vertices[i] = image_vertices[part_index][_indices[part_index][triangle_index][i]];
+                vertices[i] = image_vertices[part_index][indices_[part_index][triangle_index][i]];
 				center += vertices[i]/3.;
 				min_row =  ceil(float(vertices[i](1))) < min_row ?  ceil(float(vertices[i](1))) : min_row;
 				max_row = floor(float(vertices[i](1))) > max_row ? floor(float(vertices[i](1))) : max_row;
@@ -198,8 +195,8 @@ void RigidBodyRenderer::PredictObservation(
 
 
 				// we push back the indices of the intersections and the corresponding depths ------------------------------------
-				Vector3d normal = _R[part_index]*_normals[part_index][triangle_index];
-				float offset = normal.dot(trans_vertices[part_index][_indices[part_index][triangle_index][0]]);
+                Vector3d normal = R_[part_index]*normals_[part_index][triangle_index];
+                float offset = normal.dot(trans_vertices[part_index][indices_[part_index][triangle_index][0]]);
 				for(int row = int(min_row_given_col); row <= int(max_row_given_col); row++)
 					if(row >= 0 && row < n_rows && col >= 0 && col < n_cols)
 					{
@@ -237,60 +234,46 @@ void RigidBodyRenderer::PredictObservation(
 
 }
 
+// get functions
+std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices() const
+{
+    vector<vector<Vector3d> > trans_vertices(vertices_.size());
 
-Eigen::VectorXd RigidBodyRenderer::get_rigid_body_system() const
-{
-    return *_rigid_body_system;
-}
-std::vector<Eigen::Matrix4d> RigidBodyRenderer::get_hom() const
-{
-	vector<Matrix4d> H(_R.size(), Matrix4d::Identity());
-	for(size_t i = 0; i < _R.size(); i++)
+    for(int part_index = 0; part_index < int(vertices_.size()); part_index++)
 	{
-		H[i].topLeftCorner(3, 3) = _R[i];
-		H[i].topRightCorner(3, 1) = _t[i];
-	}
-	return H;
-}
-std::vector<Eigen::Matrix3d> RigidBodyRenderer::get_R() const
-{
-	return _R;
-}
-
-std::vector<Eigen::Vector3d> RigidBodyRenderer::get_t() const
-{
-	return _t;
-}
-
-std::vector<std::vector<Eigen::Vector3d> > RigidBodyRenderer::get_vertices() const
-{
-	vector<vector<Vector3d> > trans_vertices(_vertices.size());
-
-	for(int part_index = 0; part_index < int(_vertices.size()); part_index++)
-	{
-		trans_vertices[part_index].resize(_vertices[part_index].size());
-		for(int poin_tindex = 0; poin_tindex < int(_vertices[part_index].size()); poin_tindex++)
-			trans_vertices[part_index][poin_tindex] = _R[part_index] * _vertices[part_index][poin_tindex] + _t[part_index];
+        trans_vertices[part_index].resize(vertices_[part_index].size());
+        for(int poin_tindex = 0; poin_tindex < int(vertices_[part_index].size()); poin_tindex++)
+            trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
 	}
 	return trans_vertices;
 }
-
-Eigen::Vector3d  RigidBodyRenderer::get_com() const
+RigidBodyRenderer::Vector RigidBodyRenderer::system_center() const
 {
 	Eigen::Vector3d com = Eigen::Vector3d::Zero();
-	for(size_t i = 0; i < _coms.size(); i++)
-		com += _com_weights[i] * (_R[i]*_coms[i] + _t[i]);
+    for(size_t i = 0; i < coms_.size(); i++)
+        com += com_weights_[i] * (R_[i]*coms_[i] + t_[i]);
 
-	com = _R[0].inverse() * (com - _t[0]);
+    com = R_[0].inverse() * (com - t_[0]);
 
 	return com;
 }
+RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) const
+{
+    return R_[index]*coms_[index] + t_[index];
+}
 
-
-                Eigen::Vector3d  RigidBodyRenderer::get_coms(const size_t& index) const
-                {
-                    return _R[index]*_coms[index] + _t[index];
-                }
+// set state
+void RigidBodyRenderer::state(const Eigen::VectorXd& state)
+{
+    *state_ = state;
+    R_.resize(state_->count_bodies());
+    t_.resize(state_->count_bodies());
+    for(size_t part_index = 0; part_index < state_->count_bodies(); part_index++)
+    {
+        R_[part_index] = state_->rotation_matrix(part_index);
+        t_[part_index] = state_->position(part_index);
+    }
+}
 
 
 

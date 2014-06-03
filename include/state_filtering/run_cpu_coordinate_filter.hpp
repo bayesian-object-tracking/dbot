@@ -222,7 +222,7 @@ public:
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
             partial_process_model->parameters(
-                        object_renderer->get_coms(i).cast<double>(),
+                        object_renderer->object_center(i).cast<double>(),
                         free_damping,
                         free_linear_acceleration_covariance,
                         free_angular_acceleration_covariance);

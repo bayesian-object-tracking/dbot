@@ -87,8 +87,8 @@ std::vector<float> CPUImageObservationModel::Evaluate(
         // we predict observations_ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         std::vector<int> intersect_indices;
         std::vector<float> predictions;
-        object_model_->set_state(states[state_index]);
-        object_model_->PredictObservation(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
+        object_model_->state(states[state_index]);
+        object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
 
 
         // added for debugging
@@ -235,8 +235,8 @@ void CPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &
     depth.resize(states_.size());
 
     for (size_t i = 0; i < states_.size(); i++) {
-        object_model_->set_state(states_[i]);
-        object_model_->PredictObservation(camera_matrix_, n_rows_, n_cols_, intersect_indices[i], depth[i]);
+        object_model_->state(states_[i]);
+        object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices[i], depth[i]);
     }
 }
 

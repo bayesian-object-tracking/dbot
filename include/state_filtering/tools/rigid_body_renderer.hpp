@@ -43,57 +43,45 @@ class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
+    typedef RigidBodySystem<-1> State;
+    typedef Eigen::Vector3d Vector;
+    typedef std::vector<Vector> Vectors;
+    typedef Eigen::Matrix3d Matrix;
 
-    RigidBodyRenderer(
-            const std::vector<std::vector<Eigen::Vector3d> >& vertices,
-            const std::vector<std::vector<std::vector<int> > >& indices,
-            const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system);
+    RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&     vertices,
+                      const std::vector<std::vector<std::vector<int> > >&   indices,
+                      const boost::shared_ptr<State >&                      state_ptr);
 
     virtual ~RigidBodyRenderer();
 
-	void PredictObservation(
-			Eigen::Matrix3d camera_matrix,
+    void Render(
+            Matrix camera_matrix,
 			int n_rows, int n_cols,
 			std::vector<int> &intersec_tindices,
-			std::vector<float> &depth) const;
+            std::vector<float> &depth) const;
 
+    // get functions
+    std::vector<std::vector<Vector> > vertices() const;
+    Vector system_center() const;
+    Vector object_center(const size_t& index) const;
 
-    virtual void set_state(const Eigen::VectorXd& state)
-    {
-        *_rigid_body_system = state;
-//        _rigid_body_system->set_state(state);
-        _R.resize(_rigid_body_system->count_bodies());
-        _t.resize(_rigid_body_system->count_bodies());
-        for(size_t part_index = 0; part_index < _rigid_body_system->count_bodies(); part_index++)
-        {
-            _R[part_index] = _rigid_body_system->rotation_matrix(part_index);
-            _t[part_index] = _rigid_body_system->position(part_index);
-        }
-    }
-
-    Eigen::VectorXd get_rigid_body_system() const;
-	std::vector<Eigen::Matrix4d> get_hom() const;
-	std::vector<Eigen::Matrix3d> get_R() const;
-	std::vector<Eigen::Vector3d> get_t() const;
-
-	std::vector<std::vector<Eigen::Vector3d> > get_vertices() const;
-
-	Eigen::Vector3d get_com() const;
-
-    Eigen::Vector3d  get_coms(const size_t& index) const;
+    // set function
+    virtual void state(const Eigen::VectorXd& state);
 
 protected:
-	std::vector<std::vector<Eigen::Vector3d> > _vertices;
-	std::vector<std::vector<Eigen::Vector3d> > _normals;
-	std::vector<std::vector<std::vector<int> > > _indices;
+    // triangles
+    std::vector<std::vector<Vector> >               vertices_;
+    std::vector<std::vector<Vector> >               normals_;
+    std::vector<std::vector<std::vector<int> > >    indices_;
 
-	std::vector<Eigen::Matrix3d> _R;
-	std::vector<Eigen::Vector3d> _t;
+    // state
+    const boost::shared_ptr<State>  state_;
+    std::vector<Matrix>             R_;
+    std::vector<Vector>             t_;
 
-    const boost::shared_ptr<RigidBodySystem<-1> > _rigid_body_system;
-
-	std::vector<Eigen::Vector3d> _coms;
-	std::vector<float> _com_weights;
+    // cached center of mass
+    std::vector<Vector>     coms_;
+    std::vector<float>      com_weights_;
 };
 
 }
