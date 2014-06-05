@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <state_filtering/observation_models/cpu_image_observation_model/pixel_observation_model.hpp>
+#include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/tools/rigid_body_renderer.hpp>
 #include <state_filtering/observation_models/cpu_image_observation_model/occlusion_process_model.hpp>
 
@@ -45,7 +45,7 @@ class CPUImageObservationModel: public ImageObservationModel
 {
 public:
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectModel;
-	typedef boost::shared_ptr<obs_mod::PixelObservationModel> PixelObservationModel;
+    typedef boost::shared_ptr<obs_mod::KinectMeasurementModel> PixelObservationModel;
 	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
 
 	CPUImageObservationModel(
@@ -66,12 +66,12 @@ public:
 			std::vector<size_t>& occlusion_indices,
 			const bool& update_occlusions = false);
 
-    std::vector<float> Evaluate_test(
-            const std::vector<Eigen::VectorXd >& states,
-            std::vector<size_t>& occlusion_indices,
-            const bool& update_occlusions = false,
-            std::vector<std::vector<int> > intersect_indices = 0,
-            std::vector<std::vector<float> > predictions = 0);
+//    std::vector<float> Evaluate_test(
+//            const std::vector<Eigen::VectorXd >& states,
+//            std::vector<size_t>& occlusion_indices,
+//            const bool& update_occlusions = false,
+//            std::vector<std::vector<int> > intersect_indices = 0,
+//            std::vector<std::vector<float> > predictions = 0);
 
 	// set and get functions =============================================================================================================================================================================================================================================================================================
     void get_depth_values(std::vector<std::vector<int> > &intersect_indices,

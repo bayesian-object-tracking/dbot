@@ -113,15 +113,15 @@ std::vector<float> CPUImageObservationModel::Evaluate(
                             visibility_probs_[occlusion_indices[state_index]][intersect_indices[i]],
                         observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[i]]);
 
-                float p_obsIpred_vis = // prob of observation given prediction, knowing that the object is visible
-                        observation_model_->Prob(observations_[intersect_indices[i]], predictions[i], true)
+                float p_obsIpred_vis = // prob of observation given prediction, knowing that the object is not occluded
+                        observation_model_->Probability(observations_[intersect_indices[i]], predictions[i], false)
                         * visibility_prob;
                 float p_obsIpred_occl = // prob of observation given prediction, knowing that the object is occluded
-                        observation_model_->Prob(observations_[intersect_indices[i]], predictions[i], false)
+                        observation_model_->Probability(observations_[intersect_indices[i]], predictions[i], true)
                         * (1-visibility_prob);
                 float p_obsIinf = // prob of observation given no intersection
-                        observation_model_->Prob(observations_[intersect_indices[i]],
-                        numeric_limits<float>::infinity(), false);
+                        observation_model_->Probability(observations_[intersect_indices[i]],
+                        numeric_limits<float>::infinity(), true);
 
                 loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
@@ -143,82 +143,6 @@ std::vector<float> CPUImageObservationModel::Evaluate(
     }
     return loglikes;
 }
-
-
-
-
-std::vector<float> CPUImageObservationModel::Evaluate_test(
-        const std::vector<Eigen::VectorXd>& states,
-        std::vector<size_t>& occlusion_indices,
-        const bool& update_occlusions,
-        vector<vector<int> > intersect_indices,
-        vector<vector<float> > predictions)
-{
-    // added for debugging the depth values
-    states_ = states;
-    // ------------------------------------
-
-    std::vector<std::vector<float> > new_visibility_probs(states.size());
-    std::vector<std::vector<double> > new_visibility_update_times(states.size());
-    vector<float> loglikes(states.size(),0);
-    for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
-    {
-
-        if(update_occlusions)
-        {
-            new_visibility_probs[state_index] = visibility_probs_[occlusion_indices[state_index]];
-            new_visibility_update_times[state_index] = visibility_update_times_[occlusion_indices[state_index]];
-        }
-
-        // we loop through all the pixels which intersect the object model ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        for(size_t i = 0; i < size_t(predictions[state_index].size()); i++)
-        {
-            if(isnan(observations_[intersect_indices[state_index][i]]))
-                loglikes[state_index] += log(1.);
-            else
-            {
-                float visibility_prob;
-                // we predict the visiblity probability and set the time of the last update time to current
-                visibility_prob =
-                        occlusion_process_model_->Propagate(visibility_probs_[occlusion_indices[state_index]][intersect_indices[state_index][i]],
-                        observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[state_index][i]]);
-
-                //                cout << "time cpu: " << observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[state_index][i]] << endl;
-
-                float p_obsIpred_vis = // prob of observation given prediction, knowing that the object is visible
-                        observation_model_->Prob(observations_[intersect_indices[state_index][i]], predictions[state_index][i], true)
-                        * visibility_prob;
-                float p_obsIpred_occl = // prob of observation given prediction, knowing that the object is occluded
-                        observation_model_->Prob(observations_[intersect_indices[state_index][i]], predictions[state_index][i], false)
-                        * (1-visibility_prob);
-                float p_obsIinf = // prob of observation given no intersection
-                        observation_model_->Prob(observations_[intersect_indices[state_index][i]],
-                        numeric_limits<float>::infinity(), false);
-
-                loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
-
-
-                // we update the visibiliy (occlusion) with the observations
-                if(update_occlusions)
-                {
-                    new_visibility_probs[state_index][intersect_indices[state_index][i]] = p_obsIpred_vis/(p_obsIpred_vis + p_obsIpred_occl);
-                    new_visibility_update_times[state_index][intersect_indices[state_index][i]] = observation_time_;
-                }
-            }
-        }
-    }
-    if(update_occlusions)
-    {
-        visibility_probs_ = new_visibility_probs;
-        visibility_update_times_ = new_visibility_update_times;
-        for(size_t state_index = 0; state_index < occlusion_indices.size(); state_index++)
-            occlusion_indices[state_index] = state_index;
-    }
-
-
-    return loglikes;
-}
-
 
 
 

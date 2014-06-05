@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/filter/particle/particle_filter_context.hpp>
 
 // observation model
-#include <state_filtering/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp>
+#include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/observation_models/image_observation_model.hpp>
 #include <state_filtering/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp>
 // tools
@@ -183,12 +183,12 @@ public:
                                                                        object_vertices,
                                                                        object_triangle_indices,
                                                                        rigid_body_system));
-        // pixel_observation_model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // kinect_measurement_model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         double tail_weight; ReadParameter("tail_weight", tail_weight);
         double model_sigma; ReadParameter("model_sigma", model_sigma);
         double sigma_factor; ReadParameter("sigma_factor", sigma_factor);
-        boost::shared_ptr<obs_mod::PixelObservationModel>
-                pixel_observation_model(new obs_mod::GaussianPixelObservationModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<obs_mod::KinectMeasurementModel>
+                kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
 
         // initialize occlusion process model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         boost::shared_ptr<proc_mod::OcclusionProcessModel>
@@ -202,7 +202,7 @@ public:
                                                                                     single_body_samples.size(),
                                                                                     rigid_body_system,
                                                                                     object_renderer,
-                                                                                    pixel_observation_model,
+                                                                                    kinect_measurement_model,
                                                                                     occlusion_process_model,
                                                                                     p_visible_init_));
 

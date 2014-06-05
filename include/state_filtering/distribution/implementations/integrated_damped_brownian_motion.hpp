@@ -112,14 +112,14 @@ public:
         acceleration_covariance_ = acceleration_covariance;
     }
 
-    virtual int variableSize() const
+    virtual int variable_size() const
     {
-        return distribution_.variableSize();
+        return distribution_.variable_size();
     }
 
     virtual int randomsSize() const
     {
-        return variableSize();
+        return variable_size();
     }
 
 private:

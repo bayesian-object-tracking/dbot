@@ -50,7 +50,7 @@ CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
     observation_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
-    state_distribution_(process_model->variableSize())
+    state_distribution_(process_model->variable_size())
 {
     // count the degrees of freedom --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     dof_count_ = 0;
@@ -260,16 +260,16 @@ void CoordinateFilter::Evaluate(
 }
 
 
-void CoordinateFilter::Evaluate_test(
-        const std::vector<float>& observation,
-        const double& observation_time,
-        const bool& update_occlusions,
-        vector<vector<int> > intersect_indices,
-        vector<vector<float> > predictions)
-{
-    observation_model_->set_observation(observation, observation_time);
-    family_loglikes_ = observation_model_->Evaluate_test(parents_, parent_occlusion_indices_, update_occlusions, intersect_indices, predictions);
-}
+//void CoordinateFilter::Evaluate_test(
+//        const std::vector<float>& observation,
+//        const double& observation_time,
+//        const bool& update_occlusions,
+//        vector<vector<int> > intersect_indices,
+//        vector<vector<float> > predictions)
+//{
+//    observation_model_->set_observation(observation, observation_time);
+//    family_loglikes_ = observation_model_->Evaluate_test(parents_, parent_occlusion_indices_, update_occlusions, intersect_indices, predictions);
+//}
 
 
 void CoordinateFilter::Resample(const int &new_state_count)

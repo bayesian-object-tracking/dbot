@@ -96,7 +96,7 @@ public:
      *
      * @return variable size for dynamic and fixed size (dimensional) distributions
      */
-    virtual int variableSize() const = 0;
+    virtual int variable_size() const = 0;
 };
 
 }

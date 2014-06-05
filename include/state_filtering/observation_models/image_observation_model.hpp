@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <state_filtering/observation_models/cpu_image_observation_model/pixel_observation_model.hpp>
+#include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/observation_models/cpu_image_observation_model/occlusion_process_model.hpp>
 #include <state_filtering/system_states/rigid_body_system.hpp>
 #include <state_filtering/tools/rigid_body_renderer.hpp>
@@ -71,12 +71,12 @@ public:
 			const bool& update_occlusions = false) = 0;
 
 
-    virtual std::vector<float> Evaluate_test(
-            const std::vector<Eigen::VectorXd >& states,
-            std::vector<size_t>& occlusion_indices,
-            const bool& update_occlusions = false,
-            std::vector<std::vector<int> > intersect_indices = 0,
-            std::vector<std::vector<float> > predictions = 0) = 0;
+//    virtual std::vector<float> Evaluate_test(
+//            const std::vector<Eigen::VectorXd >& states,
+//            std::vector<size_t>& occlusion_indices,
+//            const bool& update_occlusions = false,
+//            std::vector<std::vector<int> > intersect_indices = 0,
+//            std::vector<std::vector<float> > predictions = 0) = 0;
 
 	// set and get functions =============================================================================================================================================================================================================================================================================================
     virtual void get_depth_values(std::vector<std::vector<int> > &intersect_indices,

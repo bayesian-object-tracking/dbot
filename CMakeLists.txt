@@ -106,9 +106,8 @@ set(state_filtering_headers
 
     # measurement model specializations
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.hpp
+    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.hpp
     include/${PROJECT_NAME}/observation_models/spkf/model_types.hpp
     include/${PROJECT_NAME}/observation_models/spkf/measurement_model.hpp
     include/${PROJECT_NAME}/observation_models/spkf/depth_measurement_model.hpp
@@ -154,9 +153,7 @@ set(state_filtering_headers
 
 set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
-    src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/gaussian_pixel_observation_model.cpp
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
-    src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/pixel_observation_model.cpp
 
     ## Particle specific implementations
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp

@@ -121,7 +121,7 @@ public:
 
     virtual VariableType mean() const
     {
-        VariableType mean(VariableType::Zero(variableSize()));
+        VariableType mean(VariableType::Zero(variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             mean += weights_[i] * deltas_[i];
 
@@ -131,14 +131,14 @@ public:
     virtual CovarianceType covariance() const
     {
         VariableType cached_mean = mean();
-        CovarianceType covariance(CovarianceType::Zero(variableSize(), variableSize()));
+        CovarianceType covariance(CovarianceType::Zero(variable_size(), variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             covariance += weights_[i] * (deltas_[i]-cached_mean) * (deltas_[i]-cached_mean).transpose();
 
         return covariance;
     }
 
-    virtual int variableSize() const
+    virtual int variable_size() const
     {
         return deltas_[0].rows();
     }

@@ -64,36 +64,36 @@ public:
     typedef typename BaseType::VariableType             VariableType;
 
     /**
-     * @brief Returns the probability of the given sample
+     * @brief Returns the probability of the given variable
      *
-     * @param sample    Probability sample
+     * @param variable    Probability variable
      *
-     * @return Probability of the sample
+     * @return Probability of the variable
      */
-    virtual ScalarType probability(const VariableType& sample) const
+    virtual ScalarType Probability(const VariableType& variable) const
     {
-        return std::exp(logProbability(sample));
+        return std::exp(LogProbability(variable));
     }
 
     /**
-     * @brief Returns the probability log of the given sample
+     * @brief Returns the probability log of the given variable
      *
-     * @param sample    Probability sample
+     * @param variable    Probability variable
      *
-     * @return Log of sample probability
+     * @return Log of variable probability
      */
-    virtual ScalarType logProbability(const VariableType& sample) const = 0;
+    virtual ScalarType LogProbability(const VariableType& variable) const = 0;
 
     /**
-     * @brief Returns the probability log of the given sample
+     * @brief Returns the probability log of the given variable
      *
-     * @param sample    Probability sample
+     * @param variable    Probability variable
      *
-     * @return Log of sample probability
+     * @return Log of variable probability
      */
-    virtual ScalarType logUnnormalizedProbability(const VariableType& sample) const
+    virtual ScalarType LogUnnormalizedProbability(const VariableType& variable) const
     {
-        return logProbability(sample);
+        return LogProbability(variable);
     }
 };
 

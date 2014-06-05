@@ -34,8 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Core>
 
 #include <state_filtering/observation_models/image_observation_model.hpp>
-#include <state_filtering/observation_models/cpu_image_observation_model/pixel_observation_model.hpp>
-#include <state_filtering/observation_models/cpu_image_observation_model/occlusion_process_model.hpp>
+//#include <state_filtering/observation_models/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
+//#include <state_filtering/observation_models/cpu_image_observation_model/occlusion_process_model.hpp>
 
 #include <state_filtering/tools/rigid_body_renderer.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
@@ -91,12 +91,12 @@ public:
 
 
 
-    void Evaluate_test(
-            const std::vector<float>& observation,
-            const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
-            const bool& update_occlusions = false,
-            std::vector<std::vector<int> > intersect_indices = 0,
-            std::vector<std::vector<float> > predictions = 0);
+//    void Evaluate_test(
+//            const std::vector<float>& observation,
+//            const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
+//            const bool& update_occlusions = false,
+//            std::vector<std::vector<int> > intersect_indices = 0,
+//            std::vector<std::vector<float> > predictions = 0);
 
     void Resample(const int &new_state_count = -1);
 

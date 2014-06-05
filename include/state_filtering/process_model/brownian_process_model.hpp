@@ -170,7 +170,7 @@ public:
         angular_velocity_.parameters(damping, angular_acceleration_covariance);
     }
 
-    virtual int variableSize() const
+    virtual int variable_size() const
     {
         return Base::VariableSize;
     }

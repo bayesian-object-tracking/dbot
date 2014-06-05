@@ -91,15 +91,15 @@ public: /* distribution traits */
 
     virtual VariableType mapNormal(const RandomsType& randoms) const
     {
-        VariableType variables(variableSize());
+        VariableType variables(variable_size());
 
         size_t variable_index = 0;
         size_t random_index = 0;
         for(size_t i = 0; i < process_models_.size(); i++)
         {
-            variables.middleRows(variable_index, process_models_[i]->variableSize()) =
+            variables.middleRows(variable_index, process_models_[i]->variable_size()) =
                     process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->randomsSize()));
-            variable_index += process_models_[i]->variableSize();
+            variable_index += process_models_[i]->variable_size();
             random_index += process_models_[i]->randomsSize();
         }
         return variables;
@@ -117,14 +117,14 @@ public: /* distribution traits */
         {
             process_models_[i]->conditionals(
                         delta_time,
-                        state.middleRows(state_index, process_models_[i]->variableSize()),
+                        state.middleRows(state_index, process_models_[i]->variable_size()),
                         control.middleRows(control_index, process_models_[i]->controlSize()));
-            state_index += process_models_[i]->variableSize();
+            state_index += process_models_[i]->variable_size();
             control_index += process_models_[i]->controlSize();
         }
     }
 
-    virtual int variableSize() const
+    virtual int variable_size() const
     {
         return total_count_state(process_models_);
     }
@@ -148,7 +148,7 @@ private:
     {
         unsigned total_count_state = 0;
         for(size_t i = 0; i < process_models.size(); i++)
-            total_count_state += process_models[i]->variableSize();
+            total_count_state += process_models[i]->variable_size();
         return total_count_state;
     }
     static unsigned total_count_control(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)

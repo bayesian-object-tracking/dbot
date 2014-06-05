@@ -43,10 +43,9 @@ class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef RigidBodySystem<-1> State;
-    typedef Eigen::Vector3d Vector;
-    typedef std::vector<Vector> Vectors;
-    typedef Eigen::Matrix3d Matrix;
+    typedef RigidBodySystem<-1>     State;
+    typedef Eigen::Vector3d         Vector;
+    typedef Eigen::Matrix3d         Matrix;
 
     RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&     vertices,
                       const std::vector<std::vector<std::vector<int> > >&   indices,

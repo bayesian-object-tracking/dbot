@@ -111,8 +111,8 @@ public:
     virtual void setNormal()
     {
         full_rank_ = true;
-        mean(VariableType::Zero(variableSize()));
-        covariance(CovarianceType::Identity(variableSize(), variableSize()));
+        mean(VariableType::Zero(variable_size()));
+        covariance(CovarianceType::Identity(variable_size(), variable_size()));
     }
 
     virtual void mean(const VariableType& mean)
@@ -153,7 +153,7 @@ public:
         return covariance_;
     }
 
-    virtual ScalarType logProbability(const VariableType& sample) const
+    virtual ScalarType LogProbability(const VariableType& sample) const
     {
         if(full_rank_)
             return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
@@ -161,14 +161,14 @@ public:
             return -std::numeric_limits<ScalarType>::infinity();
     }
 
-    virtual int variableSize() const
+    virtual int variable_size() const
     {
         return mean_.rows();
     }
 
     virtual int randomsSize() const
     {
-        return variableSize();
+        return variable_size();
     }
 
 protected:

@@ -72,7 +72,7 @@ public:
      */
     virtual ScalarType unnormalizedProbability(const VariableType& sample) const
     {
-        std::exp(logUnnormalizedProbability(sample));
+        std::exp(LogUnnormalizedProbability(sample));
     }
 
     /**
@@ -82,7 +82,7 @@ public:
      *
      * @return Log of sample probability
      */
-    virtual ScalarType logUnnormalizedProbability(const VariableType& sample) const = 0;
+    virtual ScalarType LogUnnormalizedProbability(const VariableType& sample) const = 0;
 };
 
 }
