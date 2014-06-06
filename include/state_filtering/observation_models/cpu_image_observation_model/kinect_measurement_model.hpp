@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef GAUSSIAN_OBSERVATION_MODEL_HPP_
-#define GAUSSIAN_OBSERVATION_MODEL_HPP_
+#ifndef GAUSSIAN_measurement_MODEL_HPP_
+#define GAUSSIAN_measurement_MODEL_HPP_
 
 #include <state_filtering/distribution/features/evaluable.hpp>
 #include <cmath>
@@ -59,20 +59,20 @@ public:
 
     virtual ~KinectMeasurementModel() {}
 
-    virtual ScalarType LogProbability(const VariableType& observation) const
+    virtual ScalarType LogProbability(const VariableType& measurement) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
 
         ScalarType probability;
-        ScalarType sigma = model_sigma_ + sigma_factor_*observation(0)*observation(0);
+        ScalarType sigma = model_sigma_ + sigma_factor_*measurement(0)*measurement(0);
         if(!occlusion_)
         {
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
                 probability = tail_weight_/max_depth_;
             else
                 probability = tail_weight_/max_depth_
-                        + (1 - tail_weight_)*std::exp(-(pow(prediction_-observation(0),2)/(2*sigma*sigma)))
+                        + (1 - tail_weight_)*std::exp(-(pow(prediction_-measurement(0),2)/(2*sigma*sigma)))
                         / (sqrt(2*M_PI) *sigma);
         }
         else
@@ -80,13 +80,13 @@ public:
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
                 probability = tail_weight_/max_depth_ +
                         (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(-2*observation(0) + exponential_rate_*sigma*sigma));
+                        std::exp(0.5*exponential_rate_*(-2*measurement(0) + exponential_rate_*sigma*sigma));
 
             else
                 probability = tail_weight_/max_depth_ +
                         (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(2*prediction_-2*observation(0) + exponential_rate_*sigma*sigma))
-            *(1+erf((prediction_-observation(0)+exponential_rate_*sigma*sigma)/(sqrt(2)*sigma)))
+                        std::exp(0.5*exponential_rate_*(2*prediction_-2*measurement(0) + exponential_rate_*sigma*sigma))
+            *(1+erf((prediction_-measurement(0)+exponential_rate_*sigma*sigma)/(sqrt(2)*sigma)))
             /(2*(std::exp(prediction_*exponential_rate_)-1));
         }
 
@@ -94,14 +94,14 @@ public:
     }
 
 
-    virtual ScalarType Probability(ScalarType observation, ScalarType prediction, bool occlusion)
+    virtual ScalarType Probability(ScalarType measurement, ScalarType prediction, bool occlusion)
     {
         prediction_ = prediction;
         occlusion_ = occlusion;
 
-        VariableType observation_vector;
-        observation_vector(0) = observation;
-        return std::exp(LogProbability(observation_vector));
+        VariableType measurement_vector;
+        measurement_vector(0) = measurement;
+        return std::exp(LogProbability(measurement_vector));
     }
 
     virtual int variable_size() const

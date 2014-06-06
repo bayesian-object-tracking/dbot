@@ -37,15 +37,23 @@ add_definitions(${GLEW_DEFINITIONS})
 
 if(NOT CUDA_FOUND)
     message(" CUDA not found!")
+else(NOT CUDA_FOUND)
+    message(" CUDA has been found")
 endif(NOT CUDA_FOUND)
 
 if(NOT OPENGL_FOUND)
     message(" OPENGL not found!")
+else(NOT OPENGL_FOUND)
+    message(" OPENGL has been found!")
 endif(NOT OPENGL_FOUND)
 
 if(NOT GLEW_FOUND)
     message(" GLEW not found!")
+else(NOT GLEW_FOUND)
+    message(" GLEW has been found!")
 endif(NOT GLEW_FOUND)
+
+
 
 # enable cuda debug information with -g -G -O0, to use with cuda-dbg
 # use --ptxas-options=-v to see number of registers, local, shared and constant memory used in kernels
@@ -93,9 +101,10 @@ set(state_filtering_headers
     # process model interface
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
 
-    # process model specializations
+    # process model implementations
     include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
+    include/${PROJECT_NAME}/process_model/occlusion_process_model.hpp
 
     # system state interface
     include/${PROJECT_NAME}/system_states/full_rigid_body_system.hpp
@@ -107,7 +116,6 @@ set(state_filtering_headers
     # measurement model specializations
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp
     include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.hpp
     include/${PROJECT_NAME}/observation_models/spkf/model_types.hpp
     include/${PROJECT_NAME}/observation_models/spkf/measurement_model.hpp
     include/${PROJECT_NAME}/observation_models/spkf/depth_measurement_model.hpp
@@ -153,7 +161,6 @@ set(state_filtering_headers
 
 set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
-    src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/occlusion_process_model.cpp
 
     ## Particle specific implementations
     src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
@@ -192,7 +199,9 @@ target_link_libraries(run_cpu_coordinate_filter
     ${PCL_LIBRARIES}
     yaml-cpp)
 
-if(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
+if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND AND bla)
+    message("building cuda implementation")
+
     set(state_filtering_gpu_HEADERS
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_filter.hpp
@@ -230,9 +239,9 @@ if(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
         yaml-cpp)
-else(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
+else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
-endif(CUDA_FOUND AND OpenGL_FOUND AND GLEW_FOUND)
+endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 ## Declare a cpp executable
 # add_executable(state_filtering_node src/state_filtering_node.cpp)

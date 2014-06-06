@@ -108,10 +108,10 @@ std::vector<float> CPUImageObservationModel::Evaluate(
             {
                 float visibility_prob;
                 // we predict the visiblity probability and set the time of the last update time to current
-                visibility_prob =
+                visibility_prob = 1. -
                         occlusion_process_model_->Propagate(
-                            visibility_probs_[occlusion_indices[state_index]][intersect_indices[i]],
-                        observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[i]]);
+                            1. - visibility_probs_[occlusion_indices[state_index]][intersect_indices[i]],
+                            observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[i]]);
 
                 float p_obsIpred_vis = // prob of observation given prediction, knowing that the object is not occluded
                         observation_model_->Probability(observations_[intersect_indices[i]], predictions[i], false)

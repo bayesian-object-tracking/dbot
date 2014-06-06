@@ -174,11 +174,11 @@ public:
     {
         return Base::VariableSize;
     }
-    virtual int randomsSize() const
+    virtual int randoms_size() const
     {
         return Base::RandomsSize;
     }
-    virtual int controlSize() const
+    virtual int control_size() const
     {
         return Base::ControlSize;
     }

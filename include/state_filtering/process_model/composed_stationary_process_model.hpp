@@ -98,9 +98,9 @@ public: /* distribution traits */
         for(size_t i = 0; i < process_models_.size(); i++)
         {
             variables.middleRows(variable_index, process_models_[i]->variable_size()) =
-                    process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->randomsSize()));
+                    process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->randoms_size()));
             variable_index += process_models_[i]->variable_size();
-            random_index += process_models_[i]->randomsSize();
+            random_index += process_models_[i]->randoms_size();
         }
         return variables;
     }
@@ -118,9 +118,9 @@ public: /* distribution traits */
             process_models_[i]->conditionals(
                         delta_time,
                         state.middleRows(state_index, process_models_[i]->variable_size()),
-                        control.middleRows(control_index, process_models_[i]->controlSize()));
+                        control.middleRows(control_index, process_models_[i]->control_size()));
             state_index += process_models_[i]->variable_size();
-            control_index += process_models_[i]->controlSize();
+            control_index += process_models_[i]->control_size();
         }
     }
 
@@ -129,12 +129,12 @@ public: /* distribution traits */
         return total_count_state(process_models_);
     }
 
-    virtual int randomsSize() const
+    virtual int randoms_size() const
     {
         return total_count_randoms(process_models_);
     }
 
-    virtual int controlSize() const
+    virtual int control_size() const
     {
         return total_count_control(process_models_);
     }
@@ -155,7 +155,7 @@ private:
     {
         unsigned total_count_control = 0;
         for(size_t i = 0; i < process_models.size(); i++)
-            total_count_control += process_models[i]->controlSize();
+            total_count_control += process_models[i]->control_size();
         return total_count_control;
     }
 
@@ -163,7 +163,7 @@ private:
     {
         unsigned total_count_randoms = 0;
         for(size_t i = 0; i < process_models.size(); i++)
-            total_count_randoms += process_models[i]->randomsSize();
+            total_count_randoms += process_models[i]->randoms_size();
         return total_count_randoms;
     }
 };

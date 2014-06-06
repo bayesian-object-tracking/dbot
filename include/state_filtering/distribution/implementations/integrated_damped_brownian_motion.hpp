@@ -117,7 +117,7 @@ public:
         return distribution_.variable_size();
     }
 
-    virtual int randomsSize() const
+    virtual int randoms_size() const
     {
         return variable_size();
     }

@@ -96,7 +96,7 @@ public:
      */
     virtual VariableType mapNormal(const RandomsType& sample) const = 0;
 
-    virtual int randomsSize() const = 0;
+    virtual int randoms_size() const = 0;
 
     /**
      * @brief Returns a random sample from the underlying distribution
@@ -107,8 +107,8 @@ public:
      */
     virtual VariableType sample()
     {
-        RandomsType normal_sample(RANDOMS_SIZE);
-        for (int i = 0; i < RANDOMS_SIZE; i++)
+        RandomsType normal_sample(randoms_size());
+        for (int i = 0; i < randoms_size(); i++)
         {
             normal_sample(i) = gaussian_generator_();
         }

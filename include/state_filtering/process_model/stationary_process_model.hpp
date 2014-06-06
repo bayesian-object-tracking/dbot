@@ -85,10 +85,10 @@ public: /* distribution traits */
 
     virtual void conditionals(const double& delta_time, const VariableType& state)
     {
-        conditionals(delta_time, state, ControlType::Zero(controlSize()));
+        conditionals(delta_time, state, ControlType::Zero(control_size()));
     }
 
-    virtual int controlSize() const = 0;
+    virtual int control_size() const = 0;
 };
 
 }

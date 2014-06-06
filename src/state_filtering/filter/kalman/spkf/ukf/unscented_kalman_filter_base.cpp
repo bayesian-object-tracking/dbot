@@ -130,7 +130,7 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
     */
 
     // TODO update. in the mean time assume it's NonLinearNonAdditiveNoise
-    int augmentedDimension = stateDimension + processModel_->randomsSize();
+    int augmentedDimension = stateDimension + processModel_->randoms_size();
 
     // NOTE STDCOUT
     // std::cout << "augmentedDimension = " << augmentedDimension << std::endl;
@@ -140,12 +140,12 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     std::vector<int> segmentsDimensions;
     segmentsDimensions.push_back(stateDimension);
-    segmentsDimensions.push_back(processModel_->randomsSize());
+    segmentsDimensions.push_back(processModel_->randoms_size());
     ukfAugmentedStateDesc.segmentsDimensions(segmentsDimensions);
 
     // x' = [x 0]^T
     augmentedState.segment(0, stateDimension) = stateDesc.mean();
-    augmentedState.segment(stateDimension, processModel_->randomsSize()).setZero();
+    augmentedState.segment(stateDimension, processModel_->randoms_size()).setZero();
 
     //       | P  0 |
     // P^a = | 0  Q |, with Q = I
@@ -159,8 +159,8 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     augmentedCovariance.block(stateDimension,
                               stateDimension,
-                              processModel_->randomsSize(),
-                              processModel_->randomsSize()).setIdentity();
+                              processModel_->randoms_size(),
+                              processModel_->randoms_size()).setIdentity();
 }
 
 void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
@@ -190,7 +190,7 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
         // Only for non-additive noise process models. For additive process model noise this
         // is not needed
         ProcessModel::RandomsType processNoise =
-                sigmaPoints.col(i).segment(stateDimension, processModel_->randomsSize());
+                sigmaPoints.col(i).segment(stateDimension, processModel_->randoms_size());
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());
 
