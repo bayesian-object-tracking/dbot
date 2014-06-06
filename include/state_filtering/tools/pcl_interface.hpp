@@ -62,6 +62,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/tools/helper_functions.hpp>
 // #include <state_filtering/tools/cloud_visualizer.hpp>
 #include <state_filtering/tools/macros.hpp>
+#include <state_filtering/system_states/full_rigid_body_system.hpp>
+#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace pi
 {
@@ -561,6 +563,87 @@ template <typename PointT> void FindCylinder(
 	coefficients.topRows(3) = p + min*e;
 	coefficients.middleRows(3,3) = p + max*e - coefficients.topRows(3);
 }
+
+
+
+// this function creates some samples around clusters on a plane. it assumes
+// that when the object is standing on the table, the origin coincides with the
+// table plane and z points upwards
+template<typename Scalar> std::vector<FullRigidBodySystem<-1>::State>
+SampleTableClusters(std::vector<Eigen::Matrix<Scalar,3,1> > points,
+                    size_t n_rows, size_t n_cols,
+                    size_t sample_count)
+{
+    typedef Eigen::Matrix<Scalar,3,1> Vector;
+    typedef Eigen::Matrix<Scalar,3,3> Matrix;
+    typedef Eigen::Matrix<Scalar,4,1> Plane;
+
+    typedef FullRigidBodySystem<-1> BodySystem;
+
+    vector<BodySystem::State> states;
+
+    // find points on table and cluster them
+    std::vector<Vector> table_points;
+    size_t table_rows, table_cols;
+    Plane table_plane;
+    pi::PointsOnPlane(points, n_rows, n_cols, table_points, table_rows, table_cols, table_plane, true);
+    if(table_plane.topRows(3).dot(Eigen::Vector3d(0,1,0)) > 0)
+        table_plane = - table_plane;
+    table_plane /= table_plane.topRows(3).norm();
+    Vector table_normal = table_plane.topRows(3);
+    std::vector<std::vector<Vector> > clusters;
+    pi::Cluster(table_points, table_rows, table_cols, clusters);
+    if(clusters.size() == 0)
+        return states;
+
+    // we create samples around the clusters on the table
+    // create gaussian for sampling
+    Scalar standard_deviation_translation = 0.03;
+    Scalar standard_deviation_rotation = 100.0;
+    filter::GaussianDistribution<Scalar, 1> unit_gaussian;
+    unit_gaussian.setNormal();
+
+    for(size_t cluster_index = 0; cluster_index < clusters.size(); cluster_index++)
+    {
+        Vector com(0,0,0);
+        for(size_t i = 0; i < clusters[cluster_index].size(); i++)
+            com += clusters[cluster_index][i];
+        com /= Scalar(clusters[cluster_index].size());
+
+        Vector t_mean = com - (com.dot(table_normal)+table_plane(3))*table_normal; // project center of mass in table plane
+        Vector table_vector_a = table_normal.cross(Vector(1,1,1)).normalized(); // vector along table plane
+        Vector table_vector_b = table_normal.cross(table_vector_a); // second vector along table plane
+        Matrix R_mean; R_mean.col(0) = table_vector_a; R_mean.col(1) = table_vector_b; R_mean.col(2) = table_normal;
+
+        // sample around mean
+        for(size_t i = 0; i < size_t(sample_count)/clusters.size(); i++)
+        {
+            BodySystem body_system(1);
+            body_system.position() =
+                    t_mean +
+                    standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_a +
+                    standard_deviation_translation * unit_gaussian.sample()(0) * table_vector_b;
+            body_system.quaternion(Eigen::Quaterniond(
+                                     Eigen::AngleAxisd(standard_deviation_rotation * unit_gaussian.sample()(0), table_normal) * R_mean));
+
+            states.push_back(body_system);
+        }
+    }
+
+    return states;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

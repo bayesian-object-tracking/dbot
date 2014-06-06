@@ -48,6 +48,64 @@ namespace ri
 {
 
 
+template<typename Parameter>
+void ReadParameter(const std::string& path,
+                   Parameter& parameter,
+                   ros::NodeHandle node_handle)
+{
+    XmlRpc::XmlRpcValue ros_parameter;
+    node_handle.getParam(path, ros_parameter);
+    parameter = Parameter(ros_parameter);
+}
+
+template<>
+void ReadParameter< std::vector<std::string> >(const std::string& path,
+                                               std::vector<std::string>& parameter,
+                                               ros::NodeHandle node_handle)
+{
+    XmlRpc::XmlRpcValue ros_parameter;
+    node_handle.getParam(path, ros_parameter);
+    parameter.resize(ros_parameter.size());
+    for(size_t i = 0; i < parameter.size(); i++)
+        parameter[i] = std::string(ros_parameter[i]);
+}
+
+template<>
+void ReadParameter< std::vector<std::vector<size_t> > >(const std::string& path,
+                                                        std::vector<std::vector<size_t> >& parameter,
+                                                        ros::NodeHandle node_handle)
+{
+    XmlRpc::XmlRpcValue ros_parameter;
+    node_handle.getParam(path, ros_parameter);
+    parameter.resize(ros_parameter.size());
+    for(size_t i = 0; i < parameter.size(); i++)
+    {
+        parameter[i].resize(ros_parameter[i].size());
+        for(size_t j = 0; j < parameter[i].size(); j++)
+            parameter[i][j] = int(ros_parameter[i][j]);
+    }
+}
+
+
+
+template<typename Scalar> Eigen::Matrix<Scalar, 3, 3>
+GetCameraMatrix(const std::string& camera_info_topic,
+                ros::NodeHandle& node_handle,
+                const Scalar& seconds)
+{
+    sensor_msgs::CameraInfo::ConstPtr camera_info =
+            ros::topic::waitForMessage<sensor_msgs::CameraInfo> (camera_info_topic,
+                                                                 node_handle,
+                                                                 ros::Duration(seconds));
+    Eigen::Matrix<Scalar, 3, 3> camera_matrix;
+    for(size_t col = 0; col < 3; col++)
+        for(size_t row = 0; row < 3; row++)
+            camera_matrix(row,col) = camera_info->K[col+row*3];
+
+    return camera_matrix;
+}
+
+
 void PublishMarker(const Eigen::Matrix3f R, const Eigen::Vector3f t,
 		std_msgs::Header header,
 		std::string object_model_path,

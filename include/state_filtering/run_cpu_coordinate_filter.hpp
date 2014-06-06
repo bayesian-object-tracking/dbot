@@ -71,82 +71,29 @@ using namespace std;
 using namespace Eigen;
 using namespace filter;
 
-template<typename T>
-void ReadParam(const string& path, T& parameter, ros::NodeHandle node_handle)
+
+
+
+
+class RunCpuCoordinateFilter
 {
-    cout << "reading parameter from " << path << endl;
-    XmlRpc::XmlRpcValue ros_parameter;
-
-    node_handle.getParam(path, ros_parameter);
-    parameter = T(ros_parameter);
-    cout << "parameter is  " << parameter << endl;
-}
-template<>
-void ReadParam< vector<string> >(const string& path, vector<string>& parameter, ros::NodeHandle node_handle)
-{
-    cout << "reading parameter from " << path << endl;
-    XmlRpc::XmlRpcValue ros_parameter;
-    node_handle.getParam(path, ros_parameter);
-    parameter.resize(ros_parameter.size());
-    cout << "parameter is  (";
-    for(size_t i = 0; i < parameter.size(); i++)
-    {
-        parameter[i] = string(ros_parameter[i]);
-        cout << parameter[i] << ", ";
-    }
-    cout << ")" << endl;
-}
-template<>
-void ReadParam< vector<vector<size_t> > >(const string& path, vector<vector<size_t> >& parameter, ros::NodeHandle node_handle)
-{
-    cout << "reading parameter from " << path << endl;
-    XmlRpc::XmlRpcValue ros_parameter;
-    node_handle.getParam(path, ros_parameter);
-    parameter.resize(ros_parameter.size());
-    cout << "parameter is  (";
-    for(size_t i = 0; i < parameter.size(); i++)
-    {
-        cout << "[ ";
-        parameter[i].resize(ros_parameter[i].size());
-        for(size_t j = 0; j < parameter[i].size(); j++)
-        {
-            parameter[i][j] = int(ros_parameter[i][j]);
-            cout << parameter[i][j] << ", ";
-        }
-        cout << "] " ;
-    }
-    cout << ")" << endl;
-}
-
-
-
-class TestFilter
-{
-    template<typename T>
-    void ReadParameter(const string& path, T& parameter)
-    {
-        ReadParam<T>(path, parameter, node_handle_);
-    }
-
 public:
     typedef filter::ParticleFilterContext<double, -1>   FilterContext;
     typedef boost::shared_ptr<FilterContext>            FilterContextPtr;
 
-
-
-    TestFilter(Matrix3d camera_matrix):
+    RunCpuCoordinateFilter(Matrix3d camera_matrix):
         node_handle_("~"),
         is_first_iteration_(true)
     {
         // read parameters ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        ReadParameter("dependencies", dependencies_);
+        ri::ReadParameter("dependencies", dependencies_, node_handle_);
 
-        ReadParameter("object_names", object_names_);
-        ReadParameter("downsampling_factor", downsampling_factor_);
-        ReadParameter("cpu_sample_count", cpu_sample_count_);
-        ReadParameter("p_visible_init", p_visible_init_);
-        ReadParameter("p_visible_visible", p_visible_visible_);
-        ReadParameter("p_visible_occluded", p_visible_occluded_);
+        ri::ReadParameter("object_names", object_names_, node_handle_);
+        ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
+        ri::ReadParameter("cpu_sample_count", cpu_sample_count_, node_handle_);
+        ri::ReadParameter("p_visible_init", p_visible_init_, node_handle_);
+        ri::ReadParameter("p_visible_visible", p_visible_visible_, node_handle_);
+        ri::ReadParameter("p_visible_occluded", p_visible_occluded_, node_handle_);
 
         camera_matrix_ = camera_matrix;
         camera_matrix_.topLeftCorner(2,3) /= float(downsampling_factor_);
@@ -184,9 +131,9 @@ public:
                                                                        object_triangle_indices,
                                                                        rigid_body_system));
         // kinect_measurement_model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        double tail_weight; ReadParameter("tail_weight", tail_weight);
-        double model_sigma; ReadParameter("model_sigma", model_sigma);
-        double sigma_factor; ReadParameter("sigma_factor", sigma_factor);
+        double tail_weight; ri::ReadParameter("tail_weight", tail_weight, node_handle_);
+        double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
+        double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
         boost::shared_ptr<obs_mod::KinectMeasurementModel>
                 kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
 
@@ -207,13 +154,13 @@ public:
                                                                                     p_visible_init_));
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-        double free_damping; ReadParameter("free_damping", free_damping);
+        double free_damping; ri::ReadParameter("free_damping", free_damping, node_handle_);
 
-        double free_linear_acceleration_sigma; ReadParameter("free_linear_acceleration_sigma", free_linear_acceleration_sigma);
+        double free_linear_acceleration_sigma; ri::ReadParameter("free_linear_acceleration_sigma", free_linear_acceleration_sigma, node_handle_);
         MatrixXd free_linear_acceleration_covariance =
                 MatrixXd::Identity(3, 3) * pow(double(free_linear_acceleration_sigma), 2);
 
-        double free_angular_acceleration_sigma; ReadParameter("free_angular_acceleration_sigma", free_angular_acceleration_sigma);
+        double free_angular_acceleration_sigma; ri::ReadParameter("free_angular_acceleration_sigma", free_angular_acceleration_sigma, node_handle_);
         MatrixXd free_angular_acceleration_covariance =
                 MatrixXd::Identity(3, 3) * pow(double(free_angular_acceleration_sigma), 2);
 
