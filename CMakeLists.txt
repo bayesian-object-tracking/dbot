@@ -3,12 +3,13 @@ project(state_filtering)
 
 set(CMAKE_BUILD_TYPE Release)
 
-find_package(catkin REQUIRED roscpp roslib sensor_msgs)
+find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge)
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.3 REQUIRED)
+
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
@@ -149,6 +150,7 @@ set(state_filtering_headers
     # tools
     include/${PROJECT_NAME}/tools/helper_functions.hpp
     include/${PROJECT_NAME}/tools/image_visualizer.hpp
+    include/${PROJECT_NAME}/tools/cloud_visualizer.hpp
     include/${PROJECT_NAME}/tools/log_erfc.hpp
     include/${PROJECT_NAME}/tools/macros.hpp
     include/${PROJECT_NAME}/tools/object_file_reader.hpp
@@ -177,6 +179,7 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.cpp
 
     src/${PROJECT_NAME}/tools/image_visualizer.cpp
+    src/${PROJECT_NAME}/tools/cloud_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp
     src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
 

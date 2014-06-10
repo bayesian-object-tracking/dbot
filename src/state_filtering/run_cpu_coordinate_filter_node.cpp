@@ -28,9 +28,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define PROFILING_ON
 
+#include <sensor_msgs/Image.h>
+
 #include <state_filtering/run_cpu_coordinate_filter.hpp>
+#include <state_filtering/tools/cloud_visualizer.hpp>
+
+
+#include <cv.h>
+#include <cv_bridge/cv_bridge.h>
+
+
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
+typedef Eigen::Matrix<double, -1, -1> Image;
 
 int main (int argc, char **argv)
 {
@@ -38,32 +48,26 @@ int main (int argc, char **argv)
     ros::NodeHandle node_handle("~");
 
     // read parameters
-    string point_cloud_topic; ri::ReadParameter("point_cloud_topic", point_cloud_topic, node_handle);
+    string depth_image_topic; ri::ReadParameter("depth_image_topic", depth_image_topic, node_handle);
     string camera_info_topic; ri::ReadParameter("camera_info_topic", camera_info_topic, node_handle);
     int initial_sample_count; ri::ReadParameter("initial_sample_count", initial_sample_count, node_handle);
 
     Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
 
-    // get observations from camera ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    cout << "reading point cloud " << endl;
-    sensor_msgs::PointCloud2 ros_cloud  =
-            *ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_topic, node_handle, ros::Duration(2.0));
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg (ros_cloud, *pcl_cloud);
-    cout << "done" << endl;
-    vector<Vector3d> all_points;
-    size_t all_rows, all_cols;
-    pi::Pcl2Eigen(*pcl_cloud, all_points, all_rows, all_cols);
+    // get observations from camera
+    sensor_msgs::Image::ConstPtr ros_image =
+            ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
+    Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
 
-   vector<VectorXd> initial_states = pi::SampleTableClusters(all_points, all_rows, all_cols, initial_sample_count);
+    vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
+                                                              initial_sample_count);
 
-    // intialize the filter ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // intialize the filter
     RunCpuCoordinateFilter test_filter(camera_matrix);
-    test_filter.Initialize(initial_states, ros_cloud);
+    test_filter.Initialize(initial_states, *ros_image);
     cout << "done initializing" << endl;
 
-    ros::Subscriber subscriber =
-            node_handle.subscribe(point_cloud_topic, 1, &RunCpuCoordinateFilter::Filter, &test_filter);
+    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &RunCpuCoordinateFilter::Filter, &test_filter);
 
     ros::spin();
     return 0;

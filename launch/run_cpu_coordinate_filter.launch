@@ -1,11 +1,11 @@
 <launch>
-  <arg name="point_cloud_topic" />
+  <arg name="depth_image_topic" />
   <arg name="camera_matrix_topic" />
 
   <!-- Pose Estimation Node-->
   <node name="run_cpu_coordinate_filter" type="run_cpu_coordinate_filter"
         pkg="state_filtering" output="screen" respawn="false"> <!-- launch-prefix="valgrind" -->
-       <param name="point_cloud_topic"    type="string"  value="$(arg point_cloud_topic)" />
+       <param name="depth_image_topic"    type="string"  value="$(arg depth_image_topic)" />
        <param name="camera_info_topic"  type="string"  value="$(arg camera_info_topic)" /> 
        <rosparam command="load" file="$(find state_filtering)/config/config.yaml" />             
   </node>

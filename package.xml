@@ -11,7 +11,7 @@
   <url type="website">http://github.com/jan-issac/state_filtering</url>
 
   <author email="jan.issac@gmail.com">Jan Issac</author>
-  <author email="jmanuel.wuthrich@gmail.com">Manuel Wuthrich</author>
+  <author email="manuel.wuthrich@gmail.com">Manuel Wuthrich</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -22,6 +22,8 @@
   <build_depend>OpenCV</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>pcl</build_depend>
+  <build_depend>cv_bridge</build_depend>
+
 
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>

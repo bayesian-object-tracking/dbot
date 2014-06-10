@@ -766,16 +766,16 @@ private:
 // depth image functions >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // converts from cartesian to image space
 template <typename T> Eigen::Matrix<T, 2, 1>
-CartCoord2ImageCoord(const Eigen::Matrix<T, 3, 1>& cart, const Eigen::Matrix<T, 3, 3>& camera_matrix)
+CartCoord2ImageCoord(const Eigen::Matrix<T, 3, 1>& cart,
+                     const Eigen::Matrix<T, 3, 3>& camera_matrix)
 {
 	return (camera_matrix * cart/cart(2)).topRows(2);
 }
 
 // converts from cartesian space to image index, (row, col)
 template <typename T> Eigen::Matrix<int, 2, 1>
-CartCoord2ImageIndex(
-		const Eigen::Matrix<T, 3, 1>& cart,
-		const Eigen::Matrix<T, 3, 3>& camera_matrix)
+CartCoord2ImageIndex(const Eigen::Matrix<T, 3, 1>& cart,
+                     const Eigen::Matrix<T, 3, 3>& camera_matrix)
 {
 	Eigen::Matrix<T, 2, 1> image = CartCoord2ImageCoord(cart, camera_matrix);
 	Eigen::Matrix<int, 2, 1> image_index;
@@ -787,10 +787,9 @@ CartCoord2ImageIndex(
 
 // converts from image coordinates and depth (z value) to cartesian coordinates
 template <typename T> Eigen::Matrix<T, 3, 1>
-ImageCoord2CartCoord(
-		const Eigen::Matrix<T, 2, 1>& image,
-		const T& depth,
-		const Eigen::Matrix<T, 3, 3>& camera_matrix_inverse)
+ImageCoord2CartCoord(const Eigen::Matrix<T, 2, 1>& image,
+                     const T& depth,
+                     const Eigen::Matrix<T, 3, 3>& camera_matrix_inverse)
 {
 	Eigen::Matrix<T, 3, 1> image_augmented;
 	image_augmented.topRows(2) = image;
@@ -801,10 +800,9 @@ ImageCoord2CartCoord(
 
 // converts from image index (row, col) and depth (z value) to cartesian coordinates
 template <typename T> Eigen::Matrix<T, 3, 1>
-ImageIndex2CartCoord(
-		const Eigen::Matrix<int, 2, 1>& image_index,
-		const T& depth,
-		const Eigen::Matrix<T, 3, 3>& camera_matrix_inverse)
+ImageIndex2CartCoord(const Eigen::Matrix<int, 2, 1>& image_index,
+                     const T& depth,
+                     const Eigen::Matrix<T, 3, 3>& camera_matrix_inverse)
 {
 	Eigen::Matrix<T, 2, 1> image;
 	image(0) = image_index(1);
@@ -812,11 +810,30 @@ ImageIndex2CartCoord(
 	return ImageCoord2CartCoord(image, depth, camera_matrix_inverse);
 }
 
+
+template <typename T> Eigen::Matrix<Eigen::Matrix<T, 3, 1> , -1, -1>
+Image2Points(const Eigen::Matrix<T, -1, -1>& image,
+             const Eigen::Matrix<T, 3, 3>& camera_matrix)
+{
+    Eigen::Matrix<T, 3, 3> camera_matrix_inverse = camera_matrix.inverse();
+
+    Eigen::Matrix<Eigen::Matrix<T, 3, 1> , -1, -1> points(image.rows(), image.cols());
+    for(size_t row = 0; row < points.rows(); row++)
+        for(size_t col = 0; col < points.cols(); col++)
+            points(row, col) = ImageIndex2CartCoord(Eigen::Vector2i(row, col),
+                                                    image(row, col),
+                                                    camera_matrix_inverse);
+
+    return points;
+}
+
+
+
+
 template <typename T> std::vector<Eigen::Matrix<T, 3, 1> >
-DepthImage2CartVectors(
-		const std::vector<T>& image,
-		const size_t& n_rows, const size_t& n_cols,
-		const Eigen::Matrix<T, 3, 3>& camera_matrix)
+DepthImage2CartVectors(const std::vector<T>& image,
+                       const size_t& n_rows, const size_t& n_cols,
+                       const Eigen::Matrix<T, 3, 3>& camera_matrix)
 {
 	Eigen::Matrix<T, 3, 3> camera_matrix_inverse = camera_matrix.inverse();
 

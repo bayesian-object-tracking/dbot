@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <string>
-#include <Eigen/Core>
+#include "Eigen/Core"
 //#include <cv.h>
 
 
@@ -49,17 +49,29 @@ public:
 
 	~ImageVisualizer();
 
-    void set_image(const std::vector<float> &image,
-            const float& min_value = 0,
-            const float& max_value = 0,
-            const bool &invert_image = false);
+    void set_image(const Eigen::MatrixXd &image,
+                   const float& min_value = 0,
+                   const float& max_value = 0,
+                   const bool &invert_image = false);
 
-	void add_points(
-			const std::vector<Eigen::Vector3f> &points,
-			const Eigen::Matrix3f &camera_matrix,
-			const Eigen::Matrix3f &R = Eigen::Matrix3f::Identity(),
-			const Eigen::Vector3f &t = Eigen::Vector3f::Zero(),
-			const std::vector<float> &colors = std::vector<float>(0));
+    void set_image(const std::vector<float> &image,
+                   const float& min_value = 0,
+                   const float& max_value = 0,
+                   const bool &invert_image = false);
+
+    void add_points(const std::vector<Eigen::Vector3f> &points,
+                    const Eigen::Matrix3f &camera_matrix,
+                    const Eigen::Matrix3f &R = Eigen::Matrix3f::Identity(),
+                    const Eigen::Vector3f &t = Eigen::Vector3f::Zero(),
+                    const std::vector<float> &colors = std::vector<float>(0));
+
+
+    void add_points(const Eigen::Matrix<Eigen::Vector3d, -1, -1> &points,
+                    const Eigen::Matrix3d &camera_matrix,
+                    const Eigen::Matrix3d &R = Eigen::Matrix3d::Identity(),
+                    const Eigen::Vector3d &t = Eigen::Vector3d::Zero(),
+                    const std::vector<float> &colors = std::vector<float>(0));
+
 
 	void add_points(
 			const std::vector<int> &point_indices,

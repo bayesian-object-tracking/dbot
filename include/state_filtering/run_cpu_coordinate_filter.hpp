@@ -80,6 +80,7 @@ class RunCpuCoordinateFilter
 public:
     typedef filter::ParticleFilterContext<double, -1>   FilterContext;
     typedef boost::shared_ptr<FilterContext>            FilterContextPtr;
+    typedef Eigen::Matrix<double, -1, -1> Image;
 
     RunCpuCoordinateFilter(Matrix3d camera_matrix):
         node_handle_("~"),
@@ -87,7 +88,6 @@ public:
     {
         // read parameters ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         ri::ReadParameter("dependencies", dependencies_, node_handle_);
-
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("cpu_sample_count", cpu_sample_count_, node_handle_);
@@ -102,11 +102,19 @@ public:
 
     void Initialize(
             vector<VectorXd> single_body_samples,
-            sensor_msgs::PointCloud2 ros_cloud)
+            const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
-        vector<float> observations; size_t n_rows, n_cols;
-        pi::Ros2Std(ros_cloud, downsampling_factor_, observations, n_rows, n_cols);
+
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+
+        vector<float> measurement(image.size()); size_t n_rows = image.rows(), n_cols = image.cols();
+        
+        for(size_t row = 0; row < image.rows(); row++)
+            for(size_t col = 0; col < image.cols(); col++)
+                measurement[row*image.cols() + col] = image(row, col);
+        
+//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
 
         // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
         // load object mesh ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -206,7 +214,7 @@ public:
                 multi_body_samples[state_index] = full_initial_state;
             }
             cpu_filter_->set_states(multi_body_samples);
-            cpu_filter_->Evaluate(observations);
+            cpu_filter_->Evaluate(measurement);
             cpu_filter_->Resample(multi_body_samples.size());
             cpu_filter_->get(multi_body_samples);
         }
@@ -214,7 +222,7 @@ public:
         // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
         cpu_filter_->set_states(multi_body_samples);
-        cpu_filter_->Evaluate(observations);
+        cpu_filter_->Evaluate(measurement);
         cpu_filter_->Resample(cpu_sample_count_);
 
         filter_context_ =
@@ -223,29 +231,77 @@ public:
     }
 
 
-    void Filter(sensor_msgs::PointCloud2 ros_cloud)
+//    void Filter(sensor_msgs::PointCloud2 ros_cloud)
+//    {
+//        boost::mutex::scoped_lock lock(mutex_);
+
+//        // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//        if(is_first_iteration_)
+//        {
+//            previous_time_ = ros_cloud.header.stamp.toSec();
+//            is_first_iteration_ = false;
+//        }
+
+
+//        // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//        vector<float> measurement; size_t n_rows, n_cols;
+//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
+
+//        // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//        INIT_PROFILING;
+//        filter_context_->predictAndUpdate(measurement,
+//                                          ros_cloud.header.stamp.toSec() - previous_time_,
+//                                          VectorXd::Zero(object_names_.size()*6));
+//        MEASURE("-----------------> total time for filtering");
+
+//        previous_time_ = ros_cloud.header.stamp.toSec();
+
+//        // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//        FullRigidBodySystem<> mean = filter_context_->stateDistribution().emiricalMean();
+//        // 3d models
+//        for(size_t i = 0; i < object_names_.size(); i++)
+//        {
+//            string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
+//            ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
+//                              ros_cloud.header, object_model_path, object_publisher_,
+//                              i, 1, 0, 0);
+//        }
+//    }
+
+
+
+    void Filter(const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
         // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         if(is_first_iteration_)
         {
-            previous_time_ = ros_cloud.header.stamp.toSec();
+            previous_time_ = ros_image.header.stamp.toSec();
             is_first_iteration_ = false;
         }
 
-        // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        vector<float> observations; size_t n_rows, n_cols;
-        pi::Ros2Std(ros_cloud, downsampling_factor_, observations, n_rows, n_cols);
+
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+
+        vector<float> measurement(image.size()); size_t n_rows = image.rows(), n_cols = image.cols();
+
+        for(size_t row = 0; row < image.rows(); row++)
+            for(size_t col = 0; col < image.cols(); col++)
+                measurement[row*image.cols() + col] = image(row, col);
+
+//        // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//        vector<float> measurement; size_t n_rows, n_cols;
+//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
 
         // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         INIT_PROFILING;
-        filter_context_->predictAndUpdate(observations,
-                                          ros_cloud.header.stamp.toSec() - previous_time_,
+        filter_context_->predictAndUpdate(measurement,
+                                          ros_image.header.stamp.toSec() - previous_time_,
                                           VectorXd::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
 
-        previous_time_ = ros_cloud.header.stamp.toSec();
+        previous_time_ = ros_image.header.stamp.toSec();
 
         // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         FullRigidBodySystem<> mean = filter_context_->stateDistribution().emiricalMean();
@@ -254,10 +310,11 @@ public:
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
             ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-                              ros_cloud.header, object_model_path, object_publisher_,
+                              ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
     }
+
 
 
 

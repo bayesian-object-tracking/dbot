@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <state_filtering/tools/image_visualizer.hpp>
+#include <state_filtering/tools/helper_functions.hpp>
 
 #include <cv.h>
 #include <highgui.h>
@@ -55,6 +56,25 @@ ImageVisualizer::ImageVisualizer(
 }
 
 ImageVisualizer::~ImageVisualizer() {cvReleaseImage((IplImage**)(&image_));}
+
+
+void ImageVisualizer::set_image(
+        const Eigen::MatrixXd &image,
+        const float &min_value,
+        const float &max_value,
+         const bool &invert_image)
+{
+    std::vector<float> std_image(image.rows()*image.cols());
+    for(size_t row = 0; row < image.rows(); row++)
+        for(size_t col = 0; col < image.cols(); col++)
+        {
+            std_image[row*image.cols()+col] = image(row, col);
+        }
+
+    set_image(std_image, min_value, max_value, invert_image);
+}
+
+
 
 void ImageVisualizer::set_image(
         const std::vector<float> &image,
@@ -132,6 +152,42 @@ void ImageVisualizer::add_points(
 
 	add_points(point_indices, new_colors);
 }
+
+
+void ImageVisualizer::add_points(
+        const Eigen::Matrix<Eigen::Vector3d, -1, -1> &points,
+        const Eigen::Matrix3d &camera_matrix,
+        const Eigen::Matrix3d &R,
+        const Eigen::Vector3d &t,
+        const std::vector<float> &colors)
+{
+    std::vector<int> point_indices(points.cols() * points.rows());
+
+    std::vector<float> new_colors;
+    if(colors.size() != 0)
+        new_colors = colors;
+    else
+        new_colors.resize(points.cols() * points.rows());
+
+    for(size_t row = 0; row < points.rows(); row++)
+        for(size_t col = 0; col < points.cols(); col++)
+        {
+            Vector3d point = R * points(row, col) + t;
+            Vector2i index = hf::CartCoord2ImageIndex(point, camera_matrix);
+
+            if(!(index(0) > 479 || index(1) > 639 || index(0) < 0 || index(1) < 0))
+            {
+                point_indices[row * points.cols() + col] = index(0)*n_cols_ + index(1);
+
+                if(colors.size() == 0)
+                    new_colors[row * points.cols() + col] = point(2);
+            }
+        }
+
+    add_points(point_indices, new_colors);
+}
+
+
 
 void ImageVisualizer::add_points(
 		const std::vector<int> &point_indices,

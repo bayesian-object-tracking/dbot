@@ -60,7 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/assert.hpp>
 
 #include <state_filtering/tools/helper_functions.hpp>
-// #include <state_filtering/tools/cloud_visualizer.hpp>
+#include <state_filtering/tools/cloud_visualizer.hpp>
 #include <state_filtering/tools/macros.hpp>
 #include <state_filtering/system_states/full_rigid_body_system.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
@@ -566,13 +566,15 @@ template <typename PointT> void FindCylinder(
 
 
 
+
+
 // this function creates some samples around clusters on a plane. it assumes
 // that when the object is standing on the table, the origin coincides with the
 // table plane and z points upwards
 template<typename Scalar> std::vector<FullRigidBodySystem<-1>::State>
-SampleTableClusters(std::vector<Eigen::Matrix<Scalar,3,1> > points,
-                    size_t n_rows, size_t n_cols,
-                    size_t sample_count)
+SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
+                    const size_t& n_rows, const size_t& n_cols,
+                    const size_t& sample_count)
 {
     typedef Eigen::Matrix<Scalar,3,1> Vector;
     typedef Eigen::Matrix<Scalar,3,3> Matrix;
@@ -634,6 +636,18 @@ SampleTableClusters(std::vector<Eigen::Matrix<Scalar,3,1> > points,
 }
 
 
+template<typename Scalar> std::vector<FullRigidBodySystem<-1>::State>
+SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& points,
+                    const size_t& sample_count)
+{
+    std::vector<Eigen::Matrix<Scalar,3,1> > std_points(points.rows()*points.cols());
+    for(size_t row = 0; row < points.rows(); row++)
+        for(size_t col = 0; col < points.cols(); col++)
+            std_points[row*points.cols() + col] = points(row, col);
+
+
+    return SampleTableClusters(std_points, points.rows(), points.cols(), sample_count);
+}
 
 
 

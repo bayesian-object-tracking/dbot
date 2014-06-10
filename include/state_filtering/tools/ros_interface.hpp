@@ -44,6 +44,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+
+#include <cv.h>
+#include <cv_bridge/cv_bridge.h>
+
+#include <sensor_msgs/Image.h>
+
+
 namespace ri
 {
 
@@ -85,6 +92,24 @@ void ReadParameter< std::vector<std::vector<size_t> > >(const std::string& path,
             parameter[i][j] = int(ros_parameter[i][j]);
     }
 }
+
+
+template<typename Scalar> Eigen::Matrix<Scalar, -1, -1>
+Ros2Eigen(const sensor_msgs::Image& ros_image,
+          const size_t& n_downsampling = 1)
+{
+    cv::Mat cv_image = cv_bridge::toCvCopy(ros_image)->image;
+
+    size_t n_rows = cv_image.rows/n_downsampling; size_t n_cols = cv_image.cols/n_downsampling;
+    Eigen::Matrix<Scalar, -1, -1> eigen_image(n_rows, n_cols);
+    for(size_t row = 0; row < n_rows; row++)
+        for(size_t col = 0; col < n_cols; col++)
+            eigen_image(row, col) = cv_image.at<float>(row*n_downsampling,col*n_downsampling);
+
+    return eigen_image;
+}
+
+
 
 
 
