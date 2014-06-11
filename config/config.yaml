@@ -7,12 +7,15 @@ object_paths: [
 ]
 
 #object_names: [impact_battery, battery, handset_down, maglite_down]
-object_names: [battery, canteen, impact_battery]
+object_names: [impact_battery]
+#, battery, canteen]
 
-dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11] , [12, 13, 14, 15, 16, 17] ]
+#dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11] , [12, 13, 14, 15, 16, 17] ]
 #, [18, 19, 20, 21, 22, 23] ] 
 #dependencies: [ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]] #completely dependent
-#dependencies: [ [0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23]] #completely independent
+dependencies: [ [0], [1], [2], [3], [4], [5] ]
+#, [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17] ]
+#, [18], [19], [20], [21], [22], [23]] #completely independent
 
 use_gpu: true
 
@@ -20,7 +23,7 @@ use_gpu: true
 downsampling_factor: 8 #8
 initial_sample_count: 1000 #10000
 max_sample_count: 10000 #10000
-sample_count: 1000
+sample_count: 500
 
 
 # visibility process model stuff ------------------------------------------------------------

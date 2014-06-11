@@ -222,6 +222,8 @@ void CoordinateFilter::Enchilada(
     PartialEvaluate(observation, observation_time);
     PartialResample(control, observation_time, new_n_states);
     UpdateOcclusions(observation, observation_time);
+
+    state_distribution_.setDeltas(parents_); // not sure whether this is the right place
 }
 
 

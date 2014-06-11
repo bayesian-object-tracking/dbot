@@ -313,15 +313,21 @@ public:
 
         duration_ += ros_image.header.stamp.toSec() - previous_time_;
 
-        filter_->Propagate(VectorXd::Zero(object_names_.size()*6), duration_);
-        filter_->Evaluate(image, duration_, true);
-        filter_->Resample();
+//        filter_->Propagate(VectorXd::Zero(object_names_.size()*6), duration_);
+//        filter_->Evaluate(image, duration_, true);
+//        filter_->Resample();
+
+
+        filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
+                           duration_,
+                           image,
+                           sample_count_);
         MEASURE("-----------------> total time for filtering");
 
         previous_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
-        FullRigidBodySystem<> mean = filter_context_->stateDistribution().empiricalMean();
+        FullRigidBodySystem<> mean = filter_->stateDistribution().empiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
