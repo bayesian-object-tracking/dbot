@@ -89,7 +89,8 @@ public:
 
     MultiObjectTracker():
         node_handle_("~"),
-        is_first_iteration_(true)
+        is_first_iteration_(true),
+        duration_(0)
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
@@ -109,6 +110,9 @@ public:
 
         vector<vector<size_t> > dependencies;
         ri::ReadParameter("dependencies", dependencies, node_handle_);
+
+        cout << "dependencies " << endl;
+        hf::PrintVector(dependencies);
 
         double p_visible_init;
         double p_visible_visible;
@@ -217,24 +221,24 @@ public:
 
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-        double free_damping; ri::ReadParameter("free_damping", free_damping, node_handle_);
+        double damping; ri::ReadParameter("damping", damping, node_handle_);
 
-        double free_linear_acceleration_sigma; ri::ReadParameter("free_linear_acceleration_sigma", free_linear_acceleration_sigma, node_handle_);
-        MatrixXd free_linear_acceleration_covariance =
-                MatrixXd::Identity(3, 3) * pow(double(free_linear_acceleration_sigma), 2);
+        double linear_acceleration_sigma; ri::ReadParameter("linear_acceleration_sigma", linear_acceleration_sigma, node_handle_);
+        MatrixXd linear_acceleration_covariance =
+                MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
 
-        double free_angular_acceleration_sigma; ri::ReadParameter("free_angular_acceleration_sigma", free_angular_acceleration_sigma, node_handle_);
-        MatrixXd free_angular_acceleration_covariance =
-                MatrixXd::Identity(3, 3) * pow(double(free_angular_acceleration_sigma), 2);
+        double angular_acceleration_sigma; ri::ReadParameter("angular_acceleration_sigma", angular_acceleration_sigma, node_handle_);
+        MatrixXd angular_acceleration_covariance =
+                MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
         vector<boost::shared_ptr<StationaryProcessModel<> > > partial_process_models(object_names_.size());
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
             partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
-                                              free_damping,
-                                              free_linear_acceleration_covariance,
-                                              free_angular_acceleration_covariance);
+                                              damping,
+                                              linear_acceleration_covariance,
+                                              angular_acceleration_covariance);
             partial_process_models[i] = partial_process_model;
         }
 
@@ -282,6 +286,7 @@ public:
         filter_context_ =
                 boost::shared_ptr<filter::ParticleFilterContext<double, -1> >
                 (new filter::ParticleFilterContext<double, -1>(filter_) );
+
     }
 
     void Filter(const sensor_msgs::Image& ros_image)
@@ -300,16 +305,23 @@ public:
 
         // filter
         INIT_PROFILING;
-        filter_context_->predictAndUpdate(image,
-                                          ros_image.header.stamp.toSec() - previous_time_,
-                                          VectorXd::Zero(object_names_.size()*6));
+//        filter_context_->predictAndUpdate(image,
+//                                          ros_image.header.stamp.toSec() - previous_time_,
+//                                          VectorXd::Zero(object_names_.size()*6));
+
+
+
+        duration_ += ros_image.header.stamp.toSec() - previous_time_;
+
+        filter_->Propagate(VectorXd::Zero(object_names_.size()*6), duration_);
+        filter_->Evaluate(image, duration_, true);
+        filter_->Resample();
         MEASURE("-----------------> total time for filtering");
 
         previous_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
         FullRigidBodySystem<> mean = filter_context_->stateDistribution().empiricalMean();
-        // 3d models
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -323,6 +335,10 @@ public:
 
 
 private:  
+    double duration_;
+
+
+
     boost::mutex mutex_;
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;

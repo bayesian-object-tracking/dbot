@@ -64,7 +64,7 @@ struct BrownianProcessModelBase
 {
     enum
     {
-        VariableSize = 13,
+        VariableSize = 12,
         RandomsSize = 6,
         ControlSize = 6
     };

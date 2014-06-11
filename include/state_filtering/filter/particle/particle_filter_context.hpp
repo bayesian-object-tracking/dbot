@@ -61,7 +61,7 @@ namespace filter
 {
 namespace pfc_internal
 {
-typedef typename CoordinateFilter::ProcessModel::ControlType            ControlType;
+typedef typename CoordinateFilter::ProcessModel::ControlType        ControlType;
 typedef typename CoordinateFilter::MeasurementModel::Measurement    Measurement;
 }
 

@@ -210,24 +210,24 @@ public:
 
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-        double free_damping; ri::ReadParameter("free_damping", free_damping, node_handle_);
+        double damping; ri::ReadParameter("damping", damping, node_handle_);
 
-        double free_linear_acceleration_sigma; ri::ReadParameter("free_linear_acceleration_sigma", free_linear_acceleration_sigma, node_handle_);
-        MatrixXd free_linear_acceleration_covariance =
-                MatrixXd::Identity(3, 3) * pow(double(free_linear_acceleration_sigma), 2);
+        double linear_acceleration_sigma; ri::ReadParameter("linear_acceleration_sigma", linear_acceleration_sigma, node_handle_);
+        MatrixXd linear_acceleration_covariance =
+                MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
 
-        double free_angular_acceleration_sigma; ri::ReadParameter("free_angular_acceleration_sigma", free_angular_acceleration_sigma, node_handle_);
-        MatrixXd free_angular_acceleration_covariance =
-                MatrixXd::Identity(3, 3) * pow(double(free_angular_acceleration_sigma), 2);
+        double angular_acceleration_sigma; ri::ReadParameter("angular_acceleration_sigma", angular_acceleration_sigma, node_handle_);
+        MatrixXd angular_acceleration_covariance =
+                MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
         vector<boost::shared_ptr<StationaryProcessModel<> > > partial_process_models(object_names_.size());
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
             partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
-                                              free_damping,
-                                              free_linear_acceleration_covariance,
-                                              free_angular_acceleration_covariance);
+                                              damping,
+                                              linear_acceleration_covariance,
+                                              angular_acceleration_covariance);
             partial_process_models[i] = partial_process_model;
         }
 
