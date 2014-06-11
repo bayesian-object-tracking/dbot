@@ -64,12 +64,12 @@ public:
 
     virtual ~MomentsSolvable() { }
 
-    virtual VariableType emiricalMean()
+    virtual VariableType empiricalMean()
     {
         return mean();
     }
 
-    virtual CovarianceType emiricalCovariance()
+    virtual CovarianceType empiricalCovariance()
     {
         return covariance();
     }

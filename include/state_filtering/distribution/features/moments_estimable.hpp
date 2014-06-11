@@ -64,8 +64,8 @@ public:
 
     virtual ~MomentsEstimable() { }
 
-    virtual VariableType emiricalMean() = 0;
-    virtual CovarianceType emiricalCovariance() = 0;
+    virtual VariableType empiricalMean() = 0;
+    virtual CovarianceType empiricalCovariance() = 0;
 };
 
 }

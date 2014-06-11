@@ -83,7 +83,7 @@ class Distribution
 {
 public:    
     typedef ScalarType_ ScalarType;
-    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, 1> VariableType;
+    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, 1> VariableType;// todo: we should also accept matrices (not just vectors) as measurements
 
 
     /**

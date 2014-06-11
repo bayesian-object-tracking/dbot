@@ -114,8 +114,6 @@ public:
             for(size_t col = 0; col < image.cols(); col++)
                 measurement[row*image.cols() + col] = image(row, col);
         
-//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
-
         // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
         // load object mesh ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         boost::shared_ptr<RigidBodySystem<> > rigid_body_system(new FullRigidBodySystem<>(object_names_.size()));
@@ -176,11 +174,10 @@ public:
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
-            partial_process_model->parameters(
-                        object_renderer->object_center(i).cast<double>(),
-                        free_damping,
-                        free_linear_acceleration_covariance,
-                        free_angular_acceleration_covariance);
+            partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
+                                              free_damping,
+                                              free_linear_acceleration_covariance,
+                                              free_angular_acceleration_covariance);
             partial_process_models[i] = partial_process_model;
         }
 
@@ -231,42 +228,7 @@ public:
     }
 
 
-//    void Filter(sensor_msgs::PointCloud2 ros_cloud)
-//    {
-//        boost::mutex::scoped_lock lock(mutex_);
 
-//        // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//        if(is_first_iteration_)
-//        {
-//            previous_time_ = ros_cloud.header.stamp.toSec();
-//            is_first_iteration_ = false;
-//        }
-
-
-//        // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//        vector<float> measurement; size_t n_rows, n_cols;
-//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
-
-//        // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//        INIT_PROFILING;
-//        filter_context_->predictAndUpdate(measurement,
-//                                          ros_cloud.header.stamp.toSec() - previous_time_,
-//                                          VectorXd::Zero(object_names_.size()*6));
-//        MEASURE("-----------------> total time for filtering");
-
-//        previous_time_ = ros_cloud.header.stamp.toSec();
-
-//        // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//        FullRigidBodySystem<> mean = filter_context_->stateDistribution().emiricalMean();
-//        // 3d models
-//        for(size_t i = 0; i < object_names_.size(); i++)
-//        {
-//            string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-//            ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-//                              ros_cloud.header, object_model_path, object_publisher_,
-//                              i, 1, 0, 0);
-//        }
-//    }
 
 
 
@@ -290,10 +252,6 @@ public:
             for(size_t col = 0; col < image.cols(); col++)
                 measurement[row*image.cols() + col] = image(row, col);
 
-//        // the point cloud is converted and downsampled ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//        vector<float> measurement; size_t n_rows, n_cols;
-//        pi::Ros2Std(ros_cloud, downsampling_factor_, measurement, n_rows, n_cols);
-
         // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         INIT_PROFILING;
         filter_context_->predictAndUpdate(measurement,
@@ -304,7 +262,7 @@ public:
         previous_time_ = ros_image.header.stamp.toSec();
 
         // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        FullRigidBodySystem<> mean = filter_context_->stateDistribution().emiricalMean();
+        FullRigidBodySystem<> mean = filter_context_->stateDistribution().empiricalMean();
         // 3d models
         for(size_t i = 0; i < object_names_.size(); i++)
         {
