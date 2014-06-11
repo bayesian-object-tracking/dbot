@@ -62,7 +62,7 @@ namespace filter
 namespace pfc_internal
 {
 typedef typename CoordinateFilter::ProcessModel::ControlType            ControlType;
-typedef typename CoordinateFilter::MeasurementModel::MeasurementType    MeasurementType;
+typedef typename CoordinateFilter::MeasurementModel::Measurement    Measurement;
 }
 
 /**
@@ -70,12 +70,12 @@ typedef typename CoordinateFilter::MeasurementModel::MeasurementType    Measurem
  */
 template <typename ScalarType_, int SIZE>
 class ParticleFilterContext:
-        public FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>
+        public FilterContext<ScalarType_, SIZE, pfc_internal::Measurement, pfc_internal::ControlType>
 {
 public:
-    typedef FilterContext<ScalarType_, SIZE, pfc_internal::MeasurementType, pfc_internal::ControlType>  Base;
+    typedef FilterContext<ScalarType_, SIZE, pfc_internal::Measurement, pfc_internal::ControlType>  Base;
     typedef typename Base::StateDistribution             StateDistribution;
-    typedef typename pfc_internal::MeasurementType       MeasurementType;
+    typedef typename pfc_internal::Measurement       Measurement;
     typedef typename pfc_internal::ControlType           ControlType;
 
     ParticleFilterContext(CoordinateFilter::Ptr filter):
@@ -90,7 +90,7 @@ public:
     /**
      * @brief @ref FilterContext::predictAndUpdate()
      */
-    virtual void predictAndUpdate(const MeasurementType& measurement,
+    virtual void predictAndUpdate(const Measurement& measurement,
                                   double delta_time,
                                   const ControlType& control)
     {

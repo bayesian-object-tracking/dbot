@@ -8,9 +8,10 @@
 
 #include <boost/timer.hpp>
 
-#include "cuda_opengl_filter.hpp"
-#include "object_rasterizer.hpp"
-#include "cuda_filter.hpp"
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_opengl_filter.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/object_rasterizer.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_filter.hpp>
+
 
 #include "cuda_gl_interop.h"
 #include <state_filtering/tools/helper_functions.hpp>

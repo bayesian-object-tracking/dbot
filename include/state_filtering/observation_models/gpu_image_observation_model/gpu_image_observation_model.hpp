@@ -5,10 +5,10 @@
 #include "boost/shared_ptr.hpp"
 #include "Eigen/Core"
 
-#include "image_observation_model.hpp"
 
-#include "object_rasterizer.hpp"
-#include "cuda_filter.hpp"
+#include <state_filtering/observation_models/image_observation_model.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/object_rasterizer.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_filter.hpp>
 
 
 namespace obs_mod
@@ -43,7 +43,7 @@ public:
 	// set and get functions =============================================================================================================================================================================================================================================================================================
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
-    void set_observation(const std::vector<float>& observations, const double& time_since_start);
+    void measurement(const std::vector<float>& observations, const double& time_since_start);
 
 
     void set_constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,

@@ -58,7 +58,7 @@ public:
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
 
-    typedef std::vector<float> Measurement;
+    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
     CoordinateFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,

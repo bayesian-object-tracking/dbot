@@ -158,7 +158,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
     include/${PROJECT_NAME}/tools/ros_interface.hpp
 
-    include/${PROJECT_NAME}/run_cpu_coordinate_filter.hpp
+    include/${PROJECT_NAME}/cpu_multi_object_tracker.hpp
 )
 
 set(state_filtering_sources
@@ -182,9 +182,6 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/tools/cloud_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp
     src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
-
-    # temporary
-    #src/${PROJECT_NAME}/run_cpu_coordinate_filter.cpp
 )
 
 
@@ -192,17 +189,17 @@ set(state_filtering_sources
 add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-## run_cpu_coordinate_filter
-add_executable(run_cpu_coordinate_filter
-    src/${PROJECT_NAME}/run_cpu_coordinate_filter_node.cpp)
-target_link_libraries(run_cpu_coordinate_filter
+## multi_object_tracker
+add_executable(cpu_multi_object_tracker
+    src/${PROJECT_NAME}/cpu_multi_object_tracker_node.cpp)
+target_link_libraries(cpu_multi_object_tracker
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
     yaml-cpp)
 
-if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND AND bla)
+if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
     set(state_filtering_gpu_HEADERS
@@ -210,7 +207,8 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND AND bla)
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_filter.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_multiple_filter.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/object_rasterizer.hpp
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.hpp)
+        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.hpp
+        include/${PROJECT_NAME}/multi_object_tracker.hpp)
 
     set(state_filtering_gpu_SOURCES
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.cpp
@@ -233,9 +231,11 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND AND bla)
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_filter.cu)
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_cuda)
 
-    add_executable(run_gpu_coordinate_filter
-        src/${PROJECT_NAME}/run_gpu_coordinate_filter.cpp)
-    target_link_libraries(run_gpu_coordinate_filter
+    ## multi_object_tracker
+    add_executable(multi_object_tracker
+        src/${PROJECT_NAME}/multi_object_tracker_node.cpp)
+    target_link_libraries(multi_object_tracker
+        ${PROJECT_NAME}
         ${PROJECT_NAME}_gpu
         ${PROJECT_NAME}_cuda
         ${catkin_LIBRARIES}

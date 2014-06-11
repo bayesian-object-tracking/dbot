@@ -25,6 +25,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
+#ifndef MULTI_OBJECT_TRACKER_
+#define MULTI_OBJECT_TRACKER_
+
 
 //#define PROFILING_ON
 #include <state_filtering/tools/image_visualizer.hpp>
@@ -48,6 +51,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/observation_models/image_observation_model.hpp>
 #include <state_filtering/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp>
+
 // tools
 #include <state_filtering/tools/object_file_reader.hpp>
 #include <state_filtering/tools/helper_functions.hpp>
@@ -75,44 +80,60 @@ using namespace filter;
 
 
 
-class RunCpuCoordinateFilter
+class MultiObjectTracker
 {
 public:
     typedef filter::ParticleFilterContext<double, -1>   FilterContext;
     typedef boost::shared_ptr<FilterContext>            FilterContextPtr;
     typedef Eigen::Matrix<double, -1, -1> Image;
 
-    RunCpuCoordinateFilter(Matrix3d camera_matrix):
+    MultiObjectTracker():
         node_handle_("~"),
         is_first_iteration_(true)
     {
-        // read parameters ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        ri::ReadParameter("dependencies", dependencies_, node_handle_);
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
-        ri::ReadParameter("cpu_sample_count", cpu_sample_count_, node_handle_);
-        ri::ReadParameter("p_visible_init", p_visible_init_, node_handle_);
-        ri::ReadParameter("p_visible_visible", p_visible_visible_, node_handle_);
-        ri::ReadParameter("p_visible_occluded", p_visible_occluded_, node_handle_);
+        ri::ReadParameter("sample_count", sample_count_, node_handle_);
 
-        camera_matrix_ = camera_matrix;
-        camera_matrix_.topLeftCorner(2,3) /= float(downsampling_factor_);
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
 
     void Initialize(
             vector<VectorXd> single_body_samples,
-            const sensor_msgs::Image& ros_image)
+            const sensor_msgs::Image& ros_image,
+            Matrix3d camera_matrix)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+        camera_matrix.topLeftCorner(2,3) /= float(downsampling_factor_);
 
-        vector<float> measurement(image.size()); size_t n_rows = image.rows(), n_cols = image.cols();
-        
-        for(size_t row = 0; row < image.rows(); row++)
-            for(size_t col = 0; col < image.cols(); col++)
-                measurement[row*image.cols() + col] = image(row, col);
+        vector<vector<size_t> > dependencies;
+        ri::ReadParameter("dependencies", dependencies, node_handle_);
+
+        double p_visible_init;
+        double p_visible_visible;
+        double p_visible_occluded;
+        ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
+        ri::ReadParameter("p_visible_visible", p_visible_visible, node_handle_);
+        ri::ReadParameter("p_visible_occluded", p_visible_occluded, node_handle_);
+
+
+
+
+        int max_sample_count;
+        ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
+
+
+
+        bool use_gpu;
+        ri::ReadParameter("use_gpu", use_gpu, node_handle_);
+
+
+
+
+
+
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
         
         // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
         // load object mesh ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -140,24 +161,60 @@ public:
         double tail_weight; ri::ReadParameter("tail_weight", tail_weight, node_handle_);
         double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
         double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
-        boost::shared_ptr<obs_mod::KinectMeasurementModel>
-                kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
 
-        // initialize occlusion process model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        boost::shared_ptr<proc_mod::OcclusionProcessModel>
-                occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible_, 1. - p_visible_occluded_));
+        boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
 
-        // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        boost::shared_ptr<obs_mod::ImageObservationModel> cpu_observation_model(new obs_mod::CPUImageObservationModel(
-                                                                                    camera_matrix_,
-                                                                                    n_rows,
-                                                                                    n_cols,
-                                                                                    single_body_samples.size(),
-                                                                                    rigid_body_system,
-                                                                                    object_renderer,
-                                                                                    kinect_measurement_model,
-                                                                                    occlusion_process_model,
-                                                                                    p_visible_init_));
+
+
+        if(!use_gpu)
+        {
+            boost::shared_ptr<obs_mod::KinectMeasurementModel>
+                    kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
+
+            // initialize occlusion process model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            boost::shared_ptr<proc_mod::OcclusionProcessModel>
+                    occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
+
+            // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            observation_model = boost::shared_ptr<obs_mod::ImageObservationModel>(new obs_mod::CPUImageObservationModel(
+                                                                                          camera_matrix,
+                                                                                          image.rows(),
+                                                                                          image.cols(),
+                                                                                          single_body_samples.size(),
+                                                                                          rigid_body_system,
+                                                                                          object_renderer,
+                                                                                          kinect_measurement_model,
+                                                                                          occlusion_process_model,
+                                                                                          p_visible_init));
+        }
+        else
+        {
+            observation_model = boost::shared_ptr<obs_mod::ImageObservationModel>(new obs_mod::GPUImageObservationModel(
+                                                                                      camera_matrix,
+                                                                                      image.rows(),
+                                                                                      image.cols(),
+                                                                                      max_sample_count,
+                                                                                      p_visible_init,
+                                                                                      rigid_body_system));
+
+            cout << "set constants" << endl;
+            // TODO replace dynamic cast with virtual methods in ImageObservationModel ??
+            dynamic_cast<obs_mod::GPUImageObservationModel&>(*observation_model).set_constants(
+                        object_vertices,
+                        object_triangle_indices,
+                        p_visible_visible,
+                        p_visible_occluded,
+                        tail_weight,
+                        model_sigma,
+                        sigma_factor,
+                        6.0f,         // max_depth
+                        -log(0.5));   // exponential_rate
+
+            cout << "Initialize" << endl;
+
+            dynamic_cast<obs_mod::GPUImageObservationModel&>(*observation_model).Initialize();
+        }
+
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
         double free_damping; ri::ReadParameter("free_damping", free_damping, node_handle_);
@@ -186,8 +243,8 @@ public:
 
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        cpu_filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(cpu_observation_model, process_model, dependencies_));
+        filter_ = boost::shared_ptr<filter::CoordinateFilter>
+                (new filter::CoordinateFilter(observation_model, process_model, dependencies));
 
 
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -210,58 +267,47 @@ public:
                 full_initial_state[body_index] = single_body_samples[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
-            cpu_filter_->set_states(multi_body_samples);
-            cpu_filter_->Evaluate(measurement);
-            cpu_filter_->Resample(multi_body_samples.size());
-            cpu_filter_->get(multi_body_samples);
+            filter_->set_states(multi_body_samples);
+            filter_->Evaluate(image);
+            filter_->Resample(multi_body_samples.size());
+            filter_->get(multi_body_samples);
         }
 
         // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
-        cpu_filter_->set_states(multi_body_samples);
-        cpu_filter_->Evaluate(measurement);
-        cpu_filter_->Resample(cpu_sample_count_);
+        filter_->set_states(multi_body_samples);
+        filter_->Evaluate(image);
+        filter_->Resample(sample_count_);
 
         filter_context_ =
                 boost::shared_ptr<filter::ParticleFilterContext<double, -1> >
-                (new filter::ParticleFilterContext<double, -1>(cpu_filter_) );
+                (new filter::ParticleFilterContext<double, -1>(filter_) );
     }
-
-
-
-
-
 
     void Filter(const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
-        // the time since start is computed ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // convert image
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+
+        // the time since start is computed
         if(is_first_iteration_)
         {
             previous_time_ = ros_image.header.stamp.toSec();
             is_first_iteration_ = false;
         }
 
-
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
-
-        vector<float> measurement(image.size()); size_t n_rows = image.rows(), n_cols = image.cols();
-
-        for(size_t row = 0; row < image.rows(); row++)
-            for(size_t col = 0; col < image.cols(); col++)
-                measurement[row*image.cols() + col] = image(row, col);
-
-        // filter: this is where stuff happens ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // filter
         INIT_PROFILING;
-        filter_context_->predictAndUpdate(measurement,
+        filter_context_->predictAndUpdate(image,
                                           ros_image.header.stamp.toSec() - previous_time_,
                                           VectorXd::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
 
         previous_time_ = ros_image.header.stamp.toSec();
 
-        // we visualize the likeliest state -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // visualize the mean state
         FullRigidBodySystem<> mean = filter_context_->stateDistribution().empiricalMean();
         // 3d models
         for(size_t i = 0; i < object_names_.size(); i++)
@@ -276,29 +322,22 @@ public:
 
 
 
-private:
+private:  
+    boost::mutex mutex_;
+    ros::NodeHandle node_handle_;
+    ros::Publisher object_publisher_;
 
+    boost::shared_ptr<filter::CoordinateFilter> filter_;
     FilterContextPtr filter_context_;
 
-    ros::NodeHandle node_handle_;
     bool is_first_iteration_;
     double previous_time_;
 
-    ros::Publisher object_publisher_;
-
-    vector<vector<size_t> > dependencies_;
-
-    boost::mutex mutex_;
-
-    //	filter::StateFilter standard_filter_;
-    boost::shared_ptr<filter::CoordinateFilter> cpu_filter_;
-
     // parameters
     vector<string> object_names_;
-    Matrix3d camera_matrix_;
     int downsampling_factor_;
-    int cpu_sample_count_;
-    double p_visible_init_;
-    double p_visible_visible_;
-    double p_visible_occluded_;
+    int sample_count_;
 };
+
+#endif
+

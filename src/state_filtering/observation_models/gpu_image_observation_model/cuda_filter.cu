@@ -7,7 +7,7 @@
 #define VECTOR_DIM 3
 #define MATRIX_DIM 9
 
-#include "cuda_filter.hpp"
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_filter.hpp>
 #include "GL/glut.h"
 
 

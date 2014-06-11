@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sensor_msgs/Image.h>
 
-#include <state_filtering/run_cpu_coordinate_filter.hpp>
+#include <state_filtering/cpu_multi_object_tracker.hpp>
 #include <state_filtering/tools/cloud_visualizer.hpp>
 
 
@@ -63,11 +63,11 @@ int main (int argc, char **argv)
                                                               initial_sample_count);
 
     // intialize the filter
-    RunCpuCoordinateFilter test_filter(camera_matrix);
-    test_filter.Initialize(initial_states, *ros_image);
+    CpuMultiObjectTracker test_filter;
+    test_filter.Initialize(initial_states, *ros_image, camera_matrix);
     cout << "done initializing" << endl;
 
-    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &RunCpuCoordinateFilter::Filter, &test_filter);
+    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &CpuMultiObjectTracker::Filter, &test_filter);
 
     ros::spin();
     return 0;

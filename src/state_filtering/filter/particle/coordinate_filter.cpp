@@ -146,7 +146,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
     hf::DiscreteSampler sampler(family_loglikes_);
     vector<size_t> children_counts(parents_.size(), 0);
     for(size_t new_state_index = 0; new_state_index < new_n_states; new_state_index++)
-        children_counts[sampler.sample()]++;
+        children_counts[sampler.Sample()]++;
     MEASURE("sampling children_counts");
 
     // combine partial children into children ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
         {
             hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
             for(size_t child_index = 0; child_index < children_counts[state_index]; child_index++)
-                mult_indices[child_index][block_index] = sampler.sample();
+                mult_indices[child_index][block_index] = sampler.Sample();
         }
         vector<size_t> child_multiplicities;
         hf::SortAndCollapse(mult_indices, child_multiplicities);
@@ -279,7 +279,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
 
     for(size_t i = 0; i < state_count; i++)
     {
-        size_t index = sampler.sample();
+        size_t index = sampler.Sample();
         new_states[i] = parents_[index];
         new_state_times[i] = parent_times_[index];
         new_multiplicities[i] = parent_multiplicities_[index];
@@ -385,7 +385,7 @@ void CoordinateFilter::get_depth_values(std::vector<std::vector<int> > &intersec
 void CoordinateFilter::set_states(const std::vector<Eigen::VectorXd >& states,
                                   const std::vector<double>& state_times,
                                   const std::vector<size_t>& multiplicities,
-                                  const Measurement &loglikes)
+                                  const std::vector<float> &loglikes)
 {
     // we copy the new states ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     parents_ = states;

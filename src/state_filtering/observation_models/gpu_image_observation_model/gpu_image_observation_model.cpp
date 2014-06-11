@@ -1,15 +1,16 @@
-#include "gpu_image_observation_model.hpp"
+
+#include <state_filtering/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/object_rasterizer.hpp>
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_filter.hpp>
+
+#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/tools/macros.hpp>
 
 #include <limits>
-
-#include "macros.hpp"
-#include "helper_functions.hpp"
-#include "object_rasterizer.hpp"
-#include "cuda_filter.hpp"
 #include <stdio.h>
 #include <stdlib.h>
-#include "iostream"
-#include "cuda_gl_interop.h"
+#include <iostream>
+#include <cuda_gl_interop.h>
 
 
 using namespace std;
@@ -126,20 +127,20 @@ std::vector<float> GPUImageObservationModel::Evaluate(
 
         // transform state format
         vector<vector<vector<float> > > states_transformed (n_poses_,
-                                                            vector<vector<float> >(rigid_body_system_->count_bodies_,
+                                                            vector<vector<float> >(rigid_body_system_->count_bodies(),
                                                             vector<float>(7, 0)));
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
         {
-            rigid_body_system_->set_state(states[state_index]);
-            for(size_t body_index = 0; body_index < rigid_body_system_->count_bodies_; body_index++)
+            *rigid_body_system_ = states[state_index];
+            for(size_t body_index = 0; body_index < rigid_body_system_->count_bodies(); body_index++)
             {
-                states_transformed[state_index][body_index][0] = rigid_body_system_->get_quaternion(body_index).w();
-                states_transformed[state_index][body_index][1] = rigid_body_system_->get_quaternion(body_index).x();
-                states_transformed[state_index][body_index][2] = rigid_body_system_->get_quaternion(body_index).y();
-                states_transformed[state_index][body_index][3] = rigid_body_system_->get_quaternion(body_index).z();
-                states_transformed[state_index][body_index][4] = rigid_body_system_->get_translation(body_index)[0];
-                states_transformed[state_index][body_index][5] = rigid_body_system_->get_translation(body_index)[1];
-                states_transformed[state_index][body_index][6] = rigid_body_system_->get_translation(body_index)[2];
+                states_transformed[state_index][body_index][0] = rigid_body_system_->quaternion(body_index).w();
+                states_transformed[state_index][body_index][1] = rigid_body_system_->quaternion(body_index).x();
+                states_transformed[state_index][body_index][2] = rigid_body_system_->quaternion(body_index).y();
+                states_transformed[state_index][body_index][3] = rigid_body_system_->quaternion(body_index).z();
+                states_transformed[state_index][body_index][4] = rigid_body_system_->position(body_index)[0];
+                states_transformed[state_index][body_index][5] = rigid_body_system_->position(body_index)[1];
+                states_transformed[state_index][body_index][6] = rigid_body_system_->position(body_index)[2];
             }
         }
 
@@ -325,7 +326,7 @@ void GPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
-void GPUImageObservationModel::set_observation(const std::vector<float>& observations, const double& time_since_start)
+void GPUImageObservationModel::measurement(const std::vector<float>& observations, const double& time_since_start)
 {
     if (initialized_) {
         cuda_->set_observations(observations.data(), time_since_start);

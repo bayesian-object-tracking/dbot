@@ -43,9 +43,7 @@ namespace obs_mod
 class ImageObservationModel
 {
 public:
-    typedef std::vector<float> MeasurementType;
-
-    typedef Eigen::Matrix<double, -1, -1> Image;
+    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
 
 
@@ -86,7 +84,7 @@ public:
     virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
 	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
 
-    virtual void measurement(const Image& image, const double& time)
+    virtual void measurement(const Measurement& image, const double& time)
     {
         vector<float> std_measurement(image.size());
 
@@ -99,7 +97,7 @@ public:
 
 
 
-    virtual void measurement(const MeasurementType& observations, const double& time) = 0;
+    virtual void measurement(const std::vector<float>& observations, const double& time) = 0;
 
 protected:
 	// constant parameters ===========================================================================================================================================================================================================================================================================================================================

@@ -2,7 +2,7 @@
 
 //#define PROFILING_ACTIVE
 
-#include "object_rasterizer.hpp"
+#include <state_filtering/observation_models/gpu_image_observation_model/object_rasterizer.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -45,8 +45,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl/point_types.h>
 
 
-#include <cv.h>
+//#include <cv.h>
+
+// to avoid stupid typedef conflict
+#define uint64 enchiladisima
 #include <cv_bridge/cv_bridge.h>
+#undef uint64
 
 #include <sensor_msgs/Image.h>
 
@@ -94,10 +98,15 @@ void ReadParameter< std::vector<std::vector<size_t> > >(const std::string& path,
 }
 
 
+
+
+
+
 template<typename Scalar> Eigen::Matrix<Scalar, -1, -1>
 Ros2Eigen(const sensor_msgs::Image& ros_image,
           const size_t& n_downsampling = 1)
 {
+
     cv::Mat cv_image = cv_bridge::toCvCopy(ros_image)->image;
 
     size_t n_rows = cv_image.rows/n_downsampling; size_t n_cols = cv_image.cols/n_downsampling;

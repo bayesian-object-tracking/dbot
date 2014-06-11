@@ -1,7 +1,7 @@
 #ifndef CUDA_OPENGL_MULTIPLE_FILTER_HPP
 #define CUDA_OPENGL_MULTIPLE_FILTER_HPP
 
-#include "cuda_opengl_filter.hpp"
+#include <state_filtering/observation_models/gpu_image_observation_model/cuda_opengl_filter.hpp>
 namespace fil {
 
 class CudaOpenglMultipleFilter : public fil::CudaOpenglFilter

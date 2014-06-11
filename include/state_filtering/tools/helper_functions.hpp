@@ -978,7 +978,7 @@ public:
 
 	~DiscreteSampler() {}
 
-	int sample()
+    int Sample()
 	{
 		double rand_number = fibo_();
 		int sample_index = 0;
