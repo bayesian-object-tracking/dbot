@@ -173,7 +173,7 @@ void CPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
-void CPUImageObservationModel::set_observation(const std::vector<float>& observations, const double& observation_time)
+void CPUImageObservationModel::measurement(const std::vector<float>& observations, const double& observation_time)
 {
     observations_ = observations;
     observation_time_ = observation_time;

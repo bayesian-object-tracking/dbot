@@ -102,11 +102,11 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
 }
 
 // evaluate offspring
-void CoordinateFilter::PartialEvaluate(const std::vector<float>& observation,
+void CoordinateFilter::PartialEvaluate(const Measurement& observation,
                                        const double& observation_time)
 {
     // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    observation_model_->set_observation(observation, observation_time);
+    observation_model_->measurement(observation, observation_time);
     hf::Structurer3D converter;
     vector<size_t> flat_partial_children_occlusion_indices_ = converter.Flatten(partial_children_occlusion_indices_);
 
@@ -198,10 +198,10 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
 }
 
 
-void CoordinateFilter::UpdateOcclusions(const std::vector<float>& observation,
+void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
                                         const double& observation_time)
 {
-    observation_model_->set_observation(observation, observation_time);
+    observation_model_->measurement(observation, observation_time);
     INIT_PROFILING;
     observation_model_->Evaluate(parents_, parent_occlusion_indices_, true);
     MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
@@ -215,7 +215,7 @@ void CoordinateFilter::UpdateOcclusions(const std::vector<float>& observation,
 void CoordinateFilter::Enchilada(
         const Eigen::VectorXd control,
         const double &observation_time,
-        const std::vector<float>& observation,
+        const Measurement& observation,
         const size_t &new_n_states)
 {
     PartialPropagate(control, observation_time);
@@ -247,29 +247,17 @@ void CoordinateFilter::Propagate(
 
 
 void CoordinateFilter::Evaluate(
-        const std::vector<float>& observation,
+        const Measurement& observation,
         const double& observation_time,
         const bool& update_occlusions)
 {
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    observation_model_->set_observation(observation, observation_time);
+    observation_model_->measurement(observation, observation_time);
     INIT_PROFILING
     family_loglikes_ = observation_model_->Evaluate(parents_, parent_occlusion_indices_, update_occlusions);
     MEASURE("observation_model_->Evaluate")
 }
-
-
-//void CoordinateFilter::Evaluate_test(
-//        const std::vector<float>& observation,
-//        const double& observation_time,
-//        const bool& update_occlusions,
-//        vector<vector<int> > intersect_indices,
-//        vector<vector<float> > predictions)
-//{
-//    observation_model_->set_observation(observation, observation_time);
-//    family_loglikes_ = observation_model_->Evaluate_test(parents_, parent_occlusion_indices_, update_occlusions, intersect_indices, predictions);
-//}
 
 
 void CoordinateFilter::Resample(const int &new_state_count)
@@ -394,11 +382,10 @@ void CoordinateFilter::get_depth_values(std::vector<std::vector<int> > &intersec
 }
 
 
-void CoordinateFilter::set_states(
-        const std::vector<Eigen::VectorXd >& states,
-        const std::vector<double>& state_times,
-        const std::vector<size_t>& multiplicities,
-        const std::vector<float>& loglikes)
+void CoordinateFilter::set_states(const std::vector<Eigen::VectorXd >& states,
+                                  const std::vector<double>& state_times,
+                                  const std::vector<size_t>& multiplicities,
+                                  const Measurement &loglikes)
 {
     // we copy the new states ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     parents_ = states;

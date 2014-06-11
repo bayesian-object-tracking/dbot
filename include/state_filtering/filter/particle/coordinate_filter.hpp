@@ -58,6 +58,8 @@ public:
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
 
+    typedef std::vector<float> Measurement;
+
     CoordinateFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
                      const std::vector<std::vector<size_t> >& independent_blocks);
@@ -66,37 +68,28 @@ public:
 
     void PartialPropagate(const Eigen::VectorXd& control,
                           const double& observation_time);
-    void PartialEvaluate(const std::vector<float>& observation,
+    void PartialEvaluate(const Measurement& observation,
                          const double& observation_time);
     void PartialResample(const Eigen::VectorXd& control,
                          const double& observation_time,
                          const size_t &new_n_states);
-    void UpdateOcclusions(const std::vector<float>& observation,
+    void UpdateOcclusions(const Measurement& observation,
                           const double& observation_time);
 
-    void Enchilada(
-            const Eigen::VectorXd control,
-            const double &observation_time,
-            const std::vector<float>& observation,
-            const size_t &new_n_states);
 
-    void Propagate(
-            const Eigen::VectorXd control,
-            const double &current_time);
-
-    void Evaluate(
-            const std::vector<float>& observation,
-            const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
-            const bool& update_occlusions = false);
+    void Enchilada(const Eigen::VectorXd control,
+                   const double &observation_time,
+                   const Measurement& observation,
+                   const size_t &new_n_states);
 
 
+    void Propagate(const Eigen::VectorXd control,
+                   const double &current_time);
 
-//    void Evaluate_test(
-//            const std::vector<float>& observation,
-//            const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
-//            const bool& update_occlusions = false,
-//            std::vector<std::vector<int> > intersect_indices = 0,
-//            std::vector<std::vector<float> > predictions = 0);
+
+    void Evaluate(const Measurement& observation,
+                  const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
+                  const bool& update_occlusions = false);
 
     void Resample(const int &new_state_count = -1);
 
@@ -122,9 +115,7 @@ public:
     void set(const MeasurementModelPtr& observation_model);
     void set(const ProcessModelPtr& process_model);
 
-
     virtual StateDistribution& stateDistribution();
-
 
 private:
     // TODO this is not used properly yet

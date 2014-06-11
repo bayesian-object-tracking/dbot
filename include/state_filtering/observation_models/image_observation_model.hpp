@@ -86,20 +86,20 @@ public:
     virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
 	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
 
-    virtual void set_observation(const Image& image, const double& observation_time)
+    virtual void measurement(const Image& image, const double& time)
     {
-        vector<float> measurement(image.size());
+        vector<float> std_measurement(image.size());
 
         for(size_t row = 0; row < image.rows(); row++)
             for(size_t col = 0; col < image.cols(); col++)
-                measurement[row*image.cols() + col] = image(row, col);
+                std_measurement[row*image.cols() + col] = image(row, col);
 
-        set_observation(measurement, observation_time);
+        measurement(std_measurement, time);
     }
 
 
 
-    virtual void set_observation(const MeasurementType& observations, const double& observation_time) = 0;
+    virtual void measurement(const MeasurementType& observations, const double& time) = 0;
 
 protected:
 	// constant parameters ===========================================================================================================================================================================================================================================================================================================================
