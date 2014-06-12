@@ -76,22 +76,22 @@ public: /* distribution traits */
     typedef MomentsSolvable<ScalarType_, SIZE>        MomentsBaseType;
     typedef GaussianMappable<ScalarType_, SIZE, SIZE>   MappableBaseType;
 
-    typedef typename MomentsBaseType::ScalarType        ScalarType;
-    typedef typename MomentsBaseType::VariableType      VariableType;
+    typedef typename MomentsBaseType::Scalar        Scalar;
+    typedef typename MomentsBaseType::Variable      Variable;
     typedef typename MomentsBaseType::CovarianceType    CovarianceType;
-    typedef typename MappableBaseType::RandomsType      RandomsType;
+    typedef typename MappableBaseType::Sample      Sample;
 
 public:
     GaussianDistribution()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VariableType);
+        DISABLE_IF_DYNAMIC_SIZE(Variable);
 
         setNormal();
     }
 
     explicit GaussianDistribution(int variable_size)
     {
-        DISABLE_IF_FIXED_SIZE(VariableType);
+        DISABLE_IF_FIXED_SIZE(Variable);
 
         mean_.resize(variable_size, 1);
         covariance_.resize(variable_size, variable_size);
@@ -103,7 +103,7 @@ public:
 
     virtual ~GaussianDistribution() { }
 
-    virtual VariableType mapNormal(const RandomsType& sample) const
+    virtual Variable mapNormal(const Sample& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
@@ -111,11 +111,11 @@ public:
     virtual void setNormal()
     {
         full_rank_ = true;
-        mean(VariableType::Zero(variable_size()));
+        mean(Variable::Zero(variable_size()));
         covariance(CovarianceType::Identity(variable_size(), variable_size()));
     }
 
-    virtual void mean(const VariableType& mean)
+    virtual void mean(const Variable& mean)
     {
         mean_ = mean;
     }
@@ -128,7 +128,7 @@ public:
         Eigen::LDLT<CovarianceType> ldlt;
         ldlt.compute(covariance_);
         CovarianceType L = ldlt.matrixL();
-        VariableType D_sqrt = ldlt.vectorD();
+        Variable D_sqrt = ldlt.vectorD();
         for(size_t i = 0; i < D_sqrt.rows(); i++)
             D_sqrt(i) = std::sqrt(std::fabs(D_sqrt(i)));
         cholesky_factor_ = ldlt.transpositionsP().transpose()*L*D_sqrt.asDiagonal();
@@ -143,7 +143,7 @@ public:
             full_rank_ = false;
     }
 
-    virtual VariableType mean() const
+    virtual Variable mean() const
     {
         return mean_;
     }
@@ -153,12 +153,12 @@ public:
         return covariance_;
     }
 
-    virtual ScalarType LogProbability(const VariableType& sample) const
+    virtual Scalar LogProbability(const Variable& sample) const
     {
         if(full_rank_)
             return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
         else
-            return -std::numeric_limits<ScalarType>::infinity();
+            return -std::numeric_limits<Scalar>::infinity();
     }
 
     virtual int variable_size() const
@@ -166,13 +166,13 @@ public:
         return mean_.rows();
     }
 
-    virtual int randoms_size() const
+    virtual int sample_size() const
     {
         return variable_size();
     }
 
 protected:
-    VariableType mean_;
+    Variable mean_;
     CovarianceType covariance_;
     bool full_rank_;
     CovarianceType precision_;

@@ -72,30 +72,30 @@ class SumOfDeltas:
 public:
     typedef MomentsSolvable<ScalarType_, SIZE>   BaseType;
 
-    typedef typename BaseType::ScalarType        ScalarType;
-    typedef typename BaseType::VariableType      VariableType;
+    typedef typename BaseType::Scalar        Scalar;
+    typedef typename BaseType::Variable      Variable;
     typedef typename BaseType::CovarianceType    CovarianceType;
 
-    typedef typename std::vector<VariableType>   Deltas;
-    typedef Eigen::Matrix<ScalarType, -1, 1>     Weights;
+    typedef typename std::vector<Variable>   Deltas;
+    typedef Eigen::Matrix<Scalar, -1, 1>     Weights;
 
 
 public:
     SumOfDeltas()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VariableType);
+        DISABLE_IF_DYNAMIC_SIZE(Variable);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, VariableType::Zero());
+        deltas_ = Deltas(1, Variable::Zero());
         weights_ = Weights::Ones(1);
     }
 
     explicit SumOfDeltas(int variable_size)
     {
-        DISABLE_IF_FIXED_SIZE(VariableType);
+        DISABLE_IF_FIXED_SIZE(Variable);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, VariableType::Zero(variable_size));
+        deltas_ = Deltas(1, Variable::Zero(variable_size));
         weights_ = Weights::Ones(1);
     }
 
@@ -119,9 +119,9 @@ public:
         weights = weights_;
     }
 
-    virtual VariableType mean() const
+    virtual Variable mean() const
     {
-        VariableType mean(VariableType::Zero(variable_size()));
+        Variable mean(Variable::Zero(variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             mean += weights_[i] * deltas_[i];
 
@@ -130,7 +130,7 @@ public:
 
     virtual CovarianceType covariance() const
     {
-        VariableType cached_mean = mean();
+        Variable cached_mean = mean();
         CovarianceType covariance(CovarianceType::Zero(variable_size(), variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             covariance += weights_[i] * (deltas_[i]-cached_mean) * (deltas_[i]-cached_mean).transpose();

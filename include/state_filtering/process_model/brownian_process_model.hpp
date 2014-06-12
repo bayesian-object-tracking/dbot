@@ -59,60 +59,59 @@ namespace filter
 
 namespace internals
 {
-template <typename ScalarType_, bool IS_DYNAMIC>
-struct BrownianProcessModelBase
+template <typename Scalar_, bool IS_DYNAMIC>
+struct BrownianProcessModelTypes
 {
     enum
     {
-        VariableSize = 12,
-        RandomsSize = 6,
-        ControlSize = 6
+        VARIABLE_SIZE = 12,
+        SAMPLE_SIZE = 6,
+        CONTROL_SIZE = 6
     };
 
-    typedef StationaryProcessModel<> Type;
+    typedef StationaryProcess<> Base;
 };
 
-template <typename ScalarType_>
-struct BrownianProcessModelBase<ScalarType_, false>
+template <typename Scalar_>
+struct BrownianProcessModelTypes<Scalar_, false>
 {
     enum
     {
-        VariableSize =BrownianProcessModelBase<ScalarType_, true>::VariableSize,
-        RandomsSize = BrownianProcessModelBase<ScalarType_, true>::RandomsSize,
-        ControlSize = BrownianProcessModelBase<ScalarType_, true>::ControlSize
+        VARIABLE_SIZE =BrownianProcessModelTypes<Scalar_, true>::VARIABLE_SIZE,
+        SAMPLE_SIZE = BrownianProcessModelTypes<Scalar_, true>::SAMPLE_SIZE,
+        CONTROL_SIZE = BrownianProcessModelTypes<Scalar_, true>::CONTROL_SIZE
     };
 
-    typedef StationaryProcessModel<ScalarType_, VariableSize, RandomsSize, ControlSize> Type;
+    typedef StationaryProcess<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE, CONTROL_SIZE> Base;
 };
 }
 
-template <typename ScalarType_ = double, bool IS_DYNAMIC = true>
+template <typename Scalar_ = double, bool IS_DYNAMIC = true>
 class BrownianProcessModel:
-        public internals::BrownianProcessModelBase<ScalarType_, IS_DYNAMIC>::Type
+        public internals::BrownianProcessModelTypes<Scalar_, IS_DYNAMIC>::Base
 {
-public: /* model traits */
-    typedef internals::BrownianProcessModelBase<ScalarType_, IS_DYNAMIC> Base;
+public:
+    typedef internals::BrownianProcessModelTypes<Scalar_, IS_DYNAMIC> Types;
 
-    typedef typename Base::Type                 BaseType;
-    typedef typename BaseType::ScalarType       ScalarType;
-    typedef typename BaseType::VariableType     VariableType;
-    typedef typename BaseType::CovarianceType   CovarianceType;
-    typedef typename BaseType::RandomsType      RandomsType;
-    typedef typename BaseType::ControlType      ControlType;
+    typedef typename Types::Base            Base;
+    typedef typename Base::Scalar           Scalar;
+    typedef typename Base::Variable         Variable;
+    typedef typename Base::Sample           Sample;
+    typedef typename Base::Control          Control;
 
-    typedef typename Eigen::Quaternion<ScalarType_>      Quaternion;
+    typedef typename Eigen::Quaternion<Scalar>      Quaternion;
 
 
-    typedef FullRigidBodySystem<1> StateType;
-    typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
-    typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
+    typedef FullRigidBodySystem<1> State;
+    typedef IntegratedDampedBrownianMotion<Scalar, 3> AccelerationDistribution;
+    typedef DampedBrownianMotion<Scalar, 3> VelocityDistribution;
 
 public:
     ~BrownianProcessModel() { }
 
-    virtual VariableType mapNormal(const RandomsType& randoms) const
+    virtual Variable mapNormal(const Sample& randoms) const
     {
-        StateType state;
+        State state;
 
         state.position() = state_.position() + delta_position_.mapNormal(randoms.topRows(3));
         state.quaternion(Quaternion(state_.quaternion().coeffs()
@@ -127,9 +126,9 @@ public:
         return state;
     }
 
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const ControlType& control)
+    virtual void conditional(const double& delta_time,
+                              const Variable& state,
+                              const Control& control)
     {
         state_ = state;
         quaternion_map_ = hf::QuaternionMatrix(state_.quaternion().coeffs());
@@ -140,10 +139,10 @@ public:
         state_.linear_velocity() += state_.angular_velocity().cross(state_.position());
 
         // todo: should controls change coordintes as well?
-        linear_velocity_.conditionals(delta_time,
+        linear_velocity_.conditional(delta_time,
                                       state_.linear_velocity(),
                                       control.topRows(3));
-        angular_velocity_.conditionals(delta_time,
+        angular_velocity_.conditional(delta_time,
                                        state_.angular_velocity(),
                                        control.bottomRows(3));
         delta_position_.conditionals(delta_time,
@@ -157,10 +156,10 @@ public:
     }
 
     virtual void parameters(
-                const Eigen::Matrix<ScalarType, 3, 1>& rotation_center,
+                const Eigen::Matrix<Scalar, 3, 1>& rotation_center,
                 const double& damping,
                 const typename AccelerationDistribution::CovarianceType& linear_acceleration_covariance,
-                const typename VelocityDistribution::CovarianceType& angular_acceleration_covariance)
+                const typename VelocityDistribution::Covariance& angular_acceleration_covariance)
     {
         rotation_center_ = rotation_center;
 
@@ -172,24 +171,24 @@ public:
 
     virtual int variable_size() const
     {
-        return Base::VariableSize;
+        return Types::VARIABLE_SIZE;
     }
-    virtual int randoms_size() const
+    virtual int sample_size() const
     {
-        return Base::RandomsSize;
+        return Types::SAMPLE_SIZE;
     }
     virtual int control_size() const
     {
-        return Base::ControlSize;
+        return Types::CONTROL_SIZE;
     }
 
 private:
     // conditionals
-    StateType state_;
-    Eigen::Matrix<ScalarType, 4, 3> quaternion_map_;
+    State state_;
+    Eigen::Matrix<Scalar, 4, 3> quaternion_map_;
 
     // parameters
-    Eigen::Matrix<ScalarType, 3, 1> rotation_center_;
+    Eigen::Matrix<Scalar, 3, 1> rotation_center_;
 
     // distributions
     AccelerationDistribution delta_position_;

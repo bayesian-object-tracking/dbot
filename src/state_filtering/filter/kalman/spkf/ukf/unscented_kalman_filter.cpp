@@ -93,7 +93,7 @@ void UkfInternals::computeCrossCovariance(const SigmaPointMatrix& predictedState
 {
     measureStateCovariance.setZero(stateMean.rows(), measurementMean.rows());
 
-    ProcessModel::VariableType zeroMeanState;
+    ProcessModel::Variable zeroMeanState;
     MeasurementModel::MeasurementVector zeroMeanMeasurement;
 
     for (int i = 0; i < predictedStateSigmaPoints.cols(); i++)

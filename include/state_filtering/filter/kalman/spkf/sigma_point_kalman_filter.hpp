@@ -20,7 +20,7 @@ namespace filter
 
     public:
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::ControlType& controlInput,
+                             const ProcessModel::Control& controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc) = 0;
 

@@ -54,38 +54,35 @@
 #include <boost/shared_ptr.hpp>
 
 // state_filtering
-#include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/features/gaussian_mappable.hpp>
-#include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType_ = double,
+template <typename Scalar_ = double,
           int VARIABLE_SIZE = Eigen::Dynamic,
           int CONTROL_SIZE = Eigen::Dynamic,
-          int RANDOMS_SIZE = Eigen::Dynamic>
-class StationaryProcessModel:
-        public GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE>
+          int SAMPLE_SIZE = Eigen::Dynamic>
+class StationaryProcess:
+        public GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE>
 {
-public: /* distribution traits */
-    typedef GaussianMappable<ScalarType_, VARIABLE_SIZE, RANDOMS_SIZE> BaseType;
+public:
+    typedef GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE> Base;
 
-    typedef typename BaseType::ScalarType                           ScalarType;
-    typedef typename BaseType::VariableType                         VariableType;
-    typedef typename BaseType::RandomsType                          RandomsType;
-    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, VARIABLE_SIZE> CovarianceType;
-    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              ControlType;
+    typedef typename Base::Scalar                               Scalar;
+    typedef typename Base::Variable                             Variable;
+    typedef typename Base::Sample                               Sample;
+    typedef Eigen::Matrix<Scalar, CONTROL_SIZE, 1>              Control;
 
-    virtual ~StationaryProcessModel() { }
+    virtual ~StationaryProcess() { }
 
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const ControlType& control) = 0;
+    virtual void conditional(const double& delta_time,
+                             const Variable& state,
+                             const Control& control) = 0;
 
-    virtual void conditionals(const double& delta_time, const VariableType& state)
+    virtual void conditional(const double& delta_time, const Variable& state)
     {
-        conditionals(delta_time, state, ControlType::Zero(control_size()));
+        conditional(delta_time, state, Control::Zero(control_size()));
     }
 
     virtual int control_size() const = 0;

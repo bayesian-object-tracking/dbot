@@ -60,8 +60,8 @@ class Evaluable:
 {
 public:
     typedef UnnormalizedEvaluable<ScalarType_, SIZE>    BaseType;
-    typedef typename BaseType::ScalarType               ScalarType;
-    typedef typename BaseType::VariableType             VariableType;
+    typedef typename BaseType::Scalar               Scalar;
+    typedef typename BaseType::Variable             Variable;
 
     /**
      * @brief Returns the probability of the given variable
@@ -70,7 +70,7 @@ public:
      *
      * @return Probability of the variable
      */
-    virtual ScalarType Probability(const VariableType& variable) const
+    virtual Scalar Probability(const Variable& variable) const
     {
         return std::exp(LogProbability(variable));
     }
@@ -82,7 +82,7 @@ public:
      *
      * @return Log of variable probability
      */
-    virtual ScalarType LogProbability(const VariableType& variable) const = 0;
+    virtual Scalar LogProbability(const Variable& variable) const = 0;
 
     /**
      * @brief Returns the probability log of the given variable
@@ -91,7 +91,7 @@ public:
      *
      * @return Log of variable probability
      */
-    virtual ScalarType LogUnnormalizedProbability(const VariableType& variable) const
+    virtual Scalar LogUnnormalizedProbability(const Variable& variable) const
     {
         return LogProbability(variable);
     }

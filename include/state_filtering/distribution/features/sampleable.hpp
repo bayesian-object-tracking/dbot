@@ -59,13 +59,13 @@ namespace filter
 /**
  * Sampleable interface of a distribution
  */
-template <typename ScalarType_, int SIZE>
+template <typename Scalar_, int SIZE>
 class Sampleable:
-        public Distribution<ScalarType_, SIZE>
+        public Distribution<Scalar_, SIZE>
 {
 public:
-    typedef ScalarType_ ScalarType;
-    typedef typename Distribution<ScalarType_, SIZE>::VariableType VariableType;
+    typedef Scalar_ Scalar;
+    typedef typename Distribution<Scalar_, SIZE>::Variable Variable;
 
     /**
      * @brief Virtual destructor
@@ -77,7 +77,7 @@ public:
      *
      * @return random sample from underlying distribution
      */
-    virtual VariableType sample() = 0;
+    virtual Variable sample() = 0;
 };
 
 }

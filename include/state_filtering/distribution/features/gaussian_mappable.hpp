@@ -64,15 +64,15 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename ScalarType_, int SIZE, int RANDOMS_SIZE>
+template <typename ScalarType_, int SIZE, int SAMPLE_SIZE>
 class GaussianMappable:
         public Sampleable<ScalarType_, SIZE>
 {
 public:
-    typedef Sampleable<ScalarType_, SIZE>               BaseType;
-    typedef typename BaseType::ScalarType               ScalarType;
-    typedef typename BaseType::VariableType             VariableType;
-    typedef Eigen::Matrix<ScalarType, RANDOMS_SIZE, 1>  RandomsType;
+    typedef Sampleable<ScalarType_, SIZE>           Base;
+    typedef typename Base::Scalar                   Scalar;
+    typedef typename Base::Variable                 Variable;
+    typedef Eigen::Matrix<Scalar, SAMPLE_SIZE, 1>   Sample;
 
     GaussianMappable():
         generator_(RANDOM_SEED),
@@ -94,9 +94,9 @@ public:
      *
      * @return
      */
-    virtual VariableType mapNormal(const RandomsType& sample) const = 0;
+    virtual Variable mapNormal(const Sample& sample) const = 0;
 
-    virtual int randoms_size() const = 0;
+    virtual int sample_size() const = 0;
 
     /**
      * @brief Returns a random sample from the underlying distribution
@@ -105,14 +105,13 @@ public:
      *
      * @return random sample from underlying distribution
      */
-    virtual VariableType sample()
+    virtual Variable sample()
     {
-        RandomsType normal_sample(randoms_size());
-        for (int i = 0; i < randoms_size(); i++)
+        Sample normal_sample(sample_size());
+        for (int i = 0; i < sample_size(); i++)
         {
             normal_sample(i) = gaussian_generator_();
         }
-
         return mapNormal(normal_sample);
     }
 

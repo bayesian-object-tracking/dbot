@@ -61,38 +61,38 @@ class IntegratedDampedBrownianMotion:
         public GaussianMappable<ScalarType_, SIZE, SIZE>
 {
 public: /* distribution traits */
-    typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;
+    typedef GaussianMappable<ScalarType_, SIZE, SIZE> Base;
 
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
-    typedef typename BaseType::RandomsType          RandomsType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
+    typedef typename Base::Scalar           Scalar;
+    typedef typename Base::Variable         Variable;
+    typedef typename Base::Sample          Sample;
+    typedef Eigen::Matrix<Scalar, SIZE, SIZE>   CovarianceType;
 
 public:
 
     IntegratedDampedBrownianMotion():
         distribution_()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VariableType);
+        DISABLE_IF_DYNAMIC_SIZE(Variable);
     }
 
     IntegratedDampedBrownianMotion(int size):
         distribution_(size)
     {
-        DISABLE_IF_FIXED_SIZE(VariableType);
+        DISABLE_IF_FIXED_SIZE(Variable);
     }
 
     virtual ~IntegratedDampedBrownianMotion() { }
 
-    virtual VariableType mapNormal(const RandomsType& sample) const
+    virtual Variable mapNormal(const Sample& sample) const
     {
         return distribution_.mapNormal(sample);
     }
 
     virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const VariableType& velocity,
-                              const VariableType& acceleration)
+                              const Variable& state,
+                              const Variable& velocity,
+                              const Variable& acceleration)
     {
         // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
         // covariance matrices which are not full rank, which is the case for time equal to zero
@@ -117,18 +117,18 @@ public:
         return distribution_.variable_size();
     }
 
-    virtual int randoms_size() const
+    virtual int sample_size() const
     {
         return variable_size();
     }
 
 private:
-    VariableType Expectation(const VariableType& state,
-                           const VariableType& velocity,
-                           const VariableType& acceleration,
+    Variable Expectation(const Variable& state,
+                           const Variable& velocity,
+                           const Variable& acceleration,
                            const double& delta_time)
     {
-        VariableType expectation;
+        Variable expectation;
         expectation = state +
                 (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
                 * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
@@ -161,7 +161,7 @@ private:
 private:
     size_t n_variables_;
     // conditionals
-    GaussianDistribution<ScalarType, SIZE> distribution_;
+    GaussianDistribution<Scalar, SIZE> distribution_;
     // parameters
     double damping_;
     CovarianceType acceleration_covariance_;

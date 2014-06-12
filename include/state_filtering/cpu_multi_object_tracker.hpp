@@ -220,7 +220,7 @@ public:
         MatrixXd angular_acceleration_covariance =
                 MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-        vector<boost::shared_ptr<StationaryProcessModel<> > > partial_process_models(object_names_.size());
+        vector<boost::shared_ptr<StationaryProcess<> > > partial_process_models(object_names_.size());
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);

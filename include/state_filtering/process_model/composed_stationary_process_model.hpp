@@ -68,18 +68,18 @@ namespace filter
 {
 
 class ComposedStationaryProcessModel:
-        public StationaryProcessModel<>
+        public StationaryProcess<>
 {
 public: /* distribution traits */
-    typedef StationaryProcessModel<> BaseType;
+    typedef StationaryProcess<> Base;
 
-    typedef typename BaseType::ScalarType       ScalarType;
-    typedef typename BaseType::VariableType     VariableType;
-    typedef typename BaseType::RandomsType      RandomsType;
-    typedef typename BaseType::CovarianceType   CovarianceType;
-    typedef typename BaseType::ControlType ControlType;
+    typedef typename Base::Scalar       Scalar;
+    typedef typename Base::Variable     Variable;
+    typedef typename Base::Sample      Sample;
+//    typedef typename Base::Covariance   Covariance;
+    typedef typename Base::Control Control;
 
-    typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
+    typedef boost::shared_ptr<Base> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
 
     ComposedStationaryProcessModel(ProcessModelList process_models):
@@ -89,33 +89,33 @@ public: /* distribution traits */
 
     virtual ~ComposedStationaryProcessModel() {}
 
-    virtual VariableType mapNormal(const RandomsType& randoms) const
+    virtual Variable mapNormal(const Sample& randoms) const
     {
-        VariableType variables(variable_size());
+        Variable variables(variable_size());
 
         size_t variable_index = 0;
         size_t random_index = 0;
         for(size_t i = 0; i < process_models_.size(); i++)
         {
             variables.middleRows(variable_index, process_models_[i]->variable_size()) =
-                    process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->randoms_size()));
+                    process_models_[i]->mapNormal(randoms.middleRows(random_index, process_models_[i]->sample_size()));
             variable_index += process_models_[i]->variable_size();
-            random_index += process_models_[i]->randoms_size();
+            random_index += process_models_[i]->sample_size();
         }
         return variables;
     }
 
     // set functions with arguments specific to stationary process models ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    virtual void conditionals(
+    virtual void conditional(
             const double& delta_time,
-            const VariableType& state,
-            const ControlType& control)
+            const Variable& state,
+            const Control& control)
     {
         size_t state_index = 0;
         size_t control_index = 0;
         for(size_t i = 0; i < process_models_.size(); i++)
         {
-            process_models_[i]->conditionals(
+            process_models_[i]->conditional(
                         delta_time,
                         state.middleRows(state_index, process_models_[i]->variable_size()),
                         control.middleRows(control_index, process_models_[i]->control_size()));
@@ -129,7 +129,7 @@ public: /* distribution traits */
         return total_count_state(process_models_);
     }
 
-    virtual int randoms_size() const
+    virtual int sample_size() const
     {
         return total_count_randoms(process_models_);
     }
@@ -144,14 +144,14 @@ protected:
 
 private:
     // silly counting functions ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    static unsigned total_count_state(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    static unsigned total_count_state(std::vector<boost::shared_ptr<StationaryProcess<> > > process_models)
     {
         unsigned total_count_state = 0;
         for(size_t i = 0; i < process_models.size(); i++)
             total_count_state += process_models[i]->variable_size();
         return total_count_state;
     }
-    static unsigned total_count_control(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    static unsigned total_count_control(std::vector<boost::shared_ptr<StationaryProcess<> > > process_models)
     {
         unsigned total_count_control = 0;
         for(size_t i = 0; i < process_models.size(); i++)
@@ -159,11 +159,11 @@ private:
         return total_count_control;
     }
 
-    static unsigned total_count_randoms(std::vector<boost::shared_ptr<StationaryProcessModel<> > > process_models)
+    static unsigned total_count_randoms(std::vector<boost::shared_ptr<StationaryProcess<> > > process_models)
     {
         unsigned total_count_randoms = 0;
         for(size_t i = 0; i < process_models.size(); i++)
-            total_count_randoms += process_models[i]->randoms_size();
+            total_count_randoms += process_models[i]->sample_size();
         return total_count_randoms;
     }
 };

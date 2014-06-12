@@ -58,13 +58,13 @@ class MomentsEstimable:
 {
 public:
     typedef Distribution<ScalarType_, SIZE>         BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
+    typedef typename BaseType::Scalar           Scalar;
+    typedef typename BaseType::Variable         Variable;
     typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
 
     virtual ~MomentsEstimable() { }
 
-    virtual VariableType empiricalMean() = 0;
+    virtual Variable empiricalMean() = 0;
     virtual CovarianceType empiricalCovariance() = 0;
 };
 

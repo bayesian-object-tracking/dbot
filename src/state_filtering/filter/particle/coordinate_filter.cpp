@@ -74,7 +74,7 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
     for(size_t state_index = 0; state_index < parents_.size(); state_index++)
     {
         // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        process_model_->conditionals(observation_time - parent_times_[state_index], parents_[state_index], control);
+        process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
         zero_children_[state_index] = process_model_->mapNormal(Eigen::VectorXd::Zero(dof_count_));
 
         // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
         vector<size_t> child_multiplicities;
         hf::SortAndCollapse(mult_indices, child_multiplicities);
 
-        process_model_->conditionals(observation_time - parent_times_[state_index], parents_[state_index], control);
+        process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
         for(size_t child_index = 0; child_index < mult_indices.size(); child_index++)
         {
             VectorXd noise(VectorXd::Zero(dof_count_));
@@ -235,7 +235,7 @@ void CoordinateFilter::Propagate(
     // we propagate the states to the current time, appying the control input ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     for(size_t state_index = 0; state_index < parents_.size(); state_index++)
     {        
-        process_model_->conditionals(current_time - parent_times_[state_index], parents_[state_index], control);
+        process_model_->conditional(current_time - parent_times_[state_index], parents_[state_index], control);
 
         Eigen::VectorXd iso_sample(dof_count_);
         for (int i = 0; i < iso_sample.rows(); i++)

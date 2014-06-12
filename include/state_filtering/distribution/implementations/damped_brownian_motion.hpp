@@ -42,112 +42,114 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
+#ifndef STATE_FILTERING_gaussian_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
+#define STATE_FILTERING_gaussian_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
 
 #include <Eigen/Dense>
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/distribution/features/sampleable.hpp>
-#include <state_filtering/distribution/features/gaussian_mappable.hpp>
+#include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
+template <typename Scalar_, int SIZE>
 class DampedBrownianMotion:
-        public GaussianMappable<ScalarType_, SIZE, SIZE>
+        public StationaryProcess<Scalar_, SIZE, SIZE, SIZE>
 {
-public: /* distribution traits */
-    typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;
+public:
+    typedef StationaryProcess<Scalar_, SIZE, SIZE, SIZE> Base;
 
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
-    typedef typename BaseType::RandomsType          RandomsType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
+    typedef typename Base::Scalar               Scalar;
+    typedef typename Base::Variable             Variable;
+    typedef typename Base::Sample               Sample;
+    typedef typename Base::Control              Control;
+    typedef Eigen::Matrix<Scalar, SIZE, SIZE>   Covariance;
 
 public:
 
-    DampedBrownianMotion():
-        distribution_()
+    DampedBrownianMotion(): gaussian_()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VariableType);
+        DISABLE_IF_DYNAMIC_SIZE(Variable);
     }
 
-    explicit DampedBrownianMotion(int size):
-        distribution_(size)
+    explicit DampedBrownianMotion(int size): gaussian_(size)
     {
-        DISABLE_IF_FIXED_SIZE(VariableType);
+        DISABLE_IF_FIXED_SIZE(Variable);
     }
 
     virtual ~DampedBrownianMotion() { }
 
-    virtual VariableType mapNormal(const RandomsType& sample) const
+    virtual Variable mapNormal(const Sample& sample) const
     {
-        return distribution_.mapNormal(sample);
+        return gaussian_.mapNormal(sample);
     }
 
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& velocity,
-                              const VariableType& acceleration)
+    virtual void conditional(const Scalar& delta_time,
+                             const Variable& state,
+                             const Control& control)
     {
-        distribution_.mean(Expectation(velocity, acceleration, delta_time));
-        distribution_.covariance(Covariance(delta_time));
+        gaussian_.mean(ComputeMean(delta_time, state, control));
+        gaussian_.covariance(ComputeCovariance(delta_time));
     }
 
-    virtual void parameters(const double& damping, const CovarianceType& acceleration_covariance)
+    virtual void parameters(const Scalar& damping, const Covariance& noise_covariance)
     {
         damping_ = damping;
-        acceleration_covariance_ = acceleration_covariance;
+        noise_covariance_ = noise_covariance;
     }
 
     virtual int variable_size() const
     {
-        return distribution_.variable_size();
+        return gaussian_.variable_size();
     }
 
-    virtual int randoms_size() const
+    virtual int sample_size() const
+    {
+        return variable_size();
+    }
+
+    virtual int control_size() const
     {
         return variable_size();
     }
 
 private:
-    VariableType Expectation(const VariableType& velocity,
-                             const VariableType& acceleration,
-                             const double& delta_time)
+    Variable ComputeMean(const Scalar& delta_time,
+                         const Variable& state,
+                         const Control& control)
     {
-        VariableType velocity_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * acceleration
-                                              + exp(-damping_*delta_time)*velocity;
+        Variable state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
+                                              + exp(-damping_*delta_time)*state;
 
         // if the damping_ is too small, the result might be nan, we thus return the limit for damping_ -> 0
-        if(!std::isfinite(velocity_expectation.norm()))
-            velocity_expectation = velocity + delta_time * acceleration;
+        if(!std::isfinite(state_expectation.norm()))
+            state_expectation = state + delta_time * control;
 
-        return velocity_expectation;
+        return state_expectation;
     }
 
-    CovarianceType Covariance(const double& delta_time)
+    Covariance ComputeCovariance(const Scalar& delta_time)
     {
-        double factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
+        Scalar factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
         if(!std::isfinite(factor))
             factor = delta_time;
 
-        return factor * acceleration_covariance_;
+        return factor * noise_covariance_;
     }
 
 private:
-    // conditionals
-    GaussianDistribution<ScalarType, SIZE> distribution_;
+    // conditional
+    GaussianDistribution<Scalar, SIZE> gaussian_;
 
     // parameters
-    double damping_;
-    CovarianceType acceleration_covariance_;
+    Scalar damping_;
+    Covariance noise_covariance_;
 
     /** @brief euler-mascheroni constant */
-    static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
+    static const Scalar gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 
 }

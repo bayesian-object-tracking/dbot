@@ -42,11 +42,11 @@ struct OcclusionProcessModelTypes
     {
         VARIABLE_SIZE = 1,
         CONTROL_SIZE = 0,
-        RANDOMS_SIZE = 0
+        SAMPLE_SIZE = 0
     };
 
     typedef double Scalar;
-    typedef filter::StationaryProcessModel<Scalar, VARIABLE_SIZE, CONTROL_SIZE, RANDOMS_SIZE> Base;
+    typedef filter::StationaryProcess<Scalar, VARIABLE_SIZE, CONTROL_SIZE, SAMPLE_SIZE> Base;
 };
 
 class OcclusionProcessModel: public OcclusionProcessModelTypes::Base
@@ -54,17 +54,17 @@ class OcclusionProcessModel: public OcclusionProcessModelTypes::Base
 public:
     typedef OcclusionProcessModelTypes Types;
     typedef Types::Base Base;
-    typedef Base::ScalarType Scalar;
-    typedef Base::VariableType Variable;
-    typedef Base::ControlType Control;
-    typedef Base::RandomsType Randoms;
+    typedef Base::Scalar Scalar;
+    typedef Base::Variable Variable;
+    typedef Base::Control Control;
+    typedef Base::Sample Sample;
 
 
     enum
     {
         VARIABLE_SIZE = Types::VARIABLE_SIZE,
         CONTROL_SIZE = Types::CONTROL_SIZE,
-        RANDOMS_SIZE = Types::RANDOMS_SIZE
+        SAMPLE_SIZE = Types::SAMPLE_SIZE
     };
 
 	// the prob of source being object given source was object one sec ago,
@@ -87,17 +87,17 @@ public:
     }
 
 
-    virtual void conditionals(const double& delta_time,
-                              const VariableType& state,
-                              const ControlType& control)
+    virtual void conditional(const double& delta_time,
+                              const Variable& state,
+                              const Control& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
     }
 
-    virtual VariableType mapNormal() const
+    virtual Variable mapNormal() const
     {
-        VariableType state_vector;
+        Variable state_vector;
 
         if(isnan(delta_time_))
             state_vector(0) =  occlusion_probability_;
@@ -110,7 +110,7 @@ public:
     }
 
 
-    virtual VariableType mapNormal(const RandomsType& sample) const
+    virtual Variable mapNormal(const Sample& sample) const
     {
         return mapNormal();
     }
@@ -123,9 +123,9 @@ public:
     {
         return CONTROL_SIZE;
     }
-    virtual int randoms_size() const
+    virtual int sample_size() const
     {
-        return RANDOMS_SIZE;
+        return SAMPLE_SIZE;
     }
 
 private:

@@ -11,7 +11,7 @@
 
 namespace filter
 {
-    typedef StationaryProcessModel< > ProcessModel;
+    typedef StationaryProcess< > ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>  MeasurementModel;
 

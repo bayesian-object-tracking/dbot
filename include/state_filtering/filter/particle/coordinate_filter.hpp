@@ -50,7 +50,7 @@ namespace filter
 class CoordinateFilter
 {
 public:
-    typedef StationaryProcessModel< > ProcessModel;
+    typedef StationaryProcess< > ProcessModel;
     typedef obs_mod::ImageObservationModel MeasurementModel;
     typedef SumOfDeltas<double, -1> StateDistribution;
 

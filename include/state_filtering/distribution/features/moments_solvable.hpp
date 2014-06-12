@@ -58,13 +58,13 @@ class MomentsSolvable:
 {
 public:
     typedef MomentsEstimable<ScalarType_, SIZE>     BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VariableType         VariableType;
+    typedef typename BaseType::Scalar           Scalar;
+    typedef typename BaseType::Variable         Variable;
     typedef typename BaseType::CovarianceType       CovarianceType;
 
     virtual ~MomentsSolvable() { }
 
-    virtual VariableType empiricalMean()
+    virtual Variable empiricalMean()
     {
         return mean();
     }
@@ -74,7 +74,7 @@ public:
         return covariance();
     }
 
-    virtual VariableType mean() const = 0;
+    virtual Variable mean() const = 0;
     virtual CovarianceType covariance() const = 0;
 };
 

@@ -78,12 +78,12 @@ struct Invalidate<true>
 };
 }
 
-template <typename ScalarType_, int VARIABLE_SIZE>
+template <typename Scalar_, int VARIABLE_SIZE>
 class Distribution
 {
 public:    
-    typedef ScalarType_ ScalarType;
-    typedef Eigen::Matrix<ScalarType, VARIABLE_SIZE, 1> VariableType;// todo: we should also accept matrices (not just vectors) as measurements
+    typedef Scalar_ Scalar;
+    typedef Eigen::Matrix<Scalar, VARIABLE_SIZE, 1> Variable;// todo: we should also accept matrices (not just vectors) as measurements
 
 
     /**
