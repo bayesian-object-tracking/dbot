@@ -26,20 +26,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef FULL_RIGID_BODY_SYSTEM_HPP_
-#define FULL_RIGID_BODY_SYSTEM_HPP_
+#ifndef ROBOT_KINEMATICS_HPP_
+#define ROBOT_KINEMATICS_HPP_
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
+#include <state_filtering/tools/macros.hpp>
 
 #include <Eigen/Dense>
 #include <boost/static_assert.hpp>
 
 #include <vector>
 
-
+/// TODO: all of this is just a copy of he floating body stuff. in here the robot kinematics have to be implemented
 
 template<int size_bodies>
-struct FloatingBodySystemTypes
+struct RobotKinematicsTypes
 {
     enum
     {
@@ -56,10 +57,10 @@ struct FloatingBodySystemTypes
 
 
 template<int size_bodies = -1>
-class FloatingBodySystem: public FloatingBodySystemTypes<size_bodies>::Base
+class RobotKinematics: public RobotKinematicsTypes<size_bodies>::Base
 {
 public:
-    typedef FloatingBodySystemTypes<size_bodies> Types;
+    typedef RobotKinematicsTypes<size_bodies> Types;
     typedef typename Types::Base Base;
 
     typedef typename Base::Scalar   Scalar;
@@ -91,7 +92,7 @@ public:
     using Base::count_state;
 
     // constructor for fixed size without initial value
-    FloatingBodySystem():
+    RobotKinematics():
         Base(State::Zero(SIZE_STATE)),
         count_bodies_(SIZE_BODIES)
     {
@@ -99,7 +100,7 @@ public:
     }
 
     // constructor for dynamic size without initial value
-    FloatingBodySystem(unsigned count_bodies):
+    RobotKinematics(unsigned count_bodies):
         Base(State::Zero(count_bodies * COUNT_PER_BODY)),
         count_bodies_(count_bodies)
     {
@@ -107,11 +108,11 @@ public:
     }
 
     // constructor with initial value
-    template <typename T> FloatingBodySystem(const Eigen::MatrixBase<T>& state_vector):
+    template <typename T> RobotKinematics(const Eigen::MatrixBase<T>& state_vector):
         Base(state_vector),
         count_bodies_(state_vector.rows()/COUNT_PER_BODY){ }
 
-    virtual ~FloatingBodySystem() {}
+    virtual ~RobotKinematics() {}
 
     // read
     virtual Vector position(const size_t& object_index = 0) const
@@ -124,41 +125,13 @@ public:
     }
     virtual Vector linear_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+        TO_BE_IMPLEMENTED
     }
     virtual Vector angular_velocity(const size_t& object_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+        TO_BE_IMPLEMENTED
     }
 
-    // write
-    Block position(const size_t& object_index = 0)
-    {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
-    }
-    Block euler_vector(const size_t& object_index = 0)
-    {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
-    }
-    Block linear_velocity(const size_t& object_index = 0)
-    {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
-    }
-    Block angular_velocity(const size_t& object_index = 0)
-    {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
-    }
-    BodyBlock operator [](const size_t& object_index)
-    {
-      return BodyBlock(this->derived(), object_index * COUNT_PER_BODY);
-    }
-
-    // other representations
-    virtual void quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
-    {
-        AngleAxis angle_axis(quaternion);
-        euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
-    }
 
     virtual unsigned count_bodies() const
     {

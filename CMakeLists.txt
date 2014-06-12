@@ -109,6 +109,7 @@ set(state_filtering_headers
 
     # system state interface
     include/${PROJECT_NAME}/system_states/full_rigid_body_system.hpp
+    include/${PROJECT_NAME}/system_states/robot_kinematics.hpp
     include/${PROJECT_NAME}/system_states/rigid_body_system.hpp
 
     # measurement model interfaces
@@ -208,7 +209,9 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_multiple_filter.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/object_rasterizer.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.hpp
-        include/${PROJECT_NAME}/multi_object_tracker.hpp)
+        include/${PROJECT_NAME}/multi_object_tracker.hpp
+        include/${PROJECT_NAME}/robot_tracker.hpp)
+
 
     set(state_filtering_gpu_SOURCES
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.cpp
@@ -235,6 +238,20 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(multi_object_tracker
         src/${PROJECT_NAME}/multi_object_tracker_node.cpp)
     target_link_libraries(multi_object_tracker
+        ${PROJECT_NAME}
+        ${PROJECT_NAME}_gpu
+        ${PROJECT_NAME}_cuda
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        yaml-cpp)
+
+
+
+    ## robot_tracker
+    add_executable(robot_tracker
+        src/${PROJECT_NAME}/robot_tracker_node.cpp)
+    target_link_libraries(robot_tracker
         ${PROJECT_NAME}
         ${PROJECT_NAME}_gpu
         ${PROJECT_NAME}_cuda

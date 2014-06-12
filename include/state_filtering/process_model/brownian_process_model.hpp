@@ -102,7 +102,7 @@ public:
     typedef typename Eigen::Quaternion<Scalar>      Quaternion;
 
 
-    typedef FullRigidBodySystem<1> State;
+    typedef FloatingBodySystem<1> State;
     typedef IntegratedDampedBrownianMotion<Scalar, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<Scalar, 3> VelocityDistribution;
 

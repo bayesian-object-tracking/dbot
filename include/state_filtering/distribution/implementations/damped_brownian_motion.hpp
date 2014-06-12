@@ -55,7 +55,7 @@
 namespace filter
 {
 
-template <typename Scalar_, int SIZE>
+template <typename Scalar_ = double, int SIZE = -1>
 class DampedBrownianMotion:
         public StationaryProcess<Scalar_, SIZE, SIZE, SIZE>
 {

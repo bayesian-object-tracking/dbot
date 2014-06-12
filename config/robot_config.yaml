@@ -1,0 +1,33 @@
+object_names: [impact_battery, battery, canteen]
+dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
+
+use_gpu: true
+
+# filtering parameters ----------------------------------------------------------------------
+downsampling_factor: 8 #8
+initial_sample_count: 1000 #10000 this is the number of samples for the initialization
+max_sample_count: 10000 #10000 this is for the gpu to allocate memory
+sample_count: 1500 #the number of particles
+
+# visibility process model stuff ------------------------------------------------------------
+# initial prob of the source being the object for each pixels
+p_visible_init: 0.9 #0.9
+# prob of source being object given that one second ago the source was the object
+p_visible_visible: 0.9 #0.9
+# prob of source being object given that one second ago source was not object
+p_visible_occluded: 0.3 #0.3
+
+# process model parameters ------------------------------------------------------------------
+linear_acceleration_sigma: 0.1 #0.1  0.2  1.0
+angular_acceleration_sigma: 1.5 #1.5  3.0  15.0
+damping: 5.0 #5.0  20.0  1000.0
+
+joint_angle_sigma: 0.1
+
+
+# observation model parameters --------------------------------------------------------------
+tail_weight: 0.01 #0.01, 0.998
+model_sigma: 0.003 #0.003, 0.005
+sigma_factor: 0.00142478 #0.0014247
+
+

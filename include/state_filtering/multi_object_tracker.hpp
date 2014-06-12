@@ -146,7 +146,7 @@ public:
 
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > rigid_body_system(new FullRigidBodySystem<>(object_names_.size()));
+        boost::shared_ptr<RigidBodySystem<> > rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
 
         boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
                                                                           object_vertices,
@@ -219,7 +219,7 @@ public:
                 (new filter::CoordinateFilter(observation_model, process_model, dependencies));
 
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        FullRigidBodySystem<> default_state(object_names_.size());
+        FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
@@ -234,7 +234,7 @@ public:
             cout << "evalution of object " << object_names_[body_index] << endl;
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             {
-                FullRigidBodySystem<> full_initial_state(multi_body_samples[state_index]);
+                FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
                 full_initial_state[body_index] = single_body_samples[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
@@ -282,7 +282,7 @@ public:
         previous_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
-        FullRigidBodySystem<> mean = filter_->stateDistribution().empiricalMean();
+        FloatingBodySystem<> mean = filter_->stateDistribution().empiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
