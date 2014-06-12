@@ -1,13 +1,13 @@
 object_names: [impact_battery, battery, canteen]
 dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
 
-use_gpu: true
+use_gpu: false
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
 initial_sample_count: 1000 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
-sample_count: 1500 #the number of particles
+sample_count: 50 #the number of particles (1500)
 
 # visibility process model stuff ------------------------------------------------------------
 # initial prob of the source being the object for each pixels

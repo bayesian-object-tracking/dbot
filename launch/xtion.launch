@@ -4,7 +4,7 @@
   <arg name="camera" default="XTION" />
   <arg name="rgb_frame"   default="/$(arg camera)_RGB" />
   <arg name="depth_frame" default="/$(arg camera)_IR" />
-  <arg name="calibration_url"  default="$(find state_filter)/config/xtion_calib.yaml" />
+  <arg name="calibration_url"  default="$(find state_filtering)/config/xtion_calib.yaml" />
   <node pkg="arm_rgbd" name="$(arg camera)" type="rgbd_node" respawn="false" output="screen">
     <param name="rgb_frame_id"  type="string"  value="$(arg rgb_frame)" />
     <param name="depth_frame_id"  type="string"  value="$(arg depth_frame)" />

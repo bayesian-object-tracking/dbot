@@ -23,7 +23,8 @@ set(GLEW_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 find_package(CUDA)
-find_package(GLEW REQUIRED)
+#find_package(GLEW REQUIRED)
+find_package(GLEW)
 find_package(OpenGL REQUIRED)
 
 include_directories(${GLEW_INCLUDE_DIRS})
