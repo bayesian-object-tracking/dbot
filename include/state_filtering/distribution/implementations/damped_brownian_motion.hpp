@@ -94,13 +94,8 @@ public:
                               const VariableType& velocity,
                               const VariableType& acceleration)
     {
-        // TODO this hack is necessary at the moment. the gaussian distribution cannot deal with
-        // covariance matrices which are not full rank, which is the case for time equal to zero
-        double bounded_delta_time = delta_time;
-        if(bounded_delta_time < 0.00001) bounded_delta_time = 0.00001;
-
-        distribution_.mean(Expectation(velocity, acceleration, bounded_delta_time));
-        distribution_.covariance(Covariance(bounded_delta_time));
+        distribution_.mean(Expectation(velocity, acceleration, delta_time));
+        distribution_.covariance(Covariance(delta_time));
     }
 
     virtual void parameters(const double& damping, const CovarianceType& acceleration_covariance)
@@ -120,17 +115,14 @@ public:
     }
 
 private:
-    VariableType Expectation(
-            const VariableType& velocity,
-            const VariableType& acceleration,
-            const double& delta_time)
+    VariableType Expectation(const VariableType& velocity,
+                             const VariableType& acceleration,
+                             const double& delta_time)
     {
-        VariableType velocity_expectation =
-                (1.0 - exp(-damping_*delta_time))
-                / damping_ * acceleration + exp(-damping_*delta_time)*velocity;
+        VariableType velocity_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * acceleration
+                                              + exp(-damping_*delta_time)*velocity;
 
-        // if the damping_ is too small, the result might be nan, we thus return the limit for
-        // damping_ -> 0
+        // if the damping_ is too small, the result might be nan, we thus return the limit for damping_ -> 0
         if(!std::isfinite(velocity_expectation.norm()))
             velocity_expectation = velocity + delta_time * acceleration;
 
