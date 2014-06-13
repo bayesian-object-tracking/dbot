@@ -35,12 +35,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-template<int size_state = -1>
-class RigidBodySystem: public Eigen::Matrix<double, size_state, 1>
+template<int SIZE_STATE_ = -1>
+class RigidBodySystem: public Eigen::Matrix<double, SIZE_STATE_, 1>
 {
 public:
     typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, size_state, 1>    State;
+    typedef Eigen::Matrix<Scalar, SIZE_STATE_, 1>    State;
     typedef Eigen::Matrix<Scalar, 3, 1>             Vector;
 
     // rotation types
@@ -51,7 +51,7 @@ public:
 
     enum
     {
-        SIZE_STATE = size_state
+        SIZE_STATE = SIZE_STATE_
     };
 
     // constructor and destructor

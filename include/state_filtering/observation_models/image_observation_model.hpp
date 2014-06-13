@@ -70,14 +70,6 @@ public:
 			std::vector<size_t>& occlusion_indices,
 			const bool& update_occlusions = false) = 0;
 
-
-//    virtual std::vector<float> Evaluate_test(
-//            const std::vector<Eigen::VectorXd >& states,
-//            std::vector<size_t>& occlusion_indices,
-//            const bool& update_occlusions = false,
-//            std::vector<std::vector<int> > intersect_indices = 0,
-//            std::vector<std::vector<float> > predictions = 0) = 0;
-
 	// set and get functions =============================================================================================================================================================================================================================================================================================
     virtual void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                                   std::vector<std::vector<float> > &depth) = 0;

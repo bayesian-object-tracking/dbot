@@ -47,21 +47,31 @@ using namespace boost;
 CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
                                    const ProcessModelPtr process_model,
                                    const std::vector<std::vector<size_t> >& independent_blocks):
-    observation_model_(observation_model),
+    measurement_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
     state_distribution_(process_model->variable_size())
 {
-    // count the degrees of freedom --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    dof_count_ = 0;
+    // make sure sizes are consistent
+    size_t sample_size = 0;
     for(size_t i = 0; i < independent_blocks_.size(); i++)
         for(size_t j = 0; j < independent_blocks_[i].size(); j++)
-            dof_count_++;
+            sample_size++;
+
+    if(sample_size != process_model_->sample_size())
+    {
+        cout << "the number of dof in the dependency specification does not correspond to" <<
+                " to the number of dof in the process model!!" << endl;
+        exit(-1);
+    }
+
+
+
 }
 CoordinateFilter::~CoordinateFilter() { }
 
 // create offspring
-void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
+void CoordinateFilter::PartialPropagate(const Control& control,
                                         const double& observation_time)
 {
     INIT_PROFILING;
@@ -75,7 +85,7 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
     {
         // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
-        zero_children_[state_index] = process_model_->mapNormal(Eigen::VectorXd::Zero(dof_count_));
+        zero_children_[state_index] = process_model_->mapNormal(Noise::Zero(process_model_->sample_size()));
 
         // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         partial_noises_[state_index].resize(independent_blocks_.size());
@@ -88,7 +98,7 @@ void CoordinateFilter::PartialPropagate(const Eigen::VectorXd& control,
             partial_children_occlusion_indices_[state_index][block_index].resize(parent_multiplicities_[state_index]);
             for(size_t mult_index = 0; mult_index < parent_multiplicities_[state_index]; mult_index++)
             {
-                Eigen::VectorXd partial_noise(Eigen::VectorXd::Zero(dof_count_));
+                Noise partial_noise(Noise::Zero(process_model_->sample_size()));
                 for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
                     partial_noise(independent_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
 
@@ -106,18 +116,18 @@ void CoordinateFilter::PartialEvaluate(const Measurement& observation,
                                        const double& observation_time)
 {
     // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    observation_model_->measurement(observation, observation_time);
+    measurement_model_->measurement(observation, observation_time);
     hf::Structurer3D converter;
     vector<size_t> flat_partial_children_occlusion_indices_ = converter.Flatten(partial_children_occlusion_indices_);
 
     INIT_PROFILING;
     partial_children_loglikes_ = converter.Deepen(
-                observation_model_->Evaluate(converter.Flatten(partial_children_),
+                measurement_model_->Evaluate(converter.Flatten(partial_children_),
                                              flat_partial_children_occlusion_indices_, false));
     MEASURE("evaluation with " + lexical_cast<string>(flat_partial_children_occlusion_indices_.size()) + " samples");
 
 
-    vector<float> zero_loglikes = observation_model_->Evaluate(zero_children_, parent_occlusion_indices_, false);
+    vector<float> zero_loglikes = measurement_model_->Evaluate(zero_children_, parent_occlusion_indices_, false);
     MEASURE("evaluation with " + lexical_cast<string>(zero_children_.size()) + " samples");
 
     // compute family_loglikes_ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -137,7 +147,7 @@ void CoordinateFilter::PartialEvaluate(const Measurement& observation,
     MEASURE("computing loglikes_")
 }
 
-void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
+void CoordinateFilter::PartialResample(const Control& control,
                                        const double& observation_time,
                                        const size_t &new_n_states)
 {
@@ -150,7 +160,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
     MEASURE("sampling children_counts");
 
     // combine partial children into children ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    vector<Eigen::VectorXd> children;
+    vector<State> children;
     std::vector<double> children_times;
     vector<size_t> children_multiplicities;
     vector<size_t> children_occlusion_indices;
@@ -170,7 +180,7 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
         process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
         for(size_t child_index = 0; child_index < mult_indices.size(); child_index++)
         {
-            VectorXd noise(VectorXd::Zero(dof_count_));
+            VectorXd noise(VectorXd::Zero(process_model_->sample_size()));
             for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
                 noise += partial_noises_[state_index][block_index][mult_indices[child_index][block_index]];
 
@@ -201,9 +211,9 @@ void CoordinateFilter::PartialResample(const Eigen::VectorXd& control,
 void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
                                         const double& observation_time)
 {
-    observation_model_->measurement(observation, observation_time);
+    measurement_model_->measurement(observation, observation_time);
     INIT_PROFILING;
-    observation_model_->Evaluate(parents_, parent_occlusion_indices_, true);
+    measurement_model_->Evaluate(parents_, parent_occlusion_indices_, true);
     MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
 
 }
@@ -213,7 +223,7 @@ void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
 
 
 void CoordinateFilter::Enchilada(
-        const Eigen::VectorXd control,
+        const Control control,
         const double &observation_time,
         const Measurement& observation,
         const size_t &new_n_states)
@@ -229,20 +239,14 @@ void CoordinateFilter::Enchilada(
 
 
 void CoordinateFilter::Propagate(
-        const Eigen::VectorXd control,
+        const Control control,
         const double &current_time)
 {
     // we propagate the states to the current time, appying the control input ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     for(size_t state_index = 0; state_index < parents_.size(); state_index++)
     {        
         process_model_->conditional(current_time - parent_times_[state_index], parents_[state_index], control);
-
-        Eigen::VectorXd iso_sample(dof_count_);
-        for (int i = 0; i < iso_sample.rows(); i++)
-            iso_sample(i) = unit_gaussian_.sample()(0);
-
-        parents_[state_index] = process_model_->mapNormal(iso_sample);
-
+        parents_[state_index] = process_model_->sample();
         parent_times_[state_index] = current_time;
     }
 }
@@ -255,9 +259,9 @@ void CoordinateFilter::Evaluate(
 {
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    observation_model_->measurement(observation, observation_time);
+    measurement_model_->measurement(observation, observation_time);
     INIT_PROFILING
-    family_loglikes_ = observation_model_->Evaluate(parents_, parent_occlusion_indices_, update_occlusions);
+    family_loglikes_ = measurement_model_->Evaluate(parents_, parent_occlusion_indices_, update_occlusions);
     MEASURE("observation_model_->Evaluate")
 }
 
@@ -271,7 +275,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
         state_count = new_state_count;
 
     // todo we are not taking multiplicity into account
-    std::vector<Eigen::VectorXd > new_states(state_count);
+    std::vector<State > new_states(state_count);
     std::vector<double> new_state_times(state_count);
     std::vector<size_t> new_multiplicities(state_count);
     std::vector<float> new_loglikes(state_count);
@@ -313,7 +317,7 @@ void CoordinateFilter::Sort()
 {
     vector<int> indices = hf::SortDescend(family_loglikes_);
 
-    std::vector<Eigen::VectorXd > sorted_states(indices.size());
+    std::vector<State > sorted_states(indices.size());
     std::vector<double> sorted_state_times(indices.size());
     std::vector<size_t> sorted_multiplicities(indices.size());
     std::vector<float> sorted_loglikes(indices.size());
@@ -342,18 +346,22 @@ CoordinateFilter::StateDistribution &CoordinateFilter::stateDistribution()
     return state_distribution_;
 }
 
+size_t CoordinateFilter::control_size()
+{
+    return process_model_->control_size();
+}
 
 
 // set and get fcts ==========================================================================================================================================================================================================================================================================================================================================================================================
 void CoordinateFilter::get(MeasurementModelPtr &observation_model) const
 {
-    observation_model = observation_model_;
+    observation_model = measurement_model_;
 }
 void CoordinateFilter::get(ProcessModelPtr &process_model) const
 {
     process_model = process_model_;
 }
-void CoordinateFilter::get(std::vector<Eigen::VectorXd >& states) const
+void CoordinateFilter::get(std::vector<State >& states) const
 {
     states = parents_;
 }
@@ -369,22 +377,22 @@ void CoordinateFilter::get(std::vector<float>& loglikes) const
 {
     loglikes = family_loglikes_;
 }
-const Eigen::VectorXd& CoordinateFilter::get_state(size_t index) const
+const CoordinateFilter::State& CoordinateFilter::get_state(size_t index) const
 {
     return parents_[index];
 }
 const std::vector<float> CoordinateFilter::get_occlusions(size_t index) const
 {
-    return observation_model_->get_occlusions(parent_occlusion_indices_[index]	);
+    return measurement_model_->get_occlusions(parent_occlusion_indices_[index]	);
 }
 void CoordinateFilter::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                                              std::vector<std::vector<float> > &depth)
 {
-    observation_model_->get_depth_values(intersect_indices, depth);
+    measurement_model_->get_depth_values(intersect_indices, depth);
 }
 
 
-void CoordinateFilter::set_states(const std::vector<Eigen::VectorXd >& states,
+void CoordinateFilter::set_states(const std::vector<State >& states,
                                   const std::vector<double>& state_times,
                                   const std::vector<size_t>& multiplicities,
                                   const std::vector<float> &loglikes)
@@ -393,7 +401,7 @@ void CoordinateFilter::set_states(const std::vector<Eigen::VectorXd >& states,
     parents_ = states;
     parent_times_ = state_times;
     parent_multiplicities_ = multiplicities;
-    parent_occlusion_indices_ = vector<size_t>(parents_.size(), 0); observation_model_->set_occlusions();
+    parent_occlusion_indices_ = vector<size_t>(parents_.size(), 0); measurement_model_->set_occlusions();
     family_loglikes_ = loglikes;
 
     // if some arguments have not been passed we set to default values ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -416,7 +424,7 @@ void CoordinateFilter::set_independence(const std::vector<std::vector<size_t> >&
 }
 void CoordinateFilter::set(const MeasurementModelPtr &observation_model)
 {
-    observation_model_ = observation_model;
+    measurement_model_ = observation_model;
 }
 void CoordinateFilter::set(const ProcessModelPtr &process_model)
 {

@@ -50,15 +50,20 @@ namespace filter
 class CoordinateFilter
 {
 public:
-    typedef StationaryProcess< > ProcessModel;
+    typedef boost::shared_ptr<CoordinateFilter> Ptr;
+
+    typedef StationaryProcess<> ProcessModel;
+    typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef obs_mod::ImageObservationModel MeasurementModel;
+    typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
+
     typedef SumOfDeltas<double, -1> StateDistribution;
 
-    typedef boost::shared_ptr<CoordinateFilter> Ptr;
-    typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
-    typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
-
-    typedef Eigen::Matrix<double, -1, -1> Measurement;
+    typedef MeasurementModel::Measurement Measurement;
+    typedef ProcessModel::Control Control;
+    typedef ProcessModel::Variable State;
+    typedef ProcessModel::Sample Noise;
+//    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
     CoordinateFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
@@ -66,24 +71,24 @@ public:
 
     ~CoordinateFilter();
 
-    void PartialPropagate(const Eigen::VectorXd& control,
+    void PartialPropagate(const Control& control,
                           const double& observation_time);
     void PartialEvaluate(const Measurement& observation,
                          const double& observation_time);
-    void PartialResample(const Eigen::VectorXd& control,
+    void PartialResample(const Control& control,
                          const double& observation_time,
                          const size_t &new_n_states);
     void UpdateOcclusions(const Measurement& observation,
                           const double& observation_time);
 
 
-    void Enchilada(const Eigen::VectorXd control,
+    void Enchilada(const Control control,
                    const double &observation_time,
                    const Measurement& observation,
                    const size_t &new_n_states);
 
 
-    void Propagate(const Eigen::VectorXd control,
+    void Propagate(const Control control,
                    const double &current_time);
 
 
@@ -95,19 +100,21 @@ public:
 
     void Sort();
 
+    size_t control_size();
+
     // set and get fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     void get(MeasurementModelPtr& observation_model) const;
     void get(ProcessModelPtr& process_model) const;
-    void get(std::vector<Eigen::VectorXd >& states) const;
+    void get(std::vector<State >& states) const;
     void get(std::vector<double>& state_times) const;
     void get(std::vector<size_t>& multiplicities) const;
     void get(std::vector<float>& loglikes) const;
-    const Eigen::VectorXd& get_state(size_t index) const;
+    const State& get_state(size_t index) const;
     const std::vector<float> get_occlusions(size_t index) const;
     void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                           std::vector<std::vector<float> > &depth);
 
-    void set_states(const std::vector<Eigen::VectorXd >& states,
+    void set_states(const std::vector<State >& states,
                     const std::vector<double>& state_times = std::vector<double>(),
                     const std::vector<size_t>& multiplicities = std::vector<size_t>(),
                     const std::vector<float>& loglikes = std::vector<float>());
@@ -123,29 +130,28 @@ private:
 
 
     // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    std::vector<Eigen::VectorXd > parents_;
+    std::vector<State > parents_;
     std::vector<double> parent_times_;
     std::vector<size_t> parent_multiplicities_;
     std::vector<size_t> parent_occlusion_indices_;
 
     // partial propagate
-    std::vector<std::vector<std::vector<Eigen::VectorXd> > > partial_noises_;
-    std::vector<std::vector<std::vector<Eigen::VectorXd> > > partial_children_;
+    std::vector<std::vector<std::vector<Noise> > > partial_noises_;
+    std::vector<std::vector<std::vector<State> > > partial_children_;
     std::vector<std::vector<std::vector<size_t> > > partial_children_occlusion_indices_;
-    std::vector<Eigen::VectorXd > zero_children_;
+    std::vector<State > zero_children_;
 
     // partial evaluate
     std::vector< std::vector< std::vector <float> > > partial_children_loglikes_;
     std::vector<float> family_loglikes_;
 
     // process and observation models ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    MeasurementModelPtr observation_model_;
+    MeasurementModelPtr measurement_model_;
     ProcessModelPtr process_model_;
     GaussianDistribution<double, 1> unit_gaussian_;
 
     // parameters ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     std::vector<std::vector<size_t> > independent_blocks_;
-    size_t dof_count_;
 };
 
 }
