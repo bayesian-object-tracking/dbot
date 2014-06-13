@@ -109,7 +109,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/process_model/occlusion_process_model.hpp
 
     # system state interface
-    include/${PROJECT_NAME}/system_states/full_rigid_body_system.hpp
+    include/${PROJECT_NAME}/system_states/floating_body_system.hpp
     include/${PROJECT_NAME}/system_states/robot_kinematics.hpp
     include/${PROJECT_NAME}/system_states/rigid_body_system.hpp
 

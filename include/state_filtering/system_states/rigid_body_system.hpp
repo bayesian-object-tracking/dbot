@@ -70,8 +70,6 @@ public:
     // read
     virtual Vector  position            (const size_t& object_index = 0) const = 0;
     virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
-    virtual Vector  linear_velocity     (const size_t& object_index = 0) const = 0;
-    virtual Vector  angular_velocity    (const size_t& object_index = 0) const = 0;
 
     // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const
@@ -97,13 +95,14 @@ public:
     }
 
     // counts
-    virtual unsigned count_state() const
+    virtual unsigned state_size() const
     {
         return count_state_;
     }
-    virtual unsigned count_bodies() const = 0;
+    virtual unsigned bodies_size() const = 0;
 
 private:
+    // this is the actual state size, since the SIZE_STATE can also be -1 for dynamic size
     unsigned count_state_;
 };
 

@@ -69,7 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/process_model/brownian_process_model.hpp>
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
-#include <state_filtering/system_states/full_rigid_body_system.hpp>
+#include <state_filtering/system_states/floating_body_system.hpp>
 #include <state_filtering/system_states/robot_kinematics.hpp>
 
 
@@ -163,12 +163,12 @@ public:
 
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > rigid_body_system(new RobotKinematics<>(object_names_.size()));
+        boost::shared_ptr<RigidBodySystem<> > kinematics(new RobotKinematics<>(object_names_.size()));
 
         boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
                                                                           object_vertices,
                                                                           object_triangle_indices,
-                                                                          rigid_body_system));
+                                                                          kinematics));
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)
@@ -183,7 +183,7 @@ public:
                                                                                           image.rows(),
                                                                                           image.cols(),
                                                                                           single_body_samples.size(),
-                                                                                          rigid_body_system,
+                                                                                          kinematics,
                                                                                           object_renderer,
                                                                                           kinect_measurement_model,
                                                                                           occlusion_process_model,
@@ -198,7 +198,7 @@ public:
                                                                                            image.cols(),
                                                                                            max_sample_count,
                                                                                            p_visible_init,
-                                                                                           rigid_body_system));
+                                                                                           kinematics));
 
             gpu_observation_model->set_constants(object_vertices,
                                                  object_triangle_indices,
@@ -215,6 +215,7 @@ public:
         }
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
+        boost::shared_ptr<StationaryProcess<> > process_model;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: here the robot process model has to be used. this should be easy, we should use the damped brownian motion
         MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
@@ -230,15 +231,14 @@ public:
                                               angular_acceleration_covariance);
             partial_process_models[i] = partial_process_model;
         }
-        boost::shared_ptr<ComposedStationaryProcessModel> process_model(new ComposedStationaryProcessModel(partial_process_models));
+        process_model = boost::shared_ptr<ComposedStationaryProcessModel>(new ComposedStationaryProcessModel(partial_process_models));
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        int joint_angle_count = 10;
-        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(joint_angle_count));
-        MatrixXd joint_covariance = MatrixXd::Identity(joint_angle_count, joint_angle_count) * pow(joint_angle_sigma, 2);
-        joint_process_model->parameters(0., joint_covariance);
-
-
-
+        /// hopefully, by just commenting the above and uncommenting the stuff below we should have a process model for the robot joints
+//        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(kinematics->state_size()));
+//        MatrixXd joint_covariance = MatrixXd::Identity(joint_process_model->variable_size(), joint_process_model->variable_size())
+//                                    * pow(joint_angle_sigma, 2);
+//        joint_process_model->parameters(0., joint_covariance);
+//        process_model = joint_process_model;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -253,7 +253,9 @@ public:
 
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// TODO: this part we should be able to get rid off, since we should already have decent initial joint angles
+        /// TODO: this part we should be able to get rid off, since we should already have decent initial joint angles.
+        /// the important part is to pass here some decent initial states to the filter by using filter_->set_states(initial_states)
+        /// all the rest should go away.
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
@@ -305,8 +307,6 @@ public:
 
         // filter
         INIT_PROFILING;
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// the control size will have to be different
         filter_->Enchilada(FilterType::Control::Zero(filter_->control_size()),
                            duration_,
                            image,

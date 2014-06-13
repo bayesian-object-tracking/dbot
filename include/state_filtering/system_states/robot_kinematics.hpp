@@ -89,7 +89,7 @@ public:
 
     // give access to base member functions (otherwise it is shadowed)
     using Base::quaternion;
-    using Base::count_state;
+    using Base::state_size;
 
     // constructor for fixed size without initial value
     RobotKinematics():
@@ -114,26 +114,34 @@ public:
 
     virtual ~RobotKinematics() {}
 
-    // read
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// these are the two main functions which have to implement the robot kinematics.
+    /// here it simply accesses the eigen vector, from which the class is derived and returns the correct
+    /// part of the vector, since it directly encodes the pose of the object. for the robot arm this will
+    /// be a bit more complicated, since the eigen vector will contain the joint angles, and we will have
+    /// to compute the pose of the link from the joint angles.
+    // this returns the position (translation) part of the pose of the link.
     virtual Vector position(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
     }
+    // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
+    // angle, and the direction is the rotation axis. below there is a function that converts from Quaternion2EulerVector
+    // which implements the transformation
     virtual Vector euler_vector(const size_t& object_index = 0) const
     {
         return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-    virtual Vector linear_velocity(const size_t& object_index = 0) const
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    virtual Vector Quaternion2EulerVector(const Quaternion& quaternion)
     {
-        TO_BE_IMPLEMENTED
-    }
-    virtual Vector angular_velocity(const size_t& object_index = 0) const
-    {
-        TO_BE_IMPLEMENTED
+        AngleAxis angle_axis(quaternion);
+        return angle_axis.angle()*angle_axis.axis();
     }
 
 
-    virtual unsigned count_bodies() const
+    virtual unsigned bodies_size() const
     {
         return count_bodies_;
     }

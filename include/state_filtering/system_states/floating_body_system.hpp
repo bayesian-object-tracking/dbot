@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef FULL_RIGID_BODY_SYSTEM_HPP_
-#define FULL_RIGID_BODY_SYSTEM_HPP_
+#ifndef FLOATING_BODY_SYSTEM_HPP_
+#define FLOATING_BODY_SYSTEM_HPP_
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
 
@@ -88,7 +88,7 @@ public:
 
     // give access to base member functions (otherwise it is shadowed)
     using Base::quaternion;
-    using Base::count_state;
+    using Base::state_size;
 
     // constructor for fixed size without initial value
     FloatingBodySystem():
@@ -160,7 +160,7 @@ public:
         euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
     }
 
-    virtual unsigned count_bodies() const
+    virtual unsigned bodies_size() const
     {
         return count_bodies_;
     }

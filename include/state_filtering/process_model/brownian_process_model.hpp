@@ -49,7 +49,7 @@
 #define STATE_FILTERING_PROCESS_MODEL_BROWNIAN_PROCESS_MODEL_HPP
 
 #include <state_filtering/tools/helper_functions.hpp>
-#include <state_filtering/system_states/full_rigid_body_system.hpp>
+#include <state_filtering/system_states/floating_body_system.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
 #include <state_filtering/distribution/implementations/damped_brownian_motion.hpp>
 #include <state_filtering/distribution/implementations/integrated_damped_brownian_motion.hpp>

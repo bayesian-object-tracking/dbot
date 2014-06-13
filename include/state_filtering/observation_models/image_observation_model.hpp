@@ -91,6 +91,21 @@ public:
 
     virtual void measurement(const std::vector<float>& observations, const double& time) = 0;
 
+    size_t state_size()
+    {
+        return rigid_body_system_->state_size();
+    }
+
+    size_t measurement_rows()
+    {
+        return n_rows_;
+    }
+
+    size_t measurement_cols()
+    {
+        return n_cols_;
+    }
+
 protected:
 	// constant parameters ===========================================================================================================================================================================================================================================================================================================================
 	const Eigen::Matrix3d camera_matrix_;

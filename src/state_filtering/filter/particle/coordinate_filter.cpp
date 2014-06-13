@@ -65,6 +65,12 @@ CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
         exit(-1);
     }
 
+    if(measurement_model_->state_size() != process_model_->variable_size())
+    {
+        cout << "the process and the measurement model do not have the same state size!!" << endl;
+        exit(-1);
+    }
+
 
 
 }

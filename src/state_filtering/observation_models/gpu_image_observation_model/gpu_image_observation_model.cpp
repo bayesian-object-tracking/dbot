@@ -127,12 +127,12 @@ std::vector<float> GPUImageObservationModel::Evaluate(
 
         // transform state format
         vector<vector<vector<float> > > states_transformed (n_poses_,
-                                                            vector<vector<float> >(rigid_body_system_->count_bodies(),
+                                                            vector<vector<float> >(rigid_body_system_->bodies_size(),
                                                             vector<float>(7, 0)));
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
         {
             *rigid_body_system_ = states[state_index];
-            for(size_t body_index = 0; body_index < rigid_body_system_->count_bodies(); body_index++)
+            for(size_t body_index = 0; body_index < rigid_body_system_->bodies_size(); body_index++)
             {
                 states_transformed[state_index][body_index][0] = rigid_body_system_->quaternion(body_index).w();
                 states_transformed[state_index][body_index][1] = rigid_body_system_->quaternion(body_index).x();

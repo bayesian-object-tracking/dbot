@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/process_model/brownian_process_model.hpp>
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
-#include <state_filtering/system_states/full_rigid_body_system.hpp>
+#include <state_filtering/system_states/floating_body_system.hpp>
 
 using namespace boost;
 using namespace std;
