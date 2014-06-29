@@ -51,10 +51,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/observation_models/image_observation_model.hpp>
 #include <state_filtering/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp>
-#include <state_filtering/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp>
+//#include <state_filtering/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp>
 
 // tools
 #include <state_filtering/tools/object_file_reader.hpp>
+#include <state_filtering/tools/urdf_reader.hpp>
+#include <state_filtering/tools/part_mesh_model.hpp>
 #include <state_filtering/tools/helper_functions.hpp>
 #include <state_filtering/tools/pcl_interface.hpp>
 #include <state_filtering/tools/ros_interface.hpp>
@@ -109,7 +111,9 @@ public:
 
         // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to meters
+	// TODO: Fix with non-fake arm_rgbd node
+	Image image;
+        //Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to meters
 
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -135,27 +139,24 @@ public:
 
 
 
-
-
-
-
+	// Read the URDF for the specific robot
+	URDFReader urdf_reader;
+	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
+	urdf_reader.Get_part_meshes(part_meshes_);
+	ROS_INFO("Number of parts %d", (int)part_meshes_.size());
+	
+	
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: the process of loading the object meshes has to be changed to load all the parts of the robot.
         /// the output here has to be a list of a list of vertices (the first index is the object index, and the second the vertex index)
         /// and a list of a list of indices, which specify the triangles
-        vector<vector<Vector3d> > object_vertices(object_names_.size());
-        vector<vector<vector<int> > > object_triangle_indices(object_names_.size());
-        for(size_t i = 0; i < object_names_.size(); i++)
-        {
-            string object_model_path = ros::package::getPath("arm_object_models") +
-                    "/objects/" + object_names_[i] + "/" + object_names_[i] + "_downsampled" + ".obj";
-            ObjectFileReader file_reader;
-            file_reader.set_filename(object_model_path);
-            file_reader.Read();
-
-            object_vertices[i] = *file_reader.get_vertices();
-            object_triangle_indices[i] = *file_reader.get_indices();
-        } 
+        vector<vector<Vector3d> > part_vertices(part_meshes_.size());
+        vector<vector<vector<int> > > part_triangle_indices(part_meshes_.size());
+        for(size_t i = 0; i < part_meshes_.size(); i++)
+	  {
+            part_vertices[i] = *(part_meshes_[i]->get_vertices());
+            part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
+	  } 
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -163,11 +164,11 @@ public:
 
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > kinematics(new RobotKinematics<>(object_names_.size()));
+        boost::shared_ptr<RigidBodySystem<> > kinematics(new RobotKinematics<>(part_meshes_.size()));
 
-        boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
-                                                                          object_vertices,
-                                                                          object_triangle_indices,
+        boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(
+                                                                          part_vertices,
+                                                                          part_triangle_indices,
                                                                           kinematics));
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
@@ -184,13 +185,14 @@ public:
                                                                                           image.cols(),
                                                                                           single_body_samples.size(),
                                                                                           kinematics,
-                                                                                          object_renderer,
+                                                                                          robot_renderer,
                                                                                           kinect_measurement_model,
                                                                                           occlusion_process_model,
                                                                                           p_visible_init));
         }
         else
         {
+	  /*
             // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             boost::shared_ptr<obs_mod::GPUImageObservationModel> gpu_observation_model(new obs_mod::GPUImageObservationModel(
                                                                                            camera_matrix,
@@ -212,6 +214,7 @@ public:
 
             gpu_observation_model->Initialize();
             observation_model = gpu_observation_model;
+	  */
         }
 
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
@@ -225,7 +228,7 @@ public:
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
-            partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
+            partial_process_model->parameters(robot_renderer->object_center(i).cast<double>(),
                                               damping,
                                               linear_acceleration_covariance,
                                               angular_acceleration_covariance);
