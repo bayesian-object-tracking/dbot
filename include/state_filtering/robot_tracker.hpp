@@ -72,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
 #include <state_filtering/system_states/floating_body_system.hpp>
-#include <state_filtering/system_states/robot_kinematics.hpp>
+#include <state_filtering/system_states/robot_state.hpp>
 
 
 using namespace boost;
@@ -160,16 +160,14 @@ public:
         /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > kinematics(new RobotKinematics<>(part_meshes_.size()));
+        boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size()));
 
         boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(
                                                                           part_vertices,
                                                                           part_triangle_indices,
-                                                                          kinematics));
+                                                                          robot_state));
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)
@@ -184,7 +182,7 @@ public:
                                                                                           image.rows(),
                                                                                           image.cols(),
                                                                                           single_body_samples.size(),
-                                                                                          kinematics,
+                                                                                          robot_state,
                                                                                           robot_renderer,
                                                                                           kinect_measurement_model,
                                                                                           occlusion_process_model,
@@ -200,7 +198,7 @@ public:
                                                                                            image.cols(),
                                                                                            max_sample_count,
                                                                                            p_visible_init,
-                                                                                           kinematics));
+                                                                                           robot_state));
 
             gpu_observation_model->set_constants(object_vertices,
                                                  object_triangle_indices,
@@ -237,7 +235,7 @@ public:
         process_model = boost::shared_ptr<ComposedStationaryProcessModel>(new ComposedStationaryProcessModel(partial_process_models));
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// hopefully, by just commenting the above and uncommenting the stuff below we should have a process model for the robot joints
-//        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(kinematics->state_size()));
+//        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(robot_state->state_size()));
 //        MatrixXd joint_covariance = MatrixXd::Identity(joint_process_model->variable_size(), joint_process_model->variable_size())
 //                                    * pow(joint_angle_sigma, 2);
 //        joint_process_model->parameters(0., joint_covariance);
@@ -322,7 +320,7 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
-        RobotKinematics<> mean = filter_->stateDistribution().empiricalMean();
+        RobotState<> mean = filter_->stateDistribution().empiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
