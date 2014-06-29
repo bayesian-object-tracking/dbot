@@ -3,10 +3,10 @@
   <arg name="camera_matrix_topic" />
 
   <!-- Hardcoding which robot we are using-->
-  <param name="robot_description" type="string" value="$(find kinect_sim)/data/darpa.urdf" />
+  <param name="robot_description" type="string" value="$(find state_filtering)/config/darpa.urdf" />
   <!-- Pose Estimation Node-->
   <node name="robot_tracker" type="robot_tracker"
-        pkg="state_filtering" output="screen" respawn="false" launch-prefix="gdb --args" > <!-- launch-prefix="valgrind" -->
+        pkg="state_filtering" output="screen" respawn="false"><!--launch-prefix="gdb args" launch-prefix="valgrind" -->
     <param name="tf_correction_root" type="string" value="BASE" />
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
     <param name="depth_image_topic"    type="string"  value="$(arg depth_image_topic)" />

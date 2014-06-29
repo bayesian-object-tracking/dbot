@@ -74,7 +74,6 @@ public:
 	  {
 	    if (filename.substr(filename.size() - 4 , 4) == ".dae")
 	      filename.replace(filename.size() - 4 , 4, ".stl");
-	    printf("adding link %d %s",p_index,name_.c_str());
 	    filename.erase(0,25);
 	    filename = p_description_path + filename;
 	    
