@@ -54,21 +54,25 @@ int main (int argc, char **argv)
 
     Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
 
+    sensor_msgs::Image::ConstPtr ros_image(new sensor_msgs::Image);
+    /*
     // get observations from camera
     sensor_msgs::Image::ConstPtr ros_image =
             ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
     Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
+    */
 
 
 
 
-
-
-
+    
+    
+    vector<VectorXd> initial_states;
     /// ====================================================================================================
     /// TODO: this has to be adapted, we have to provide some samples around the initial robot joint angles
-    vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
-                                                              initial_sample_count);
+    /*vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
+      initial_sample_count);
+    */
     /// ====================================================================================================
 
 

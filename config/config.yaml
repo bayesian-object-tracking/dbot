@@ -45,7 +45,7 @@ dependencies: [
 #object_names: [mugbox]
 #dependencies: [[0], [1], [2], [3], [4], [5]]
 
-use_gpu: true
+use_gpu: false
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
