@@ -244,7 +244,7 @@ target_link_libraries(cpu_multi_object_tracker
     ${PCL_LIBRARIES}
     yaml-cpp)
 
-set(CUDA_FOUND)
+#set(CUDA_FOUND)
 
 if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
