@@ -35,6 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define PROFILING_ON
 
+#define GET_TIME(time) {struct timeval profiling_time; gettimeofday(&profiling_time, NULL);\
+    time = (profiling_time.tv_sec * 1000000u + profiling_time.tv_usec) /1000000.;}
 #ifdef PROFILING_ON
 	#define INIT_PROFILING struct timeval profiling_start_time, profiling_end_time; gettimeofday(&profiling_start_time, NULL);
 	#define RESET gettimeofday(&profiling_start_time, NULL);

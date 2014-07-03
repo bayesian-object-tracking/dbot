@@ -259,17 +259,18 @@ public:
     void Filter(const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
+        // the time since start is computed
+        double start_time; GET_TIME(start_time)
+
+        if(is_first_iteration_)
+        {
+            previous_image_time_ = ros_image.header.stamp.toSec();
+            is_first_iteration_ = false;
+        }
+        duration_ += ros_image.header.stamp.toSec() - previous_image_time_;
 
         // convert image
         Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
-
-        // the time since start is computed
-        if(is_first_iteration_)
-        {
-            previous_time_ = ros_image.header.stamp.toSec();
-            is_first_iteration_ = false;
-        }
-        duration_ += ros_image.header.stamp.toSec() - previous_time_;
 
         // filter
         INIT_PROFILING;
@@ -279,7 +280,7 @@ public:
                            sample_count_);
         MEASURE("-----------------> total time for filtering");
 
-        previous_time_ = ros_image.header.stamp.toSec();
+        previous_image_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
         FloatingBodySystem<> mean = filter_->stateDistribution().empiricalMean();
@@ -290,6 +291,13 @@ public:
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
+
+        double end_time; GET_TIME(end_time);
+        cout << "delta time: " << end_time-start_time << endl;
+        cout << "sample count: " << sample_count_ << endl;
+
+
+        sample_count_ = ceil((0.1 * 0.025/(end_time - start_time) + 0.9) * double(sample_count_));
     }
 
 
@@ -308,7 +316,7 @@ private:
     FilterContextPtr filter_context_;
 
     bool is_first_iteration_;
-    double previous_time_;
+    double previous_image_time_;
 
     // parameters
     vector<string> object_names_;

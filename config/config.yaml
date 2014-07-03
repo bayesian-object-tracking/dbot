@@ -1,13 +1,57 @@
-object_names: [impact_battery, battery, canteen]
-dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
+object_names: [mugbox, mugbox, mugbox, mugbox, mugbox, mugbox,mugbox, mugbox, mugbox, mugbox, mugbox, mugbox]
+#dependencies: [ [
+#0, 1, 2, 3, 4, 5, 
+#6, 7, 8, 9, 10, 11,
+#12, 13, 14, 15, 16, 17, 
+#18, 19, 20, 21, 22, 23, 
+#24, 25, 26, 27, 28, 29, 
+#30, 31, 32, 33, 34, 35,
+#36, 37, 38, 39, 40, 41,
+#42, 43, 44, 45, 46, 47,
+#48, 49, 50, 51, 52, 53,
+#54, 55, 56, 57, 58, 59,
+#60, 61, 62, 63, 64, 65,
+#66, 67, 68, 69, 70, 71]]
+
+dependencies: [ 
+[0], [1], [2], [3], [4], [5], 
+[6], [7], [8], [9], [10], [11],
+[12], [13], [14], [15], [16], [17], 
+[18], [19], [20], [21], [22], [23], 
+[24], [25], [26], [27], [28], [29], 
+[30], [31], [32], [33], [34], [35],
+[36], [37], [38], [39], [40], [41],
+[42], [43], [44], [45], [46], [47],
+[48], [49], [50], [51], [52], [53],
+[54], [55], [56], [57], [58], [59],
+[60], [61], [62], [63], [64], [65],
+[66], [67], [68], [69], [70], [71]]
+
+#dependencies: [ 
+#[0, 1, 2, 3, 4, 5],
+#[6, 7, 8, 9, 10, 11],
+#[12, 13, 14, 15, 16, 17], 
+#[18, 19, 20, 21, 22, 23],
+#[24, 25, 26, 27, 28, 29], 
+#[30, 31, 32, 33, 34, 35],
+#[36, 37, 38, 39, 40, 41],
+#[42, 43, 44, 45, 46, 47],
+#[48, 49, 50, 51, 52, 53],
+#[54, 55, 56, 57, 58, 59],
+#[60, 61, 62, 63, 64, 65],
+#[66, 67, 68, 69, 70, 71]]
+
+
+#object_names: [mugbox]
+#dependencies: [[0], [1], [2], [3], [4], [5]]
 
 use_gpu: true
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
-initial_sample_count: 1000 #10000 this is the number of samples for the initialization
+initial_sample_count: 10000 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
-sample_count: 1500 #the number of particles
+sample_count: 7 #the number of particles
 
 # visibility process model stuff ------------------------------------------------------------
 # initial prob of the source being the object for each pixels
@@ -23,8 +67,8 @@ angular_acceleration_sigma: 1.5 #1.5  3.0  15.0
 damping: 5.0 #5.0  20.0  1000.0
 
 # observation model parameters --------------------------------------------------------------
-tail_weight: 0.01 #0.01, 0.998
+tail_weight: 0.1 #0.01, 0.998
 model_sigma: 0.003 #0.003, 0.005
-sigma_factor: 0.00142478 #0.0014247
+sigma_factor: 0.0014247 #0.0014247
 
 
