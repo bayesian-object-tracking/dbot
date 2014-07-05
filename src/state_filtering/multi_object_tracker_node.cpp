@@ -37,10 +37,83 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cv.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include <fstream>
+#include <boost/filesystem.hpp>
+
+#include <ctime>
+
 
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;
+
+class TrackerInterface
+{
+public:
+    TrackerInterface(boost::shared_ptr<MultiObjectTracker> tracker): tracker_(tracker), node_handle_("~")
+    {
+        string config_file;
+        ri::ReadParameter("config_file", config_file, node_handle_);
+
+
+        path_ = config_file;
+        path_ = path_.parent_path();
+        cout << path_ << endl;
+
+         time_t rawtime;
+         struct tm * timeinfo;
+         char buffer[80];
+
+         time (&rawtime);
+         timeinfo = localtime(&rawtime);
+
+         strftime(buffer,80,"%d.%m.%Y_%I.%M.%S",timeinfo);
+         std::string current_time(buffer);
+
+         path_ /= "data_" + current_time + ".txt";
+    }
+    ~TrackerInterface() {}
+
+    void Filter(const sensor_msgs::Image& ros_image)
+    {
+        double start_time; GET_TIME(start_time)
+        VectorXd mean_state = tracker_->Filter(ros_image);
+        double end_time; GET_TIME(end_time);
+        double delta_time = end_time - start_time;
+        cout << "delta time: " << delta_time << endl;
+
+
+        ofstream file;
+        file.open(path_.c_str(), ios::out | ios::app);
+        if(file.is_open())
+        {
+            file << ros_image.header.stamp << " ";
+            file << delta_time << " ";
+            file << mean_state.transpose() << endl;
+            file.close();
+        }
+        else
+        {
+            cout << "could not open file " << path_ << endl;
+            exit(-1);
+        }
+
+//        cout << config_file_ << endl;
+
+
+
+
+
+    }
+
+
+private:
+    boost::shared_ptr<MultiObjectTracker> tracker_;
+    ros::NodeHandle node_handle_;
+    boost::filesystem::path path_;
+};
+
+
 
 int main (int argc, char **argv)
 {
@@ -63,11 +136,13 @@ int main (int argc, char **argv)
                                                               initial_sample_count);
 
     // intialize the filter
-    MultiObjectTracker test_filter;
-    test_filter.Initialize(initial_states, *ros_image, camera_matrix);
+    boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
+    tracker->Initialize(initial_states, *ros_image, camera_matrix);
     cout << "done initializing" << endl;
 
-    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &MultiObjectTracker::Filter, &test_filter);
+    TrackerInterface interface(tracker);
+    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+
 
     ros::spin();
     return 0;

@@ -256,11 +256,10 @@ public:
 
     }
 
-    void Filter(const sensor_msgs::Image& ros_image)
+    VectorXd Filter(const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
         // the time since start is computed
-        double start_time; GET_TIME(start_time)
 
         if(is_first_iteration_)
         {
@@ -291,13 +290,10 @@ public:
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
-
-        double end_time; GET_TIME(end_time);
-        cout << "delta time: " << end_time-start_time << endl;
         cout << "sample count: " << sample_count_ << endl;
 
 
-        sample_count_ = ceil((0.1 * 0.025/(end_time - start_time) + 0.9) * double(sample_count_));
+        return filter_->stateDistribution().empiricalMean();
     }
 
 

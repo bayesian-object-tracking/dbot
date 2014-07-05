@@ -64,8 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-#define RANDOM_SEED 1
-//(unsigned)time(0)
+#define RANDOM_SEED (unsigned)time(0)//1
 
 
 #endif

@@ -1,3 +1,8 @@
+depth_image_topic: /XTION/depth/image 
+camera_info_topic: /XTION/depth/camera_info 
+
+
+
 object_names: [mugbox, mugbox, mugbox, mugbox, mugbox, mugbox,mugbox, mugbox, mugbox, mugbox, mugbox, mugbox]
 #dependencies: [ [
 #0, 1, 2, 3, 4, 5, 
@@ -51,7 +56,7 @@ use_gpu: true
 downsampling_factor: 8 #8
 initial_sample_count: 10000 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
-sample_count: 7 #the number of particles
+sample_count: 10 #the number of particles
 
 # visibility process model stuff ------------------------------------------------------------
 # initial prob of the source being the object for each pixels
