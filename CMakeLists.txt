@@ -4,7 +4,7 @@ project(state_filtering)
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 
-find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser)
+find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters)
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)

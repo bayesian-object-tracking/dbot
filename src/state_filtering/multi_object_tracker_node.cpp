@@ -43,9 +43,129 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 
 
+#include <ros/ros.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+
+#include <boost/foreach.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+
+
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;
+
+
+
+
+
+
+
+class RangeData
+{
+public:
+    sensor_msgs::Image::ConstPtr image_;
+    sensor_msgs::CameraInfo::ConstPtr camera_info_;
+
+    RangeData(const sensor_msgs::Image::ConstPtr &image,
+              const sensor_msgs::CameraInfo::ConstPtr &camera_info) :
+        image_(image),
+        camera_info_(camera_info)
+    {}
+};
+
+/**
+ * Inherits from message_filters::SimpleFilter<M>
+ * to use protected signalMessage function
+ */
+template <class M>
+class BagSubscriber : public message_filters::SimpleFilter<M>
+{
+public:
+    void newMessage(const boost::shared_ptr<M const> &msg)
+    {
+        signalMessage(msg);
+    }
+};
+
+// Callback for synchronized messages
+class BagReader
+{
+public:
+    BagReader() {}
+    ~BagReader() {}
+
+    void callback(const sensor_msgs::Image::ConstPtr &image,
+                  const sensor_msgs::CameraInfo::ConstPtr &camera_info)
+    {
+        RangeData data(image, camera_info);
+        data_.push_back(data);
+    }
+
+    // Load bag
+    void loadBag(const std::string &filename, const std::string& image_topic, const std::string& camera_info_topic)
+    {
+        rosbag::Bag bag;
+        bag.open(filename, rosbag::bagmode::Read);
+
+        // Image topics to load
+        std::vector<std::string> topics;
+        topics.push_back(image_topic);
+        topics.push_back(camera_info_topic);
+
+        rosbag::View view(bag, rosbag::TopicQuery(topics));
+
+        // Set up fake subscribers to capture images
+        BagSubscriber<sensor_msgs::Image> image_subscriber;
+        BagSubscriber<sensor_msgs::CameraInfo> camera_info_subscriber;
+
+        // Use time synchronizer to make sure we get properly synchronized images
+        message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>
+                sync(image_subscriber, camera_info_subscriber, 25);
+        sync.registerCallback(boost::bind(&BagReader::callback, this,  _1, _2));
+
+        // Load all messages into our stereo dataset
+        BOOST_FOREACH(rosbag::MessageInstance const m, view)
+        {
+            if (m.getTopic() == image_topic || ("/" + m.getTopic() == image_topic))
+            {
+                sensor_msgs::Image::ConstPtr image = m.instantiate<sensor_msgs::Image>();
+                if (image != NULL)
+                    image_subscriber.newMessage(image);
+            }
+
+            if (m.getTopic() == camera_info_topic || ("/" + m.getTopic() == camera_info_topic))
+            {
+                sensor_msgs::CameraInfo::ConstPtr camera_info = m.instantiate<sensor_msgs::CameraInfo>();
+                if (camera_info != NULL)
+                    camera_info_subscriber.newMessage(camera_info);
+            }
+        }
+        bag.close();
+    }
+
+    vector<RangeData> data_;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class TrackerInterface
 {
@@ -70,7 +190,7 @@ public:
          strftime(buffer,80,"%d.%m.%Y_%I.%M.%S",timeinfo);
          std::string current_time(buffer);
 
-         path_ /= "data_" + current_time + ".txt";
+         path_ /= "tracking_data_" + current_time + ".txt";
     }
     ~TrackerInterface() {}
 
@@ -123,25 +243,62 @@ int main (int argc, char **argv)
     // read parameters
     string depth_image_topic; ri::ReadParameter("depth_image_topic", depth_image_topic, node_handle);
     string camera_info_topic; ri::ReadParameter("camera_info_topic", camera_info_topic, node_handle);
+    string bagfile; ri::ReadParameter("bagfile", bagfile, node_handle);
     int initial_sample_count; ri::ReadParameter("initial_sample_count", initial_sample_count, node_handle);
 
-    Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
+    // read from camera
+    if(bagfile.empty())
+    {
+        Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
 
-    // get observations from camera
-    sensor_msgs::Image::ConstPtr ros_image =
-            ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
-    Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
+        // get observations from camera
+        sensor_msgs::Image::ConstPtr ros_image =
+                ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
+        Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
 
-    vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
-                                                              initial_sample_count);
+        vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
+                                                                  initial_sample_count);
 
-    // intialize the filter
-    boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
-    tracker->Initialize(initial_states, *ros_image, camera_matrix);
-    cout << "done initializing" << endl;
+        // intialize the filter
+        boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
+        tracker->Initialize(initial_states, *ros_image, camera_matrix);
+        cout << "done initializing" << endl;
+        TrackerInterface interface(tracker);
 
-    TrackerInterface interface(tracker);
-    ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+    }
+    // read from bagfile
+    else
+    {
+        BagReader reader;
+        reader.loadBag(bagfile, depth_image_topic, camera_info_topic);
+        cout << "data size: " << reader.data_.size() << endl;
+
+        Matrix3d camera_matrix;
+        for(size_t col = 0; col < 3; col++)
+            for(size_t row = 0; row < 3; row++)
+                camera_matrix(row,col) = reader.data_[0].camera_info_->K[col+row*3];
+
+        // TODO: intialization has to be changed because it is not fully reliable
+        Image image = ri::Ros2Eigen<double>(*reader.data_[0].image_) / 1000.; // convert to m
+        vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
+                                                                  initial_sample_count);
+
+        // intialize the filter
+        boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
+        tracker->Initialize(initial_states, *reader.data_[0].image_, camera_matrix);
+        cout << "done initializing" << endl;
+        TrackerInterface interface(tracker);
+
+
+        ros::Publisher publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
+
+        for(size_t i = 0; i < reader.data_.size(); i++)
+        {
+            interface.Filter(*reader.data_[i].image_);
+            publisher.publish(*reader.data_[i].image_);
+        }
+    }
 
 
     ros::spin();
