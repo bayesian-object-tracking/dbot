@@ -100,9 +100,10 @@ public:
     }
 
     void Initialize(
-            vector<VectorXd> single_body_samples,
+            vector<VectorXd> initial_states,
             const sensor_msgs::Image& ros_image,
-            Matrix3d camera_matrix)
+            Matrix3d camera_matrix,
+            bool state_is_partial = true)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
@@ -166,7 +167,7 @@ public:
                                                                                           camera_matrix,
                                                                                           image.rows(),
                                                                                           image.cols(),
-                                                                                          single_body_samples.size(),
+                                                                                          initial_states.size(),
                                                                                           rigid_body_system,
                                                                                           object_renderer,
                                                                                           kinect_measurement_model,
@@ -218,13 +219,16 @@ public:
         filter_ = boost::shared_ptr<filter::CoordinateFilter>
                 (new filter::CoordinateFilter(observation_model, process_model, dependencies));
 
+
+        if(state_is_partial)
+        {
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
         cout << "creating intiial stuff" << endl;
-        vector<VectorXd> multi_body_samples(single_body_samples.size());
+        vector<VectorXd> multi_body_samples(initial_states.size());
         for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             multi_body_samples[state_index] = default_state;
 
@@ -235,7 +239,7 @@ public:
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             {
                 FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
-                full_initial_state[body_index] = single_body_samples[state_index];
+                full_initial_state[body_index] = initial_states[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
             filter_->set_states(multi_body_samples);
@@ -249,11 +253,13 @@ public:
         filter_->set_states(multi_body_samples);
         filter_->Evaluate(image);
         filter_->Resample(sample_count_);
-
-        filter_context_ =
-                boost::shared_ptr<filter::ParticleFilterContext<double, -1> >
-                (new filter::ParticleFilterContext<double, -1>(filter_) );
-
+        }
+        else
+        {
+            filter_->set_states(initial_states);
+            filter_->Evaluate(image);
+            filter_->Resample(sample_count_);
+        }
     }
 
     VectorXd Filter(const sensor_msgs::Image& ros_image)
@@ -309,7 +315,6 @@ private:
     ros::Publisher object_publisher_;
 
     boost::shared_ptr<filter::CoordinateFilter> filter_;
-    FilterContextPtr filter_context_;
 
     bool is_first_iteration_;
     double previous_image_time_;

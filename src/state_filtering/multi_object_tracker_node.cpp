@@ -175,26 +175,35 @@ public:
         string config_file;
         ri::ReadParameter("config_file", config_file, node_handle_);
 
-
         path_ = config_file;
         path_ = path_.parent_path();
         cout << path_ << endl;
 
-         time_t rawtime;
-         struct tm * timeinfo;
-         char buffer[80];
+        time_t rawtime;
+        struct tm * timeinfo;
+        char buffer[80];
 
-         time (&rawtime);
-         timeinfo = localtime(&rawtime);
+        time (&rawtime);
+        timeinfo = localtime(&rawtime);
 
-         strftime(buffer,80,"%d.%m.%Y_%I.%M.%S",timeinfo);
-         std::string current_time(buffer);
+        strftime(buffer,80,"%d.%m.%Y_%I.%M.%S",timeinfo);
+        std::string current_time(buffer);
 
-         path_ /= "tracking_data_" + current_time + ".txt";
+        path_ /= "tracking_data_" + current_time + ".txt";
     }
     ~TrackerInterface() {}
 
     void Filter(const sensor_msgs::Image& ros_image)
+    {
+        cout << "filtering" << endl;
+        double start_time; GET_TIME(start_time)
+        VectorXd mean_state = tracker_->Filter(ros_image);
+        double end_time; GET_TIME(end_time);
+        double delta_time = end_time - start_time;
+        cout << "delta time: " << delta_time << endl;
+    }
+
+    void FilterAndStore(const sensor_msgs::Image& ros_image)
     {
         double start_time; GET_TIME(start_time)
         VectorXd mean_state = tracker_->Filter(ros_image);
@@ -202,13 +211,12 @@ public:
         double delta_time = end_time - start_time;
         cout << "delta time: " << delta_time << endl;
 
-
         ofstream file;
         file.open(path_.c_str(), ios::out | ios::app);
         if(file.is_open())
         {
             file << ros_image.header.stamp << " ";
-            file << delta_time << " ";
+            //            file << delta_time << " ";
             file << mean_state.transpose() << endl;
             file.close();
         }
@@ -217,14 +225,9 @@ public:
             cout << "could not open file " << path_ << endl;
             exit(-1);
         }
-
-//        cout << config_file_ << endl;
-
-
-
-
-
     }
+
+
 
 
 private:
@@ -241,14 +244,16 @@ int main (int argc, char **argv)
     ros::NodeHandle node_handle("~");
 
     // read parameters
+    cout << "reading parameters" << endl;
     string depth_image_topic; ri::ReadParameter("depth_image_topic", depth_image_topic, node_handle);
     string camera_info_topic; ri::ReadParameter("camera_info_topic", camera_info_topic, node_handle);
-    string bagfile; ri::ReadParameter("bagfile", bagfile, node_handle);
+    string source; ri::ReadParameter("source", source, node_handle);
     int initial_sample_count; ri::ReadParameter("initial_sample_count", initial_sample_count, node_handle);
 
     // read from camera
-    if(bagfile.empty())
+    if(source == "camera")
     {
+        cout << "reading data from camera " << endl;
         Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
 
         // get observations from camera
@@ -266,12 +271,21 @@ int main (int argc, char **argv)
         TrackerInterface interface(tracker);
 
         ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+        ros::spin();
     }
     // read from bagfile
     else
     {
+        // somehow the bagfile reader does not like the slash in the beginning
+        if(depth_image_topic[0] == '/')
+            depth_image_topic.erase(depth_image_topic.begin());
+        cout << depth_image_topic << endl;
+        if(camera_info_topic[0] == '/')
+            camera_info_topic.erase(camera_info_topic.begin());
+
+        cout << "reading data from bagfile " << endl;
         BagReader reader;
-        reader.loadBag(bagfile, depth_image_topic, camera_info_topic);
+        reader.loadBag(source, depth_image_topic, camera_info_topic);
         cout << "data size: " << reader.data_.size() << endl;
 
         Matrix3d camera_matrix;
@@ -279,28 +293,59 @@ int main (int argc, char **argv)
             for(size_t row = 0; row < 3; row++)
                 camera_matrix(row,col) = reader.data_[0].camera_info_->K[col+row*3];
 
-        // TODO: intialization has to be changed because it is not fully reliable
-        Image image = ri::Ros2Eigen<double>(*reader.data_[0].image_) / 1000.; // convert to m
-        vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
-                                                                  initial_sample_count);
+        // read initial state from file
+        VectorXd initial_state;
+        initial_state.resize(0,1);
+        string config_file; ri::ReadParameter("config_file", config_file, node_handle);
+        boost::filesystem::path path;
+        path = config_file;
+        path = path.parent_path().parent_path();
+        path /= "ground_truth.txt";
+        ifstream file;
+        file.open(path.c_str(), ios::in);
+        if(file.is_open())
+        {
+            std::string temp;
+            std::getline(file, temp);
+            std::istringstream line(temp);
+            double scalar;
+            line >> scalar; // first one is timestamp, we throw it away
+            while(line >> scalar)
+            {
+                VectorXd temp(initial_state.rows() + 1);
+                temp.topRows(initial_state.rows()) = initial_state;
+                temp(temp.rows()-1) = scalar;
+                initial_state = temp;
+            }
+            file.close();
+
+            cout << "read initial state with size " << initial_state.rows() << endl;
+        }
+        else
+        {
+            cout << "could not open file " << path << endl;
+            exit(-1);
+        }
+
+        vector<VectorXd> initial_states;
+        initial_states.push_back(initial_state);
 
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
-        tracker->Initialize(initial_states, *reader.data_[0].image_, camera_matrix);
+        tracker->Initialize(initial_states, *reader.data_[0].image_, camera_matrix, false);
         cout << "done initializing" << endl;
         TrackerInterface interface(tracker);
-
 
         ros::Publisher publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
 
         for(size_t i = 0; i < reader.data_.size(); i++)
         {
-            interface.Filter(*reader.data_[i].image_);
+            interface.FilterAndStore(*reader.data_[i].image_);
             publisher.publish(*reader.data_[i].image_);
         }
     }
 
 
-    ros::spin();
+
     return 0;
 }
