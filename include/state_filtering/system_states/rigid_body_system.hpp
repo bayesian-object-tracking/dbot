@@ -40,8 +40,8 @@ class RigidBodySystem: public Eigen::Matrix<double, SIZE_STATE_, 1>
 {
 public:
     typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, SIZE_STATE_, 1>    State;
-    typedef Eigen::Matrix<Scalar, 3, 1>             Vector;
+    typedef Eigen::Matrix<Scalar, SIZE_STATE_, 1>       State;
+    typedef Eigen::Matrix<Scalar, 3, 1>                 Vector;
 
     // rotation types
     typedef Eigen::AngleAxis<Scalar>    AngleAxis;

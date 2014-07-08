@@ -44,14 +44,17 @@ struct FloatingBodySystemTypes
     enum
     {
         COUNT_PER_BODY = 12,
+        POSE_COUNT = 6,
         BLOCK_COUNT = 3,
         POSITION_INDEX = 0,
+        POSE_INDEX = 0,
         ORIENTATION_INDEX = 3,
         LINEAR_VELOCITY_INDEX = 6,
         ANGULAR_VELOCITY_INDEX = 9,
     };
 
     typedef RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
+    typedef Eigen::Matrix<typename Base::Scalar, size_bodies == -1 ? -1 : size_bodies * POSE_COUNT, 1> Poses;
 };
 
 
@@ -61,29 +64,33 @@ class FloatingBodySystem: public FloatingBodySystemTypes<size_bodies>::Base
 public:
     typedef FloatingBodySystemTypes<size_bodies> Types;
     typedef typename Types::Base Base;
+    enum
+    {
+        SIZE_BODIES = size_bodies,
+        SIZE_STATE = Base::SIZE_STATE,
+        COUNT_PER_BODY = Types::COUNT_PER_BODY,
+        POSE_COUNT = Types::POSE_COUNT,
+        BLOCK_COUNT = Types::BLOCK_COUNT,
+        POSITION_INDEX = Types::POSITION_INDEX,
+        POSE_INDEX = Types::POSE_INDEX,
+        ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
+        LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
+        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
+    };
 
     typedef typename Base::Scalar   Scalar;
     typedef typename Base::State    State;
     typedef typename Base::Vector   Vector;
+    typedef typename Eigen::Matrix<Scalar, POSE_COUNT, 1> Pose;
+    typedef typename Types::Poses Poses;
 
     typedef typename Base::AngleAxis            AngleAxis;
     typedef typename Base::Quaternion           Quaternion;
     typedef typename Base::RotationMatrix       RotationMatrix;
     typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
 
-    enum
-    {
-        SIZE_BODIES = size_bodies,
-        SIZE_STATE = Base::SIZE_STATE,
-        COUNT_PER_BODY = Types::COUNT_PER_BODY,
-        BLOCK_COUNT = Types::BLOCK_COUNT,
-        POSITION_INDEX = Types::POSITION_INDEX,
-        ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
-        LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
-    };
-
     typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
+    typedef Eigen::VectorBlock<State, POSE_COUNT>       PoseBlock;
     typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
 
     // give access to base member functions (otherwise it is shadowed)
@@ -114,50 +121,74 @@ public:
     virtual ~FloatingBodySystem() {}
 
     // read
-    virtual Vector position(const size_t& object_index = 0) const
+    virtual Vector position(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-    virtual Vector euler_vector(const size_t& object_index = 0) const
+    virtual Vector euler_vector(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-    virtual Vector linear_velocity(const size_t& object_index = 0) const
+    virtual Vector linear_velocity(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    virtual Vector angular_velocity(const size_t& object_index = 0) const
+    virtual Vector angular_velocity(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+    }
+    virtual Pose pose(const size_t& body_index = 0) const
+    {
+        return this->template middleRows<POSE_COUNT>(body_index * COUNT_PER_BODY + POSE_INDEX);
+    }
+    virtual Poses poses() const
+    {
+        Poses poses_(bodies_size()*POSE_COUNT);
+        for(size_t body_index = 0; body_index < bodies_size(); body_index++)
+        {
+             poses_.template middleRows<POSE_COUNT>(body_index * POSE_COUNT) = pose(body_index);
+        }
+        return poses_;
     }
 
     // write
-    Block position(const size_t& object_index = 0)
+    virtual void poses(const Poses& poses_)
     {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + POSITION_INDEX);
+        for(size_t body_index = 0; body_index < bodies_size(); body_index++)
+        {
+             pose(body_index) = poses_.template middleRows<POSE_COUNT>(body_index * POSE_COUNT);
+        }
     }
-    Block euler_vector(const size_t& object_index = 0)
+    Block position(const size_t& body_index = 0)
     {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+      return Block(this->derived(), body_index * COUNT_PER_BODY + POSITION_INDEX);
     }
-    Block linear_velocity(const size_t& object_index = 0)
+    Block euler_vector(const size_t& body_index = 0)
     {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+      return Block(this->derived(), body_index * COUNT_PER_BODY + ORIENTATION_INDEX);
     }
-    Block angular_velocity(const size_t& object_index = 0)
+    Block linear_velocity(const size_t& body_index = 0)
     {
-      return Block(this->derived(), object_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+      return Block(this->derived(), body_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
     }
-    BodyBlock operator [](const size_t& object_index)
+    Block angular_velocity(const size_t& body_index = 0)
     {
-      return BodyBlock(this->derived(), object_index * COUNT_PER_BODY);
+      return Block(this->derived(), body_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+    }
+    PoseBlock pose(const size_t& body_index = 0)
+    {
+      return PoseBlock(this->derived(), body_index * COUNT_PER_BODY + POSE_INDEX);
+    }
+    BodyBlock operator [](const size_t& body_index)
+    {
+      return BodyBlock(this->derived(), body_index * COUNT_PER_BODY);
     }
 
     // other representations
-    virtual void quaternion(const Quaternion& quaternion, const size_t& object_index = 0)
+    virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
     {
         AngleAxis angle_axis(quaternion);
-        euler_vector(object_index) = angle_axis.angle()*angle_axis.axis();
+        euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
     }
 
     virtual unsigned bodies_size() const

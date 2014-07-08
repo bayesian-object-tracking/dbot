@@ -55,6 +55,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 
+#include "state_filtering/system_states/rigid_body_system.hpp"
+
 
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
@@ -197,7 +199,7 @@ public:
     {
         cout << "filtering" << endl;
         double start_time; GET_TIME(start_time)
-        VectorXd mean_state = tracker_->Filter(ros_image);
+        FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
         double end_time; GET_TIME(end_time);
         double delta_time = end_time - start_time;
         cout << "delta time: " << delta_time << endl;
@@ -206,7 +208,7 @@ public:
     void FilterAndStore(const sensor_msgs::Image& ros_image)
     {
         double start_time; GET_TIME(start_time)
-        VectorXd mean_state = tracker_->Filter(ros_image);
+        FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
         double end_time; GET_TIME(end_time);
         double delta_time = end_time - start_time;
         cout << "delta time: " << delta_time << endl;
@@ -216,8 +218,7 @@ public:
         if(file.is_open())
         {
             file << ros_image.header.stamp << " ";
-            //            file << delta_time << " ";
-            file << mean_state.transpose() << endl;
+            file << mean_state.poses().transpose() << endl;
             file.close();
         }
         else
@@ -294,8 +295,8 @@ int main (int argc, char **argv)
                 camera_matrix(row,col) = reader.data_[0].camera_info_->K[col+row*3];
 
         // read initial state from file
-        VectorXd initial_state;
-        initial_state.resize(0,1);
+        VectorXd poses;
+        poses.resize(0,1);
         string config_file; ri::ReadParameter("config_file", config_file, node_handle);
         boost::filesystem::path path;
         path = config_file;
@@ -312,14 +313,14 @@ int main (int argc, char **argv)
             line >> scalar; // first one is timestamp, we throw it away
             while(line >> scalar)
             {
-                VectorXd temp(initial_state.rows() + 1);
-                temp.topRows(initial_state.rows()) = initial_state;
+                VectorXd temp(poses.rows() + 1);
+                temp.topRows(poses.rows()) = poses;
                 temp(temp.rows()-1) = scalar;
-                initial_state = temp;
+                poses = temp;
             }
             file.close();
 
-            cout << "read initial state with size " << initial_state.rows() << endl;
+            cout << "read initial state with size " << poses.rows() << endl;
         }
         else
         {
@@ -327,6 +328,8 @@ int main (int argc, char **argv)
             exit(-1);
         }
 
+        FloatingBodySystem<-1> initial_state(poses.rows()/6);
+        initial_state.poses(poses);
         vector<VectorXd> initial_states;
         initial_states.push_back(initial_state);
 
