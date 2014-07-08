@@ -81,10 +81,7 @@ public:
     {}
 };
 
-/**
- * Inherits from message_filters::SimpleFilter<M>
- * to use protected signalMessage function
- */
+
 template <class M>
 class BagSubscriber : public message_filters::SimpleFilter<M>
 {
@@ -147,6 +144,29 @@ public:
                 if (camera_info != NULL)
                     camera_info_subscriber.newMessage(camera_info);
             }
+        }
+        bag.close();
+    }
+
+    void writeBag(const std::string &filename, const std::string& image_topic, const std::string& camera_info_topic)
+    {
+        rosbag::Bag bag;
+        bag.open(filename, rosbag::bagmode::Write);
+
+        // Image topics to load
+        std::vector<std::string> topics;
+        topics.push_back(image_topic);
+        topics.push_back(camera_info_topic);
+
+        for(size_t i = 0; i < data_.size(); i++)
+        {
+//            sensor_msgs::Image bla;
+//            bla.header.
+
+//            ros::Time stamp = data_[i].image_->header.stamp();
+//            bla.header.stamp();
+            bag.write(image_topic, data_[i].image_->header.stamp, data_[i].image_);
+            bag.write(camera_info_topic, data_[i].camera_info_->header.stamp, data_[i].camera_info_);
         }
         bag.close();
     }
@@ -346,6 +366,9 @@ int main (int argc, char **argv)
             interface.FilterAndStore(*reader.data_[i].image_);
             publisher.publish(*reader.data_[i].image_);
         }
+
+//        reader.writeBag(source + "enchilada.bag", depth_image_topic, camera_info_topic);
+
     }
 
 
