@@ -33,17 +33,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/current_function.hpp>
 #include <time.h>
 
-#define PROFILING_ON
-
 #define GET_TIME(time) {struct timeval profiling_time; gettimeofday(&profiling_time, NULL);\
     time = (profiling_time.tv_sec * 1000000u + profiling_time.tv_usec) /1000000.;}
 #ifdef PROFILING_ON
+    #define PRINT(object) std::cout << object;
+
 	#define INIT_PROFILING struct timeval profiling_start_time, profiling_end_time; gettimeofday(&profiling_start_time, NULL);
 	#define RESET gettimeofday(&profiling_start_time, NULL);
 	#define MEASURE(text) 	gettimeofday(&profiling_end_time, NULL); std::cout << "time for " << text << " " \
 	<< ((profiling_end_time.tv_sec - profiling_start_time.tv_sec) * 1000000u + profiling_end_time.tv_usec - profiling_start_time.tv_usec) /1000000. \
     << " s" << std::endl; gettimeofday(&profiling_start_time, NULL);
 #else
+    #define PRINT(object)
 	#define INIT_PROFILING
 	#define RESET
 	#define MEASURE(text)

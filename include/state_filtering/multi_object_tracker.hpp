@@ -296,8 +296,8 @@ public:
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
-        cout << "sample count: " << sample_count_ << endl;
 
+        PRINT("sample count ") PRINT(sample_count_)
 
         return filter_->stateDistribution().empiricalMean();
     }

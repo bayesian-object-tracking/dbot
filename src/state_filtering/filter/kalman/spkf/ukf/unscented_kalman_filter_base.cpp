@@ -1,6 +1,4 @@
 
-#define PROFILING_ON
-
 #define ROS_ASSERT_ENABLED
 #include <ros/assert.h>
 

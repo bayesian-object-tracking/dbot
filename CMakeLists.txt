@@ -3,6 +3,7 @@ project(state_filtering)
 
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
+add_definitions( -DPROFILING_ON=1 ) #print profiling output
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters)
 
@@ -116,6 +117,7 @@ catkin_package(
 include_directories(include)
 
 set(state_filtering_headers
+
     # distribution
     include/${PROJECT_NAME}/distribution/distribution.hpp
 
@@ -199,6 +201,8 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/tools/pcl_interface.hpp
     include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
     include/${PROJECT_NAME}/tools/ros_interface.hpp
+    include/${PROJECT_NAME}/tools/tracking_dataset.hpp
+
 
     include/${PROJECT_NAME}/cpu_multi_object_tracker.hpp
 )
