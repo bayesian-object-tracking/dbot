@@ -32,6 +32,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -75,7 +81,7 @@ public:
 class TrackingDataset
 {
 public:
-    TrackingDataset(const string& path):path_(path),
+    TrackingDataset(const std::string& path):path_(path),
                                 image_topic_("XTION/depth/image"),
                                 info_topic_("XTION/depth/camera_info"),
                                 measurements_filename_("measurements.bag"),
@@ -109,7 +115,7 @@ public:
     }
     Eigen::Matrix3d getCameraMatrix(const size_t& index)
     {
-        Matrix3d camera_matrix;
+        Eigen::Matrix3d camera_matrix;
         for(size_t col = 0; col < 3; col++)
             for(size_t row = 0; row < 3; row++)
                 camera_matrix(row,col) = data_[0].info_->K[col+row*3];
@@ -167,15 +173,15 @@ public:
         bag.close();
 
         // load ground_truth.txt ---------------------------------------------------------------------
-        ifstream file; file.open((path_ / ground_truth_filename_).c_str(), ios::in); // open file
+        std::ifstream file; file.open((path_ / ground_truth_filename_).c_str(), std::ios::in); // open file
         if(file.is_open())
         {
             std::string temp; std::getline(file, temp); std::istringstream line(temp); // get a line from file
             double time_stamp; line >> time_stamp; // get the timestamp
-            double scalar; VectorXd state;
+            double scalar; Eigen::VectorXd state;
             while(line >> scalar) // get the state
             {
-                VectorXd temp(state.rows() + 1);
+                Eigen::VectorXd temp(state.rows() + 1);
                 temp.topRows(state.rows()) = state;
                 temp(temp.rows()-1) = scalar;
                 state = temp;
@@ -189,7 +195,7 @@ public:
         }
         else
         {
-            cout << "could not open file " << path_ / ground_truth_filename_ << endl;
+            std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
             exit(-1);
         }
     }
@@ -198,8 +204,8 @@ public:
     {
         if(boost::filesystem::exists(path_))
         {
-            std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << endl;
-            return;
+//            std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
+//            return;
         }
         else
             boost::filesystem::create_directory(path_);
@@ -220,7 +226,7 @@ public:
         bag.close();
 
         // write ground truth to txt file ----------------------------------------------------------
-        ofstream file; file.open((path_ / ground_truth_filename_).c_str(), ios::out | ios::trunc);
+        std::ofstream file; file.open((path_ / ground_truth_filename_).c_str(), std::ios::out | std::ios::trunc);
         if(file.is_open())
         {
             for(size_t i = 0; i < data_.size(); i++)
@@ -228,26 +234,26 @@ public:
                 if(data_[i].ground_truth_.rows() != 0)
                 {
                     file << data_[i].image_->header.stamp << " ";
-                    file << data_[i].ground_truth_.transpose() << endl;
+                    file << data_[i].ground_truth_.transpose() << std::endl;
                 }
             }
             file.close();
         }
         else
         {
-            cout << "could not open file " << path_ / ground_truth_filename_ << endl;
+            std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
             exit(-1);
         }
     }
 
 private:
-    vector<DataFrame> data_;
+    std::vector<DataFrame> data_;
 
     const boost::filesystem::path path_;
-    const string image_topic_;
-    const string info_topic_;
-    const string measurements_filename_;
-    const string ground_truth_filename_;
+    const std::string image_topic_;
+    const std::string info_topic_;
+    const std::string measurements_filename_;
+    const std::string ground_truth_filename_;
     const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
 };
 
