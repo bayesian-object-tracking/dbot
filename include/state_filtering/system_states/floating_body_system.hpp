@@ -88,6 +88,7 @@ public:
     typedef typename Base::Quaternion           Quaternion;
     typedef typename Base::RotationMatrix       RotationMatrix;
     typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
+    typedef typename Eigen::Transform<Scalar, 3, Eigen::Affine> Affine;
 
     typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
     typedef Eigen::VectorBlock<State, POSE_COUNT>       PoseBlock;
@@ -190,6 +191,12 @@ public:
         AngleAxis angle_axis(quaternion);
         euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
     }
+    virtual void pose(const Affine& affine, const size_t& body_index = 0)
+    {
+       quaternion(Quaternion(affine.rotation()), body_index);
+       position(body_index) = affine.translation();
+    }
+
 
     virtual unsigned bodies_size() const
     {

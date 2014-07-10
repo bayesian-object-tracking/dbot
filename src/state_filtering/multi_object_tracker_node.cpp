@@ -58,6 +58,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/tools/tracking_dataset.hpp>
 
+#include <pcl_ros/point_cloud.h>
+
+
 
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
@@ -161,7 +164,7 @@ int main (int argc, char **argv)
         // get observations from camera
         sensor_msgs::Image::ConstPtr ros_image =
                 ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
-        Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
+        Image image = ri::Ros2Eigen<double>(*ros_image);
 
         vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
                                                                   initial_sample_count);
@@ -190,13 +193,15 @@ int main (int argc, char **argv)
         tracker->Initialize(initial_states, *TrackingDataset.getImage(0), TrackingDataset.getCameraMatrix(0), false);
         TrackerInterface interface(tracker);
 
-        ros::Publisher publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
+        ros::Publisher image_publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
+        ros::Publisher cloud_publisher = node_handle.advertise<pcl::PointCloud<pcl::PointXYZ> > ("/bagfile/depth/points", 0);
 
         cout << "processing TrackingDataset of size: " << TrackingDataset.sIze() << endl;
         for(size_t i = 0; i < TrackingDataset.sIze(); i++)
         {
             interface.FilterAndStore(*TrackingDataset.getImage(i));
-            publisher.publish(*TrackingDataset.getImage(i));
+            image_publisher.publish(*TrackingDataset.getImage(i));
+            cloud_publisher.publish((*TrackingDataset.getPointCloud(i)).makeShared());
         }
         cout << endl << "done processing TrackingDataset" << endl;
     }

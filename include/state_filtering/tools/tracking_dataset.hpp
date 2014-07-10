@@ -42,6 +42,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+
+#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/tools/ros_interface.hpp>
+#include <state_filtering/tools/pcl_interface.hpp>
+
 
 
 
@@ -113,6 +120,19 @@ public:
     {
         return data_[index].info_;
     }
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr getPointCloud(const size_t& index)
+    {
+        Eigen::MatrixXd image = ri::Ros2Eigen<double>(*data_[index].image_);
+        Eigen::Matrix<Eigen::Matrix<double, 3, 1> , -1, -1> points = hf::Image2Points(image, getCameraMatrix(index));
+        pcl::PointCloud<pcl::PointXYZ>::Ptr
+                point_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
+
+        point_cloud->header = data_[index].image_->header;
+        pi::Eigen2Pcl(points, *point_cloud);
+
+        return point_cloud;
+    }
+
     Eigen::Matrix3d getCameraMatrix(const size_t& index)
     {
         Eigen::Matrix3d camera_matrix;

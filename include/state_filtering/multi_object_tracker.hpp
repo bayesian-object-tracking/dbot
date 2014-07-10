@@ -109,7 +109,7 @@ public:
 
         // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to meters
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to meters
 
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -275,7 +275,7 @@ public:
         duration_ += ros_image.header.stamp.toSec() - previous_image_time_;
 
         // convert image
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
 
         // filter
         INIT_PROFILING;

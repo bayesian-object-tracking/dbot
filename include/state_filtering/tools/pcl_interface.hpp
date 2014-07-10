@@ -67,6 +67,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace pi
 {
+
+
+
 template<typename PointT, typename MatrixT>
 void Pcl2Eigen(
 		const pcl::PointCloud<PointT> &point_cloud,
@@ -118,6 +121,29 @@ std::vector<Eigen::Matrix<MatrixT, 3, 1> > Pcl2Eigen(const pcl::PointCloud<Point
 }
 
 
+
+
+
+template<typename PointT, typename MatrixT>
+void Eigen2Pcl( const Eigen::Matrix<Eigen::Matrix<MatrixT, 3, 1>, -1, -1>& eigen,
+                pcl::PointCloud<PointT>& pcl)
+{
+    pcl.width    = eigen.cols();
+    pcl.height   = eigen.rows();
+    pcl.is_dense = (eigen.cols() == 1);
+    pcl.points.resize (pcl.width * pcl.height);
+
+    for (size_t i = 0; i < pcl.points.size(); ++i)
+    {
+        pcl.points[i].x = eigen(i)(0);
+        pcl.points[i].y = eigen(i)(1);
+        pcl.points[i].z = eigen(i)(2);
+    }
+}
+
+
+
+
 template<typename PointT, typename MatrixT>
 void Eigen2Pcl(
 		const std::vector<Eigen::Matrix<MatrixT, 3, 1> > &vector,
@@ -136,6 +162,10 @@ void Eigen2Pcl(
 		point_cloud.points[i].z = vector[i](2);
 	}
 }
+
+
+
+
 template<typename PointT, typename MatrixT>
 pcl::PointCloud<PointT> Eigen2Pcl(
 		const std::vector<Eigen::Matrix<MatrixT, 3, 1> > &vector,
