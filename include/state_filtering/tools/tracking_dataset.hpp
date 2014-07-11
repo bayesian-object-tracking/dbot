@@ -223,10 +223,11 @@ public:
 
     void stOre()
     {
-        if(boost::filesystem::exists(path_))
+        if(boost::filesystem::exists(path_ / measurements_filename_) ||
+           boost::filesystem::exists(path_ / ground_truth_filename_) )
         {
-//            std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
-//            return;
+            std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
+            return;
         }
         else
             boost::filesystem::create_directory(path_);
