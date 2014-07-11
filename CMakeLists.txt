@@ -105,6 +105,7 @@ catkin_package(
     urdf
     orocos_kdl
     kdl_parser
+    message_filters
   DEPENDS 
     OpenCV 
     eigen 
