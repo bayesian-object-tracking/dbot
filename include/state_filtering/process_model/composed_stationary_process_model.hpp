@@ -76,11 +76,12 @@ public: /* distribution traits */
     typedef typename Base::Scalar       Scalar;
     typedef typename Base::Variable     Variable;
     typedef typename Base::Sample      Sample;
-//    typedef typename Base::Covariance   Covariance;
     typedef typename Base::Control Control;
 
     typedef boost::shared_ptr<Base> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
+
+    using Base::conditional;
 
     ComposedStationaryProcessModel(ProcessModelList process_models):
         process_models_(process_models)

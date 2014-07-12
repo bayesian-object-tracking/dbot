@@ -106,16 +106,18 @@ public:
     typedef IntegratedDampedBrownianMotion<Scalar, 3> AccelerationDistribution;
     typedef DampedBrownianMotion<Scalar, 3> VelocityDistribution;
 
+    using Base::conditional;
+
 public:
     ~BrownianProcessModel() { }
 
     virtual Variable mapNormal(const Sample& randoms) const
     {
         State state;
-
         state.position() = state_.position() + delta_position_.mapNormal(randoms.topRows(3));
-        state.quaternion(Quaternion(state_.quaternion().coeffs()
-                                        + quaternion_map_ * delta_orientation_.mapNormal(randoms.template bottomRows(3))));
+        Quaternion updated_quaternion(state_.quaternion().coeffs()
+                                    + quaternion_map_ * delta_orientation_.mapNormal(randoms.template bottomRows(3)));
+        state.quaternion(updated_quaternion.normalized());
         state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
         state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
 

@@ -188,7 +188,7 @@ public:
     // other representations
     virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
     {
-        AngleAxis angle_axis(quaternion);
+        AngleAxis angle_axis(quaternion.normalized());
         euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
     }
     virtual void pose(const Affine& affine, const size_t& body_index = 0)
