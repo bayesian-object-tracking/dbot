@@ -37,119 +37,137 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 
-/// TODO: all of this is just a copy of he floating body stuff. in here the robot state have to be implemented
-
-template<int size_bodies>
+template<int size_joints>
 struct RobotStateTypes
 {
-    enum
+  enum
     {
-        COUNT_PER_BODY = 12,
-        BLOCK_COUNT = 3,
-        POSITION_INDEX = 0,
-        ORIENTATION_INDEX = 3,
-        LINEAR_VELOCITY_INDEX = 6,
-        ANGULAR_VELOCITY_INDEX = 9,
+      // For the joints
+      COUNT_PER_JOINT = 2,
+      JOINT_ANGLE_INDEX = 0,
+      JOINT_VELOCITY_INDEX = 0,
+      // TODO: Check if obsolete
+      // for the links
+      COUNT_PER_BODY = 12,
+      BLOCK_COUNT = 3,
+      POSITION_INDEX = 0,
+      ORIENTATION_INDEX = 3,
+      LINEAR_VELOCITY_INDEX = 6,
+      ANGULAR_VELOCITY_INDEX = 9,
     };
 
-    typedef RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
+  typedef RigidBodySystem<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
 };
 
 
-template<int size_bodies = -1>
-class RobotState: public RobotStateTypes<size_bodies>::Base
+template<int size_joints = -1, int size_bodies = -1>
+class RobotState: public RobotStateTypes<size_joints>::Base
 {
 public:
-    typedef RobotStateTypes<size_bodies> Types;
-    typedef typename Types::Base Base;
+  typedef RobotStateTypes<size_joints> Types;
+  typedef typename Types::Base Base;
 
-    typedef typename Base::Scalar   Scalar;
-    typedef typename Base::State    State;
-    typedef typename Base::Vector   Vector;
+  typedef typename Base::Scalar   Scalar;
+  typedef typename Base::State    State;
+  typedef typename Base::Vector   Vector;
 
-    typedef typename Base::AngleAxis            AngleAxis;
-    typedef typename Base::Quaternion           Quaternion;
-    typedef typename Base::RotationMatrix       RotationMatrix;
-    typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
+  typedef typename Base::AngleAxis            AngleAxis;
+  typedef typename Base::Quaternion           Quaternion;
+  typedef typename Base::RotationMatrix       RotationMatrix;
+  typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
 
-    enum
+  enum
     {
-        SIZE_BODIES = size_bodies,
-        SIZE_STATE = Base::SIZE_STATE,
-        COUNT_PER_BODY = Types::COUNT_PER_BODY,
-        BLOCK_COUNT = Types::BLOCK_COUNT,
-        POSITION_INDEX = Types::POSITION_INDEX,
-        ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
-        LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
+      // for the joints
+      SIZE_JOINTS = size_joints,
+      COUNT_PER_JOINT = Types::COUNT_PER_JOINT,
+      JOINT_ANGLE_INDEX = Types::JOINT_ANGLE_INDEX,
+      JOINT_VELOCITY_INDEX = Types::JOINT_VELOCITY_INDEX,
+      // For the links
+      SIZE_BODIES = size_bodies,
+      SIZE_STATE = Base::SIZE_STATE,
+      COUNT_PER_BODY = Types::COUNT_PER_BODY,
+      BLOCK_COUNT = Types::BLOCK_COUNT,
+      POSITION_INDEX = Types::POSITION_INDEX,
+      ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
+      LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
+      ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
     };
 
-    typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
-    typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
+  // give access to base member functions (otherwise it is shadowed)
+  using Base::quaternion;
+  using Base::state_size;
 
-    // give access to base member functions (otherwise it is shadowed)
-    using Base::quaternion;
-    using Base::state_size;
+  // constructor for fixed size without initial value
+  RobotState():
+    Base(State::Zero(SIZE_STATE)),
+    count_bodies_(SIZE_BODIES),
+    count_joints_(SIZE_JOINTS)
+  {
+    assert_fixed_size<true>();
+  }
 
-    // constructor for fixed size without initial value
-    RobotState():
-        Base(State::Zero(SIZE_STATE)),
-        count_bodies_(SIZE_BODIES)
-    {
-        assert_fixed_size<true>();
-    }
+  // constructor for dynamic size without initial value
+  RobotState(unsigned count_bodies, unsigned count_joints):
+  Base(State::Zero(count_joints * COUNT_PER_JOINT)),
+  count_bodies_(count_bodies),
+  count_joints_(count_joints)
+  {
+    assert_dynamic_size<true>();
+  }
 
-    // constructor for dynamic size without initial value
-    RobotState(unsigned count_bodies):
-        Base(State::Zero(count_bodies * COUNT_PER_BODY)),
-        count_bodies_(count_bodies)
-    {
-        assert_dynamic_size<true>();
-    }
-
-    // constructor with initial value
-    template <typename T> RobotState(const Eigen::MatrixBase<T>& state_vector):
-        Base(state_vector),
-        count_bodies_(state_vector.rows()/COUNT_PER_BODY){ }
-
-    virtual ~RobotState() {}
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// these are the two main functions which have to implement the robot state.
-    /// here it simply accesses the eigen vector, from which the class is derived and returns the correct
-    /// part of the vector, since it directly encodes the pose of the object. for the robot arm this will
-    /// be a bit more complicated, since the eigen vector will contain the joint angles, and we will have
-    /// to compute the pose of the link from the joint angles.
-    // this returns the position (translation) part of the pose of the link.
-    virtual Vector position(const size_t& object_index = 0) const
-    {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
-    }
-    // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
-    // angle, and the direction is the rotation axis. below there is a function that converts from Quaternion2EulerVector
-    // which implements the transformation
-    virtual Vector euler_vector(const size_t& object_index = 0) const
-    {
-        return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    virtual Vector Quaternion2EulerVector(const Quaternion& quaternion)
-    {
-        AngleAxis angle_axis(quaternion);
-        return angle_axis.angle()*angle_axis.axis();
-    }
+  // constructor with initial value
+  template <typename T> RobotState(const Eigen::MatrixBase<T>& state_vector):
+    Base(state_vector),
+    //count_bodies_(state_vector.rows()/COUNT_PER_JOINT)
+    count_joints_(state_vector.rows()/COUNT_PER_JOINT)
+  { }
 
 
-    virtual unsigned bodies_size() const
-    {
-        return count_bodies_;
-    }
+  virtual ~RobotState() {}
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// these are the two main functions which have to implement the robot state.
+  /// here it simply accesses the eigen vector, from which the class is derived and returns the correct
+  /// part of the vector, since it directly encodes the pose of the object. for the robot arm this will
+  /// be a bit more complicated, since the eigen vector will contain the joint angles, and we will have
+  /// to compute the pose of the link from the joint angles.
+  // this returns the position (translation) part of the pose of the link.
+  virtual Vector position(const size_t& object_index = 0) const
+  {
+    return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
+  }
+  // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
+  // angle, and the direction is the rotation axis. below there is a function that converts from Quaternion2EulerVector
+  // which implements the transformation
+  virtual Vector euler_vector(const size_t& object_index = 0) const
+  {
+    return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  virtual Vector Quaternion2EulerVector(const Quaternion& quaternion)
+  {
+    AngleAxis angle_axis(quaternion);
+    return angle_axis.angle()*angle_axis.axis();
+  }
+
+
+  virtual unsigned bodies_size() const
+  {
+    return count_bodies_;
+  }
+
+  virtual unsigned joints_size() const
+  {
+    return count_joints_;
+  }
 private:
-    unsigned count_bodies_;
+  unsigned count_bodies_;
+  unsigned count_joints_;
 
-    template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_bodies > -1);}
-    template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_bodies == -1);}
+  template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_joints > -1);}
+  template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_joints == -1);}
 };
 
 
