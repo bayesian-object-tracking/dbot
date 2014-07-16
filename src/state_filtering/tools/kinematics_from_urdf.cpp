@@ -196,6 +196,62 @@ Eigen::Quaternion<double> KinematicsFromURDF::GetLinkOrientation( int idx)
   return quat;
 }
 
+std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialSamples(const sensor_msgs::JointState &state,
+								   int initial_sample_count,
+								   float ratio_std)
+{
+  std::vector<Eigen::VectorXd>samples;
+  samples.reserve(initial_sample_count);
+  for(int i=0; i<initial_sample_count; ++i)
+    {
+      Eigen::VectorXd sample(state.position.size());
+      // loop over all joint and fill in KDL array
+      for(std::vector<double>::const_iterator jnt = state.position.begin(); 
+	  jnt !=state.position.end(); ++jnt)
+	{
+	  int tmp_index = GetJointIndex(state.name[jnt-state.position.begin()]);
+	  if (tmp_index >=0)
+	    {
+	      double new_jnt;
+	      std::string name = state.name[jnt-state.position.begin()];
+	      new_jnt = GetRandomPertubation( tmp_index, *jnt, ratio_std);
+	      sample(tmp_index) = new_jnt;
+	    } else 
+	    ROS_ERROR("i: %d, No joint index for %s", 
+		      (int)(jnt-state.position.begin()), 
+		      state.name[jnt-state.position.begin()].c_str());
+	}
+      samples[i]=sample;
+    }
+}
+
+double KinematicsFromURDF::GetRandomPertubation(int jnt_index, double jnt_angle, double ratio)
+{
+  double mean = jnt_angle;
+  double range = upper_limit_[jnt_index]-lower_limit_[jnt_index];
+  double std  = ratio * range;
+  std::normal_distribution<double> normal(mean, std);
+  double val = normal(generator_);
+
+  // clip the values to the limits
+  if(val>upper_limit_[jnt_index])
+    val = upper_limit_[jnt_index];
+  
+  if(val<lower_limit_[jnt_index])
+    val = lower_limit_[jnt_index];
+    
+  return val;
+  
+}
+
+int KinematicsFromURDF::GetJointIndex(const std::string &name)
+{
+    for (unsigned int i=0; i < joint_map_.size(); ++i)
+      if (joint_map_[i] == name)
+	return i;
+    return -1;
+  }
+
 int KinematicsFromURDF::num_joints()
 {
   return kin_tree_.getNrOfJoints();

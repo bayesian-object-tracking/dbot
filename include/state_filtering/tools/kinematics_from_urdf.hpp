@@ -37,6 +37,7 @@
 #define KINEMATICS_FROM_URDF_HPP_
 
 #include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -45,6 +46,7 @@
 #include <list>
 #include <vector>
 #include <list>
+#include <random>
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
@@ -62,21 +64,38 @@ public:
   
   // outputs a list of mesh model objects
   void GetPartMeshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
+
   // Initialises the KDL data and specifically the camera pose
   void InitKDLData(const Eigen::VectorXd& joint_state);
+
   // Get the position of the robot link with index idx
   Eigen::VectorXd GetLinkPosition( int idx);
+
   // Get the orientation of the robot link with index idx
   Eigen::Quaternion<double> GetLinkOrientation( int idx);
+  
+  // Get initial samples around input joint state
+  std::vector<Eigen::VectorXd> GetInitialSamples(const sensor_msgs::JointState &state,
+						 int initial_sample_count,
+						 float ratio_std = 0.1);
+  
   // Get the number of joints
   int num_joints();
 
 private:
+  
   // compute the camera frame for the current joint angles
   void SetCameraTransform();
+  
   // compute the transformations for all the links in one go
   void ComputeLinkTransforms();
     
+  // get the joint index in state array 
+  int GetJointIndex(const std::string &name);
+  
+  // get a random pertubation of a joint within its limits
+  double GetRandomPertubation(int jnt_index, double jnt_angle, double ratio);
+
   ros::NodeHandle nh_;
   ros::NodeHandle nh_priv_;
   std::string tf_correction_root_;
@@ -110,6 +129,9 @@ private:
   // Contains Camera pose relative to base
   KDL::Frame    cam_frame_;
   
+  // random generator for joint angle sampling
+  std::mt19937 generator_;
+
 };
 
 #endif

@@ -82,25 +82,18 @@ public:
     // get observations from camera
     sensor_msgs::Image::ConstPtr ros_image =
     ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
-    
+    */
     // get the latest corresponding joint angles
+    sensor_msgs::JointState joint_state_copy;
     {
-    boost::mutex::scoped_lock lock(joint_state_mutex_);
-    std::cout << joint_state_ << std::endl;
+      boost::mutex::scoped_lock lock(joint_state_mutex_);
+      joint_state_copy = joint_state_;
     }
-    
+    /*
     Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
     */
-
-    vector<VectorXd> initial_states;
-    /// ====================================================================================================
-    /// TODO: this has to be adapted, we have to provide some samples around the initial robot joint angles
-    /*vector<VectorXd> initial_states = pi::SampleTableClusters(hf::Image2Points(image, camera_matrix),
-      initial_sample_count);
-    */
-    /// ====================================================================================================
     
-
+    vector<VectorXd> initial_states = urdf_kinematics->GetInitialSamples(joint_state_copy, initial_sample_count_);
 
     // intialize the filter
     RobotTracker robot_tracker;
