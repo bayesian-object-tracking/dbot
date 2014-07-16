@@ -138,11 +138,11 @@ public:
         // initialize observation model =================================================================================================
 
 	// Read the URDF for the specific robot
-	KinematicsFromURDF urdf_kinematics;
+	boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
-	urdf_kinematics.Get_part_meshes(part_meshes_);
+	urdf_kinematics->Get_part_meshes(part_meshes_);
 	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
-	ROS_INFO("Number of joints %d", urdf_kinematics.Get_number_joints());
+	ROS_INFO("Number of joints %d", urdf_kinematics->Get_number_joints());
 	
 	
         /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +162,8 @@ public:
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
         boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(), 
-									   urdf_kinematics.Get_number_joints()));
+									   urdf_kinematics->Get_number_joints(),
+									   urdf_kinematics));
 
         boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,
 												    part_triangle_indices,

@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
 #include <state_filtering/tools/macros.hpp>
+#include <state_filtering/tools/kinematics_from_urdf.hpp>
 
 #include <Eigen/Dense>
 #include <boost/static_assert.hpp>
@@ -108,18 +109,21 @@ public:
   }
 
   // constructor for dynamic size without initial value
-  RobotState(unsigned count_bodies, unsigned count_joints):
-  Base(State::Zero(count_joints * COUNT_PER_JOINT)),
-  count_bodies_(count_bodies),
-  count_joints_(count_joints)
+  RobotState(unsigned count_bodies, 
+	     unsigned count_joints,
+	     const boost::shared_ptr<KinematicsFromURDF> &kinematics_ptr):
+    Base(State::Zero(count_joints * COUNT_PER_JOINT)),
+    count_bodies_(count_bodies),
+    count_joints_(count_joints),
+    kinematics_(kinematics_ptr)
   {
+    
     assert_dynamic_size<true>();
   }
 
   // constructor with initial value
   template <typename T> RobotState(const Eigen::MatrixBase<T>& state_vector):
     Base(state_vector),
-    //count_bodies_(state_vector.rows()/COUNT_PER_JOINT)
     count_joints_(state_vector.rows()/COUNT_PER_JOINT)
   { }
 
@@ -165,6 +169,9 @@ public:
 private:
   unsigned count_bodies_;
   unsigned count_joints_;
+
+  // pointer to the robot kinematic
+  const boost::shared_ptr<KinematicsFromURDF>  kinematics_;
 
   template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_joints > -1);}
   template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_joints == -1);}

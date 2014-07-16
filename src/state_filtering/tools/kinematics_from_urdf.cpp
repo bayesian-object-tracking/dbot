@@ -92,7 +92,7 @@ KinematicsFromURDF::KinematicsFromURDF()
   kin_tree_.getChain(cam_frame, base_frame, cam_2_base_);
   chain_solver_ = new KDL::ChainFkSolverPos_recursive(cam_2_base_);
   
-  // initialise solver
+  // initialise kinematic tree solver
   tree_solver_ = new KDL::TreeFkSolverPos_recursive(kin_tree_);
 }
 
@@ -112,9 +112,7 @@ void KinematicsFromURDF::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshM
 	  tmp_link = tmp_link->getParent();
 	}
       
-      boost::shared_ptr<PartMeshModel> part_ptr(new PartMeshModel(links[i],
-								  description_path_,
-								  i));
+      boost::shared_ptr<PartMeshModel> part_ptr(new PartMeshModel(links[i], description_path_, i));
       if(part_ptr->proper_)
 	{
 	  // if the link has an actual mesh file to read
