@@ -140,9 +140,9 @@ public:
 	// Read the URDF for the specific robot
 	boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
-	urdf_kinematics->Get_part_meshes(part_meshes_);
+	urdf_kinematics->GetPartMeshes(part_meshes_);
 	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
-	ROS_INFO("Number of joints %d", urdf_kinematics->Get_number_joints());
+	ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 	
 	
         /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

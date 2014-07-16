@@ -57,13 +57,10 @@ class KinematicsFromURDF
 public:
   KinematicsFromURDF();
   ~KinematicsFromURDF(){}
-
-  void Get_tree(boost::shared_ptr<KDL::Tree>);
-  void Get_cam_chain(boost::shared_ptr<KDL::Chain>);
-
-  void Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
-
-  int Get_number_joints();
+  
+  void GetPartMeshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
+  void ComputeTransforms(const Eigen::VectorXd& joint_state);
+  int num_joints();
 
 private:
   ros::NodeHandle nh_;

@@ -96,7 +96,7 @@ KinematicsFromURDF::KinematicsFromURDF()
   tree_solver_ = new KDL::TreeFkSolverPos_recursive(kin_tree_);
 }
 
-void KinematicsFromURDF::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
+void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
 {
   //Load robot mesh for each link
   std::vector<boost::shared_ptr<urdf::Link> > links;
@@ -122,7 +122,14 @@ void KinematicsFromURDF::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshM
     }
 }
 
-int KinematicsFromURDF::Get_number_joints()
+void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
+{
+  KDL::JntArray jnt_array(kin_tree_.getNrOfJoints());
+  KDL::Frame frame;
+  
+}
+
+int KinematicsFromURDF::num_joints()
 {
   return kin_tree_.getNrOfJoints();
 }

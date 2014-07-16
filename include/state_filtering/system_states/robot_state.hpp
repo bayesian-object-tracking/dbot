@@ -102,19 +102,19 @@ public:
   // constructor for fixed size without initial value
   RobotState():
     Base(State::Zero(SIZE_STATE)),
-    count_bodies_(SIZE_BODIES),
-    count_joints_(SIZE_JOINTS)
+    num_bodies_(SIZE_BODIES),
+    num_joints_(SIZE_JOINTS)
   {
     assert_fixed_size<true>();
   }
 
   // constructor for dynamic size without initial value
-  RobotState(unsigned count_bodies, 
-	     unsigned count_joints,
+  RobotState(unsigned num_bodies, 
+	     unsigned num_joints,
 	     const boost::shared_ptr<KinematicsFromURDF> &kinematics_ptr):
-    Base(State::Zero(count_joints * COUNT_PER_JOINT)),
-    count_bodies_(count_bodies),
-    count_joints_(count_joints),
+    Base(State::Zero(num_joints * COUNT_PER_JOINT)),
+    num_bodies_(num_bodies),
+    num_joints_(num_joints),
     kinematics_(kinematics_ptr)
   {
     
@@ -124,7 +124,7 @@ public:
   // constructor with initial value
   template <typename T> RobotState(const Eigen::MatrixBase<T>& state_vector):
     Base(state_vector),
-    count_joints_(state_vector.rows()/COUNT_PER_JOINT)
+    num_joints_(state_vector.rows()/COUNT_PER_JOINT)
   { }
 
 
@@ -159,16 +159,16 @@ public:
 
   virtual unsigned bodies_size() const
   {
-    return count_bodies_;
+    return num_bodies_;
   }
 
   virtual unsigned joints_size() const
   {
-    return count_joints_;
+    return num_joints_;
   }
 private:
-  unsigned count_bodies_;
-  unsigned count_joints_;
+  unsigned num_bodies_;
+  unsigned num_joints_;
 
   // pointer to the robot kinematic
   const boost::shared_ptr<KinematicsFromURDF>  kinematics_;
