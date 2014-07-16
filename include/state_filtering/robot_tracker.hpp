@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // tools
 #include <state_filtering/tools/object_file_reader.hpp>
-#include <state_filtering/tools/urdf_reader.hpp>
+#include <state_filtering/tools/kinematics_from_urdf.hpp>
 #include <state_filtering/tools/part_mesh_model.hpp>
 #include <state_filtering/tools/helper_functions.hpp>
 #include <state_filtering/tools/pcl_interface.hpp>
@@ -109,13 +109,13 @@ public:
     {
         boost::mutex::scoped_lock lock(mutex_);
 
-        // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // convert camera matrix and image to desired format ----------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
 	// TODO: Fix with non-fake arm_rgbd node
 	Image image;
         //Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to meters
 
-        // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
 
         vector<vector<size_t> > dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
@@ -135,18 +135,17 @@ public:
         double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
         double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
 
-        // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-
-
+        // initialize observation model =================================================================================================
 
 	// Read the URDF for the specific robot
-	URDFReader urdf_reader;
+	KinematicsFromURDF urdf_kinematics;
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
-	urdf_reader.Get_part_meshes(part_meshes_);
-	ROS_INFO("Number of parts %d", (int)part_meshes_.size());
+	urdf_kinematics.Get_part_meshes(part_meshes_);
+	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
+	ROS_INFO("Number of joints %d", urdf_kinematics.Get_number_joints());
 	
 	
-        /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: the process of loading the object meshes has to be changed to load all the parts of the robot.
         /// the output here has to be a list of a list of vertices (the first index is the object index, and the second the vertex index)
         /// and a list of a list of indices, which specify the triangles
@@ -157,22 +156,22 @@ public:
             part_vertices[i] = *(part_meshes_[i]->get_vertices());
             part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
 	  } 
-        /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size()));
+        boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(), 
+									   urdf_kinematics.Get_number_joints()));
 
-        boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(
-                                                                          part_vertices,
-                                                                          part_triangle_indices,
-                                                                          robot_state));
+        boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,
+												    part_triangle_indices,
+												    robot_state));
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)
         {
-            // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            // cpu obseration model -----------------------------------------------------------------------------------------------------
             boost::shared_ptr<obs_mod::KinectMeasurementModel>
                     kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcessModel>
@@ -191,7 +190,7 @@ public:
         else
         {
 	  /*
-            // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            // gpu obseration model -----------------------------------------------------------------------------------------------------
             boost::shared_ptr<obs_mod::GPUImageObservationModel> gpu_observation_model(new obs_mod::GPUImageObservationModel(
                                                                                            camera_matrix,
                                                                                            image.rows(),
@@ -215,9 +214,9 @@ public:
 	  */
         }
 
-        // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
+        // initialize process model =====================================================================================================
         boost::shared_ptr<StationaryProcess<> > process_model;
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: here the robot process model has to be used. this should be easy, we should use the damped brownian motion
         MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
         MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
@@ -233,31 +232,31 @@ public:
             partial_process_models[i] = partial_process_model;
         }
         process_model = boost::shared_ptr<ComposedStationaryProcessModel>(new ComposedStationaryProcessModel(partial_process_models));
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// hopefully, by just commenting the above and uncommenting the stuff below we should have a process model for the robot joints
 //        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(robot_state->state_size()));
 //        MatrixXd joint_covariance = MatrixXd::Identity(joint_process_model->variable_size(), joint_process_model->variable_size())
 //                                    * pow(joint_angle_sigma, 2);
 //        joint_process_model->parameters(0., joint_covariance);
 //        process_model = joint_process_model;
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 
 
 
-        // initialize coordinate_filter ============================================================================================================================================================================================================================================================
+        // initialize coordinate_filter =================================================================================================
         filter_ = boost::shared_ptr<filter::CoordinateFilter>
                 (new filter::CoordinateFilter(observation_model, process_model, dependencies));
 
 
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: this part we should be able to get rid off, since we should already have decent initial joint angles.
         /// the important part is to pass here some decent initial states to the filter by using filter_->set_states(initial_states)
         /// all the rest should go away.
-        // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // create the multi body initial samples ----------------------------------------------------------------------------------------
         FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
@@ -282,9 +281,9 @@ public:
             filter_->Resample(multi_body_samples.size());
             filter_->get(multi_body_samples);
         }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->set_states(multi_body_samples);
         filter_->Evaluate(image);
@@ -317,7 +316,7 @@ public:
         previous_time_ = ros_image.header.stamp.toSec();
 
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
         RobotState<> mean = filter_->stateDistribution().empiricalMean();
@@ -328,7 +327,7 @@ public:
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
 

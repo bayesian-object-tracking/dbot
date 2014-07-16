@@ -45,7 +45,7 @@ struct RobotStateTypes
       // For the joints
       COUNT_PER_JOINT = 2,
       JOINT_ANGLE_INDEX = 0,
-      JOINT_VELOCITY_INDEX = 0,
+      JOINT_VELOCITY_INDEX = 1,
       // TODO: Check if obsolete
       // for the links
       COUNT_PER_BODY = 12,

@@ -197,7 +197,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/tools/log_erfc.hpp
     include/${PROJECT_NAME}/tools/macros.hpp
     include/${PROJECT_NAME}/tools/object_file_reader.hpp
-    include/${PROJECT_NAME}/tools/urdf_reader.hpp
+    include/${PROJECT_NAME}/tools/kinematics_from_urdf.hpp
     include/${PROJECT_NAME}/tools/part_mesh_model.hpp
     include/${PROJECT_NAME}/tools/pcl_interface.hpp
     include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
@@ -228,7 +228,7 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/tools/image_visualizer.cpp
     src/${PROJECT_NAME}/tools/cloud_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp
-    src/${PROJECT_NAME}/tools/urdf_reader.cpp
+    src/${PROJECT_NAME}/tools/kinematics_from_urdf.cpp
     src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
 )
 

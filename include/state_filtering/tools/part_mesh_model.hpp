@@ -56,10 +56,11 @@ public:
   PartMeshModel(const boost::shared_ptr<urdf::Link> p_link,
 		const std::string &p_description_path,
 		unsigned p_index)
-  : link_(p_link)
-  , name_(p_link->name)
-  , vertices_(new std::vector<Vector3d>)
-  , indices_(new std::vector<std::vector<int> >)
+    : proper_(false) 
+    , link_(p_link)
+    , name_(p_link->name)
+    , vertices_(new std::vector<Vector3d>)
+    , indices_(new std::vector<std::vector<int> >)
   {
     
     if ((link_->visual.get() != NULL) &&
@@ -68,6 +69,7 @@ public:
       { 
         boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh> (link_->visual->geometry);
         std::string filename (mesh->filename);
+	filename_ = filename;
 
         if (filename.substr(filename.size() - 4 , 4) == ".stl" || 
 	    filename.substr(filename.size() - 4 , 4) == ".dae")
@@ -76,21 +78,22 @@ public:
 	      filename.replace(filename.size() - 4 , 4, ".stl");
 	    filename.erase(0,25);
 	    filename = p_description_path + filename;
-	    
+	    	    
 	    scene_ =  aiImportFile(filename.c_str(),
 				   aiProcessPreset_TargetRealtime_Quality);
 	    numFaces_ = scene_->mMeshes[0]->mNumFaces;
 
 	    /*
-	    tf::Vector3 origin(link_->visual->origin.position.x, 
-			       link_->visual->origin.position.y, 
-			       link_->visual->origin.position.z);
-	    tf::Quaternion orientation(link_->visual->origin.rotation.x, 
-				       link_->visual->origin.rotation.y, 
-				       link_->visual->origin.rotation.z, 
-				       link_->visual->origin.rotation.w);
-	    original_transform_ = tf::Transform(orientation,origin);
+	      tf::Vector3 origin(link_->visual->origin.position.x, 
+	      link_->visual->origin.position.y, 
+	      link_->visual->origin.position.z);
+	      tf::Quaternion orientation(link_->visual->origin.rotation.x, 
+	      link_->visual->origin.rotation.y, 
+	      link_->visual->origin.rotation.z, 
+	      link_->visual->origin.rotation.w);
+	      original_transform_ = tf::Transform(orientation,origin);
 	    */
+	    proper_=true;
 	  }
       }
   }
@@ -136,6 +139,8 @@ public:
     return indices_;
   }
 
+  bool proper_;
+
 private:
   const boost::shared_ptr<urdf::Link> link_;
   const struct aiScene* scene_;
@@ -147,6 +152,8 @@ private:
   //tf::Transform original_transform_;
   //tf::Transform transform_;
   std::string name_;
+
+  std::string filename_;
   
 };
 

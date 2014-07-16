@@ -34,7 +34,7 @@
 
 #include <state_filtering/tools/kinematics_from_urdf.hpp>
 
-URDFReader::URDFReader()
+KinematicsFromURDF::KinematicsFromURDF()
   : nh_priv_("~")
 {
   // Load robot description from parameter server
@@ -50,15 +50,53 @@ URDFReader::URDFReader()
   if (!kdl_parser::treeFromUrdfModel(urdf_, kin_tree_)){
     ROS_ERROR("Failed to construct kdl tree");
     return;
-  }
-  
-  
+  }  
 
+  // setup path fro robot description and root of the tree
   nh_priv_.param<std::string>("robot_description_package_path", description_path_, "..");
   nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
+
+
+  // create segment map for correct ordering of joints
+  segment_map_ =  kin_tree_.getSegments();
+  boost::shared_ptr<const urdf::Joint> joint;
+  joint_map_.resize(kin_tree_.getNrOfJoints());
+  lower_limit_.resize(kin_tree_.getNrOfJoints());
+  upper_limit_.resize(kin_tree_.getNrOfJoints());
+  for (KDL::SegmentMap::const_iterator seg_it = segment_map_.begin(); seg_it != segment_map_.end(); ++seg_it)
+    {
+	
+      if (seg_it->second.segment.getJoint().getType() != KDL::Joint::None)
+	{
+	  joint = urdf_.getJoint(seg_it->second.segment.getJoint().getName().c_str());
+	  // check, if joint can be found in the URDF model of the object/robot
+	  if (!joint)
+	    {
+	      ROS_FATAL("Joint '%s' has not been found in the URDF robot model! Aborting ...", joint->name.c_str());
+	      return;
+	    }
+	  // extract joint information
+	  if (joint->type != urdf::Joint::UNKNOWN && joint->type != urdf::Joint::FIXED)
+	    {
+	      joint_map_[seg_it->second.q_nr] = joint->name;
+	      lower_limit_[seg_it->second.q_nr] = joint->limits->lower;
+	      upper_limit_[seg_it->second.q_nr] = joint->limits->upper;
+	    }
+	}
+    }
+  
+  std::string cam_frame, base_frame;
+  nh_priv_.param<std::string>("camera_frame", cam_frame, "XTION" );
+  nh_priv_.param<std::string>("kinematic_frame", base_frame, "BASE" );
+  // create chain from base to camera
+  kin_tree_.getChain(cam_frame, base_frame, cam_2_base_);
+  chain_solver_ = new KDL::ChainFkSolverPos_recursive(cam_2_base_);
+  
+  // initialise solver
+  tree_solver_ = new KDL::TreeFkSolverPos_recursive(kin_tree_);
 }
 
-void URDFReader::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
+void KinematicsFromURDF::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
 {
   //Load robot mesh for each link
   std::vector<boost::shared_ptr<urdf::Link> > links;
@@ -86,7 +124,7 @@ void URDFReader::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > 
     }
 }
 
-int URDFReader::Get_number_joints()
+int KinematicsFromURDF::Get_number_joints()
 {
   return kin_tree_.getNrOfJoints();
 }

@@ -33,8 +33,8 @@
  *********************************************************************/
 
 
-#ifndef URDF_READER_HPP_
-#define URDF_READER_HPP_
+#ifndef KINEMATICS_FROM_URDF_HPP_
+#define KINEMATICS_FROM_URDF_HPP_
 
 #include <ros/ros.h>
 
@@ -50,16 +50,19 @@
 // tools
 #include <state_filtering/tools/part_mesh_model.hpp>
 
-class URDFReader
+class KinematicsFromURDF
 {
 public:
-  URDFReader();
-  ~URDFReader(){}
+  KinematicsFromURDF();
+  ~KinematicsFromURDF(){}
 
   void Get_tree(boost::shared_ptr<KDL::Tree>);
   void Get_cam_chain(boost::shared_ptr<KDL::Chain>);
 
   void Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
+
+  int Get_number_links();
+  int Get_number_joints();
 
 private:
   ros::NodeHandle nh_;
@@ -70,6 +73,9 @@ private:
   urdf::Model urdf_;
   KDL::Tree kin_tree_;
   KDL::Chain cam_2_base_;
+
+  int n_links_;
+  int n_joints_;
   
 };
 

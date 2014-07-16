@@ -32,63 +32,57 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <state_filtering/tools/kinematics_from_urdf.hpp>
 
-URDFReader::URDFReader()
-  : nh_priv_("~")
+#ifndef KINEMATICS_FROM_URDF_HPP_
+#define KINEMATICS_FROM_URDF_HPP_
+
+#include <ros/ros.h>
+
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include <Eigen/Core>
+#include <list>
+#include <vector>
+#include <list>
+#include <urdf/model.h>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/treefksolverpos_recursive.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+
+// tools
+#include <state_filtering/tools/part_mesh_model.hpp>
+
+class KinematicsFromURDF
 {
-  // Load robot description from parameter server
-  std::string desc_string;
-  if(!nh_.getParam("robot_description", desc_string))
-    ROS_ERROR("Could not get urdf from param server at %s", desc_string.c_str());
+public:
+  KinematicsFromURDF();
+  ~KinematicsFromURDF(){}
 
-  // Initialize URDF object from robot description
-  if (!urdf_.initFile(desc_string))
-    ROS_ERROR("Failed to parse urdf");
- 
-  // set up kinematic tree from URDF
-  if (!kdl_parser::treeFromUrdfModel(urdf_, kin_tree_)){
-    ROS_ERROR("Failed to construct kdl tree");
-    return;
-  }
+  void Get_tree(boost::shared_ptr<KDL::Tree>);
+  void Get_cam_chain(boost::shared_ptr<KDL::Chain>);
+
+  void Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
+
+  int Get_number_joints();
+
+private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_priv_;
+  std::string tf_correction_root_;
+  std::string description_path_;
+
+  urdf::Model urdf_;
+  KDL::Tree kin_tree_;
+  KDL::Chain cam_2_base_;
+
+  std::vector<std::string> joint_map_;
+  std::vector<float> lower_limit_;
+  std::vector<float> upper_limit_;
+
+  KDL::SegmentMap segment_map_;
+  KDL::TreeFkSolverPos_recursive *tree_solver_;
+  KDL::ChainFkSolverPos_recursive *chain_solver_;
   
-  
+};
 
-  nh_priv_.param<std::string>("robot_description_package_path", description_path_, "..");
-  nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
-}
-
-void URDFReader::Get_part_meshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
-{
-  //Load robot mesh for each link
-  std::vector<boost::shared_ptr<urdf::Link> > links;
-  urdf_.getLinks(links);
-  std::string global_root =  urdf_.getRoot()->name;
-  for (unsigned i=0; i< links.size(); i++)
-    {
-      // keep only the links descending from our root
-      boost::shared_ptr<urdf::Link> tmp_link = links[i];
-      while(tmp_link->name.compare(tf_correction_root_)!=0 && 
-	    tmp_link->name.compare(global_root)!=0)
-	{
-	  tmp_link = tmp_link->getParent();
-	}
-      
-      boost::shared_ptr<PartMeshModel> part_ptr(new PartMeshModel(links[i],
-								  description_path_,
-								  i));
-      if(part_ptr->proper_)
-	{
-	  // if the link has an actual mesh file to read
-	  std::cout << "link " << links[i]->name << " is descendant of " << tmp_link->name << std::endl;
-	  part_meshes.push_back(part_ptr);
-	}
-    }
-}
-
-int URDFReader::Get_number_joints()
-{
-  return kin_tree_.getNrOfJoints();
-}
-
-
+#endif
