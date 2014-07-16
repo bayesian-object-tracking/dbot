@@ -44,9 +44,9 @@ struct RobotStateTypes
   enum
     {
       // For the joints
-      COUNT_PER_JOINT = 2,
+      COUNT_PER_JOINT = 1,
       JOINT_ANGLE_INDEX = 0,
-      JOINT_VELOCITY_INDEX = 1,
+      //JOINT_VELOCITY_INDEX = 1,
       // TODO: Check if obsolete
       // for the links
       COUNT_PER_BODY = 12,
@@ -83,7 +83,7 @@ public:
       SIZE_JOINTS = size_joints,
       COUNT_PER_JOINT = Types::COUNT_PER_JOINT,
       JOINT_ANGLE_INDEX = Types::JOINT_ANGLE_INDEX,
-      JOINT_VELOCITY_INDEX = Types::JOINT_VELOCITY_INDEX,
+      //JOINT_VELOCITY_INDEX = Types::JOINT_VELOCITY_INDEX,
       // For the links
       SIZE_BODIES = size_bodies,
       SIZE_STATE = Base::SIZE_STATE,
@@ -130,6 +130,13 @@ public:
 
   virtual ~RobotState() {}
 
+  template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
+  {
+    Base::count_state_ = state_vector.rows();
+    kinematics_->InitKDLData(state_vector);
+    *((State*)(this)) = state_vector;
+  }
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /// these are the two main functions which have to implement the robot state.
   /// here it simply accesses the eigen vector, from which the class is derived and returns the correct
@@ -139,18 +146,18 @@ public:
   // this returns the position (translation) part of the pose of the link.
   virtual Vector position(const size_t& object_index = 0) const
   {
-    return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + POSITION_INDEX);
+    return kinematics_->GetLinkPosition(object_index);
   }
   // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
   // angle, and the direction is the rotation axis. below there is a function that converts from Quaternion2EulerVector
   // which implements the transformation
   virtual Vector euler_vector(const size_t& object_index = 0) const
   {
-    return this->template middleRows<BLOCK_COUNT>(object_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+    return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  virtual Vector Quaternion2EulerVector(const Quaternion& quaternion)
+  virtual Vector Quaternion2EulerVector(const Quaternion& quaternion) const 
   {
     AngleAxis angle_axis(quaternion);
     return angle_axis.angle()*angle_axis.axis();

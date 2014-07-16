@@ -41,6 +41,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <list>
 #include <vector>
 #include <list>
@@ -55,30 +56,59 @@
 class KinematicsFromURDF
 {
 public:
-  KinematicsFromURDF();
-  ~KinematicsFromURDF(){}
   
+  KinematicsFromURDF();
+  ~KinematicsFromURDF();
+  
+  // outputs a list of mesh model objects
   void GetPartMeshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes);
-  void ComputeTransforms(const Eigen::VectorXd& joint_state);
+  // Initialises the KDL data and specifically the camera pose
+  void InitKDLData(const Eigen::VectorXd& joint_state);
+  // Get the position of the robot link with index idx
+  Eigen::VectorXd GetLinkPosition( int idx);
+  // Get the orientation of the robot link with index idx
+  Eigen::Quaternion<double> GetLinkOrientation( int idx);
+  // Get the number of joints
   int num_joints();
 
 private:
+  // compute the camera frame for the current joint angles
+  void SetCameraTransform();
+  // compute the transformations for all the links in one go
+  void ComputeLinkTransforms();
+    
   ros::NodeHandle nh_;
   ros::NodeHandle nh_priv_;
   std::string tf_correction_root_;
   std::string description_path_;
 
+  // model as constructed form the robot urdf description
   urdf::Model urdf_;
+  // KDL kinematic tree
   KDL::Tree kin_tree_;
-  KDL::Chain cam_2_base_;
+  // KDL Kinematic chain from camera to robot base
+  KDL::Chain base_2_cam_;
 
+  // maps joint indices to joint names and joint limits
   std::vector<std::string> joint_map_;
   std::vector<float> lower_limit_;
   std::vector<float> upper_limit_;
 
+  // maps mesh indices to link names
+  std::vector<std::string> part_mesh_map_;
+  // maps link names to KDL frames
+  std::map<std::string, KDL::Frame> frame_map_;
+
+  // KDL segment map connecting link segments to joints
   KDL::SegmentMap segment_map_;
+  // Forward kinematics solver
   KDL::TreeFkSolverPos_recursive *tree_solver_;
   KDL::ChainFkSolverPos_recursive *chain_solver_;
+
+  // KDL copy of the joint state
+  KDL::JntArray jnt_array_;
+  // Contains Camera pose relative to base
+  KDL::Frame    cam_frame_;
   
 };
 

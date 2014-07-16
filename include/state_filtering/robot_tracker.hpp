@@ -162,7 +162,7 @@ public:
         // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
         // the poses of the rigid objects
         boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(), 
-									   urdf_kinematics->Get_number_joints(),
+									   urdf_kinematics->num_joints(),
 									   urdf_kinematics));
 
         boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,

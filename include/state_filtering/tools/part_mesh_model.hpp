@@ -139,6 +139,8 @@ public:
     return indices_;
   }
 
+  const std::string& get_name(){return name_;}
+
   bool proper_;
 
 private:
