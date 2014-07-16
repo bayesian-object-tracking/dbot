@@ -102,10 +102,10 @@ public:
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
 
-    void Initialize(
-            vector<VectorXd> single_body_samples,
-            const sensor_msgs::Image& ros_image,
-            Matrix3d camera_matrix)
+  void Initialize(vector<VectorXd> single_body_samples,
+		  const sensor_msgs::Image& ros_image,
+		  Matrix3d camera_matrix,
+		  boost::shared_ptr<KinematicsFromURDF> &urdf_kinematics)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
@@ -138,7 +138,7 @@ public:
         // initialize observation model =================================================================================================
 
 	// Read the URDF for the specific robot
-	boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
+	//boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
 	urdf_kinematics->GetPartMeshes(part_meshes_);
 	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
