@@ -46,6 +46,7 @@ typedef Eigen::Matrix<double, -1, -1> Image;
 class RobotTrackerNode
 {
   ros::NodeHandle nh_;
+  ros::NodeHandle priv_nh_;
   
   string depth_image_topic_;
   string camera_info_topic_;
@@ -55,43 +56,50 @@ class RobotTrackerNode
 
   sensor_msgs::JointState joint_state_;
   boost::mutex joint_state_mutex_;
+  
+  bool first_time_;
 
 public:
   RobotTrackerNode()
-    : nh_("~")
+    : priv_nh_("~")
+    , first_time_(true)
   {
     // subscribe to the joint angles
-    ros::Subscriber joint_states_sub = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 
-									      1,
-									      &RobotTrackerNode::jointStateCallback, 
-									      this);
+    ros::Subscriber joint_states_sub_ = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 
+							       5,
+							       &RobotTrackerNode::jointStateCallback, 
+							       this);
     // initialize the kinematics 
     boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
    
     // read the node parameters
-    ri::ReadParameter("depth_image_topic", depth_image_topic_, nh_);
-    ri::ReadParameter("camera_info_topic", camera_info_topic_, nh_);
-    ri::ReadParameter("initial_sample_count", initial_sample_count_, nh_);
+    ri::ReadParameter("depth_image_topic", depth_image_topic_, priv_nh_);
+    ri::ReadParameter("camera_info_topic", camera_info_topic_, priv_nh_);
+    ri::ReadParameter("initial_sample_count", initial_sample_count_, priv_nh_);
     
+    ROS_INFO("Reading depth images from %s", depth_image_topic_.c_str());
+    ROS_INFO("Reading camera info from %s", camera_info_topic_.c_str());
+    ROS_INFO("Getting %d initial samples", initial_sample_count_);
+
     // get the camera parameters
     camera_matrix_ = ri::GetCameraMatrix<double>(camera_info_topic_, nh_, 2.0);
 
-    // subscribe to the image topic
-    sensor_msgs::Image::ConstPtr ros_image(new sensor_msgs::Image);
-    /*
     // get observations from camera
-    sensor_msgs::Image::ConstPtr ros_image =
-    ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
-    */
+    sensor_msgs::Image::ConstPtr ros_image=ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic_, nh_, ros::Duration(10.0));
+
     // get the latest corresponding joint angles
     sensor_msgs::JointState joint_state_copy;
+    while(first_time_)
+      {
+	ROS_INFO("Waiting for joint angles being published on '/joint_states'");
+	ros::spinOnce();
+      }
     {
       boost::mutex::scoped_lock lock(joint_state_mutex_);
       joint_state_copy = joint_state_;
     }
-    /*
+    
     Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
-    */
     
     vector<VectorXd> initial_states = urdf_kinematics->GetInitialSamples(joint_state_copy, initial_sample_count_);
 
@@ -102,11 +110,14 @@ public:
 
     ros::Subscriber subscriber = nh_.subscribe(depth_image_topic_, 1, &RobotTracker::Filter, &robot_tracker);
   }
-  
+
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
   {
     boost::mutex::scoped_lock lock(joint_state_mutex_);
     joint_state_ = *msg;
+    
+    if (first_time_)
+      first_time_ = false;
   }
 
 };

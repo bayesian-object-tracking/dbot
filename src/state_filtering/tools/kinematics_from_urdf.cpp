@@ -222,8 +222,9 @@ std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialSamples(const sensor_
 		      (int)(jnt-state.position.begin()), 
 		      state.name[jnt-state.position.begin()].c_str());
 	}
-      samples[i]=sample;
+      samples.push_back(sample);
     }
+  return samples;
 }
 
 double KinematicsFromURDF::GetRandomPertubation(int jnt_index, double jnt_angle, double ratio)
@@ -251,7 +252,7 @@ int KinematicsFromURDF::GetJointIndex(const std::string &name)
       if (joint_map_[i] == name)
 	return i;
     return -1;
-  }
+}
 
 int KinematicsFromURDF::num_joints()
 {
