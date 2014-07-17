@@ -132,6 +132,7 @@ public:
 
   template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
   {
+    std::cout << "EQUAL OPERATOR IN ROBOT STATE" << std::endl;
     Base::count_state_ = state_vector.rows();
     kinematics_->InitKDLData(state_vector);
     *((State*)(this)) = state_vector;

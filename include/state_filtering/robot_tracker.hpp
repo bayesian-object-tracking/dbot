@@ -139,6 +139,8 @@ public:
 
 	// Read the URDF for the specific robot
 	//boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
+	// Initialize transformations of each mesh 
+	//urdf_kinematics->InitKDLData(single_body_samples[0]);
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
 	urdf_kinematics->GetPartMeshes(part_meshes_);
 	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
@@ -170,7 +172,9 @@ public:
 												    robot_state));
 
 	// FOR DEBUGGING
+	std::cout << "Setting the initial state " << std::endl;
 	robot_renderer->state(single_body_samples[0]);
+	std::cout << "Init KDL data is supposed to be called " << std::endl;
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
 	vis::CloudVisualizer cloud_vis;
 	std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();

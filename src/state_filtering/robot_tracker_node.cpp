@@ -104,9 +104,6 @@ public:
     else
       initial_states = urdf_kinematics->GetInitialJoints(joint_state_copy_);
 
-    std::cout << "Size of initial states " << initial_states.size() << std::endl;
-    std::cout << initial_states[0] << std::endl;
-
     // intialize the filter
     RobotTracker robot_tracker;
     robot_tracker.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);

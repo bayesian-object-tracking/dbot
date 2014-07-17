@@ -133,6 +133,7 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
 
 void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
 {
+  std::cout << "CAAAAAAALING InitKDLDATA with " << joint_state << std::endl;
   // Internally, KDL array use Eigen Vectors
   jnt_array_.data = joint_state;
   // Get the transform from the robot base to the camera frame

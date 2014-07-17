@@ -63,6 +63,7 @@ public:
 
     template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
     {
+      std::cout << "EQUAL OPERATOR IN RIGID BODY SYSTEM" << std::endl;
         count_state_ = state_vector.rows();
         *((State*)(this)) = state_vector;
     }
