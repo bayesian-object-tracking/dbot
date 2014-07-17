@@ -261,10 +261,21 @@ void CloudVisualizer::show(bool loop)
 	}
 
 	pcl_visualizer_.initCameraParameters ();
-	if(loop)
-		pcl_visualizer_.spin();
+	if(loop) 
+	  {
+	    while (!pcl_visualizer_.wasStopped ()){
+	      pcl_visualizer_.spinOnce (100);
+	      usleep(100000);
+	    }
+	  } 
 	else
+	  {
 		pcl_visualizer_.spinOnce();
+	  }
+	
+	// does not work for some reason, but at least the function returns
+	pcl_visualizer_.close();
+	
 }
 
 void CloudVisualizer::reset()
