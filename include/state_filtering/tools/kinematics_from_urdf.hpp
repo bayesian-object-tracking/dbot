@@ -41,12 +41,13 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/random/mersenne_twister.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <list>
 #include <vector>
 #include <list>
-#include <random>
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
@@ -130,7 +131,7 @@ private:
   KDL::Frame    cam_frame_;
   
   // random generator for joint angle sampling
-  std::mt19937 generator_;
+  boost::mt19937 generator_;
 
 };
 

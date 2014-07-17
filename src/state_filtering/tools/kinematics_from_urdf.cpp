@@ -33,6 +33,7 @@
  *********************************************************************/
 
 #include <state_filtering/tools/kinematics_from_urdf.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 KinematicsFromURDF::KinematicsFromURDF()
   : nh_priv_("~")
@@ -230,9 +231,9 @@ double KinematicsFromURDF::GetRandomPertubation(int jnt_index, double jnt_angle,
   double mean = jnt_angle;
   double range = upper_limit_[jnt_index]-lower_limit_[jnt_index];
   double std  = ratio * range;
-  std::normal_distribution<double> normal(mean, std);
+  boost::normal_distribution<double> normal(mean, std);
   double val = normal(generator_);
-
+  
   // clip the values to the limits
   if(val>upper_limit_[jnt_index])
     val = upper_limit_[jnt_index];
