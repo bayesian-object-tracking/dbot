@@ -201,7 +201,7 @@ std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialSamples(const sensor_
 								   int initial_sample_count,
 								   float ratio_std)
 {
-  std::vector<Eigen::VectorXd>samples;
+  std::vector<Eigen::VectorXd> samples;
   samples.reserve(initial_sample_count);
   for(int i=0; i<initial_sample_count; ++i)
     {
@@ -224,6 +224,26 @@ std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialSamples(const sensor_
 	}
       samples.push_back(sample);
     }
+  return samples;
+}
+
+std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialJoints(const sensor_msgs::JointState &state)
+{
+  std::vector<Eigen::VectorXd> samples;
+  Eigen::VectorXd sample(state.position.size());
+  // loop over all joint and fill in KDL array
+  for(std::vector<double>::const_iterator jnt = state.position.begin(); 
+      jnt !=state.position.end(); ++jnt)
+    {
+      int tmp_index = GetJointIndex(state.name[jnt-state.position.begin()]);
+      if (tmp_index >=0)
+	sample(tmp_index) = *jnt;
+      else 
+	ROS_ERROR("i: %d, No joint index for %s", 
+		  (int)(jnt-state.position.begin()), 
+		  state.name[jnt-state.position.begin()].c_str());
+    }
+  samples.push_back(sample);
   return samples;
 }
 

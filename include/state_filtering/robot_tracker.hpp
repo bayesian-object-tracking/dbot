@@ -155,7 +155,7 @@ public:
 	  {
             part_vertices[i] = *(part_meshes_[i]->get_vertices());
             part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
-	  } 
+	   }
         /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -168,6 +168,17 @@ public:
         boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,
 												    part_triangle_indices,
 												    robot_state));
+
+	// FOR DEBUGGING
+	robot_renderer->state(single_body_samples[0]);
+	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
+	vis::CloudVisualizer cloud_vis;
+	std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
+	for(; it!=vertices.end();++it)
+	  cloud_vis.add_cloud(*it);
+	cloud_vis.show();
+
+	exit(-1);
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)

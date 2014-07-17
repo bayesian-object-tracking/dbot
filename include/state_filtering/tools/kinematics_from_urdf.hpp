@@ -79,6 +79,9 @@ public:
   std::vector<Eigen::VectorXd> GetInitialSamples(const sensor_msgs::JointState &state,
 						 int initial_sample_count,
 						 float ratio_std = 0.1);
+
+  // Convert Joint message to Eigen vector
+  std::vector<Eigen::VectorXd> GetInitialJoints(const sensor_msgs::JointState &state);
   
   // Get the number of joints
   int num_joints();

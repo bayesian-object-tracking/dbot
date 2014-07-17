@@ -41,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
-typedef Eigen::Matrix<double, -1, -1> Image;
 
 class RobotTrackerNode
 {
@@ -53,22 +52,29 @@ class RobotTrackerNode
   int initial_sample_count_;
 
   Matrix3d camera_matrix_;
+  
+  sensor_msgs::Image ros_image_;
 
   sensor_msgs::JointState joint_state_;
+  sensor_msgs::JointState joint_state_copy_;
   boost::mutex joint_state_mutex_;
   
   bool first_time_;
+  bool has_image_;
+  bool has_joints_;
 
 public:
   RobotTrackerNode()
     : priv_nh_("~")
     , first_time_(true)
+    , has_image_(false)
+    , has_joints_(false)
   {
     // subscribe to the joint angles
-    ros::Subscriber joint_states_sub_ = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 
-							       5,
-							       &RobotTrackerNode::jointStateCallback, 
-							       this);
+    ros::Subscriber joint_states_sub = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 
+									      1,
+									      &RobotTrackerNode::jointStateCallback, 
+									      this);
     // initialize the kinematics 
     boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
    
@@ -77,40 +83,54 @@ public:
     ri::ReadParameter("camera_info_topic", camera_info_topic_, priv_nh_);
     ri::ReadParameter("initial_sample_count", initial_sample_count_, priv_nh_);
     
-    ROS_INFO("Reading depth images from %s", depth_image_topic_.c_str());
-    ROS_INFO("Reading camera info from %s", camera_info_topic_.c_str());
-    ROS_INFO("Getting %d initial samples", initial_sample_count_);
+    ros::Subscriber depth_image_sub = nh_.subscribe<sensor_msgs::Image>(depth_image_topic_, 
+									     1,
+									     &RobotTrackerNode::depthImageCallback, 
+									     this);
 
     // get the camera parameters
     camera_matrix_ = ri::GetCameraMatrix<double>(camera_info_topic_, nh_, 2.0);
-
-    // get observations from camera
-    sensor_msgs::Image::ConstPtr ros_image=ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic_, nh_, ros::Duration(10.0));
-
-    // get the latest corresponding joint angles
-    sensor_msgs::JointState joint_state_copy;
-    while(first_time_)
+    
+    while(!(has_joints_ & has_image_))
       {
-	ROS_INFO("Waiting for joint angles being published on '/joint_states'");
+	ROS_INFO("Waiting for joint angles and depth images: %d %d", has_joints_, has_image_);
 	ros::spinOnce();
+	usleep(10000);
       }
-    {
-      boost::mutex::scoped_lock lock(joint_state_mutex_);
-      joint_state_copy = joint_state_;
-    }
-    
-    Image image = ri::Ros2Eigen<double>(*ros_image) / 1000.; // convert to m
-    
-    vector<VectorXd> initial_states = urdf_kinematics->GetInitialSamples(joint_state_copy, initial_sample_count_);
+
+    vector<VectorXd> initial_states;
+    if(initial_sample_count_>1)
+      initial_states = urdf_kinematics->GetInitialSamples(joint_state_copy_, initial_sample_count_);
+    else
+      initial_states = urdf_kinematics->GetInitialJoints(joint_state_copy_);
+
+    std::cout << "Size of initial states " << initial_states.size() << std::endl;
+    std::cout << initial_states[0] << std::endl;
 
     // intialize the filter
     RobotTracker robot_tracker;
-    robot_tracker.Initialize(initial_states, *ros_image, camera_matrix_, urdf_kinematics);
+    robot_tracker.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);
     cout << "done initializing" << endl;
 
     ros::Subscriber subscriber = nh_.subscribe(depth_image_topic_, 1, &RobotTracker::Filter, &robot_tracker);
   }
-
+  
+  void depthImageCallback(const sensor_msgs::Image::ConstPtr& msg)
+  {
+    ros_image_ = *msg;
+    if(!has_image_)
+      has_image_=true;
+    {
+      // get the latest corresponding joint angles
+      boost::mutex::scoped_lock lock(joint_state_mutex_);
+      if(!first_time_)
+	{
+	  joint_state_copy_ = joint_state_;
+	  has_joints_=true;
+	}
+    }
+  }
+  
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
   {
     boost::mutex::scoped_lock lock(joint_state_mutex_);
