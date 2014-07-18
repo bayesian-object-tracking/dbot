@@ -161,8 +161,9 @@ void CoordinateFilter::PartialResample(const Control& control,
     INIT_PROFILING;
     hf::DiscreteSampler sampler(family_loglikes_);
     vector<size_t> children_counts(parents_.size(), 0);
-    for(size_t new_state_index = 0; new_state_index < new_n_states; new_state_index++)
+    for(size_t new_state_index = 0; new_state_index < new_n_states/2/*TEST*/; new_state_index++)
         children_counts[sampler.Sample()]++;
+
     MEASURE("sampling children_counts");
 
     // combine partial children into children ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -178,7 +179,7 @@ void CoordinateFilter::PartialResample(const Control& control,
         {
             hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
             for(size_t child_index = 0; child_index < children_counts[state_index]; child_index++)
-                mult_indices[child_index][block_index] = sampler.Sample();
+                mult_indices[child_index][block_index] = sampler.Sample(); // just for testing!!
         }
         vector<size_t> child_multiplicities;
         hf::SortAndCollapse(mult_indices, child_multiplicities);
@@ -192,7 +193,7 @@ void CoordinateFilter::PartialResample(const Control& control,
 
             children.push_back(process_model_->mapNormal(noise));
             children_times.push_back(observation_time);
-            children_multiplicities.push_back(child_multiplicities[child_index]);
+            children_multiplicities.push_back(child_multiplicities[child_index]*2 /*TEST*/);
             children_occlusion_indices.push_back(parent_occlusion_indices_[state_index]);
         }
     }
@@ -234,6 +235,11 @@ void CoordinateFilter::Enchilada(
         const Measurement& observation,
         const size_t &new_n_states)
 {
+    vector<size_t> sorted_multiplicities = parent_multiplicities_;
+    hf::SortDescend(sorted_multiplicities, sorted_multiplicities);
+    cout << "multiplicites: ";
+    hf::PrintVector(sorted_multiplicities);
+
     PartialPropagate(control, observation_time);
     PartialEvaluate(observation, observation_time);
     PartialResample(control, observation_time, new_n_states);
