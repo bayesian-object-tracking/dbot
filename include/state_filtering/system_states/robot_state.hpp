@@ -130,13 +130,11 @@ public:
 
   virtual ~RobotState() {}
 
-  template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
+  virtual void update() const
   {
-    std::cout << "EQUAL OPERATOR IN ROBOT STATE" << std::endl;
-    Base::count_state_ = state_vector.rows();
-    kinematics_->InitKDLData(state_vector);
-    *((State*)(this)) = state_vector;
+    kinematics_->InitKDLData(*this);
   }
+
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /// these are the two main functions which have to implement the robot state.

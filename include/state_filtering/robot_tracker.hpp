@@ -172,7 +172,6 @@ public:
 												    robot_state));
 
 	// FOR DEBUGGING
-	std::cout << "Setting the initial state " << std::endl;
 	robot_renderer->state(single_body_samples[0]);
 	std::cout << "Init KDL data is supposed to be called " << std::endl;
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();

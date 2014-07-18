@@ -266,6 +266,7 @@ RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) 
 void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 {
     *state_ = state;
+    state_->update();
     R_.resize(state_->bodies_size());
     t_.resize(state_->bodies_size());
     for(size_t part_index = 0; part_index < state_->bodies_size(); part_index++)
@@ -274,8 +275,6 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
         t_[part_index] = state_->position(part_index);
     }
 }
-
-
 
 
 // test the enchilada

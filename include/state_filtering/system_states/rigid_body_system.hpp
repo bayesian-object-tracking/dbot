@@ -61,16 +61,17 @@ public:
     }
     virtual ~RigidBodySystem() {}
 
-    template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
-    {
-      std::cout << "EQUAL OPERATOR IN RIGID BODY SYSTEM" << std::endl;
-        count_state_ = state_vector.rows();
-        *((State*)(this)) = state_vector;
+  template <typename T> 
+  void operator = (const Eigen::MatrixBase<T>& state_vector)
+  {
+    count_state_ = state_vector.rows();
+    *((State*)(this)) = state_vector;
     }
-
-    // read
-    virtual Vector  position            (const size_t& object_index = 0) const = 0;
-    virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
+  
+  // read
+  virtual Vector  position            (const size_t& object_index = 0) const = 0;
+  virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
+  virtual void  update        () const = 0;
 
     // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const

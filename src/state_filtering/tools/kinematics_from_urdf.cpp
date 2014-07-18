@@ -133,7 +133,6 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
 
 void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
 {
-  std::cout << "CAAAAAAALING InitKDLDATA with " << joint_state << std::endl;
   // Internally, KDL array use Eigen Vectors
   jnt_array_.data = joint_state;
   // Get the transform from the robot base to the camera frame
@@ -172,14 +171,25 @@ void KinematicsFromURDF::SetCameraTransform()
 void KinematicsFromURDF::ComputeLinkTransforms( )
 {
   // loop over all segments to compute the link transformation
-  for (KDL::SegmentMap::const_iterator seg_it = segment_map_.begin(); seg_it != segment_map_.end(); ++seg_it)
+  for (KDL::SegmentMap::const_iterator seg_it = segment_map_.begin(); 
+       seg_it != segment_map_.end(); ++seg_it)
     {
-      if (std::find(part_mesh_map_.begin(), part_mesh_map_.end(), seg_it->second.segment.getName()) != part_mesh_map_.end())
+      if (std::find(part_mesh_map_.begin(), 
+		    part_mesh_map_.end(), 
+		    seg_it->second.segment.getName()) != part_mesh_map_.end())
 	{
 	  KDL::Frame frame;
 	  if(tree_solver_->JntToCart(jnt_array_, frame, seg_it->second.segment.getName())<0)
-	    ROS_ERROR("TreeSolver returned an error for link %s", seg_it->second.segment.getName().c_str());
+	    ROS_ERROR("TreeSolver returned an error for link %s", 
+		      seg_it->second.segment.getName().c_str());
 	  frame_map_[seg_it->second.segment.getName()] = cam_frame_ * frame;
+	  // DEBUG
+	  /*
+	  Eigen::VectorXd pos(3);
+	  std::string name = seg_it->second.segment.getName();
+	  pos << frame_map_[name].p.x(), frame_map_[name].p.y(),frame_map_[name].p.z(); 
+	  std::cout << "Frame " << name << std::endl << pos << std::endl;
+	  */
 	}
     }
 }
@@ -231,20 +241,22 @@ std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialSamples(const sensor_
 std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialJoints(const sensor_msgs::JointState &state)
 {
   std::vector<Eigen::VectorXd> samples;
-  Eigen::VectorXd sample(state.position.size());
+  Eigen::VectorXd sample(num_joints());
   // loop over all joint and fill in KDL array
   for(std::vector<double>::const_iterator jnt = state.position.begin(); 
       jnt !=state.position.end(); ++jnt)
     {
       int tmp_index = GetJointIndex(state.name[jnt-state.position.begin()]);
-      if (tmp_index >=0)
+
+      if (tmp_index >=0) 
 	sample(tmp_index) = *jnt;
-      else 
+	else 
 	ROS_ERROR("i: %d, No joint index for %s", 
 		  (int)(jnt-state.position.begin()), 
 		  state.name[jnt-state.position.begin()].c_str());
     }
   samples.push_back(sample);
+
   return samples;
 }
 
