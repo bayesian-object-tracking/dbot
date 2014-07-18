@@ -117,6 +117,12 @@ void CoordinateFilter::PartialPropagate(const Control& control,
     MEASURE("creating samples")
 }
 
+
+
+
+
+
+
 // evaluate offspring
 void CoordinateFilter::PartialEvaluate(const Measurement& observation,
                                        const double& observation_time)
@@ -161,7 +167,7 @@ void CoordinateFilter::PartialResample(const Control& control,
     INIT_PROFILING;
     hf::DiscreteSampler sampler(family_loglikes_);
     vector<size_t> children_counts(parents_.size(), 0);
-    for(size_t new_state_index = 0; new_state_index < new_n_states/2/*TEST*/; new_state_index++)
+    for(size_t new_state_index = 0; new_state_index < new_n_states; new_state_index++)
         children_counts[sampler.Sample()]++;
 
     MEASURE("sampling children_counts");
@@ -179,7 +185,7 @@ void CoordinateFilter::PartialResample(const Control& control,
         {
             hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
             for(size_t child_index = 0; child_index < children_counts[state_index]; child_index++)
-                mult_indices[child_index][block_index] = sampler.Sample(); // just for testing!!
+                mult_indices[child_index][block_index] = sampler.Sample();
         }
         vector<size_t> child_multiplicities;
         hf::SortAndCollapse(mult_indices, child_multiplicities);
@@ -193,7 +199,7 @@ void CoordinateFilter::PartialResample(const Control& control,
 
             children.push_back(process_model_->mapNormal(noise));
             children_times.push_back(observation_time);
-            children_multiplicities.push_back(child_multiplicities[child_index]*2 /*TEST*/);
+            children_multiplicities.push_back(child_multiplicities[child_index]);
             children_occlusion_indices.push_back(parent_occlusion_indices_[state_index]);
         }
     }
@@ -224,6 +230,152 @@ void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
     MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
 
 }
+
+
+
+
+void CoordinateFilter::Enchiladisima(
+        const Control control,
+        const double &observation_time,
+        const Measurement& observation,
+        const size_t &evaluation_count)
+{
+    vector<size_t> sorted_multiplicities = parent_multiplicities_;
+    hf::SortDescend(sorted_multiplicities, sorted_multiplicities);
+    cout << "multiplicites: ";
+    hf::PrintVector(sorted_multiplicities);
+
+    size_t M = 10;
+    size_t D = independent_blocks_.size();
+    size_t N = evaluation_count / (M*D);
+
+
+    if(parents_.size() != N || family_loglikes_.size() != N ||
+            parent_times_.size() != N || parent_occlusion_indices_.size() != N)
+    {
+        cout << "parents_.size() = " << parents_.size() << endl;
+        cout << "family_loglikes_.size () = " << family_loglikes_.size() << endl;
+        cout << "parent_times_.size () = " << parent_times_.size() << endl;
+        cout << "parent_occlusion_indices_.size () = " << parent_occlusion_indices_.size() << endl;
+
+
+        cout << "N " << N << endl;
+        cout << "D " << D << endl;
+        exit(-1);
+    }
+
+
+    cout << "parents_.size() = " << parents_.size() << endl;
+    cout << "family_loglikes_.size () = " << family_loglikes_.size() << endl;
+    cout << "parent_times_.size () = " << parent_times_.size() << endl;
+    cout << "parent_occlusion_indices_.size () = " << parent_occlusion_indices_.size() << endl;
+
+
+    cout << "N " << N << endl;
+    cout << "D " << D << endl;
+
+
+    INIT_PROFILING;
+    // we write to the following members ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    partial_noises_.resize(N);
+    partial_children_.resize(N);
+    partial_children_occlusion_indices_.resize(N);
+    zero_children_.resize(N);
+
+
+    for(size_t state_index = 0; state_index < N; state_index++)
+    {
+        // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
+        zero_children_[state_index] = process_model_->mapNormal(Noise::Zero(process_model_->sample_size()));
+
+        // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        partial_noises_[state_index].resize(independent_blocks_.size());
+        partial_children_[state_index].resize(independent_blocks_.size());
+        partial_children_occlusion_indices_[state_index].resize(independent_blocks_.size());
+        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
+        {
+            partial_noises_[state_index][block_index].resize(M);
+            partial_children_[state_index][block_index].resize(M);
+            partial_children_occlusion_indices_[state_index][block_index].resize(M);
+            for(size_t m = 0; m < M; m++)
+            {
+                Noise partial_noise(Noise::Zero(process_model_->sample_size()));
+                for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
+                    partial_noise(independent_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
+
+                partial_noises_[state_index][block_index][m] = partial_noise;
+                partial_children_[state_index][block_index][m] = process_model_->mapNormal(partial_noise);
+                partial_children_occlusion_indices_[state_index][block_index][m] = parent_occlusion_indices_[state_index];
+            }
+        }
+    }
+    MEASURE("creating samples");
+
+
+
+
+
+
+    // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    measurement_model_->measurement(observation, observation_time);
+    hf::Structurer3D converter;
+    vector<size_t> flat_partial_children_occlusion_indices_ = converter.Flatten(partial_children_occlusion_indices_);
+
+    RESET;
+    partial_children_loglikes_ = converter.Deepen(
+                measurement_model_->Evaluate(converter.Flatten(partial_children_),
+                                             flat_partial_children_occlusion_indices_, false));
+    MEASURE("evaluation with " + lexical_cast<string>(flat_partial_children_occlusion_indices_.size()) + " samples");
+
+
+
+
+
+
+    // propagate the shizzle
+    for(size_t state_index = 0; state_index < parents_.size(); state_index++)
+    {
+        Noise noise(Noise::Zero(process_model_->sample_size()));
+        double factorized_loglike = 0;
+        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
+        {
+            hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
+            size_t sample = sampler.Sample();
+
+            noise += partial_noises_[state_index][block_index][sample];
+            factorized_loglike += partial_children_loglikes_[state_index][block_index][sample];
+        }
+
+        process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
+        parents_[state_index] = process_model_->mapNormal(noise);
+        parent_times_[state_index] = observation_time;
+        family_loglikes_[state_index] = factorized_loglike;
+    }
+
+    // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    partial_noises_.clear();
+    partial_children_.clear();
+    partial_children_occlusion_indices_.clear();
+    zero_children_.clear();
+    partial_children_loglikes_.clear();
+
+
+
+
+
+
+
+
+    measurement_model_->measurement(observation, observation_time);
+    RESET;
+    measurement_model_->Evaluate(parents_, parent_occlusion_indices_, true);
+    MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
+
+    state_distribution_.setDeltas(parents_); // not sure whether this is the right place
+}
+
+
 
 
 
