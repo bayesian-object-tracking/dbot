@@ -59,6 +59,8 @@ class RobotTrackerNode
   sensor_msgs::JointState joint_state_copy_;
   boost::mutex joint_state_mutex_;
   
+  ros::Subscriber subscriber_;
+
   bool first_time_;
   bool has_image_;
   bool has_joints_;
@@ -108,8 +110,11 @@ public:
     RobotTracker robot_tracker;
     robot_tracker.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);
     cout << "done initializing" << endl;
-
-    ros::Subscriber subscriber = nh_.subscribe(depth_image_topic_, 1, &RobotTracker::Filter, &robot_tracker);
+    
+    subscriber_ = nh_.subscribe(depth_image_topic_, 
+			       1, 
+			       &RobotTracker::Filter, 
+			       &robot_tracker);
   }
   
   void depthImageCallback(const sensor_msgs::Image::ConstPtr& msg)

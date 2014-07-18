@@ -95,7 +95,7 @@ public:
         is_first_iteration_(true),
         duration_(0)
     {
-        ri::ReadParameter("object_names", object_names_, node_handle_);
+      //ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("sample_count", sample_count_, node_handle_);
 
@@ -118,7 +118,6 @@ public:
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
 
-        vector<vector<size_t> > dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
         double p_visible_init; ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
@@ -137,16 +136,15 @@ public:
 
         // initialize observation model =================================================================================================
 
-	// Read the URDF for the specific robot
-	//boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
-	// Initialize transformations of each mesh 
-	//urdf_kinematics->InitKDLData(single_body_samples[0]);
+	// Read the URDF for the specific robot and get part meshes
 	std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
 	urdf_kinematics->GetPartMeshes(part_meshes_);
 	ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
 	ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 	
-	
+	vector<vector<size_t> > dependencies; 
+	urdf_kinematics->GetDependencies(dependencies);
+
         /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: the process of loading the object meshes has to be changed to load all the parts of the robot.
         /// the output here has to be a list of a list of vertices (the first index is the object index, and the second the vertex index)
@@ -173,15 +171,12 @@ public:
 
 	// FOR DEBUGGING
 	robot_renderer->state(single_body_samples[0]);
-	std::cout << "Init KDL data is supposed to be called " << std::endl;
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
 	vis::CloudVisualizer cloud_vis;
 	std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
 	for(; it!=vertices.end();++it)
 	  cloud_vis.add_cloud(*it);
 	cloud_vis.show();
-
-	exit(-1);
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)
@@ -233,7 +228,7 @@ public:
         boost::shared_ptr<StationaryProcess<> > process_model;
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// TODO: here the robot process model has to be used. this should be easy, we should use the damped brownian motion
-        MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
+        /*MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
         MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
         vector<boost::shared_ptr<StationaryProcess<> > > partial_process_models(object_names_.size());
@@ -247,16 +242,16 @@ public:
             partial_process_models[i] = partial_process_model;
         }
         process_model = boost::shared_ptr<ComposedStationaryProcessModel>(new ComposedStationaryProcessModel(partial_process_models));
+	*/
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// hopefully, by just commenting the above and uncommenting the stuff below we should have a process model for the robot joints
-//        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(robot_state->state_size()));
-//        MatrixXd joint_covariance = MatrixXd::Identity(joint_process_model->variable_size(), joint_process_model->variable_size())
-//                                    * pow(joint_angle_sigma, 2);
-//        joint_process_model->parameters(0., joint_covariance);
-//        process_model = joint_process_model;
+        boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(robot_state->state_size()));
+	MatrixXd joint_covariance = MatrixXd::Identity(joint_process_model->variable_size(), 
+						       joint_process_model->variable_size())
+	  * pow(joint_angle_sigma, 2);
+	joint_process_model->parameters(0., joint_covariance); 
+	process_model = joint_process_model;
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
 
@@ -272,6 +267,7 @@ public:
         /// the important part is to pass here some decent initial states to the filter by using filter_->set_states(initial_states)
         /// all the rest should go away.
         // create the multi body initial samples ----------------------------------------------------------------------------------------
+	/*
         FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
@@ -296,20 +292,23 @@ public:
             filter_->Resample(multi_body_samples.size());
             filter_->get(multi_body_samples);
         }
+	*/
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
-        filter_->set_states(multi_body_samples);
+        filter_->set_states(single_body_samples);
         filter_->Evaluate(image);
         filter_->Resample(sample_count_);
     }
 
     void Filter(const sensor_msgs::Image& ros_image)
     {
+      std::cout << "Calling the filter function " << std::endl;
         boost::mutex::scoped_lock lock(mutex_);
 
-        // convert image
+        // convert imagex
         Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
 
         // the time since start is computed
@@ -334,6 +333,7 @@ public:
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
+	/*
         RobotState<> mean = filter_->stateDistribution().empiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
@@ -342,6 +342,7 @@ public:
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
+	*/
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
@@ -363,7 +364,7 @@ private:
     double previous_time_;
 
     // parameters
-    vector<string> object_names_;
+  //vector<string> object_names_;
     int downsampling_factor_;
     int sample_count_;
 };

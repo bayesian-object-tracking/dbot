@@ -123,7 +123,7 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
       if(part_ptr->proper_)
 	{
 	  // if the link has an actual mesh file to read
-	  std::cout << "link " << links[i]->name << " is descendant of " << tmp_link->name << std::endl;
+	  //std::cout << "link " << links[i]->name << " is descendant of " << tmp_link->name << std::endl;
 	  part_meshes.push_back(part_ptr);
 	  // Produces an index map for the links
 	  part_mesh_map_.push_back(part_ptr->get_name());
@@ -258,6 +258,15 @@ std::vector<Eigen::VectorXd> KinematicsFromURDF::GetInitialJoints(const sensor_m
   samples.push_back(sample);
 
   return samples;
+}
+
+void KinematicsFromURDF::GetDependencies(std::vector<std::vector<size_t> >& dependencies)
+{
+  // only one fully dependent object -> the robot 
+  std::vector<size_t> robot_deps;
+  for(int i=0; i<num_joints(); ++i)
+    robot_deps.push_back(i);
+  dependencies.push_back(robot_deps);
 }
 
 double KinematicsFromURDF::GetRandomPertubation(int jnt_index, double jnt_angle, double ratio)
