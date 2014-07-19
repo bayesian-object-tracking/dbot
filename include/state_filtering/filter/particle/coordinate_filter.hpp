@@ -77,7 +77,7 @@ public:
                          const double& observation_time);
     void PartialResample(const Control& control,
                          const double& observation_time,
-                         const size_t &new_n_states);
+                         const size_t &evaluation_count);
     void UpdateOcclusions(const Measurement& observation,
                           const double& observation_time);
 
@@ -85,13 +85,14 @@ public:
     void Enchilada(const Control control,
                    const double &observation_time,
                    const Measurement& observation,
-                   const size_t &new_n_states);
+                   const size_t &evaluation_count);
 
 
     void Enchiladisima(const Control control,
                    const double &observation_time,
                    const Measurement& observation,
-                   const size_t &new_n_states);
+                   const size_t &evaluation_count,
+                   const size_t &factor_evaluation_count);
 
 
     void Propagate(const Control control,
@@ -137,6 +138,7 @@ private:
 
     // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     std::vector<State > parents_;
+    std::vector<float>  log_weights_;
     std::vector<double> parent_times_;
     std::vector<size_t> parent_occlusion_indices_;
 

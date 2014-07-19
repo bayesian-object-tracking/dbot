@@ -94,7 +94,9 @@ public:
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
-        ri::ReadParameter("sample_count", evaluation_count_, node_handle_);
+        ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
+        ri::ReadParameter("factor_evaluation_count", factor_evaluation_count_, node_handle_);
+
 
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
@@ -114,7 +116,32 @@ public:
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
 
-        vector<vector<size_t> > dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
+//        dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
+
+
+
+
+        ri::ReadParameter("coordinate_sampling", coordinate_sampling_, node_handle_);
+
+        if(coordinate_sampling_)
+        {
+            dependencies.resize(object_names_.size()*6);
+            for(size_t i = 0; i < dependencies.size(); i++)
+                dependencies[i] = vector<size_t>(1, i);
+        }
+        else
+        {
+            dependencies.resize(1);
+            dependencies[0].resize(object_names_.size()*6);
+
+            for(size_t i = 0; i < dependencies[0].size(); i++)
+                dependencies[0][i] = i;
+        }
+
+        cout << "depencies: " << endl;
+        hf::PrintVector(dependencies);
+
+
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
         double p_visible_init; ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
@@ -252,13 +279,13 @@ public:
             cout << "evaluating initial particles cpu ..." << endl;
             filter_->set_states(multi_body_samples);
             filter_->Evaluate(image);
-            filter_->Resample(evaluation_count_/(dependencies.size() * 10)); // FOR TESTING ONLY
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_)); // FOR TESTING ONLY
         }
         else
         {
             filter_->set_states(initial_states);
             filter_->Evaluate(image);
-            filter_->Resample(evaluation_count_/(dependencies.size() * 10));// FOR TESTING ONLY
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));// FOR TESTING ONLY
         }
     }
 
@@ -279,15 +306,25 @@ public:
 
         // filter
         INIT_PROFILING;
-//        filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
-//                           duration_,
-//                           image,
-//                           evaluation_count_);
+        if(coordinate_sampling_)
+        {
+            cout << "CALLING ENCHILADISIMA" << endl;
 
-        filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
+            filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
+                                   duration_,
+                                   image,
+                                   evaluation_count_,
+                                   factor_evaluation_count_);
+        }
+        else
+        {
+            filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
                                duration_,
                                image,
-                               evaluation_count_);
+                               evaluation_count_/dependencies.size());
+        }
+
+
         MEASURE("-----------------> total time for filtering");
 
         previous_image_time_ = ros_image.header.stamp.toSec();
@@ -328,6 +365,11 @@ private:
     vector<string> object_names_;
     int downsampling_factor_;
     int evaluation_count_;
+    int factor_evaluation_count_;
+
+    vector<vector<size_t> > dependencies;
+
+    bool coordinate_sampling_;
 };
 
 #endif

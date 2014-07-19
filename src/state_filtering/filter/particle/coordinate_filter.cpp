@@ -184,6 +184,8 @@ void CoordinateFilter::PartialResample(const Control& control,
         for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
         {
             hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
+
+            int sample = sampler.Sample();
             for(size_t child_index = 0; child_index < children_counts[state_index]; child_index++)
                 mult_indices[child_index][block_index] = sampler.Sample();
         }
@@ -234,29 +236,59 @@ void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
 
 
 
-void CoordinateFilter::Enchiladisima(
+
+
+void CoordinateFilter::Enchilada(
         const Control control,
         const double &observation_time,
         const Measurement& observation,
-        const size_t &evaluation_count)
+        const size_t &new_n_states)
 {
     vector<size_t> sorted_multiplicities = parent_multiplicities_;
     hf::SortDescend(sorted_multiplicities, sorted_multiplicities);
     cout << "multiplicites: ";
     hf::PrintVector(sorted_multiplicities);
 
-    size_t M = 10;
+    PartialPropagate(control, observation_time);
+    PartialEvaluate(observation, observation_time);
+    PartialResample(control, observation_time, new_n_states);
+    UpdateOcclusions(observation, observation_time);
+
+    state_distribution_.setDeltas(parents_); // not sure whether this is the right place
+}
+
+
+
+
+
+
+void CoordinateFilter::Enchiladisima(
+        const Control control,
+        const double &observation_time,
+        const Measurement& observation,
+        const size_t &evaluation_count,
+        const size_t &factor_evaluation_count)
+{
+    size_t M = factor_evaluation_count;
     size_t D = independent_blocks_.size();
     size_t N = evaluation_count / (M*D);
 
+    cout << "number of samples per factor M = " << M  << endl
+         << "number of factors D = " << D << endl
+         << "number of particles N = " << N << endl
+         << "total number of evaluations M*D*N = " << N*D*M << endl;
+
 
     if(parents_.size() != N || family_loglikes_.size() != N ||
-            parent_times_.size() != N || parent_occlusion_indices_.size() != N)
+            parent_times_.size() != N || parent_occlusion_indices_.size() != N||
+            log_weights_.size() != N)
     {
         cout << "parents_.size() = " << parents_.size() << endl;
         cout << "family_loglikes_.size () = " << family_loglikes_.size() << endl;
         cout << "parent_times_.size () = " << parent_times_.size() << endl;
         cout << "parent_occlusion_indices_.size () = " << parent_occlusion_indices_.size() << endl;
+        cout << "log_weights_.size () = " << log_weights_.size() << endl;
+
 
 
         cout << "N " << N << endl;
@@ -265,35 +297,23 @@ void CoordinateFilter::Enchiladisima(
     }
 
 
-    cout << "parents_.size() = " << parents_.size() << endl;
-    cout << "family_loglikes_.size () = " << family_loglikes_.size() << endl;
-    cout << "parent_times_.size () = " << parent_times_.size() << endl;
-    cout << "parent_occlusion_indices_.size () = " << parent_occlusion_indices_.size() << endl;
-
-
-    cout << "N " << N << endl;
-    cout << "D " << D << endl;
-
-
     INIT_PROFILING;
     // we write to the following members ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     partial_noises_.resize(N);
     partial_children_.resize(N);
     partial_children_occlusion_indices_.resize(N);
-    zero_children_.resize(N);
 
 
     for(size_t state_index = 0; state_index < N; state_index++)
     {
         // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
-        zero_children_[state_index] = process_model_->mapNormal(Noise::Zero(process_model_->sample_size()));
 
         // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        partial_noises_[state_index].resize(independent_blocks_.size());
-        partial_children_[state_index].resize(independent_blocks_.size());
-        partial_children_occlusion_indices_[state_index].resize(independent_blocks_.size());
-        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
+        partial_noises_[state_index].resize(D);
+        partial_children_[state_index].resize(D);
+        partial_children_occlusion_indices_[state_index].resize(D);
+        for(size_t block_index = 0; block_index < D; block_index++)
         {
             partial_noises_[state_index][block_index].resize(M);
             partial_children_[state_index][block_index].resize(M);
@@ -332,45 +352,104 @@ void CoordinateFilter::Enchiladisima(
 
 
 
+    std::vector<float> proposal_loglikes(N);
 
     // propagate the shizzle
     for(size_t state_index = 0; state_index < parents_.size(); state_index++)
     {
         Noise noise(Noise::Zero(process_model_->sample_size()));
-        double factorized_loglike = 0;
-        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
+        proposal_loglikes[state_index] = -float(D-1) * family_loglikes_[state_index];
+        for(size_t block_index = 0; block_index < D; block_index++)
         {
             hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
             size_t sample = sampler.Sample();
 
             noise += partial_noises_[state_index][block_index][sample];
-            factorized_loglike += partial_children_loglikes_[state_index][block_index][sample];
+            proposal_loglikes[state_index] += partial_children_loglikes_[state_index][block_index][sample];
         }
 
         process_model_->conditional(observation_time - parent_times_[state_index], parents_[state_index], control);
         parents_[state_index] = process_model_->mapNormal(noise);
         parent_times_[state_index] = observation_time;
-        family_loglikes_[state_index] = factorized_loglike;
     }
 
     // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     partial_noises_.clear();
     partial_children_.clear();
     partial_children_occlusion_indices_.clear();
-    zero_children_.clear();
     partial_children_loglikes_.clear();
 
 
 
-
-
-
-
-
-    measurement_model_->measurement(observation, observation_time);
     RESET;
-    measurement_model_->Evaluate(parents_, parent_occlusion_indices_, true);
-    MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples")
+    family_loglikes_ = measurement_model_->Evaluate(parents_, parent_occlusion_indices_, true);
+    MEASURE("evaluation with " + lexical_cast<string>(parents_.size()) + " samples");
+
+    for(size_t i = 0; i < N; i++)
+        log_weights_[i] += family_loglikes_[i] - proposal_loglikes[i];
+
+
+    vector<float> sorted_weights = log_weights_;
+    hf::Sort(sorted_weights, 1);
+
+    for(int i = sorted_weights.size() - 1; i >= 0; i--)
+        sorted_weights[i] -= sorted_weights[0];
+
+    sorted_weights = hf::Apply<float, float>(sorted_weights, std::exp);
+
+    sorted_weights = hf::SetSum(sorted_weights, float(1));
+
+    cout << "weights " << endl;
+    hf::PrintVector(sorted_weights);
+
+
+
+    std::vector<State > new_states(N);
+    std::vector<double> new_state_times(N);
+    std::vector<float> new_loglikes(N);
+    std::vector<size_t> new_occlusion_indices(N);
+
+    hf::DiscreteSampler sampler(log_weights_); //TESTING
+
+    for(size_t i = 0; i < N; i++)
+    {
+        size_t index = sampler.Sample();
+        new_states[i] = parents_[index];
+        new_state_times[i] = parent_times_[index];
+        new_loglikes[i] = family_loglikes_[index]; // should we set this to 1?
+        new_occlusion_indices[i] = parent_occlusion_indices_[index];
+    }
+
+    log_weights_ = std::vector<float>(N, 0);
+    parents_    		= new_states;
+    parent_times_    = new_state_times;
+    family_loglikes_ = new_loglikes;
+    parent_occlusion_indices_ = new_occlusion_indices;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     state_distribution_.setDeltas(parents_); // not sure whether this is the right place
 }
@@ -378,27 +457,6 @@ void CoordinateFilter::Enchiladisima(
 
 
 
-
-
-
-void CoordinateFilter::Enchilada(
-        const Control control,
-        const double &observation_time,
-        const Measurement& observation,
-        const size_t &new_n_states)
-{
-    vector<size_t> sorted_multiplicities = parent_multiplicities_;
-    hf::SortDescend(sorted_multiplicities, sorted_multiplicities);
-    cout << "multiplicites: ";
-    hf::PrintVector(sorted_multiplicities);
-
-    PartialPropagate(control, observation_time);
-    PartialEvaluate(observation, observation_time);
-    PartialResample(control, observation_time, new_n_states);
-    UpdateOcclusions(observation, observation_time);
-
-    state_distribution_.setDeltas(parents_); // not sure whether this is the right place
-}
 
 
 
@@ -443,6 +501,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
     std::vector<double> new_state_times(state_count);
     std::vector<size_t> new_multiplicities(state_count);
     std::vector<float> new_loglikes(state_count);
+    std::vector<float> new_weights(state_count);
     std::vector<size_t> new_occlusion_indices(state_count);
 
     hf::DiscreteSampler sampler(family_loglikes_);
@@ -450,6 +509,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
     for(size_t i = 0; i < state_count; i++)
     {
         size_t index = sampler.Sample();
+        new_weights[i] = log_weights_[index];
         new_states[i] = parents_[index];
         new_state_times[i] = parent_times_[index];
         new_multiplicities[i] = parent_multiplicities_[index];
@@ -462,6 +522,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
     parent_multiplicities_ = new_multiplicities;
     family_loglikes_= new_loglikes;
     parent_occlusion_indices_ = new_occlusion_indices;
+    log_weights_ = new_weights;
 
 
 
@@ -572,6 +633,8 @@ void CoordinateFilter::set_states(const std::vector<State >& states,
     if(parent_times_.empty()) parent_times_ = std::vector<double>(parents_.size(), 0);
     if(parent_multiplicities_.empty()) parent_multiplicities_ = std::vector<size_t>(parents_.size(), 1);
     if(family_loglikes_.empty()) family_loglikes_ = std::vector<float>(parents_.size(), 0);
+    log_weights_ = std::vector<float>(parents_.size(), 0);
+
 
     // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     partial_noises_.clear();
