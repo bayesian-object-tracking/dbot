@@ -94,7 +94,7 @@ public:
                                 info_topic_("XTION/depth/camera_info"),
                                 measurements_filename_("measurements.bag"),
                                 ground_truth_filename_("ground_truth.txt"),
-                                admissible_delta_time_(0.0001) {}
+                                admissible_delta_time_(0.02) {}
     ~TrackingDataset() {}
 
     void addFrame(const sensor_msgs::Image::ConstPtr& image,
@@ -163,6 +163,8 @@ public:
         std::vector<std::string> topics;
         topics.push_back(image_topic_);
         topics.push_back(info_topic_);
+        topics.push_back("/" + image_topic_);
+        topics.push_back("/" + info_topic_);
         rosbag::View view(bag, rosbag::TopicQuery(topics));
 
         // Set up fake subscribers to capture images
@@ -177,14 +179,14 @@ public:
         // Load all messages into our stereo TrackingDataset
         BOOST_FOREACH(rosbag::MessageInstance const m, view)
         {
-            if (m.getTopic() == image_topic_ || ("/" + m.getTopic() == image_topic_))
+            if (m.getTopic() == image_topic_ || (m.getTopic() == "/" + image_topic_))
             {
                 sensor_msgs::Image::ConstPtr image = m.instantiate<sensor_msgs::Image>();
                 if (image != NULL)
                     image_subscriber.newMessage(image);
             }
 
-            if (m.getTopic() == info_topic_ || ("/" + m.getTopic() == info_topic_))
+            if (m.getTopic() == info_topic_ || (m.getTopic() == "/" + info_topic_))
             {
                 sensor_msgs::CameraInfo::ConstPtr info = m.instantiate<sensor_msgs::CameraInfo>();
                 if (info != NULL)
@@ -207,6 +209,10 @@ public:
                 temp(temp.rows()-1) = scalar;
                 state = temp;
             }
+
+            cout << "read state " << state.transpose() << endl;
+            cout << "read bagfile of size " << data_.size() << endl;
+            cout << "timestamp of first image is " << data_[0].image_->header.stamp << endl;
             file.close();
 
             // attach the state to the appropriate data frames

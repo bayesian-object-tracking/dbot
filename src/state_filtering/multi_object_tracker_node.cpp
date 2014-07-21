@@ -177,19 +177,25 @@ int main (int argc, char **argv)
         cout << "done initializing" << endl;
         TrackerInterface interface(tracker);
 
-        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::FilterAndStore, &interface);
         ros::spin();
     }
     // read from bagfile
     else
     {
         TrackingDataset TrackingDataset(source);
+        cout << "laoding bagfile " << endl;
         TrackingDataset.loAd();
+        cout << "done" << endl;
 
+        cout << "setting initial state " << endl;
+        cout << TrackingDataset.getGroundTruth(0).transpose() << endl;
+        cout << "done printing vector " << endl;
         FloatingBodySystem<-1> initial_state(object_names.size());
         initial_state.poses(TrackingDataset.getGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
         vector<VectorXd> initial_states(1, initial_state);
 
+        cout << "initializing filter " << endl;
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
         tracker->Initialize(initial_states, *TrackingDataset.getImage(0), TrackingDataset.getCameraMatrix(0), false);
