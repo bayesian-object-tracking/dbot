@@ -123,6 +123,10 @@ public:
 
         ri::ReadParameter("coordinate_sampling", coordinate_sampling_, node_handle_);
 
+        double max_kl_divergence;
+        ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
+
+
         if(coordinate_sampling_)
         {
             dependencies.resize(object_names_.size()*6);
@@ -244,7 +248,7 @@ public:
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(observation_model, process_model, dependencies));
+                (new filter::CoordinateFilter(observation_model, process_model, dependencies, max_kl_divergence));
 
 
         if(state_is_partial)
@@ -310,18 +314,24 @@ public:
         {
             cout << "CALLING ENCHILADISIMA" << endl;
 
-            filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
-                                   duration_,
-                                   image,
-                                   evaluation_count_,
-                                   factor_evaluation_count_);
+//            filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
+//                                   duration_,
+//                                   image,
+//                                   evaluation_count_,
+//                                   factor_evaluation_count_);
+            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+                                         duration_,
+                                         image);
         }
         else
         {
-            filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
-                               duration_,
-                               image,
-                               evaluation_count_/dependencies.size());
+//            filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
+//                               duration_,
+//                               image,
+//                               evaluation_count_/dependencies.size());
+            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+                                         duration_,
+                                         image);
         }
 
 
