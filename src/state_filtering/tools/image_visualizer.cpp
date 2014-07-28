@@ -222,16 +222,20 @@ void ImageVisualizer::add_points(
 	}
 }
 
-char ImageVisualizer::show_image(
-		const std::string &window_name,
-		const int &window_width, const int &window_height,
-		const int &delay) const
-{
-	cvNamedWindow(window_name.c_str(), CV_WINDOW_NORMAL);
+  char ImageVisualizer::show_image(
+				   const std::string &window_name,
+				   const int &window_width, const int &window_height,
+				   const int &delay) const
+  {
+    cvStartWindowThread();
+    cvNamedWindow(window_name.c_str(), CV_WINDOW_NORMAL);
     cvShowImage(window_name.c_str(), ((IplImage*)(image_)));
-	cvResizeWindow(window_name.c_str(), window_width, window_height);
-	return cvWaitKey(delay);
-}
+    cvResizeWindow(window_name.c_str(), window_width, window_height);
+    char out = cvWaitKey(delay);
+    cvDestroyWindow(window_name.c_str());
+    cvReleaseImage(((IplImage**)(&image_)));
+    return out;
+  }
 
 void ImageVisualizer::Cart2Index(
 		const Eigen::Vector3f &cart,

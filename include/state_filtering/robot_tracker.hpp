@@ -112,8 +112,8 @@ public:
         // convert camera matrix and image to desired format ----------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
 	// TODO: Fix with non-fake arm_rgbd node
-	Image image;
-        //Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to meters
+	//Image image;
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);/// 1000.; // convert to meters
 
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -170,7 +170,21 @@ public:
 												    robot_state));
 
 	// FOR DEBUGGING
+	std::cout << "Image rows and cols " << image.rows() << " " << image.cols() << std::endl;
+
 	robot_renderer->state(single_body_samples[0]);
+	std::vector<int> indices;
+	std::vector<float> depth;
+	robot_renderer->Render(camera_matrix, 
+			       image.rows(),
+			       image.cols(),
+			       indices,
+			       depth);
+	vis::ImageVisualizer image_viz(image.rows(),image.cols());
+	image_viz.set_image(image);
+	image_viz.add_points(indices, depth);
+	image_viz.show_image();
+
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
 	vis::CloudVisualizer cloud_vis;
 	std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();

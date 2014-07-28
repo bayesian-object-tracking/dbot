@@ -7,7 +7,7 @@
 use_gpu: false
 
 # filtering parameters ----------------------------------------------------------------------
-downsampling_factor: 8 #8
+downsampling_factor: 1 #8 #8
 initial_sample_count: 1 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 sample_count: 50 #the number of particles (1500)
