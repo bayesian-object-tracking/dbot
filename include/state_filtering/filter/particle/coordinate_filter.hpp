@@ -67,7 +67,8 @@ public:
 
     CoordinateFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
-                     const std::vector<std::vector<size_t> >& independent_blocks);
+                     const std::vector<std::vector<size_t> >& independent_blocks,
+                     const double& max_kl_divergence = 0);
 
     ~CoordinateFilter();
 
@@ -77,7 +78,7 @@ public:
                          const double& observation_time);
     void PartialResample(const Control& control,
                          const double& observation_time,
-                         const size_t &new_n_states);
+                         const size_t &evaluation_count);
     void UpdateOcclusions(const Measurement& observation,
                           const double& observation_time);
 
@@ -85,7 +86,19 @@ public:
     void Enchilada(const Control control,
                    const double &observation_time,
                    const Measurement& observation,
-                   const size_t &new_n_states);
+                   const size_t &evaluation_count);
+
+
+    void Enchiladisima(const Control control,
+                   const double &observation_time,
+                   const Measurement& observation,
+                   const size_t &evaluation_count,
+                   const size_t &factor_evaluation_count);
+
+
+    void Enchiladisimimisima(const Control control,
+                   const double &observation_time,
+                   const Measurement& observation);
 
 
     void Propagate(const Control control,
@@ -95,6 +108,10 @@ public:
     void Evaluate(const Measurement& observation,
                   const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
                   const bool& update_occlusions = false);
+
+
+    void UpdateWeights(std::vector<float> log_weight_diffs);
+
 
     void Resample(const int &new_state_count = -1);
 
@@ -130,10 +147,19 @@ private:
 
 
     // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    std::vector<State > parents_;
-    std::vector<double> parent_times_;
+    std::vector<State > particles_;
+    std::vector<double> particle_times_;
+    std::vector<size_t> occlusion_indices_;
+    std::vector<float>  log_weights_;
+
+    std::vector<Noise> noises_;
+    std::vector<State> propagated_particles_;
+    std::vector<float> loglikes_;
+
+
+
+
     std::vector<size_t> parent_multiplicities_;
-    std::vector<size_t> parent_occlusion_indices_;
 
     // partial propagate
     std::vector<std::vector<std::vector<Noise> > > partial_noises_;
@@ -152,6 +178,9 @@ private:
 
     // parameters ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     std::vector<std::vector<size_t> > independent_blocks_;
+
+
+    const double max_kl_divergence_;
 };
 
 }

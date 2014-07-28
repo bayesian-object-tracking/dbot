@@ -104,7 +104,7 @@ public:
     virtual void setDeltas(const Deltas& deltas, const Weights& weights)
     {
         deltas_ = deltas;
-        weights_ = weights;
+        weights_ = weights.normalized();
     }
 
     virtual void setDeltas(const Deltas& deltas)

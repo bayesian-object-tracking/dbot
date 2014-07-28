@@ -153,6 +153,8 @@ int main (int argc, char **argv)
     string depth_image_topic; ri::ReadParameter("depth_image_topic", depth_image_topic, node_handle);
     string camera_info_topic; ri::ReadParameter("camera_info_topic", camera_info_topic, node_handle);
     string source; ri::ReadParameter("source", source, node_handle);
+    vector<string> object_names; ri::ReadParameter("object_names", object_names, node_handle);
+
     int initial_sample_count; ri::ReadParameter("initial_sample_count", initial_sample_count, node_handle);
 
     // read from camera
@@ -175,19 +177,25 @@ int main (int argc, char **argv)
         cout << "done initializing" << endl;
         TrackerInterface interface(tracker);
 
-        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::Filter, &interface);
+        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::FilterAndStore, &interface);
         ros::spin();
     }
     // read from bagfile
     else
     {
         TrackingDataset TrackingDataset(source);
+        cout << "laoding bagfile " << endl;
         TrackingDataset.loAd();
+        cout << "done" << endl;
 
-        FloatingBodySystem<-1> initial_state(TrackingDataset.getGroundTruth(0).rows()/6);
-        initial_state.poses(TrackingDataset.getGroundTruth(0));
+        cout << "setting initial state " << endl;
+        cout << TrackingDataset.getGroundTruth(0).transpose() << endl;
+        cout << "done printing vector " << endl;
+        FloatingBodySystem<-1> initial_state(object_names.size());
+        initial_state.poses(TrackingDataset.getGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
         vector<VectorXd> initial_states(1, initial_state);
 
+        cout << "initializing filter " << endl;
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
         tracker->Initialize(initial_states, *TrackingDataset.getImage(0), TrackingDataset.getCameraMatrix(0), false);
@@ -197,7 +205,7 @@ int main (int argc, char **argv)
         ros::Publisher cloud_publisher = node_handle.advertise<pcl::PointCloud<pcl::PointXYZ> > ("/bagfile/depth/points", 0);
 
         cout << "processing TrackingDataset of size: " << TrackingDataset.sIze() << endl;
-        for(size_t i = 0; i < TrackingDataset.sIze(); i++)
+        for(size_t i = 0; i < TrackingDataset.sIze() && ros::ok(); i++)
         {
             interface.FilterAndStore(*TrackingDataset.getImage(i));
             image_publisher.publish(*TrackingDataset.getImage(i));

@@ -94,7 +94,9 @@ public:
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
-        ri::ReadParameter("sample_count", sample_count_, node_handle_);
+        ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
+        ri::ReadParameter("factor_evaluation_count", factor_evaluation_count_, node_handle_);
+
 
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
@@ -114,7 +116,36 @@ public:
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
 
-        vector<vector<size_t> > dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
+//        dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
+
+
+
+
+        ri::ReadParameter("coordinate_sampling", coordinate_sampling_, node_handle_);
+
+        double max_kl_divergence;
+        ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
+
+
+        if(coordinate_sampling_)
+        {
+            dependencies.resize(object_names_.size()*6);
+            for(size_t i = 0; i < dependencies.size(); i++)
+                dependencies[i] = vector<size_t>(1, i);
+        }
+        else
+        {
+            dependencies.resize(1);
+            dependencies[0].resize(object_names_.size()*6);
+
+            for(size_t i = 0; i < dependencies[0].size(); i++)
+                dependencies[0][i] = i;
+        }
+
+        cout << "depencies: " << endl;
+        hf::PrintVector(dependencies);
+
+
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
         double p_visible_init; ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
@@ -217,48 +248,48 @@ public:
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(observation_model, process_model, dependencies));
+                (new filter::CoordinateFilter(observation_model, process_model, dependencies, max_kl_divergence));
 
 
         if(state_is_partial)
         {
-        // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        FloatingBodySystem<> default_state(object_names_.size());
-        for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
-            default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
+            // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            FloatingBodySystem<> default_state(object_names_.size());
+            for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
+                default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
-        cout << "creating intiial stuff" << endl;
-        vector<VectorXd> multi_body_samples(initial_states.size());
-        for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
-            multi_body_samples[state_index] = default_state;
-
-        cout << "doing evaluations " << endl;
-        for(size_t body_index = 0; body_index < object_names_.size(); body_index++)
-        {
-            cout << "evalution of object " << object_names_[body_index] << endl;
+            cout << "creating intiial stuff" << endl;
+            vector<VectorXd> multi_body_samples(initial_states.size());
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
+                multi_body_samples[state_index] = default_state;
+
+            cout << "doing evaluations " << endl;
+            for(size_t body_index = 0; body_index < object_names_.size(); body_index++)
             {
-                FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
-                full_initial_state[body_index] = initial_states[state_index];
-                multi_body_samples[state_index] = full_initial_state;
+                cout << "evalution of object " << object_names_[body_index] << endl;
+                for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
+                {
+                    FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
+                    full_initial_state[body_index] = initial_states[state_index];
+                    multi_body_samples[state_index] = full_initial_state;
+                }
+                filter_->set_states(multi_body_samples);
+                filter_->Evaluate(image);
+                filter_->Resample(multi_body_samples.size());
+                filter_->get(multi_body_samples);
             }
+
+            // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            cout << "evaluating initial particles cpu ..." << endl;
             filter_->set_states(multi_body_samples);
             filter_->Evaluate(image);
-            filter_->Resample(multi_body_samples.size());
-            filter_->get(multi_body_samples);
-        }
-
-        // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        cout << "evaluating initial particles cpu ..." << endl;
-        filter_->set_states(multi_body_samples);
-        filter_->Evaluate(image);
-        filter_->Resample(sample_count_);
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_)); // FOR TESTING ONLY
         }
         else
         {
             filter_->set_states(initial_states);
             filter_->Evaluate(image);
-            filter_->Resample(sample_count_);
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));// FOR TESTING ONLY
         }
     }
 
@@ -279,10 +310,31 @@ public:
 
         // filter
         INIT_PROFILING;
-        filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
-                           duration_,
-                           image,
-                           sample_count_);
+        if(coordinate_sampling_)
+        {
+            cout << "CALLING ENCHILADISIMA" << endl;
+
+//            filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
+//                                   duration_,
+//                                   image,
+//                                   evaluation_count_,
+//                                   factor_evaluation_count_);
+            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+                                         duration_,
+                                         image);
+        }
+        else
+        {
+//            filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
+//                               duration_,
+//                               image,
+//                               evaluation_count_/dependencies.size());
+            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+                                         duration_,
+                                         image);
+        }
+
+
         MEASURE("-----------------> total time for filtering");
 
         previous_image_time_ = ros_image.header.stamp.toSec();
@@ -297,7 +349,7 @@ public:
                               i, 1, 0, 0);
         }
 
-        PRINT("sample count ") PRINT(sample_count_)
+        PRINT("sample count ") PRINT(evaluation_count_)
 
         return filter_->stateDistribution().empiricalMean();
     }
@@ -322,7 +374,12 @@ private:
     // parameters
     vector<string> object_names_;
     int downsampling_factor_;
-    int sample_count_;
+    int evaluation_count_;
+    int factor_evaluation_count_;
+
+    vector<vector<size_t> > dependencies;
+
+    bool coordinate_sampling_;
 };
 
 #endif
