@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <limits>
 
+#include <opencv2/highgui/highgui.hpp>
+
 using namespace std;
 using namespace Eigen;
 
@@ -204,8 +206,9 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 						// we find the intersection between the ray and the triangle --------------------------------------------
 						Vector3d line_vector = inv_camera_matrix * Vector3d(col, row, 1); // the depth is the z component
 						float depth = abs(offset/normal.dot(line_vector));
-						depth_image[row*n_cols + col] =
-								depth < depth_image[row*n_cols + col] ? depth : depth_image[row*n_cols + col];
+						//if(depth > 0.5)
+						  depth_image[row*n_cols + col] =
+						    depth < depth_image[row*n_cols + col] ? depth : depth_image[row*n_cols + col];
 					}
 			}
 		}
@@ -216,6 +219,12 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 	//	for(int i = 0; i < int(intersec_tindices.size()); i++)
 	//		depth[i] = depth_image[intersec_tindices[i]];
 
+    // DEBUG
+    // create and store an openCV image
+    cv::Mat tmp_scaled;
+    cv::Mat tmp_depth = cv::Mat(depth_image).reshape(1,480);
+    cv::convertScaleAbs(tmp_depth, tmp_scaled, 255.0f);
+    cv::imwrite("/tmp/depth.png", tmp_scaled);
 
 	// fill the depths into the depth vector -------------------------------
 	intersec_tindices.resize(n_rows*n_cols);
@@ -241,9 +250,10 @@ std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices
 
     for(int part_index = 0; part_index < int(vertices_.size()); part_index++)
 	{
+
         trans_vertices[part_index].resize(vertices_[part_index].size());
         for(int poin_tindex = 0; poin_tindex < int(vertices_[part_index].size()); poin_tindex++)
-            trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
+	  trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
 	}
 	return trans_vertices;
 }

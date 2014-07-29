@@ -110,6 +110,8 @@ void ImageVisualizer::set_image(
         min = min_value;
     }
 
+    //std::cout << "Min and Max of depth image " << max << " " << min << std::endl;
+
 	for(size_t i = 0; i < display_image.size(); i++)
 		display_image[i] = (display_image[i] - min) / (max-min) * 255.;
 
@@ -210,6 +212,8 @@ void ImageVisualizer::add_points(
 		max = colors[i] > max ? colors[i] : max;
 	}
 	if(min == max) min = 0;
+
+	std::cout << "Min and max of generated depth " << min << " " << max << std::endl;
 
 	for(int i = 0; i < int(point_indices.size()); i++)
 	{

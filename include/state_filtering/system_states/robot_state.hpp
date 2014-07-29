@@ -172,6 +172,7 @@ public:
   {
     return num_joints_;
   }
+
 private:
   unsigned num_bodies_;
   unsigned num_joints_;

@@ -234,7 +234,7 @@ set(state_filtering_sources
 
 
 ## state_filtering
-message("CATKING LIBRARIES" ${catkin_LIBRARIES})
+#message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
 add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)

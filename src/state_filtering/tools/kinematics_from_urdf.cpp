@@ -123,7 +123,7 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
       if(part_ptr->proper_)
 	{
 	  // if the link has an actual mesh file to read
-	  //std::cout << "link " << links[i]->name << " is descendant of " << tmp_link->name << std::endl;
+	  std::cout << "link " << links[i]->name << " is descendant of " << tmp_link->name << std::endl;
 	  part_meshes.push_back(part_ptr);
 	  // Produces an index map for the links
 	  part_mesh_map_.push_back(part_ptr->get_name());
@@ -183,13 +183,6 @@ void KinematicsFromURDF::ComputeLinkTransforms( )
 	    ROS_ERROR("TreeSolver returned an error for link %s", 
 		      seg_it->second.segment.getName().c_str());
 	  frame_map_[seg_it->second.segment.getName()] = cam_frame_ * frame;
-	  // DEBUG
-	  /*
-	  Eigen::VectorXd pos(3);
-	  std::string name = seg_it->second.segment.getName();
-	  pos << frame_map_[name].p.x(), frame_map_[name].p.y(),frame_map_[name].p.z(); 
-	  std::cout << "Frame " << name << std::endl << pos << std::endl;
-	  */
 	}
     }
 }
@@ -294,6 +287,11 @@ int KinematicsFromURDF::GetJointIndex(const std::string &name)
       if (joint_map_[i] == name)
 	return i;
     return -1;
+}
+
+std::string KinematicsFromURDF::GetLinkName(int idx)
+{
+  return part_mesh_map_[idx];
 }
 
 int KinematicsFromURDF::num_joints()

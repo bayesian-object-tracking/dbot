@@ -61,8 +61,10 @@ void CloudVisualizer::add_cloud(const pcl::PointCloud<pcl::PointXYZRGB> &point_c
 	point_clouds_.push_back(point_cloud);
 	poses_.push_back(H);
 
+	/*
 	if(point_clouds_.size() == 1)
 		set_origin_to_mean();
+	*/
 }
 void CloudVisualizer::add_cloud(const PointCloud<PointXYZ> &point_cloud,
                                 const Eigen::Matrix3f R,
@@ -236,6 +238,7 @@ void CloudVisualizer::show(bool loop)
 		pcl_visualizer_.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "point_cloud"+boost::lexical_cast<std::string>(i));
 	}
 	pcl_visualizer_.setBackgroundColor (1, 1, 1);
+	pcl_visualizer_.addCoordinateSystem();
 
 	for(unsigned int i = 0; i < lines_.size(); i += 2)
 	{
@@ -275,6 +278,7 @@ void CloudVisualizer::show(bool loop)
 	
 	// does not work for some reason, but at least the function returns
 	pcl_visualizer_.close();
+	sleep(1);
 	
 }
 

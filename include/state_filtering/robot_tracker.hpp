@@ -113,7 +113,7 @@ public:
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
 	// TODO: Fix with non-fake arm_rgbd node
 	//Image image;
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);/// 1000.; // convert to meters
+        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
 
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -153,8 +153,12 @@ public:
         vector<vector<vector<int> > > part_triangle_indices(part_meshes_.size());
         for(size_t i = 0; i < part_meshes_.size(); i++)
 	  {
-            part_vertices[i] = *(part_meshes_[i]->get_vertices());
-            part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
+	    //if(i>4 && i<35){
+	    if(i==35) {
+	      std::cout << "The single part added : " << part_meshes_[i]->get_name() << std::endl;
+	      part_vertices[i] = *(part_meshes_[i]->get_vertices());
+	      part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
+	    }
 	   }
         /// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -188,8 +192,10 @@ public:
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
 	vis::CloudVisualizer cloud_vis;
 	std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
-	for(; it!=vertices.end();++it)
+	for(; it!=vertices.end();++it){
+	  if(!it->empty())
 	  cloud_vis.add_cloud(*it);
+	}
 	cloud_vis.show();
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;

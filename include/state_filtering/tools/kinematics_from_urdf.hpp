@@ -89,6 +89,8 @@ public:
   // Get the number of joints
   int num_joints();
 
+  std::string GetLinkName(int idx);
+
 private:
   
   // compute the camera frame for the current joint angles

@@ -83,16 +83,14 @@ public:
 				   aiProcessPreset_TargetRealtime_Quality);
 	    numFaces_ = scene_->mMeshes[0]->mNumFaces;
 
-	    /*
-	      tf::Vector3 origin(link_->visual->origin.position.x, 
-	      link_->visual->origin.position.y, 
-	      link_->visual->origin.position.z);
-	      tf::Quaternion orientation(link_->visual->origin.rotation.x, 
-	      link_->visual->origin.rotation.y, 
-	      link_->visual->origin.rotation.z, 
-	      link_->visual->origin.rotation.w);
-	      original_transform_ = tf::Transform(orientation,origin);
-	    */
+	    original_transform_.linear() = Eigen::Quaterniond(link_->visual->origin.rotation.w,
+							      link_->visual->origin.rotation.x, 
+							      link_->visual->origin.rotation.y, 
+							      link_->visual->origin.rotation.z).toRotationMatrix(); 
+	    original_transform_.translation() = Eigen::Vector3d(link_->visual->origin.position.x, 
+								link_->visual->origin.position.y, 
+								link_->visual->origin.position.z);
+
 	    proper_=true;
 	  }
       }
@@ -109,7 +107,7 @@ public:
 	point(0) = mesh->mVertices[v].x;
 	point(1) = mesh->mVertices[v].y;
 	point(2) = mesh->mVertices[v].z;
-	vertices_->at(v) = point;
+	vertices_->at(v) = original_transform_ * point;
       }
     return vertices_;
   }
@@ -151,8 +149,8 @@ private:
   boost::shared_ptr<std::vector<Eigen::Vector3d> > vertices_;
   boost::shared_ptr<std::vector<std::vector<int> > > indices_;
 
-  //tf::Transform original_transform_;
-  //tf::Transform transform_;
+  Eigen::Affine3d original_transform_;
+
   std::string name_;
 
   std::string filename_;
