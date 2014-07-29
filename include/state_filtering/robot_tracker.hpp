@@ -154,7 +154,7 @@ public:
         for(size_t i = 0; i < part_meshes_.size(); i++)
 	  {
 	    //if(i>4 && i<35){
-	    if(i==35) {
+        if(i==35 || true) {
 	      std::cout << "The single part added : " << part_meshes_[i]->get_name() << std::endl;
 	      part_vertices[i] = *(part_meshes_[i]->get_vertices());
 	      part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
@@ -187,7 +187,6 @@ public:
 	vis::ImageVisualizer image_viz(image.rows(),image.cols());
 	image_viz.set_image(image);
 	image_viz.add_points(indices, depth);
-	image_viz.show_image();
 
 	std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
 	vis::CloudVisualizer cloud_vis;
@@ -196,7 +195,11 @@ public:
 	  if(!it->empty())
 	  cloud_vis.add_cloud(*it);
 	}
-	cloud_vis.show();
+
+    cloud_vis.show();
+    image_viz.show_image("enchilada ");
+
+
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
         if(!use_gpu)

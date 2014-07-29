@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/tools/rigid_body_renderer.hpp>
 #include <state_filtering/tools/macros.hpp>
+#include <state_filtering/tools/image_visualizer.hpp>
 
 #include <limits>
 
@@ -63,8 +64,8 @@ RigidBodyRenderer::RigidBodyRenderer(   const std::vector<std::vector<Eigen::Vec
     normals_.clear();
     for(size_t part_index = 0; part_index < indices_.size(); part_index++)
 	{
-        vector<Vector3d> par_tnormals(indices_[part_index].size());
-		for(int triangle_index = 0; triangle_index < int(par_tnormals.size()); triangle_index++)
+        vector<Vector3d> part_normals(indices_[part_index].size());
+        for(int triangle_index = 0; triangle_index < int(part_normals.size()); triangle_index++)
 		{
 			//compute the three cross products and make sure that they yield the same normal
 			vector<Vector3d> temp_normals(3);
@@ -75,14 +76,14 @@ RigidBodyRenderer::RigidBodyRenderer(   const std::vector<std::vector<Eigen::Vec
 			for(int vertex_index = 0; vertex_index < 3; vertex_index++)
 				if(!temp_normals[vertex_index].isApprox(temp_normals[(vertex_index+1)%3]))
 				{
-					cout << "error, par_tnormals are not equal, probably the triangle is degenerate."<< endl;
+                    cout << "error, part_normals are not equal, probably the triangle is degenerate."<< endl;
 					cout << "normal 1 " << endl << temp_normals[vertex_index] << endl;
 					cout << "normal 2 " << endl << temp_normals[(vertex_index+1)%3] << endl;
 					exit(-1);
 				}
-			par_tnormals[triangle_index] = temp_normals[0];
+            part_normals[triangle_index] = temp_normals[0];
 		}
-        normals_.push_back(par_tnormals);
+        normals_.push_back(part_normals);
 	}
 }
 
@@ -107,27 +108,22 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 	{
         image_vertices[part_index].resize(vertices_[part_index].size());
         trans_vertices[part_index].resize(vertices_[part_index].size());
-        for(int poin_tindex = 0; poin_tindex < int(vertices_[part_index].size()); poin_tindex++)
+        for(int point_index = 0; point_index < int(vertices_[part_index].size()); point_index++)
 		{
-            trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
-			image_vertices[part_index][poin_tindex] =
-					(camera_matrix * trans_vertices[part_index][poin_tindex]/trans_vertices[part_index][poin_tindex](2)).topRows(2);
+            trans_vertices[part_index][point_index] = R_[part_index] * vertices_[part_index][point_index] + t_[part_index];
+            image_vertices[part_index][point_index] =
+                    (camera_matrix * trans_vertices[part_index][point_index]/trans_vertices[part_index][point_index](2)).topRows(2);
 
 		}
 	}
 
 	// we find the intersections with the triangles and the depths ---------------------------------------------------
-	vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
+    vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
 	intersec_tindices.clear(); depth.clear();
     for(int part_index = 0; part_index < int(indices_.size()); part_index++)
 	{
         for(int triangle_index = 0; triangle_index < int(indices_[part_index].size()); triangle_index++)
 		{
-			//			// the problem is that we cannot always discard triangles with normals pointing in opposite direction
-			//			// because some of the triangles represent the inner ant the outer surface at the same time
-			//			if((_R[part_index] * _normals[part_index][triangle_index]).dot(Vector3d(0,0,1)) > 0)
-			//				continue;
-
 			vector<Vector2d> vertices(3);
 			Vector2d center(Vector2d::Zero());
 
@@ -136,6 +132,7 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 			int max_row = -numeric_limits<int>::max();
 			int min_col = numeric_limits<int>::max();
 			int max_col = -numeric_limits<int>::max();
+            bool behind_camera = false;
 			for(int i = 0; i < 3; i++)
 			{
                 vertices[i] = image_vertices[part_index][indices_[part_index][triangle_index][i]];
@@ -145,7 +142,14 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 				min_col =  ceil(float(vertices[i](0))) < min_col ?  ceil(float(vertices[i](0))) : min_col;
 				max_col = floor(float(vertices[i](0))) > max_col ? floor(float(vertices[i](0))) : max_col;
 
+                // how should this be handled properly? for now if some vertex in a triangle comes to lie behind camera
+                // we just discard that triangle.
+                if(trans_vertices[part_index][indices_[part_index][triangle_index][i]](2) < 0.001)
+                    behind_camera = true;
 			}
+            if(behind_camera)
+                continue;
+
 
 			// make sure all of them are inside of image -----------------------------------------------------------------
 			min_row = min_row >= 0 ? min_row : 0;
@@ -205,26 +209,14 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 						//						intersec_tindices.push_back(row*n_cols + col);
 						// we find the intersection between the ray and the triangle --------------------------------------------
 						Vector3d line_vector = inv_camera_matrix * Vector3d(col, row, 1); // the depth is the z component
-						float depth = abs(offset/normal.dot(line_vector));
+                        float depth = std::fabs(offset/normal.dot(line_vector));
 						//if(depth > 0.5)
 						  depth_image[row*n_cols + col] =
 						    depth < depth_image[row*n_cols + col] ? depth : depth_image[row*n_cols + col];
-					}
+                    }
 			}
 		}
 	}
-
-	//	// fill the depths into the depth vector -------------------------------
-	//	depth.resize(intersec_tindices.size());
-	//	for(int i = 0; i < int(intersec_tindices.size()); i++)
-	//		depth[i] = depth_image[intersec_tindices[i]];
-
-    // DEBUG
-    // create and store an openCV image
-    cv::Mat tmp_scaled;
-    cv::Mat tmp_depth = cv::Mat(depth_image).reshape(1,480);
-    cv::convertScaleAbs(tmp_depth, tmp_scaled, 255.0f);
-    cv::imwrite("/tmp/depth.png", tmp_scaled);
 
 	// fill the depths into the depth vector -------------------------------
 	intersec_tindices.resize(n_rows*n_cols);
@@ -252,8 +244,8 @@ std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices
 	{
 
         trans_vertices[part_index].resize(vertices_[part_index].size());
-        for(int poin_tindex = 0; poin_tindex < int(vertices_[part_index].size()); poin_tindex++)
-	  trans_vertices[part_index][poin_tindex] = R_[part_index] * vertices_[part_index][poin_tindex] + t_[part_index];
+        for(int point_index = 0; point_index < int(vertices_[part_index].size()); point_index++)
+      trans_vertices[part_index][point_index] = R_[part_index] * vertices_[part_index][point_index] + t_[part_index];
 	}
 	return trans_vertices;
 }
