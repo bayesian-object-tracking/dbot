@@ -72,170 +72,8 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
         cout << "the process and the measurement model do not have the same state size!!" << endl;
         exit(-1);
     }
-
-
-
 }
 CoordinateParticleFilter::~CoordinateParticleFilter() { }
-
-// create offspring
-void CoordinateParticleFilter::PartialPropagate(const Control& control,
-                                        const double& observation_time)
-{
-    INIT_PROFILING;
-    // we write to the following members ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    partial_noises_.resize(particles_.size());
-    partial_children_.resize(particles_.size());
-    partial_children_occlusion_indices_.resize(particles_.size());
-    zero_children_.resize(particles_.size());
-
-    for(size_t state_index = 0; state_index < particles_.size(); state_index++)
-    {
-        // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        process_model_->conditional(observation_time - particle_times_[state_index], particles_[state_index], control);
-        zero_children_[state_index] = process_model_->mapNormal(Noise::Zero(process_model_->sample_size()));
-
-        // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        partial_noises_[state_index].resize(independent_blocks_.size());
-        partial_children_[state_index].resize(independent_blocks_.size());
-        partial_children_occlusion_indices_[state_index].resize(independent_blocks_.size());
-        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
-        {
-            partial_noises_[state_index][block_index].resize(parent_multiplicities_[state_index]);
-            partial_children_[state_index][block_index].resize(parent_multiplicities_[state_index]);
-            partial_children_occlusion_indices_[state_index][block_index].resize(parent_multiplicities_[state_index]);
-            for(size_t mult_index = 0; mult_index < parent_multiplicities_[state_index]; mult_index++)
-            {
-                Noise partial_noise(Noise::Zero(process_model_->sample_size()));
-                for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
-                    partial_noise(independent_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
-
-                partial_noises_[state_index][block_index][mult_index] = partial_noise;
-                partial_children_[state_index][block_index][mult_index] = process_model_->mapNormal(partial_noise);
-                partial_children_occlusion_indices_[state_index][block_index][mult_index] = occlusion_indices_[state_index];
-            }
-        }
-    }
-    MEASURE("creating samples")
-}
-
-
-
-
-
-
-
-// evaluate offspring
-void CoordinateParticleFilter::PartialEvaluate(const Measurement& observation,
-                                       const double& observation_time)
-{
-    // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    measurement_model_->measurement(observation, observation_time);
-    hf::Structurer3D converter;
-    vector<size_t> flat_partial_children_occlusion_indices_ = converter.Flatten(partial_children_occlusion_indices_);
-
-    INIT_PROFILING;
-    partial_children_loglikes_ = converter.Deepen(
-                measurement_model_->Evaluate(converter.Flatten(partial_children_),
-                                             flat_partial_children_occlusion_indices_, false));
-    MEASURE("evaluation with " + lexical_cast<string>(flat_partial_children_occlusion_indices_.size()) + " samples");
-
-
-    vector<float> zero_loglikes = measurement_model_->Evaluate(zero_children_, occlusion_indices_, false);
-    MEASURE("evaluation with " + lexical_cast<string>(zero_children_.size()) + " samples");
-
-    // compute family_loglikes_ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    family_loglikes_.resize(particles_.size());
-    for(size_t state_index = 0; state_index < particles_.size(); state_index++)
-    {
-        family_loglikes_[state_index] =
-                (zero_loglikes[state_index] + log(parent_multiplicities_[state_index])) * (1.0 - float(independent_blocks_.size()));
-        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
-        {
-            hf::LogSumExp<float> block_loglike;
-            for(size_t mult_index = 0; mult_index < parent_multiplicities_[state_index]; mult_index++)
-                block_loglike.add_exponent(partial_children_loglikes_[state_index][block_index][mult_index]);
-            family_loglikes_[state_index] += block_loglike.Compute();
-        }
-    }
-    MEASURE("computing loglikes_")
-}
-
-void CoordinateParticleFilter::PartialResample(const Control& control,
-                                       const double& observation_time,
-                                       const size_t &new_n_states)
-{
-    // find the children counts per parent ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    INIT_PROFILING;
-    hf::DiscreteSampler sampler(family_loglikes_);
-    vector<size_t> children_counts(particles_.size(), 0);
-    for(size_t new_state_index = 0; new_state_index < new_n_states; new_state_index++)
-        children_counts[sampler.Sample()]++;
-
-    MEASURE("sampling children_counts");
-
-    // combine partial children into children ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    vector<State> children;
-    std::vector<double> children_times;
-    vector<size_t> children_multiplicities;
-    vector<size_t> children_occlusion_indices;
-    for(size_t state_index = 0; state_index < particles_.size(); state_index++)
-    {
-        if(children_counts[state_index] == 0) continue;
-        vector<vector<size_t> >	mult_indices(children_counts[state_index], vector<size_t>(independent_blocks_.size()));
-        for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
-        {
-            hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
-
-            int sample = sampler.Sample();
-            for(size_t child_index = 0; child_index < children_counts[state_index]; child_index++)
-                mult_indices[child_index][block_index] = sampler.Sample();
-        }
-        vector<size_t> child_multiplicities;
-        hf::SortAndCollapse(mult_indices, child_multiplicities);
-
-        process_model_->conditional(observation_time - particle_times_[state_index], particles_[state_index], control);
-        for(size_t child_index = 0; child_index < mult_indices.size(); child_index++)
-        {
-            VectorXd noise(VectorXd::Zero(process_model_->sample_size()));
-            for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
-                noise += partial_noises_[state_index][block_index][mult_indices[child_index][block_index]];
-
-            children.push_back(process_model_->mapNormal(noise));
-            children_times.push_back(observation_time);
-            children_multiplicities.push_back(child_multiplicities[child_index]);
-            children_occlusion_indices.push_back(occlusion_indices_[state_index]);
-        }
-    }
-    MEASURE("sampling children");
-
-    // children become new parents ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    particles_ = children;
-    particle_times_ = children_times;
-    parent_multiplicities_ = children_multiplicities;
-    occlusion_indices_ = children_occlusion_indices;
-    family_loglikes_ = vector<float>(particles_.size(), 0);
-
-    // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    partial_noises_.clear();
-    partial_children_.clear();
-    partial_children_occlusion_indices_.clear();
-    zero_children_.clear();
-    partial_children_loglikes_.clear();
-}
-
-
-void CoordinateParticleFilter::UpdateOcclusions(const Measurement& observation,
-                                        const double& observation_time)
-{
-    measurement_model_->measurement(observation, observation_time);
-    INIT_PROFILING;
-    measurement_model_->Evaluate(particles_, occlusion_indices_, true);
-    MEASURE("evaluation with " + lexical_cast<string>(particles_.size()) + " samples")
-
-}
-
-
 
 
 
@@ -246,235 +84,9 @@ void CoordinateParticleFilter::Enchilada(
         const Measurement& observation,
         const size_t &new_n_states)
 {
-    vector<size_t> sorted_multiplicities = parent_multiplicities_;
-    hf::SortDescend(sorted_multiplicities, sorted_multiplicities);
-    cout << "multiplicites: ";
-    hf::PrintVector(sorted_multiplicities);
-
-    PartialPropagate(control, observation_time);
-    PartialEvaluate(observation, observation_time);
-    PartialResample(control, observation_time, new_n_states);
-    UpdateOcclusions(observation, observation_time);
-
-    state_distribution_.setDeltas(particles_); // not sure whether this is the right place
+    cout << "DONT USE THIS FUNCTION ANYMORE!!" <<  endl;
+    exit(-1);
 }
-
-
-
-
-
-
-void CoordinateParticleFilter::Enchiladisima(const Control control,
-        const double &observation_time,
-        const Measurement& observation, const size_t &evaluation_count, const size_t &factor_evaluation_count)
-{
-    size_t M = factor_evaluation_count;
-    size_t D = independent_blocks_.size();
-    size_t N = evaluation_count / (M*D);
-
-    cout << "number of samples per factor M = " << M  << endl
-         << "number of factors D = " << D << endl
-         << "number of particles N = " << N << endl
-         << "total number of evaluations M*D*N = " << N*D*M << endl;
-
-
-    if(particles_.size() != N || family_loglikes_.size() != N ||
-            particle_times_.size() != N || occlusion_indices_.size() != N||
-            log_weights_.size() != N)
-    {
-        cout << "parents_.size() = " << particles_.size() << endl;
-        cout << "family_loglikes_.size () = " << family_loglikes_.size() << endl;
-        cout << "parent_times_.size () = " << particle_times_.size() << endl;
-        cout << "parent_occlusion_indices_.size () = " << occlusion_indices_.size() << endl;
-        cout << "log_weights_.size () = " << log_weights_.size() << endl;
-
-
-
-        cout << "N " << N << endl;
-        cout << "D " << D << endl;
-        exit(-1);
-    }
-
-
-    INIT_PROFILING;
-    // we write to the following members ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    partial_noises_.resize(N);
-    partial_children_.resize(N);
-    partial_children_occlusion_indices_.resize(N);
-
-
-    for(size_t state_index = 0; state_index < N; state_index++)
-    {
-        // propagation with zero noise is required for normalization ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        process_model_->conditional(observation_time - particle_times_[state_index], particles_[state_index], control);
-
-        // fill the partial noises and resulting states --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        partial_noises_[state_index].resize(D);
-        partial_children_[state_index].resize(D);
-        partial_children_occlusion_indices_[state_index].resize(D);
-        for(size_t block_index = 0; block_index < D; block_index++)
-        {
-            partial_noises_[state_index][block_index].resize(M);
-            partial_children_[state_index][block_index].resize(M);
-            partial_children_occlusion_indices_[state_index][block_index].resize(M);
-            for(size_t m = 0; m < M; m++)
-            {
-                Noise partial_noise(Noise::Zero(process_model_->sample_size()));
-                for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
-                    partial_noise(independent_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
-
-                partial_noises_[state_index][block_index][m] = partial_noise;
-                partial_children_[state_index][block_index][m] = process_model_->mapNormal(partial_noise);
-                partial_children_occlusion_indices_[state_index][block_index][m] = occlusion_indices_[state_index];
-            }
-        }
-    }
-    MEASURE("creating samples");
-
-
-
-
-
-
-    // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    measurement_model_->measurement(observation, observation_time);
-    hf::Structurer3D converter;
-    vector<size_t> flat_partial_children_occlusion_indices_ = converter.Flatten(partial_children_occlusion_indices_);
-
-    RESET;
-    partial_children_loglikes_ = converter.Deepen(
-                measurement_model_->Evaluate(converter.Flatten(partial_children_),
-                                             flat_partial_children_occlusion_indices_, false));
-    MEASURE("evaluation with " + lexical_cast<string>(flat_partial_children_occlusion_indices_.size()) + " samples");
-
-
-
-
-
-    std::vector<float> proposal_loglikes(N);
-
-    // propagate the shizzle
-    for(size_t state_index = 0; state_index < particles_.size(); state_index++)
-    {
-        Noise noise(Noise::Zero(process_model_->sample_size()));
-        proposal_loglikes[state_index] = -float(D-1) * family_loglikes_[state_index];
-        for(size_t block_index = 0; block_index < D; block_index++)
-        {
-            hf::DiscreteSampler sampler(partial_children_loglikes_[state_index][block_index]);
-            size_t sample = sampler.Sample();
-
-            noise += partial_noises_[state_index][block_index][sample];
-            proposal_loglikes[state_index] += partial_children_loglikes_[state_index][block_index][sample];
-        }
-
-        process_model_->conditional(observation_time - particle_times_[state_index], particles_[state_index], control);
-        particles_[state_index] = process_model_->mapNormal(noise);
-        particle_times_[state_index] = observation_time;
-    }
-
-    // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    partial_noises_.clear();
-    partial_children_.clear();
-    partial_children_occlusion_indices_.clear();
-    partial_children_loglikes_.clear();
-
-
-
-    RESET;
-    family_loglikes_ = measurement_model_->Evaluate(particles_, occlusion_indices_, true);
-    MEASURE("evaluation with " + lexical_cast<string>(particles_.size()) + " samples");
-
-    for(size_t i = 0; i < N; i++)
-        log_weights_[i] += family_loglikes_[i] - proposal_loglikes[i];
-
-
-    vector<float> sorted_weights = log_weights_;
-    hf::Sort(sorted_weights, 1);
-
-    for(int i = sorted_weights.size() - 1; i >= 0; i--)
-        sorted_weights[i] -= sorted_weights[0];
-
-    sorted_weights = hf::Apply<float, float>(sorted_weights, std::exp);
-
-    sorted_weights = hf::SetSum(sorted_weights, float(1));
-
-    cout << "weights " << endl;
-    hf::PrintVector(sorted_weights);
-
-
-
-    std::vector<State > new_states(N);
-    std::vector<double> new_state_times(N);
-    std::vector<float> new_loglikes(N);
-    std::vector<size_t> new_occlusion_indices(N);
-
-    hf::DiscreteSampler sampler(log_weights_); //TESTING
-
-    for(size_t i = 0; i < N; i++)
-    {
-        size_t index = sampler.Sample();
-        new_states[i] = particles_[index];
-        new_state_times[i] = particle_times_[index];
-        new_loglikes[i] = family_loglikes_[index]; // should we set this to 1?
-        new_occlusion_indices[i] = occlusion_indices_[index];
-    }
-
-    log_weights_ = std::vector<float>(N, 0);
-    particles_    		= new_states;
-    particle_times_    = new_state_times;
-    family_loglikes_ = new_loglikes;
-    occlusion_indices_ = new_occlusion_indices;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    state_distribution_.setDeltas(particles_); // not sure whether this is the right place
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -560,9 +172,9 @@ void CoordinateParticleFilter::UpdateWeights(std::vector<float> log_weight_diffs
 
 
 
-void CoordinateParticleFilter::Enchiladisimimisima( const Control control,
-                                            const double &observation_time,
-                                            const Measurement& observation)
+void CoordinateParticleFilter::Filter( const Control control,
+                                       const double &observation_time,
+                                       const Measurement& observation)
 {
     INIT_PROFILING;
     measurement_model_->measurement(observation, observation_time);
@@ -617,31 +229,18 @@ void CoordinateParticleFilter::Enchiladisimimisima( const Control control,
 
 void CoordinateParticleFilter::set_states(const std::vector<State >& states,
                                   const std::vector<double>& state_times,
-                                  const std::vector<size_t>& multiplicities,
                                   const std::vector<float> &loglikes)
 {
     // we copy the new states ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     particles_ = states;
     particle_times_ = state_times;
-    parent_multiplicities_ = multiplicities;
     occlusion_indices_ = vector<size_t>(particles_.size(), 0); measurement_model_->set_occlusions();
     family_loglikes_ = loglikes;
 
     // if some arguments have not been passed we set to default values ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     if(particle_times_.empty()) particle_times_ = std::vector<double>(particles_.size(), 0);
-    if(parent_multiplicities_.empty()) parent_multiplicities_ = std::vector<size_t>(particles_.size(), 1);
     if(family_loglikes_.empty()) family_loglikes_ = std::vector<float>(particles_.size(), 0);
     log_weights_ = std::vector<float>(particles_.size(), 0);
-
-
-    // new parents have no children yet ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    partial_noises_.clear();
-    partial_children_.clear();
-    partial_children_occlusion_indices_.clear();
-    zero_children_.clear();
-    partial_children_loglikes_.clear();
-
-
 }
 
 
@@ -719,7 +318,6 @@ void CoordinateParticleFilter::Resample(const int &new_state_count)
     // todo we are not taking multiplicity into account
     std::vector<State > new_states(state_count);
     std::vector<double> new_state_times(state_count);
-    std::vector<size_t> new_multiplicities(state_count);
     std::vector<float> new_loglikes(state_count);
     std::vector<float> new_weights(state_count);
     std::vector<size_t> new_occlusion_indices(state_count);
@@ -732,14 +330,12 @@ void CoordinateParticleFilter::Resample(const int &new_state_count)
         new_weights[i] = log_weights_[index];
         new_states[i] = particles_[index];
         new_state_times[i] = particle_times_[index];
-        new_multiplicities[i] = parent_multiplicities_[index];
         new_loglikes[i] = family_loglikes_[index]; // should we set this to 1?
         new_occlusion_indices[i] = occlusion_indices_[index];
     }
 
     particles_    		= new_states;
     particle_times_    = new_state_times;
-    parent_multiplicities_ = new_multiplicities;
     family_loglikes_= new_loglikes;
     occlusion_indices_ = new_occlusion_indices;
     log_weights_ = new_weights;
@@ -750,39 +346,12 @@ void CoordinateParticleFilter::Resample(const int &new_state_count)
     // TODO: all of this is disgusting. i have to make sure that there is a consistent
     // representation of the hyperstate at all times!
     CoordinateParticleFilter::StateDistribution::Weights weights(particles_.size());
-    for(size_t i = 0; i < particles_.size(); i++)
-        weights(i) = parent_multiplicities_[i];
-    weights /= weights.sum();
+//    for(size_t i = 0; i < particles_.size(); i++)
+//        weights(i) = parent_multiplicities_[i];
+//    weights /= weights.sum();
 
     state_distribution_.setDeltas(particles_, weights);
 }
-
-
-void CoordinateParticleFilter::Sort()
-{
-    vector<int> indices = hf::SortDescend(family_loglikes_);
-
-    std::vector<State > sorted_states(indices.size());
-    std::vector<double> sorted_state_times(indices.size());
-    std::vector<size_t> sorted_multiplicities(indices.size());
-    std::vector<float> sorted_loglikes(indices.size());
-    std::vector<size_t> sorted_occlusion_indices(indices.size());
-    for(size_t i = 0; i < indices.size(); i++)
-    {
-        sorted_states[i] = particles_[indices[i]];
-        sorted_state_times[i] = particle_times_[indices[i]];
-        sorted_multiplicities[i] = parent_multiplicities_[indices[i]];
-        sorted_loglikes[i] = family_loglikes_[indices[i]]; // should we set this to 1?
-        sorted_occlusion_indices[i] = occlusion_indices_[indices[i]];
-    }
-
-    particles_    		= sorted_states;
-    particle_times_    = sorted_state_times;
-    parent_multiplicities_ = sorted_multiplicities;
-    family_loglikes_= sorted_loglikes;
-    occlusion_indices_ = sorted_occlusion_indices;
-}
-
 
 
 
@@ -813,10 +382,6 @@ void CoordinateParticleFilter::get(std::vector<State >& states) const
 void CoordinateParticleFilter::get(std::vector<double>& state_times) const
 {
     state_times = particle_times_;
-}
-void CoordinateParticleFilter::get(std::vector<size_t>& multiplicities) const
-{
-    multiplicities = parent_multiplicities_;
 }
 void CoordinateParticleFilter::get(std::vector<float>& loglikes) const
 {

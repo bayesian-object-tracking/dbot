@@ -72,17 +72,6 @@ public:
 
     ~CoordinateParticleFilter();
 
-    void PartialPropagate(const Control& control,
-                          const double& observation_time);
-    void PartialEvaluate(const Measurement& observation,
-                         const double& observation_time);
-    void PartialResample(const Control& control,
-                         const double& observation_time,
-                         const size_t &evaluation_count);
-    void UpdateOcclusions(const Measurement& observation,
-                          const double& observation_time);
-
-
     void Enchilada(const Control control,
                    const double &observation_time,
                    const Measurement& observation,
@@ -96,7 +85,7 @@ public:
                    const size_t &factor_evaluation_count);
 
 
-    void Enchiladisimimisima(const Control control,
+    void Filter(const Control control,
                    const double &observation_time,
                    const Measurement& observation);
 
@@ -115,8 +104,6 @@ public:
 
     void Resample(const int &new_state_count = -1);
 
-    void Sort();
-
     size_t control_size();
 
     // set and get fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -124,7 +111,6 @@ public:
     void get(ProcessModelPtr& process_model) const;
     void get(std::vector<State >& states) const;
     void get(std::vector<double>& state_times) const;
-    void get(std::vector<size_t>& multiplicities) const;
     void get(std::vector<float>& loglikes) const;
     const State& get_state(size_t index) const;
     const std::vector<float> get_occlusions(size_t index) const;
@@ -133,7 +119,6 @@ public:
 
     void set_states(const std::vector<State >& states,
                     const std::vector<double>& state_times = std::vector<double>(),
-                    const std::vector<size_t>& multiplicities = std::vector<size_t>(),
                     const std::vector<float>& loglikes = std::vector<float>());
     void set_independence(const std::vector<std::vector<size_t> >& independent_blocks);
     void set(const MeasurementModelPtr& observation_model);
@@ -158,14 +143,6 @@ private:
 
 
 
-
-    std::vector<size_t> parent_multiplicities_;
-
-    // partial propagate
-    std::vector<std::vector<std::vector<Noise> > > partial_noises_;
-    std::vector<std::vector<std::vector<State> > > partial_children_;
-    std::vector<std::vector<std::vector<size_t> > > partial_children_occlusion_indices_;
-    std::vector<State > zero_children_;
 
     // partial evaluate
     std::vector< std::vector< std::vector <float> > > partial_children_loglikes_;

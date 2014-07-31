@@ -317,7 +317,7 @@ public:
 //                                   image,
 //                                   evaluation_count_,
 //                                   factor_evaluation_count_);
-            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+            filter_->Filter(VectorXd::Zero(object_names_.size()*6),
                                          duration_,
                                          image);
         }
@@ -327,7 +327,7 @@ public:
 //                               duration_,
 //                               image,
 //                               evaluation_count_/dependencies.size());
-            filter_->Enchiladisimimisima(VectorXd::Zero(object_names_.size()*6),
+            filter_->Filter(VectorXd::Zero(object_names_.size()*6),
                                          duration_,
                                          image);
         }
