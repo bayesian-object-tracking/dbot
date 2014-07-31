@@ -173,7 +173,9 @@ public:
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
+	image_viz.show_image("enchilada ");
 
+	/*
         std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
         vis::CloudVisualizer cloud_vis;
         std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
@@ -183,8 +185,7 @@ public:
         }
 
         cloud_vis.show();
-        image_viz.show_image("enchilada ");
-
+	*/
 
 
         boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;

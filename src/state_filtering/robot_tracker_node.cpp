@@ -46,6 +46,8 @@ class RobotTrackerNode
 {
   ros::NodeHandle nh_;
   ros::NodeHandle priv_nh_;
+
+  RobotTracker robot_tracker_;
   
   string depth_image_topic_;
   string camera_info_topic_;
@@ -107,14 +109,15 @@ public:
       initial_states = urdf_kinematics->GetInitialJoints(joint_state_copy_);
 
     // intialize the filter
-    RobotTracker robot_tracker;
-    robot_tracker.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);
+    robot_tracker_.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);
     cout << "done initializing" << endl;
+   
     
     subscriber_ = nh_.subscribe(depth_image_topic_, 
 			       1, 
 			       &RobotTracker::Filter, 
-			       &robot_tracker);
+			       &robot_tracker_);
+    
   }
   
   void depthImageCallback(const sensor_msgs::Image::ConstPtr& msg)
