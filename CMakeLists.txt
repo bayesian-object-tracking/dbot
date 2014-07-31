@@ -4,7 +4,7 @@ project(state_filtering)
 set(CMAKE_BUILD_TYPE Release)
 add_definitions( -DPROFILING_ON=1 ) #print profiling output
 
-find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters)
+find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters robot_state_pub)
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -104,6 +104,7 @@ catkin_package(
     orocos_kdl
     kdl_parser
     message_filters
+    robot_state_pub
   DEPENDS 
     OpenCV 
     eigen 
@@ -113,7 +114,8 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-include_directories(include)
+include_directories(include ${catkin_INCLUDE_DIRS} )
+#include_directories(${catkin_INCLUDE_DIRS})
 
 file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
@@ -157,6 +159,8 @@ target_link_libraries(cpu_multi_object_tracker
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
     yaml-cpp)
+
+set(CUDA_FOUND False)
 
 if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")

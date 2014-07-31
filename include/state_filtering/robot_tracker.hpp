@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl-1.6/pcl/point_types.h>
 
 // for visualizing the estimated robot state
-#include <robot_state_publisher/robot_state_publisher.h>
+#include <robot_state_pub/robot_state_publisher.h>
 
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
@@ -97,7 +97,8 @@ public:
     RobotTracker():
         node_handle_("~"),
         is_first_iteration_(true),
-        duration_(0)
+        duration_(0),
+	tf_prefix_("MEAN")
     {
         //ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
@@ -141,8 +142,8 @@ public:
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
 	// initialize the robot state publisher
-	robot_state_publisher_ = boost::shared_ptr<robot_state_publisher::RobotStatePublisher>
-	  (new robot_state_publisher::RobotStatePublisher(urdf_kinematics->GetTree()));
+	robot_state_publisher_ = boost::shared_ptr<robot_state_pub::RobotStatePublisher>
+	  (new robot_state_pub::RobotStatePublisher(urdf_kinematics->GetTree()));
 
         vector<vector<size_t> > dependencies;
         urdf_kinematics->GetDependencies(dependencies);
@@ -355,8 +356,8 @@ public:
         RobotState<> mean = filter_->stateDistribution().empiricalMean();
 	std::map<std::string, double> joint_positions;
 	mean.GetJointState(joint_positions);
-	robot_state_publisher_->publishTransforms(joint_positions, ros_image.header.stamp, "MEAN");
-	robot_state_publisher_->publishFixedTransforms();
+	robot_state_publisher_->publishTransforms(joint_positions, ros_image.header.stamp, tf_prefix_);
+	robot_state_publisher_->publishFixedTransforms(tf_prefix_);
 	/*
 	// publish moving joints
 	void publishTransforms(const std::map<std::string, double>& joint_positions,
@@ -384,22 +385,21 @@ public:
 private:  
     double duration_;
 
-
-
     boost::mutex mutex_;
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
   boost::shared_ptr<FilterType> filter_;
   
-  boost::shared_ptr<robot_state_publisher::RobotStatePublisher> robot_state_publisher_;
+  boost::shared_ptr<robot_state_pub::RobotStatePublisher> robot_state_publisher_;
     
 
     bool is_first_iteration_;
     double previous_time_;
 
+    std::string tf_prefix_;
+
     // parameters
-    //vector<string> object_names_;
     int downsampling_factor_;
     int sample_count_;
 };
