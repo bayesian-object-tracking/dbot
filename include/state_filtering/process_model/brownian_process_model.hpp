@@ -51,8 +51,8 @@
 #include <state_filtering/tools/helper_functions.hpp>
 #include <state_filtering/system_states/floating_body_system.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
-#include <state_filtering/distribution/implementations/damped_brownian_motion.hpp>
-#include <state_filtering/distribution/implementations/integrated_damped_brownian_motion.hpp>
+#include <state_filtering/process_model/damped_brownian_motion.hpp>
+#include <state_filtering/process_model/integrated_damped_brownian_motion.hpp>
 
 namespace filter
 {
@@ -93,33 +93,33 @@ class BrownianProcessModel:
 public:
     typedef internals::BrownianProcessModelTypes<Scalar_, IS_DYNAMIC> Types;
 
-    typedef typename Types::Base            Base;
-    typedef typename Base::Scalar           Scalar;
-    typedef typename Base::Variable         Variable;
-    typedef typename Base::Sample           Sample;
-    typedef typename Base::Control          Control;
+    typedef typename Types::Base            BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VectorType         VectorType;
+    typedef typename BaseType::Sample           Sample;
+    typedef typename BaseType::Control          Control;
 
-    typedef typename Eigen::Quaternion<Scalar>      Quaternion;
+    typedef typename Eigen::Quaternion<ScalarType>      Quaternion;
 
 
     typedef FloatingBodySystem<1> State;
-    typedef IntegratedDampedBrownianMotion<Scalar, 3> AccelerationDistribution;
-    typedef DampedBrownianMotion<Scalar, 3> VelocityDistribution;
+    typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
+    typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
 
-    using Base::conditional;
+    using BaseType::conditional;
 
 public:
     ~BrownianProcessModel() { }
 
-    virtual Variable mapNormal(const Sample& randoms) const
+    virtual VectorType MapNormal(const Sample& randoms) const
     {
         State state;
-        state.position() = state_.position() + delta_position_.mapNormal(randoms.topRows(3));
+        state.position() = state_.position() + delta_position_.MapNormal(randoms.topRows(3));
         Quaternion updated_quaternion(state_.quaternion().coeffs()
-                                    + quaternion_map_ * delta_orientation_.mapNormal(randoms.template bottomRows(3)));
+                                    + quaternion_map_ * delta_orientation_.MapNormal(randoms.template bottomRows(3)));
         state.quaternion(updated_quaternion.normalized());
-        state.linear_velocity() = linear_velocity_.mapNormal(randoms.topRows(3));
-        state.angular_velocity() = angular_velocity_.mapNormal(randoms.bottomRows(3));
+        state.linear_velocity() = linear_velocity_.MapNormal(randoms.topRows(3));
+        state.angular_velocity() = angular_velocity_.MapNormal(randoms.bottomRows(3));
 
         // transform to external coordinate system
         state.linear_velocity() -= state.angular_velocity().cross(state.position());
@@ -129,7 +129,7 @@ public:
     }
 
     virtual void conditional(const double& delta_time,
-                              const Variable& state,
+                              const VectorType& state,
                               const Control& control)
     {
         state_ = state;
@@ -158,7 +158,7 @@ public:
     }
 
     virtual void parameters(
-                const Eigen::Matrix<Scalar, 3, 1>& rotation_center,
+                const Eigen::Matrix<ScalarType, 3, 1>& rotation_center,
                 const double& damping,
                 const typename AccelerationDistribution::CovarianceType& linear_acceleration_covariance,
                 const typename VelocityDistribution::Covariance& angular_acceleration_covariance)
@@ -175,7 +175,7 @@ public:
     {
         return Types::VARIABLE_SIZE;
     }
-    virtual int sample_size() const
+    virtual int Dimension() const
     {
         return Types::SAMPLE_SIZE;
     }
@@ -187,10 +187,10 @@ public:
 private:
     // conditionals
     State state_;
-    Eigen::Matrix<Scalar, 4, 3> quaternion_map_;
+    Eigen::Matrix<ScalarType, 4, 3> quaternion_map_;
 
     // parameters
-    Eigen::Matrix<Scalar, 3, 1> rotation_center_;
+    Eigen::Matrix<ScalarType, 3, 1> rotation_center_;
 
     // distributions
     AccelerationDistribution delta_position_;

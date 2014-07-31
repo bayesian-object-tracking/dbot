@@ -78,27 +78,22 @@ struct Invalidate<true>
 };
 }
 
-template <typename Scalar_, int VARIABLE_SIZE>
+
+
+
+
+template <typename ScalarType_, typename VectorType_>
 class Distribution
 {
 public:    
-    typedef Scalar_ Scalar;
-    typedef Eigen::Matrix<Scalar, VARIABLE_SIZE, 1> Variable;// todo: we should also accept matrices (not just vectors) as measurements
+    typedef ScalarType_ ScalarType;
+    typedef VectorType_ VectorType;
 
-
-    /**
-     * @brief Overridable virtual destructor
-     */
     virtual ~Distribution() { }
-
-    /**
-     * @brief Returns current variable size
-     *
-     * @return variable size for dynamic and fixed size (dimensional) distributions
-     */
-    virtual int variable_size() const = 0;
 };
 
-}
 
+
+
+}
 #endif

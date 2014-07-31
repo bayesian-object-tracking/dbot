@@ -320,7 +320,7 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
-        RobotState<> mean = filter_->stateDistribution().empiricalMean();
+        RobotState<> mean = filter_->stateDistribution().EmpiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";

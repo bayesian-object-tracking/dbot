@@ -52,20 +52,19 @@
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class MomentsEstimable:
-    public Distribution<ScalarType_, SIZE>
+template <typename ScalarType_, typename VectorType_, typename OperatorType_>
+class MomentsEstimable: public Distribution<ScalarType_, VectorType_>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE>         BaseType;
-    typedef typename BaseType::Scalar           Scalar;
-    typedef typename BaseType::Variable         Variable;
-    typedef Eigen::Matrix<ScalarType_, SIZE, SIZE>  CovarianceType;
+    typedef Distribution<ScalarType_, VectorType_>  BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VectorType           VectorType;
+    typedef OperatorType_                           OperatorType;
 
     virtual ~MomentsEstimable() { }
 
-    virtual Variable empiricalMean() = 0;
-    virtual CovarianceType empiricalCovariance() = 0;
+    virtual VectorType   EmpiricalMean() = 0;
+    virtual OperatorType EmpiricalCovariance() = 0;
 };
 
 }

@@ -53,11 +53,11 @@ class OcclusionProcessModel: public OcclusionProcessModelTypes::Base
 {
 public:
     typedef OcclusionProcessModelTypes Types;
-    typedef Types::Base Base;
-    typedef Base::Scalar Scalar;
-    typedef Base::Variable Variable;
-    typedef Base::Control Control;
-    typedef Base::Sample Sample;
+    typedef Types::Base BaseType;
+    typedef BaseType::ScalarType ScalarType;
+    typedef BaseType::VectorType VectorType;
+    typedef BaseType::Control Control;
+    typedef BaseType::Sample Sample;
 
 
     enum
@@ -69,8 +69,8 @@ public:
 
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
-    OcclusionProcessModel(Scalar p_occluded_visible,
-                          Scalar p_occluded_occluded)
+    OcclusionProcessModel(ScalarType p_occluded_visible,
+                          ScalarType p_occluded_occluded)
         : p_occluded_visible_(p_occluded_visible),
           p_occluded_occluded_(p_occluded_occluded),
           c_(p_occluded_occluded_ - p_occluded_visible_),
@@ -79,25 +79,25 @@ public:
     virtual ~OcclusionProcessModel() {}
 
 
-    virtual Scalar Propagate(Scalar occlusion_probability, Scalar delta_time /*in s*/)
+    virtual ScalarType Propagate(ScalarType occlusion_probability, ScalarType delta_time /*in s*/)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = occlusion_probability;
-        return mapNormal()(0);
+        return MapNormal()(0);
     }
 
 
     virtual void conditional(const double& delta_time,
-                              const Variable& state,
+                              const VectorType& state,
                               const Control& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
     }
 
-    virtual Variable mapNormal() const
+    virtual VectorType MapNormal() const
     {
-        Variable state_vector;
+        VectorType state_vector;
 
         if(isnan(delta_time_))
             state_vector(0) =  occlusion_probability_;
@@ -110,9 +110,9 @@ public:
     }
 
 
-    virtual Variable mapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const Sample& sample) const
     {
-        return mapNormal();
+        return MapNormal();
     }
 
     virtual int variable_size() const
@@ -123,16 +123,16 @@ public:
     {
         return CONTROL_SIZE;
     }
-    virtual int sample_size() const
+    virtual int Dimension() const
     {
         return SAMPLE_SIZE;
     }
 
 private:
     // conditionals
-    Scalar occlusion_probability_, delta_time_;
+    ScalarType occlusion_probability_, delta_time_;
     // parameters
-    Scalar p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
+    ScalarType p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
 
 };
 

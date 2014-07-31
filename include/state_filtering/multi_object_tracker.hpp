@@ -338,7 +338,7 @@ public:
         previous_image_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
-        FloatingBodySystem<> mean = filter_->stateDistribution().empiricalMean();
+        FloatingBodySystem<> mean = filter_->stateDistribution().EmpiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -349,7 +349,7 @@ public:
 
         PRINT("sample count ") PRINT(evaluation_count_)
 
-        return filter_->stateDistribution().empiricalMean();
+        return filter_->stateDistribution().EmpiricalMean();
     }
 
 

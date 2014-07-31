@@ -49,13 +49,11 @@
 
 #include <Eigen/Dense>
 
-// boost
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/variate_generator.hpp>
 
 #include <state_filtering/tools/macros.hpp>
-#include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/features/sampleable.hpp>
 
 namespace filter
@@ -64,15 +62,14 @@ namespace filter
 /**
  * Mappable interface of a distribution
  */
-template <typename ScalarType_, int SIZE, int SAMPLE_SIZE>
-class GaussianMappable:
-        public Sampleable<ScalarType_, SIZE>
+template <typename ScalarType_, typename VectorType_, int DIMENSION>
+class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
 {
 public:
-    typedef Sampleable<ScalarType_, SIZE>           Base;
-    typedef typename Base::Scalar                   Scalar;
-    typedef typename Base::Variable                 Variable;
-    typedef Eigen::Matrix<Scalar, SAMPLE_SIZE, 1>   Sample;
+    typedef Sampleable<ScalarType_, VectorType_>       BaseType;
+    typedef typename BaseType::ScalarType              ScalarType;
+    typedef typename BaseType::VectorType              VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>    SampleType;
 
     GaussianMappable():
         generator_(RANDOM_SEED),
@@ -82,37 +79,22 @@ public:
 
     }
 
-    /**
-     * @brief Virtual destructor
-     */
     virtual ~GaussianMappable() { }
 
-    /**
-     * @brief Maps a sample from gaussian into the underlying distribution
-     *
-     * @param sample    Sample from the a gaussian distribution
-     *
-     * @return
-     */
-    virtual Variable mapNormal(const Sample& sample) const = 0;
+    virtual VectorType MapNormal(const SampleType& sample) const = 0;
 
-    virtual int sample_size() const = 0;
+    virtual int Dimension() const = 0;
 
-    /**
-     * @brief Returns a random sample from the underlying distribution
-     *
-     * Returns a random sample from the underlying distribution by gaussian sample mapping
-     *
-     * @return random sample from underlying distribution
-     */
-    virtual Variable sample()
+
+
+    virtual VectorType Sample()
     {
-        Sample normal_sample(sample_size());
-        for (int i = 0; i < sample_size(); i++)
+        SampleType normal_sample(Dimension());
+        for (int i = 0; i < Dimension(); i++)
         {
             normal_sample(i) = gaussian_generator_();
         }
-        return mapNormal(normal_sample);
+        return MapNormal(normal_sample);
     }
 
 

@@ -45,39 +45,23 @@
 #ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
 #define STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
 
-// boost
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/variate_generator.hpp>
 
-#include <state_filtering/filter/types.hpp>
 #include <state_filtering/distribution/distribution.hpp>
 
 namespace filter
 {
 
-/**
- * Sampleable interface of a distribution
- */
-template <typename Scalar_, int SIZE>
-class Sampleable:
-        public Distribution<Scalar_, SIZE>
+template <typename ScalarType_, typename VectorType_>
+class Sampleable: public Distribution<ScalarType_, VectorType_>
 {
 public:
-    typedef Scalar_ Scalar;
-    typedef typename Distribution<Scalar_, SIZE>::Variable Variable;
+    typedef Distribution<ScalarType_, VectorType_>  BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VectorType           VectorType;
 
-    /**
-     * @brief Virtual destructor
-     */
     virtual ~Sampleable() { }
 
-    /**
-     * @brief Returns a random sample from the underlying distribution
-     *
-     * @return random sample from underlying distribution
-     */
-    virtual Variable sample() = 0;
+    virtual VectorType Sample() = 0;
 };
 
 }

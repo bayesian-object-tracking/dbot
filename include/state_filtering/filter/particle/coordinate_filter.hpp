@@ -61,7 +61,7 @@ public:
 
     typedef MeasurementModel::Measurement Measurement;
     typedef ProcessModel::Control Control;
-    typedef ProcessModel::Variable State;
+    typedef ProcessModel::VectorType State;
     typedef ProcessModel::Sample Noise;
 //    typedef Eigen::Matrix<double, -1, -1> Measurement;
 

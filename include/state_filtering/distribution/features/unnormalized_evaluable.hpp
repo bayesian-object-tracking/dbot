@@ -54,35 +54,20 @@
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class UnnormalizedEvaluable:
-        public Distribution<ScalarType_, SIZE>
+template <typename ScalarType_, typename VectorType_>
+class  UnnormalizedEvaluable: public Distribution<ScalarType_, VectorType_>
 {
 public:
-    typedef Distribution<ScalarType_, SIZE> BaseType;
-    typedef typename BaseType::Scalar   Scalar;
-    typedef typename BaseType::Variable Variable;
+    typedef Distribution<ScalarType_, VectorType_>  BaseType;
+    typedef typename BaseType::ScalarType           ScalarType;
+    typedef typename BaseType::VectorType           VectorType;
 
-    /**
-     * @brief Returns the probability of the given sample
-     *
-     * @param sample    Probability sample
-     *
-     * @return Probability of the sample
-     */
-    virtual Scalar unnormalizedProbability(const Variable& sample) const
+
+    virtual ScalarType unnormalizedProbability(const VectorType& vector) const
     {
-        std::exp(LogUnnormalizedProbability(sample));
+        std::exp(LogUnnormalizedProbability(vector));
     }
-
-    /**
-     * @brief Returns the probability log of the given sample
-     *
-     * @param sample    Probability sample
-     *
-     * @return Log of sample probability
-     */
-    virtual Scalar LogUnnormalizedProbability(const Variable& sample) const = 0;
+    virtual ScalarType LogUnnormalizedProbability(const VectorType& vector) const = 0;
 };
 
 }

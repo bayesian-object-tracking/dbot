@@ -63,35 +63,50 @@
 namespace filter
 {
 
-/**
- * @brief GaussianDistribution is a parametrized distribution
- */
+
+
+
 template <typename ScalarType_, int SIZE>
-class GaussianDistribution:
-        public MomentsSolvable<ScalarType_, SIZE>,
-        public Evaluable<ScalarType_, SIZE>,
-        public GaussianMappable<ScalarType_, SIZE, SIZE>
+struct GaussianDistributionTypes
 {
-public: /* distribution traits */
+    typedef ScalarType_                           ScalarType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
+
+    typedef MomentsSolvable<ScalarType_, VectorType_, OperatorType_> MomentsSolvableType;
+};
+
+
+
+
+
+
+template <typename ScalarType_, int SIZE>
+class GaussianDistribution: public MomentsSolvable<ScalarType_, SIZE>,
+                            public Evaluable<ScalarType_, SIZE>,
+                            public GaussianMappable<ScalarType_, SIZE, SIZE>
+{
+public:
     typedef MomentsSolvable<ScalarType_, SIZE>        MomentsBaseType;
     typedef GaussianMappable<ScalarType_, SIZE, SIZE>   MappableBaseType;
 
-    typedef typename MomentsBaseType::Scalar        Scalar;
-    typedef typename MomentsBaseType::Variable      Variable;
-    typedef typename MomentsBaseType::CovarianceType    CovarianceType;
+    typedef typename MomentsBaseType::ScalarType        ScalarType;
+    typedef typename MomentsBaseType::VectorType      VectorType;
+    typedef typename MomentsBaseType::OperatorType    OperatorType;
     typedef typename MappableBaseType::Sample      Sample;
 
-public:
+
+
     GaussianDistribution()
     {
-        DISABLE_IF_DYNAMIC_SIZE(Variable);
+        DISABLE_IF_DYNAMIC_SIZE(VectorType);
 
         setNormal();
     }
 
     explicit GaussianDistribution(int variable_size)
     {
-        DISABLE_IF_FIXED_SIZE(Variable);
+        DISABLE_IF_FIXED_SIZE(VectorType);
 
         mean_.resize(variable_size, 1);
         covariance_.resize(variable_size, variable_size);
@@ -103,7 +118,7 @@ public:
 
     virtual ~GaussianDistribution() { }
 
-    virtual Variable mapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const Sample& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
@@ -111,24 +126,24 @@ public:
     virtual void setNormal()
     {
         full_rank_ = true;
-        mean(Variable::Zero(variable_size()));
-        covariance(CovarianceType::Identity(variable_size(), variable_size()));
+        Mean(VectorType::Zero(variable_size()));
+        Covariance(OperatorType::Identity(variable_size(), variable_size()));
     }
 
-    virtual void mean(const Variable& mean)
+    virtual void mean(const VectorType& mean)
     {
         mean_ = mean;
     }
 
-    virtual void covariance(const CovarianceType& covariance)
+    virtual void covariance(const OperatorType& covariance)
     {
         covariance_ = covariance;
 
         // we assume that the input matrix is positive semidefinite
-        Eigen::LDLT<CovarianceType> ldlt;
+        Eigen::LDLT<OperatorType> ldlt;
         ldlt.compute(covariance_);
-        CovarianceType L = ldlt.matrixL();
-        Variable D_sqrt = ldlt.vectorD();
+        OperatorType L = ldlt.matrixL();
+        VectorType D_sqrt = ldlt.vectorD();
         for(size_t i = 0; i < D_sqrt.rows(); i++)
             D_sqrt(i) = std::sqrt(std::fabs(D_sqrt(i)));
         cholesky_factor_ = ldlt.transpositionsP().transpose()*L*D_sqrt.asDiagonal();
@@ -143,22 +158,22 @@ public:
             full_rank_ = false;
     }
 
-    virtual Variable mean() const
+    virtual VectorType Mean() const
     {
         return mean_;
     }
 
-    virtual CovarianceType covariance() const
+    virtual OperatorType Covariance() const
     {
         return covariance_;
     }
 
-    virtual Scalar LogProbability(const Variable& sample) const
+    virtual ScalarType LogProbability(const VectorType& sample) const
     {
         if(full_rank_)
             return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
         else
-            return -std::numeric_limits<Scalar>::infinity();
+            return -std::numeric_limits<ScalarType>::infinity();
     }
 
     virtual int variable_size() const
@@ -166,17 +181,17 @@ public:
         return mean_.rows();
     }
 
-    virtual int sample_size() const
+    virtual int Dimension() const
     {
         return variable_size();
     }
 
 protected:
-    Variable mean_;
-    CovarianceType covariance_;
+    VectorType mean_;
+    OperatorType covariance_;
     bool full_rank_;
-    CovarianceType precision_;
-    CovarianceType cholesky_factor_;
+    OperatorType precision_;
+    OperatorType cholesky_factor_;
     double log_normalizer_;
 };
 

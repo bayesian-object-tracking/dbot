@@ -71,17 +71,17 @@ class ComposedStationaryProcessModel:
         public StationaryProcess<>
 {
 public: /* distribution traits */
-    typedef StationaryProcess<> Base;
+    typedef StationaryProcess<> BaseType;
 
-    typedef typename Base::Scalar       Scalar;
-    typedef typename Base::Variable     Variable;
-    typedef typename Base::Sample      Sample;
-    typedef typename Base::Control Control;
+    typedef typename BaseType::ScalarType       ScalarType;
+    typedef typename BaseType::VectorType     VectorType;
+    typedef typename BaseType::Sample      Sample;
+    typedef typename BaseType::Control Control;
 
-    typedef boost::shared_ptr<Base> StationaryProcessModelPtr;
+    typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
 
-    using Base::conditional;
+    using BaseType::conditional;
 
     ComposedStationaryProcessModel(ProcessModelList process_models):
         process_models_(process_models)
@@ -90,9 +90,9 @@ public: /* distribution traits */
 
     virtual ~ComposedStationaryProcessModel() {}
 
-    virtual Variable mapNormal(const Sample& randoms) const
+    virtual VectorType MapNormal(const Sample& randoms) const
     {
-        Variable variables(variable_size());
+        VectorType variables(variable_size());
 
         size_t variable_index = 0;
         size_t random_index = 0;
@@ -109,7 +109,7 @@ public: /* distribution traits */
     // set functions with arguments specific to stationary process models ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     virtual void conditional(
             const double& delta_time,
-            const Variable& state,
+            const VectorType& state,
             const Control& control)
     {
         size_t state_index = 0;
@@ -130,7 +130,7 @@ public: /* distribution traits */
         return total_count_state(process_models_);
     }
 
-    virtual int sample_size() const
+    virtual int Dimension() const
     {
         return total_count_randoms(process_models_);
     }

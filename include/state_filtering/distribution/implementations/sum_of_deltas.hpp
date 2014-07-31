@@ -72,30 +72,30 @@ class SumOfDeltas:
 public:
     typedef MomentsSolvable<ScalarType_, SIZE>   BaseType;
 
-    typedef typename BaseType::Scalar        Scalar;
-    typedef typename BaseType::Variable      Variable;
-    typedef typename BaseType::CovarianceType    CovarianceType;
+    typedef typename BaseType::ScalarType        ScalarType;
+    typedef typename BaseType::VectorType      VectorType;
+    typedef typename BaseType::OperatorType    OperatorType;
 
-    typedef typename std::vector<Variable>   Deltas;
-    typedef Eigen::Matrix<Scalar, -1, 1>     Weights;
+    typedef typename std::vector<VectorType>   Deltas;
+    typedef Eigen::Matrix<ScalarType, -1, 1>     Weights;
 
 
 public:
     SumOfDeltas()
     {
-        DISABLE_IF_DYNAMIC_SIZE(Variable);
+        DISABLE_IF_DYNAMIC_SIZE(VectorType);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, Variable::Zero());
+        deltas_ = Deltas(1, VectorType::Zero());
         weights_ = Weights::Ones(1);
     }
 
     explicit SumOfDeltas(int variable_size)
     {
-        DISABLE_IF_FIXED_SIZE(Variable);
+        DISABLE_IF_FIXED_SIZE(VectorType);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, Variable::Zero(variable_size));
+        deltas_ = Deltas(1, VectorType::Zero(variable_size));
         weights_ = Weights::Ones(1);
     }
 
@@ -119,19 +119,19 @@ public:
         weights = weights_;
     }
 
-    virtual Variable mean() const
+    virtual VectorType Mean() const
     {
-        Variable mean(Variable::Zero(variable_size()));
+        VectorType mean(VectorType::Zero(variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             mean += weights_[i] * deltas_[i];
 
         return mean;
     }
 
-    virtual CovarianceType covariance() const
+    virtual OperatorType Covariance() const
     {
-        Variable cached_mean = mean();
-        CovarianceType covariance(CovarianceType::Zero(variable_size(), variable_size()));
+        VectorType cached_mean = Mean();
+        OperatorType covariance(OperatorType::Zero(variable_size(), variable_size()));
         for(size_t i = 0; i < deltas_.size(); i++)
             covariance += weights_[i] * (deltas_[i]-cached_mean) * (deltas_[i]-cached_mean).transpose();
 

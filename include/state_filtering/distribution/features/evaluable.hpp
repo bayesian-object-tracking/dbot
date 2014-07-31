@@ -54,46 +54,24 @@
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class Evaluable:
-        public UnnormalizedEvaluable<ScalarType_, SIZE>
+template <typename ScalarType_, typename VectorType_>
+class Evaluable: public UnnormalizedEvaluable<ScalarType_, VectorType_>
 {
 public:
-    typedef UnnormalizedEvaluable<ScalarType_, SIZE>    BaseType;
-    typedef typename BaseType::Scalar               Scalar;
-    typedef typename BaseType::Variable             Variable;
+    typedef UnnormalizedEvaluable<ScalarType_, VectorType_>     BaseType;
+    typedef typename BaseType::ScalarType                       ScalarType;
+    typedef typename BaseType::VectorType                       VectorType;
 
-    /**
-     * @brief Returns the probability of the given variable
-     *
-     * @param variable    Probability variable
-     *
-     * @return Probability of the variable
-     */
-    virtual Scalar Probability(const Variable& variable) const
+    virtual ScalarType Probability(const VectorType& vector) const
     {
-        return std::exp(LogProbability(variable));
+        return std::exp(LogProbability(vector));
     }
 
-    /**
-     * @brief Returns the probability log of the given variable
-     *
-     * @param variable    Probability variable
-     *
-     * @return Log of variable probability
-     */
-    virtual Scalar LogProbability(const Variable& variable) const = 0;
+    virtual ScalarType LogProbability(const VectorType& vector) const = 0;
 
-    /**
-     * @brief Returns the probability log of the given variable
-     *
-     * @param variable    Probability variable
-     *
-     * @return Log of variable probability
-     */
-    virtual Scalar LogUnnormalizedProbability(const Variable& variable) const
+    virtual ScalarType LogUnnormalizedProbability(const VectorType& vector) const
     {
-        return LogProbability(variable);
+        return LogProbability(vector);
     }
 };
 

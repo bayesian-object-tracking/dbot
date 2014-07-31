@@ -52,30 +52,29 @@
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class MomentsSolvable:
-    public MomentsEstimable<ScalarType_, SIZE>
+template <typename ScalarType_, typename VectorType_, typename OperatorType_>
+class MomentsSolvable: public MomentsEstimable<ScalarType_, VectorType_, OperatorType_>
 {
 public:
-    typedef MomentsEstimable<ScalarType_, SIZE>     BaseType;
-    typedef typename BaseType::Scalar           Scalar;
-    typedef typename BaseType::Variable         Variable;
-    typedef typename BaseType::CovarianceType       CovarianceType;
+    typedef MomentsEstimable<ScalarType_, VectorType_, OperatorType_>   BaseType;
+    typedef typename BaseType::ScalarType                               ScalarType;
+    typedef typename BaseType::VectorType                               VectorType;
+    typedef typename BaseType::OperatorType                             OperatorType;
 
     virtual ~MomentsSolvable() { }
 
-    virtual Variable empiricalMean()
+    virtual VectorType EmpiricalMean()
     {
-        return mean();
+        return Mean();
     }
 
-    virtual CovarianceType empiricalCovariance()
+    virtual OperatorType EmpiricalCovariance()
     {
-        return covariance();
+        return Covariance();
     }
 
-    virtual Variable mean() const = 0;
-    virtual CovarianceType covariance() const = 0;
+    virtual VectorType Mean() const = 0;
+    virtual OperatorType Covariance() const = 0;
 };
 
 }

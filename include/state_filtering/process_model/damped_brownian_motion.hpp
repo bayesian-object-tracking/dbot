@@ -60,42 +60,42 @@ class DampedBrownianMotion:
         public StationaryProcess<Scalar_, SIZE, SIZE, SIZE>
 {
 public:
-    typedef StationaryProcess<Scalar_, SIZE, SIZE, SIZE> Base;
+    typedef StationaryProcess<Scalar_, SIZE, SIZE, SIZE> BaseType;
 
-    typedef typename Base::Scalar               Scalar;
-    typedef typename Base::Variable             Variable;
-    typedef typename Base::Sample               Sample;
-    typedef typename Base::Control              Control;
-    typedef Eigen::Matrix<Scalar, SIZE, SIZE>   Covariance;
+    typedef typename BaseType::ScalarType               ScalarType;
+    typedef typename BaseType::VectorType             VectorType;
+    typedef typename BaseType::Sample               Sample;
+    typedef typename BaseType::Control              Control;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   Covariance;
 
 public:
 
     DampedBrownianMotion(): gaussian_()
     {
-        DISABLE_IF_DYNAMIC_SIZE(Variable);
+        DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
     explicit DampedBrownianMotion(int size): gaussian_(size)
     {
-        DISABLE_IF_FIXED_SIZE(Variable);
+        DISABLE_IF_FIXED_SIZE(VectorType);
     }
 
     virtual ~DampedBrownianMotion() { }
 
-    virtual Variable mapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const Sample& sample) const
     {
-        return gaussian_.mapNormal(sample);
+        return gaussian_.MapNormal(sample);
     }
 
-    virtual void conditional(const Scalar& delta_time,
-                             const Variable& state,
+    virtual void conditional(const ScalarType& delta_time,
+                             const VectorType& state,
                              const Control& control)
     {
-        gaussian_.mean(ComputeMean(delta_time, state, control));
-        gaussian_.covariance(ComputeCovariance(delta_time));
+        gaussian_.Mean(ComputeMean(delta_time, state, control));
+        gaussian_.Covariance(ComputeCovariance(delta_time));
     }
 
-    virtual void parameters(const Scalar& damping, const Covariance& noise_covariance)
+    virtual void parameters(const ScalarType& damping, const Covariance& noise_covariance)
     {
         damping_ = damping;
         noise_covariance_ = noise_covariance;
@@ -106,7 +106,7 @@ public:
         return gaussian_.variable_size();
     }
 
-    virtual int sample_size() const
+    virtual int Dimension() const
     {
         return variable_size();
     }
@@ -117,11 +117,11 @@ public:
     }
 
 private:
-    Variable ComputeMean(const Scalar& delta_time,
-                         const Variable& state,
+    VectorType ComputeMean(const ScalarType& delta_time,
+                         const VectorType& state,
                          const Control& control)
     {
-        Variable state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
+        VectorType state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
                                               + exp(-damping_*delta_time)*state;
 
         // if the damping_ is too small, the result might be nan, we thus return the limit for damping_ -> 0
@@ -131,9 +131,9 @@ private:
         return state_expectation;
     }
 
-    Covariance ComputeCovariance(const Scalar& delta_time)
+    Covariance ComputeCovariance(const ScalarType& delta_time)
     {
-        Scalar factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
+        ScalarType factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
         if(!std::isfinite(factor))
             factor = delta_time;
 
@@ -142,14 +142,14 @@ private:
 
 private:
     // conditional
-    GaussianDistribution<Scalar, SIZE> gaussian_;
+    GaussianDistribution<ScalarType, SIZE> gaussian_;
 
     // parameters
-    Scalar damping_;
+    ScalarType damping_;
     Covariance noise_covariance_;
 
     /** @brief euler-mascheroni constant */
-    static const Scalar gamma_ = 0.57721566490153286060651209008240243104215933593992;
+    static const ScalarType gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 
 }

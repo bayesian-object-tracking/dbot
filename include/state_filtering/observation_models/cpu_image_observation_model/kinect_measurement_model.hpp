@@ -42,15 +42,15 @@ class KinectMeasurementModel: public filter::Evaluable<double, 1>
 {
 public:
     typedef Evaluable<double, 1>                BaseType;
-    typedef typename BaseType::Scalar       Scalar;
-    typedef typename BaseType::Variable     Variable;
+    typedef typename BaseType::ScalarType       ScalarType;
+    typedef typename BaseType::VectorType     VectorType;
 
 
-    KinectMeasurementModel(Scalar tail_weight = 0.01,
-                           Scalar model_sigma = 0.003,
-                           Scalar sigma_factor = 0.00142478,
-                           Scalar half_life_depth = 1.0,
-                           Scalar max_depth = 6.0)
+    KinectMeasurementModel(ScalarType tail_weight = 0.01,
+                           ScalarType model_sigma = 0.003,
+                           ScalarType sigma_factor = 0.00142478,
+                           ScalarType half_life_depth = 1.0,
+                           ScalarType max_depth = 6.0)
         : exponential_rate_(-log(0.5)/half_life_depth),
           tail_weight_(tail_weight),
           model_sigma_(model_sigma),
@@ -59,13 +59,13 @@ public:
 
     virtual ~KinectMeasurementModel() {}
 
-    virtual Scalar LogProbability(const Variable& measurement) const
+    virtual ScalarType LogProbability(const VectorType& measurement) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
 
-        Scalar probability;
-        Scalar sigma = model_sigma_ + sigma_factor_*measurement(0)*measurement(0);
+        ScalarType probability;
+        ScalarType sigma = model_sigma_ + sigma_factor_*measurement(0)*measurement(0);
         if(!occlusion_)
         {
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
@@ -94,12 +94,12 @@ public:
     }
 
 
-    virtual Scalar Probability(Scalar measurement, Scalar prediction, bool occlusion)
+    virtual ScalarType Probability(ScalarType measurement, ScalarType prediction, bool occlusion)
     {
         prediction_ = prediction;
         occlusion_ = occlusion;
 
-        Variable measurement_vector;
+        VectorType measurement_vector;
         measurement_vector(0) = measurement;
         return std::exp(LogProbability(measurement_vector));
     }
@@ -109,10 +109,10 @@ public:
         return 1;
     }
 private:
-    Scalar prediction_;
+    ScalarType prediction_;
     bool occlusion_;
 
-    const Scalar exponential_rate_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
+    const ScalarType exponential_rate_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
 };
 
 }

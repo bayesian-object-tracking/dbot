@@ -301,7 +301,7 @@ public:
         previous_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
-        FloatingBodySystem<> mean = filter_context_->stateDistribution().empiricalMean();
+        FloatingBodySystem<> mean = filter_context_->stateDistribution().EmpiricalMean();
         // 3d models
         for(size_t i = 0; i < object_names_.size(); i++)
         {

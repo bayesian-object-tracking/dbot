@@ -67,20 +67,20 @@ class StationaryProcess:
         public GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE>
 {
 public:
-    typedef GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE> Base;
+    typedef GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE> BaseType;
 
-    typedef typename Base::Scalar                               Scalar;
-    typedef typename Base::Variable                             Variable;
-    typedef typename Base::Sample                               Sample;
-    typedef Eigen::Matrix<Scalar, CONTROL_SIZE, 1>              Control;
+    typedef typename BaseType::ScalarType                               ScalarType;
+    typedef typename BaseType::VectorType                             VectorType;
+    typedef typename BaseType::Sample                               Sample;
+    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              Control;
 
     virtual ~StationaryProcess() { }
 
     virtual void conditional(const double& delta_time,
-                             const Variable& state,
+                             const VectorType& state,
                              const Control& control) = 0;
 
-    virtual void conditional(const double& delta_time, const Variable& state)
+    virtual void conditional(const double& delta_time, const VectorType& state)
     {
         conditional(delta_time, state, Control::Zero(control_size()));
     }
