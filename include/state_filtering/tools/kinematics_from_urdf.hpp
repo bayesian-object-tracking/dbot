@@ -86,10 +86,15 @@ public:
   // Get dependencies
   void GetDependencies(std::vector<std::vector<size_t> >& dependencies);
   
+  // return the KDL kinematic tree
+  KDL::Tree GetTree();
+
   // Get the number of joints
   int num_joints();
 
   std::string GetLinkName(int idx);
+
+  std::vector<std::string> GetJointMap();
 
 private:
   

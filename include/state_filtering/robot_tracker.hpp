@@ -43,6 +43,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl-1.6/pcl/ros/conversions.h>
 #include <pcl-1.6/pcl/point_cloud.h>
 #include <pcl-1.6/pcl/point_types.h>
+
+// for visualizing the estimated robot state
+#include <robot_state_publisher/robot_state_publisher.h>
+
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
 #include <state_filtering/filter/particle/particle_filter_context.hpp>
@@ -135,6 +139,10 @@ public:
         urdf_kinematics->GetPartMeshes(part_meshes_);
         ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
+
+	// initialize the robot state publisher
+	robot_state_publisher_ = boost::shared_ptr<robot_state_publisher::RobotStatePublisher>
+	  (new robot_state_publisher::RobotStatePublisher(urdf_kinematics->GetTree()));
 
         vector<vector<size_t> > dependencies;
         urdf_kinematics->GetDependencies(dependencies);
@@ -343,16 +351,30 @@ public:
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
-        /*
+        
         RobotState<> mean = filter_->stateDistribution().empiricalMean();
-        for(size_t i = 0; i < object_names_.size(); i++)
+	std::map<std::string, double> joint_positions;
+	mean.GetJointState(joint_positions);
+	robot_state_publisher_->publishTransforms(joint_positions, ros_image.header.stamp, "MEAN");
+	robot_state_publisher_->publishFixedTransforms();
+	/*
+	// publish moving joints
+	void publishTransforms(const std::map<std::string, double>& joint_positions,
+			       const ros::Time& time,
+			       const std::string &  	tf_prefix);
+	
+	// publish fixed joints
+	void publishFixedTransforms();
+	*/
+        /*for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
             ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
                               ros_image.header, object_model_path, object_publisher_,
                               i, 1, 0, 0);
         }
-    */
+	*/
+	
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
@@ -368,7 +390,10 @@ private:
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<FilterType> filter_;
+  boost::shared_ptr<FilterType> filter_;
+  
+  boost::shared_ptr<robot_state_publisher::RobotStatePublisher> robot_state_publisher_;
+    
 
     bool is_first_iteration_;
     double previous_time_;

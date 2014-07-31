@@ -117,7 +117,7 @@ public:
     num_joints_(num_joints),
     kinematics_(kinematics_ptr)
   {
-    
+    joint_map_ = kinematics_->GetJointMap();
     assert_dynamic_size<true>();
   }
 
@@ -173,9 +173,23 @@ public:
     return num_joints_;
   }
 
+
+  void GetJointState(std::map<std::string, double>& joint_positions)
+  {
+
+    for(std::vector<std::string>::const_iterator it = joint_map_.begin();
+	it != joint_map_.end(); ++it)
+      {
+	joint_positions[*it] = this[it - joint_map_.begin()];
+      }
+  }
+
+
 private:
   unsigned num_bodies_;
   unsigned num_joints_;
+
+  std::vector<std::string> joint_map_;
 
   // pointer to the robot kinematic
   const boost::shared_ptr<KinematicsFromURDF>  kinematics_;

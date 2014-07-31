@@ -262,6 +262,11 @@ void KinematicsFromURDF::GetDependencies(std::vector<std::vector<size_t> >& depe
   dependencies.push_back(robot_deps);
 }
 
+KDL::Tree KinematicsFromURDF::GetTree()
+{
+  return kin_tree_;
+}
+
 double KinematicsFromURDF::GetRandomPertubation(int jnt_index, double jnt_angle, double ratio)
 {
   double mean = jnt_angle;
@@ -299,4 +304,9 @@ int KinematicsFromURDF::num_joints()
   return kin_tree_.getNrOfJoints();
 }
 
+
+std::vector<std::string> KinematicsFromURDF::GetJointMap()
+{
+  return joint_map_;
+}
 
