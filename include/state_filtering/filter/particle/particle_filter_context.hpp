@@ -61,8 +61,8 @@ namespace filter
 {
 namespace pfc_internal
 {
-typedef typename CoordinateFilter::ProcessModel::Control        ControlType;
-typedef typename CoordinateFilter::MeasurementModel::Measurement    Measurement;
+typedef typename CoordinateParticleFilter::ProcessModel::Control        ControlType;
+typedef typename CoordinateParticleFilter::MeasurementModel::Measurement    Measurement;
 }
 
 /**
@@ -78,7 +78,7 @@ public:
     typedef typename pfc_internal::Measurement       Measurement;
     typedef typename pfc_internal::ControlType           ControlType;
 
-    ParticleFilterContext(CoordinateFilter::Ptr filter):
+    ParticleFilterContext(CoordinateParticleFilter::Ptr filter):
         filter_(filter),
         duration_(0.)
     {
@@ -111,7 +111,7 @@ public:
 
 protected:
     double duration_;
-    CoordinateFilter::Ptr filter_;
+    CoordinateParticleFilter::Ptr filter_;
 };
 
 }

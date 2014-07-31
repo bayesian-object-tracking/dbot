@@ -236,8 +236,8 @@ public:
 
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(observation_model, process_model, dependencies));
+        filter_ = boost::shared_ptr<filter::CoordinateParticleFilter>
+                (new filter::CoordinateParticleFilter(observation_model, process_model, dependencies));
 
 
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -320,7 +320,7 @@ private:
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<filter::CoordinateFilter> filter_;
+    boost::shared_ptr<filter::CoordinateParticleFilter> filter_;
     FilterContextPtr filter_context_;
 
     bool is_first_iteration_;

@@ -83,8 +83,6 @@ using namespace filter;
 class MultiObjectTracker
 {
 public:
-    typedef filter::ParticleFilterContext<double, -1>   FilterContext;
-    typedef boost::shared_ptr<FilterContext>            FilterContextPtr;
     typedef Eigen::Matrix<double, -1, -1> Image;
 
     MultiObjectTracker():
@@ -247,8 +245,8 @@ public:
         boost::shared_ptr<ComposedStationaryProcessModel> process_model(new ComposedStationaryProcessModel(partial_process_models));
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(observation_model, process_model, dependencies, max_kl_divergence));
+        filter_ = boost::shared_ptr<filter::CoordinateParticleFilter>
+                (new filter::CoordinateParticleFilter(observation_model, process_model, dependencies, max_kl_divergence));
 
 
         if(state_is_partial)
@@ -366,7 +364,7 @@ private:
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<filter::CoordinateFilter> filter_;
+    boost::shared_ptr<filter::CoordinateParticleFilter> filter_;
 
     bool is_first_iteration_;
     double previous_image_time_;

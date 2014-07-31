@@ -88,7 +88,7 @@ class RobotTracker
 {
 public:
     typedef Eigen::Matrix<double, -1, -1> Image;
-    typedef filter::CoordinateFilter FilterType;
+    typedef filter::CoordinateParticleFilter FilterType;
 
     RobotTracker():
         node_handle_("~"),
@@ -248,8 +248,8 @@ public:
 
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<filter::CoordinateFilter>
-                (new filter::CoordinateFilter(observation_model, process_model, dependencies));
+        filter_ = boost::shared_ptr<filter::CoordinateParticleFilter>
+                (new filter::CoordinateParticleFilter(observation_model, process_model, dependencies));
 
 
 

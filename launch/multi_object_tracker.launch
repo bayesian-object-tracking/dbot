@@ -1,5 +1,5 @@
 <launch>
-  <arg name="config_file" />
+  <arg name="config_file" default="$(find state_filtering)/config/multi_object_config.yaml"/>
 
   <!-- Pose Estimation Node-->
   <node name="multi_object_tracker" type="multi_object_tracker"

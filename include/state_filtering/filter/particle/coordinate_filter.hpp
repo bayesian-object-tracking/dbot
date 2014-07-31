@@ -47,10 +47,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace filter
 {
 
-class CoordinateFilter
+class CoordinateParticleFilter
 {
 public:
-    typedef boost::shared_ptr<CoordinateFilter> Ptr;
+    typedef boost::shared_ptr<CoordinateParticleFilter> Ptr;
 
     typedef StationaryProcess<> ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
@@ -65,12 +65,12 @@ public:
     typedef ProcessModel::Sample Noise;
 //    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
-    CoordinateFilter(const MeasurementModelPtr observation_model,
+    CoordinateParticleFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
                      const std::vector<std::vector<size_t> >& independent_blocks,
                      const double& max_kl_divergence = 0);
 
-    ~CoordinateFilter();
+    ~CoordinateParticleFilter();
 
     void PartialPropagate(const Control& control,
                           const double& observation_time);

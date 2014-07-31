@@ -44,7 +44,7 @@ using namespace Eigen;
 using namespace filter;
 using namespace boost;
 
-CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
+CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr observation_model,
                                    const ProcessModelPtr process_model,
                                    const std::vector<std::vector<size_t> >& independent_blocks,
                                    const double &max_kl_divergence):
@@ -76,10 +76,10 @@ CoordinateFilter::CoordinateFilter(const MeasurementModelPtr observation_model,
 
 
 }
-CoordinateFilter::~CoordinateFilter() { }
+CoordinateParticleFilter::~CoordinateParticleFilter() { }
 
 // create offspring
-void CoordinateFilter::PartialPropagate(const Control& control,
+void CoordinateParticleFilter::PartialPropagate(const Control& control,
                                         const double& observation_time)
 {
     INIT_PROFILING;
@@ -126,7 +126,7 @@ void CoordinateFilter::PartialPropagate(const Control& control,
 
 
 // evaluate offspring
-void CoordinateFilter::PartialEvaluate(const Measurement& observation,
+void CoordinateParticleFilter::PartialEvaluate(const Measurement& observation,
                                        const double& observation_time)
 {
     // compute partial_loglikes_ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ void CoordinateFilter::PartialEvaluate(const Measurement& observation,
     MEASURE("computing loglikes_")
 }
 
-void CoordinateFilter::PartialResample(const Control& control,
+void CoordinateParticleFilter::PartialResample(const Control& control,
                                        const double& observation_time,
                                        const size_t &new_n_states)
 {
@@ -225,7 +225,7 @@ void CoordinateFilter::PartialResample(const Control& control,
 }
 
 
-void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
+void CoordinateParticleFilter::UpdateOcclusions(const Measurement& observation,
                                         const double& observation_time)
 {
     measurement_model_->measurement(observation, observation_time);
@@ -240,7 +240,7 @@ void CoordinateFilter::UpdateOcclusions(const Measurement& observation,
 
 
 
-void CoordinateFilter::Enchilada(
+void CoordinateParticleFilter::Enchilada(
         const Control control,
         const double &observation_time,
         const Measurement& observation,
@@ -264,7 +264,7 @@ void CoordinateFilter::Enchilada(
 
 
 
-void CoordinateFilter::Enchiladisima(const Control control,
+void CoordinateParticleFilter::Enchiladisima(const Control control,
         const double &observation_time,
         const Measurement& observation, const size_t &evaluation_count, const size_t &factor_evaluation_count)
 {
@@ -481,7 +481,7 @@ void CoordinateFilter::Enchiladisima(const Control control,
 
 
 
-void CoordinateFilter::UpdateWeights(std::vector<float> log_weight_diffs)
+void CoordinateParticleFilter::UpdateWeights(std::vector<float> log_weight_diffs)
 {
     for(size_t i = 0; i < log_weight_diffs.size(); i++)
         log_weights_[i] += log_weight_diffs[i];
@@ -560,7 +560,7 @@ void CoordinateFilter::UpdateWeights(std::vector<float> log_weight_diffs)
 
 
 
-void CoordinateFilter::Enchiladisimimisima( const Control control,
+void CoordinateParticleFilter::Enchiladisimimisima( const Control control,
                                             const double &observation_time,
                                             const Measurement& observation)
 {
@@ -615,7 +615,7 @@ void CoordinateFilter::Enchiladisimimisima( const Control control,
 
 
 
-void CoordinateFilter::set_states(const std::vector<State >& states,
+void CoordinateParticleFilter::set_states(const std::vector<State >& states,
                                   const std::vector<double>& state_times,
                                   const std::vector<size_t>& multiplicities,
                                   const std::vector<float> &loglikes)
@@ -680,7 +680,7 @@ void CoordinateFilter::set_states(const std::vector<State >& states,
 
 
 
-void CoordinateFilter::Propagate(
+void CoordinateParticleFilter::Propagate(
         const Control control,
         const double &current_time)
 {
@@ -694,7 +694,7 @@ void CoordinateFilter::Propagate(
 }
 
 
-void CoordinateFilter::Evaluate(
+void CoordinateParticleFilter::Evaluate(
         const Measurement& observation,
         const double& observation_time,
         const bool& update_occlusions)
@@ -708,7 +708,7 @@ void CoordinateFilter::Evaluate(
 }
 
 
-void CoordinateFilter::Resample(const int &new_state_count)
+void CoordinateParticleFilter::Resample(const int &new_state_count)
 {
     size_t state_count;
     if(new_state_count == -1)
@@ -749,7 +749,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
 
     // TODO: all of this is disgusting. i have to make sure that there is a consistent
     // representation of the hyperstate at all times!
-    CoordinateFilter::StateDistribution::Weights weights(particles_.size());
+    CoordinateParticleFilter::StateDistribution::Weights weights(particles_.size());
     for(size_t i = 0; i < particles_.size(); i++)
         weights(i) = parent_multiplicities_[i];
     weights /= weights.sum();
@@ -758,7 +758,7 @@ void CoordinateFilter::Resample(const int &new_state_count)
 }
 
 
-void CoordinateFilter::Sort()
+void CoordinateParticleFilter::Sort()
 {
     vector<int> indices = hf::SortDescend(family_loglikes_);
 
@@ -786,65 +786,65 @@ void CoordinateFilter::Sort()
 
 
 
-CoordinateFilter::StateDistribution &CoordinateFilter::stateDistribution()
+CoordinateParticleFilter::StateDistribution &CoordinateParticleFilter::stateDistribution()
 {
     return state_distribution_;
 }
 
-size_t CoordinateFilter::control_size()
+size_t CoordinateParticleFilter::control_size()
 {
     return process_model_->control_size();
 }
 
 
 // set and get fcts ==========================================================================================================================================================================================================================================================================================================================================================================================
-void CoordinateFilter::get(MeasurementModelPtr &observation_model) const
+void CoordinateParticleFilter::get(MeasurementModelPtr &observation_model) const
 {
     observation_model = measurement_model_;
 }
-void CoordinateFilter::get(ProcessModelPtr &process_model) const
+void CoordinateParticleFilter::get(ProcessModelPtr &process_model) const
 {
     process_model = process_model_;
 }
-void CoordinateFilter::get(std::vector<State >& states) const
+void CoordinateParticleFilter::get(std::vector<State >& states) const
 {
     states = particles_;
 }
-void CoordinateFilter::get(std::vector<double>& state_times) const
+void CoordinateParticleFilter::get(std::vector<double>& state_times) const
 {
     state_times = particle_times_;
 }
-void CoordinateFilter::get(std::vector<size_t>& multiplicities) const
+void CoordinateParticleFilter::get(std::vector<size_t>& multiplicities) const
 {
     multiplicities = parent_multiplicities_;
 }
-void CoordinateFilter::get(std::vector<float>& loglikes) const
+void CoordinateParticleFilter::get(std::vector<float>& loglikes) const
 {
     loglikes = family_loglikes_;
 }
-const CoordinateFilter::State& CoordinateFilter::get_state(size_t index) const
+const CoordinateParticleFilter::State& CoordinateParticleFilter::get_state(size_t index) const
 {
     return particles_[index];
 }
-const std::vector<float> CoordinateFilter::get_occlusions(size_t index) const
+const std::vector<float> CoordinateParticleFilter::get_occlusions(size_t index) const
 {
     return measurement_model_->get_occlusions(occlusion_indices_[index]	);
 }
-void CoordinateFilter::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+void CoordinateParticleFilter::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                                              std::vector<std::vector<float> > &depth)
 {
     measurement_model_->get_depth_values(intersect_indices, depth);
 }
 
-void CoordinateFilter::set_independence(const std::vector<std::vector<size_t> >& independent_blocks)
+void CoordinateParticleFilter::set_independence(const std::vector<std::vector<size_t> >& independent_blocks)
 {
     independent_blocks_ = independent_blocks;
 }
-void CoordinateFilter::set(const MeasurementModelPtr &observation_model)
+void CoordinateParticleFilter::set(const MeasurementModelPtr &observation_model)
 {
     measurement_model_ = observation_model;
 }
-void CoordinateFilter::set(const ProcessModelPtr &process_model)
+void CoordinateParticleFilter::set(const ProcessModelPtr &process_model)
 {
     process_model_ = process_model;
 }
