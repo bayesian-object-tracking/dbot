@@ -96,6 +96,8 @@ public:
 
   std::vector<std::string> GetJointMap();
 
+  std::string GetRootFrameID();
+
 private:
   
   // compute the camera frame for the current joint angles

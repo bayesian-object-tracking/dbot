@@ -310,3 +310,7 @@ std::vector<std::string> KinematicsFromURDF::GetJointMap()
   return joint_map_;
 }
 
+std::string KinematicsFromURDF::GetRootFrameID()
+{
+  return kin_tree_.getRootSegment()->first;
+}

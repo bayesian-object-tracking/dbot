@@ -7,7 +7,7 @@
 use_gpu: false
 
 # filtering parameters ----------------------------------------------------------------------
-downsampling_factor: 1 #8 #8
+downsampling_factor: 8 #8
 initial_sample_count: 1 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 sample_count: 50 #the number of particles (1500)
@@ -25,7 +25,7 @@ linear_acceleration_sigma: 0.1 #0.1  0.2  1.0
 angular_acceleration_sigma: 1.5 #1.5  3.0  15.0
 damping: 5.0 #5.0  20.0  1000.0
 
-joint_angle_sigma: 0.1
+joint_angle_sigma: 0.01
 
 
 # observation model parameters --------------------------------------------------------------

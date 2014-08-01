@@ -46,6 +46,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // for visualizing the estimated robot state
 #include <robot_state_pub/robot_state_publisher.h>
+#include <tf/transform_broadcaster.h>
+
 
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
@@ -141,6 +143,9 @@ public:
         ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
+	// get the name of the root frame
+	root_ = urdf_kinematics->GetRootFrameID();
+
 	// initialize the robot state publisher
 	robot_state_publisher_ = boost::shared_ptr<robot_state_pub::RobotStatePublisher>
 	  (new robot_state_pub::RobotStatePublisher(urdf_kinematics->GetTree()));
@@ -174,6 +179,7 @@ public:
                                                                                                     robot_state));
 
         // FOR DEBUGGING
+	
         std::cout << "Image rows and cols " << image.rows() << " " << image.cols() << std::endl;
 
         robot_renderer->state(single_body_samples[0]);
@@ -250,23 +256,7 @@ public:
 
         // initialize process model =====================================================================================================
         boost::shared_ptr<StationaryProcess<> > process_model;
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// TODO: here the robot process model has to be used. this should be easy, we should use the damped brownian motion
-        /*MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
-        MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-        vector<boost::shared_ptr<StationaryProcess<> > > partial_process_models(object_names_.size());
-        for(size_t i = 0; i < partial_process_models.size(); i++)
-        {
-            boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
-            partial_process_model->parameters(robot_renderer->object_center(i).cast<double>(),
-                                              damping,
-                                              linear_acceleration_covariance,
-                                              angular_acceleration_covariance);
-            partial_process_models[i] = partial_process_model;
-        }
-        process_model = boost::shared_ptr<ComposedStationaryProcessModel>(new ComposedStationaryProcessModel(partial_process_models));
-    */
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// hopefully, by just commenting the above and uncommenting the stuff below we should have a process model for the robot joints
         boost::shared_ptr<DampedBrownianMotion<> > joint_process_model(new DampedBrownianMotion<>(robot_state->state_size()));
@@ -277,46 +267,9 @@ public:
         process_model = joint_process_model;
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
         // initialize coordinate_filter =================================================================================================
         filter_ = boost::shared_ptr<filter::CoordinateFilter>
                 (new filter::CoordinateFilter(observation_model, process_model, dependencies));
-
-
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// TODO: this part we should be able to get rid off, since we should already have decent initial joint angles.
-        /// the important part is to pass here some decent initial states to the filter by using filter_->set_states(initial_states)
-        /// all the rest should go away.
-        // create the multi body initial samples ----------------------------------------------------------------------------------------
-        /*
-        FloatingBodySystem<> default_state(object_names_.size());
-        for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
-            default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
-
-        cout << "creating intiial stuff" << endl;
-        vector<VectorXd> multi_body_samples(single_body_samples.size());
-        for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
-            multi_body_samples[state_index] = default_state;
-
-        cout << "doing evaluations " << endl;
-        for(size_t body_index = 0; body_index < object_names_.size(); body_index++)
-        {
-            cout << "evalution of object " << object_names_[body_index] << endl;
-            for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
-            {
-                FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
-                full_initial_state[body_index] = single_body_samples[state_index];
-                multi_body_samples[state_index] = full_initial_state;
-            }
-            filter_->set_states(multi_body_samples);
-            filter_->Evaluate(image);
-            filter_->Resample(multi_body_samples.size());
-            filter_->get(multi_body_samples);
-        }
-    */
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -362,26 +315,14 @@ public:
 	*mean_ = filter_->stateDistribution().empiricalMean();
 	std::map<std::string, double> joint_positions;
 	mean_->GetJointState(joint_positions);
-	robot_state_publisher_->publishTransforms(joint_positions,  ros::Time::now(), tf_prefix_);
+	ros::Time t = ros::Time::now();
+	// publish movable joints
+	robot_state_publisher_->publishTransforms(joint_positions,  t, tf_prefix_);
+	// make sure there is a valid transformation between base of real robot and estimated robot
+	publishTransform(t, root_, tf::resolve(tf_prefix_, root_));
+	// publish fixed transforms
 	robot_state_publisher_->publishFixedTransforms(tf_prefix_);
-	/*
-	// publish moving joints
-	void publishTransforms(const std::map<std::string, double>& joint_positions,
-			       const ros::Time& time,
-			       const std::string &  	tf_prefix);
-	
-	// publish fixed joints
-	void publishFixedTransforms();
-	*/
-        /*for(size_t i = 0; i < object_names_.size(); i++)
-        {
-            string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-            ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-                              ros_image.header, object_model_path, object_publisher_,
-                              i, 1, 0, 0);
-        }
-	*/
-	
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
@@ -390,7 +331,17 @@ public:
 
 private:  
 
-    double duration_;
+  void publishTransform(const ros::Time& time,
+			const std::string& from,
+			const std::string& to)
+  {
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setIdentity();
+    br.sendTransform(tf::StampedTransform(transform, time, from, to));
+  }
+  
+  double duration_;
 
     boost::mutex mutex_;
     ros::NodeHandle node_handle_;
@@ -406,7 +357,8 @@ private:
     double previous_time_;
 
     std::string tf_prefix_;
-
+  std::string root_;
+  
     // parameters
     int downsampling_factor_;
     int sample_count_;
