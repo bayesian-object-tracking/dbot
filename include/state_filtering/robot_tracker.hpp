@@ -105,8 +105,9 @@ public:
         //ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("sample_count", sample_count_, node_handle_);
-
-        object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
+	
+	pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
+	*pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
     }
 
     void Initialize(vector<VectorXd> single_body_samples,
@@ -308,10 +309,10 @@ public:
 
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// the visualization will of course also have to be adapted to use the robot model
-        ///
-        
-        //RobotState<> mean = filter_->stateDistribution().empiricalMean();
+        /// the visualization of the estimated joint angles
+        /// and of the point cloud from the depth image
+
+	// get the mean estimation for the robot joints
 	*mean_ = filter_->stateDistribution().empiricalMean();
 	std::map<std::string, double> joint_positions;
 	mean_->GetJointState(joint_positions);
@@ -322,7 +323,8 @@ public:
 	publishTransform(t, root_, tf::resolve(tf_prefix_, root_));
 	// publish fixed transforms
 	robot_state_publisher_->publishFixedTransforms(tf_prefix_);
-
+	// publish point cloud
+	publishPointCloud(ros_image);
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
@@ -340,28 +342,93 @@ private:
     transform.setIdentity();
     br.sendTransform(tf::StampedTransform(transform, time, from, to));
   }
+
+  void publishPointCloud(const sensor_msgs::Image& ros_image)
+  {
+    
+    float bad_point = std::numeric_limits<float>::quiet_NaN();
+ 
+    sensor_msgs::PointCloud2Ptr points = boost::make_shared<sensor_msgs::PointCloud2 > ();
+    points->header.frame_id = ros_image.header.frame_id;
+    points->header.stamp = ros_image.header.stamp;
+    points->width        = ros_image.width;
+    points->height       = ros_image.height;
+    points->is_dense     = false;
+    points->is_bigendian = false;
+    points->fields.resize( 3+1 );
+    points->fields[0].name = "x"; 
+    points->fields[1].name = "y"; 
+    points->fields[2].name = "z";
+    int offset = 0;
+    for (size_t d = 0; 
+	 d < points->fields.size (); 
+	 ++d, offset += sizeof(float)) {
+      points->fields[d].offset = offset;
+      points->fields[d].datatype = 
+	sensor_msgs::PointField::FLOAT32;
+      points->fields[d].count  = 1;
+    }
+    
+    points->point_step = offset;
+    points->row_step   = 
+      points->point_step * points->width;
+    
+    points->data.resize (points->width * 
+			 points->height * 
+			 points->point_step);
+    
+    const float* depth_row = reinterpret_cast<const float*>(&ros_image.data[0]);
+    int row_step = ros_image.step / sizeof(float);
+    for (int v = 0; v < (int)points->height; ++v, depth_row += row_step)
+      {
+	for (int u = 0; u < (int)points->width; ++u)
+	  {
+	    float depth = depth_row[u]/1000.0;
+ 
+	    if(depth!=depth)
+	      {
+		// depth is invalid
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[0].offset], &bad_point, sizeof (float));
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[1].offset], &bad_point, sizeof (float));
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[2].offset], &bad_point, sizeof (float));
+	      } 
+	    else 
+	      {
+		// depth is valid
+		float x = ((float)u - 320.0) * depth / 550.0;
+		float y = ((float)v - 240.0) * depth / 550.0;
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[0].offset], &x, sizeof (float));
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[1].offset], &y, sizeof (float));
+		memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[2].offset], &depth, sizeof (float));
+	      }
+	    
+	  }
+      }
+
+    if (  pub_point_cloud_->getNumSubscribers () > 0)
+      pub_point_cloud_->publish (points);
+  }
   
   double duration_;
 
-    boost::mutex mutex_;
-    ros::NodeHandle node_handle_;
-    ros::Publisher object_publisher_;
+  boost::mutex mutex_;
+  ros::NodeHandle node_handle_;
 
   boost::shared_ptr<FilterType> filter_;
   
   boost::shared_ptr<RobotState<> > mean_;
   boost::shared_ptr<robot_state_pub::RobotStatePublisher> robot_state_publisher_;
-    
+  boost::shared_ptr<ros::Publisher> pub_point_cloud_;
 
-    bool is_first_iteration_;
-    double previous_time_;
+  bool is_first_iteration_;
+  double previous_time_;
 
-    std::string tf_prefix_;
+  std::string tf_prefix_;
   std::string root_;
   
-    // parameters
-    int downsampling_factor_;
-    int sample_count_;
+  // parameters
+  int downsampling_factor_;
+  int sample_count_;
 };
 
 #endif

@@ -32,5 +32,4 @@ joint_angle_sigma: 0.01
 tail_weight: 0.01 #0.01, 0.998
 model_sigma: 0.003 #0.003, 0.005
 sigma_factor: 0.00142478 #0.0014247
-
-
+ 
