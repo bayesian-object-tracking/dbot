@@ -62,23 +62,31 @@
 namespace filter
 {
 
-/**
- * @brief SumOfDeltas is a parametrized distribution
- */
+
 template <typename ScalarType_, int SIZE>
-class SumOfDeltas:
-        public MomentsSolvable<ScalarType_, SIZE>
+struct SumOfDeltasTypes
+{
+    typedef ScalarType_                           ScalarType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
+
+    typedef MomentsSolvable<ScalarType, VectorType, OperatorType>   MomentsSolvableType;
+};
+
+
+
+// TODO: THIS DISTRIBUTION COULD BE GENERALIZED SUCH THAT IT CAN DEAL WITH
+// ALL KINDS OF OBJECTS, NOT JUST EIGEN VECTORS
+template <typename ScalarType_, int SIZE>
+class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, SIZE>::MomentsSolvableType
 {
 public:
-    typedef MomentsSolvable<ScalarType_, SIZE>   BaseType;
-
-    typedef typename BaseType::ScalarType        ScalarType;
-    typedef typename BaseType::VectorType      VectorType;
-    typedef typename BaseType::OperatorType    OperatorType;
+    typedef SumOfDeltasTypes<ScalarType_, SIZE>::ScalarType      ScalarType;
+    typedef SumOfDeltasTypes<ScalarType_, SIZE>::VectorType      VectorType;
+    typedef SumOfDeltasTypes<ScalarType_, SIZE>::OperatorType    OperatorType;
 
     typedef typename std::vector<VectorType>   Deltas;
-    typedef Eigen::Matrix<ScalarType, -1, 1>     Weights;
-
+    typedef Eigen::Matrix<ScalarType, -1, 1>   Weights;
 
 public:
     SumOfDeltas()

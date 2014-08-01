@@ -81,7 +81,7 @@ public: /* distribution traits */
     typedef boost::shared_ptr<BaseType> StationaryProcessModelPtr;
     typedef std::vector<StationaryProcessModelPtr> ProcessModelList;
 
-    using BaseType::conditional;
+    using BaseType::Conditional;
 
     ComposedStationaryProcessModel(ProcessModelList process_models):
         process_models_(process_models)
@@ -107,7 +107,7 @@ public: /* distribution traits */
     }
 
     // set functions with arguments specific to stationary process models ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    virtual void conditional(
+    virtual void Conditional(
             const double& delta_time,
             const VectorType& state,
             const Control& control)

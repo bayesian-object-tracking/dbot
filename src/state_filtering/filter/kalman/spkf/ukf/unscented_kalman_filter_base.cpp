@@ -178,7 +178,7 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
     for (int i = 0; i < nSigmaPoints; i++)
     {
         // set conditionals which is the state part of the augmented state
-        processModel_->conditional(deltaTime,
+        processModel_->Conditional(deltaTime,
                                     sigmaPoints.col(i).segment(0, stateDimension),
                                     control);
 

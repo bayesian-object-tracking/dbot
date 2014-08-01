@@ -87,7 +87,7 @@ public:
     }
 
 
-    virtual void conditional(const double& delta_time,
+    virtual void Conditional(const double& delta_time,
                               const VectorType& state,
                               const Control& control)
     {

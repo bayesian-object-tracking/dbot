@@ -55,47 +55,54 @@
 namespace filter
 {
 
-template <typename Scalar_ = double, int SIZE = -1>
-class DampedBrownianMotion:
-        public StationaryProcess<Scalar_, SIZE, SIZE, SIZE>
+template <int SIZE = -1, typename ScalarType_ = double>
+struct DampedWienerProcessTypes
+{
+    typedef ScalarType_                                         ScalarType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1>                  VectorType;
+    typedef StationaryProcess<ScalarType, VectorType, SIZE>     StationaryProcessType;
+    typedef StationaryProcessType::PerturbationType             PerturbationType;
+};
+
+
+
+template <int SIZE = -1, typename ScalarType_ = double>
+class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::StationaryProcessType
 {
 public:
-    typedef StationaryProcess<Scalar_, SIZE, SIZE, SIZE> BaseType;
-
-    typedef typename BaseType::ScalarType               ScalarType;
-    typedef typename BaseType::VectorType             VectorType;
-    typedef typename BaseType::Sample               Sample;
-    typedef typename BaseType::Control              Control;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   Covariance;
+    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
+    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
+    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   PerturbationType;
+    typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
+    typedef GaussianType::OperatorType                                      OperatorType;
 
 public:
-
-    DampedBrownianMotion(): gaussian_()
+    DampedWienerProcess(): gaussian_()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    explicit DampedBrownianMotion(int size): gaussian_(size)
+    explicit DampedWienerProcess(int size): gaussian_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
 
-    virtual ~DampedBrownianMotion() { }
+    virtual ~DampedWienerProcess() { }
 
-    virtual VectorType MapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const PerturbationType& sample) const
     {
         return gaussian_.MapNormal(sample);
     }
 
-    virtual void conditional(const ScalarType& delta_time,
-                             const VectorType& state,
-                             const Control& control)
+    virtual void Conditional(const ScalarType&       delta_time,
+                             const VectorType&       state,
+                             const PerturbationType& control)
     {
-        gaussian_.Mean(ComputeMean(delta_time, state, control));
-        gaussian_.Covariance(ComputeCovariance(delta_time));
+        gaussian_.Mean(Mean(delta_time, state, control));
+        gaussian_.Covariance(Covariance(delta_time));
     }
 
-    virtual void parameters(const ScalarType& damping, const Covariance& noise_covariance)
+    virtual void parameters(const ScalarType& damping, const OperatorType& noise_covariance)
     {
         damping_ = damping;
         noise_covariance_ = noise_covariance;
@@ -117,9 +124,9 @@ public:
     }
 
 private:
-    VectorType ComputeMean(const ScalarType& delta_time,
+    VectorType Mean(const ScalarType& delta_time,
                          const VectorType& state,
-                         const Control& control)
+                         const PerturbationType& control)
     {
         VectorType state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
                                               + exp(-damping_*delta_time)*state;
@@ -131,7 +138,7 @@ private:
         return state_expectation;
     }
 
-    Covariance ComputeCovariance(const ScalarType& delta_time)
+    OperatorType Covariance(const ScalarType& delta_time)
     {
         ScalarType factor = (1.0 - exp(-2.0*damping_*delta_time))/(2.0*damping_);
         if(!std::isfinite(factor))
@@ -142,11 +149,11 @@ private:
 
 private:
     // conditional
-    GaussianDistribution<ScalarType, SIZE> gaussian_;
+    GaussianType gaussian_;
 
     // parameters
     ScalarType damping_;
-    Covariance noise_covariance_;
+    OperatorType noise_covariance_;
 
     /** @brief euler-mascheroni constant */
     static const ScalarType gamma_ = 0.57721566490153286060651209008240243104215933593992;

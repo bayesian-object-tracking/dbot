@@ -56,35 +56,48 @@
 namespace filter
 {
 
-template <typename ScalarType_, int SIZE>
-class IntegratedDampedBrownianMotion:
-        public GaussianMappable<ScalarType_, SIZE, SIZE>
-{
-public: /* distribution traits */
-    typedef GaussianMappable<ScalarType_, SIZE, SIZE> BaseType;
 
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VectorType         VectorType;
-    typedef typename BaseType::Sample          Sample;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE>   CovarianceType;
+template <typename ScalarType_, int SIZE>
+struct IntegratedDampedWienerProcessTypes
+{
+    typedef ScalarType_                           ScalarType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
+    typedef GaussianMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
+    typedef GaussianMappableType::PerturbationType PerturbationType;
+};
+
+
+
+
+
+// TODO: THIS SHOULD BE DERIVED FROM STATIONARY PROCESS
+template <typename ScalarType_, int SIZE>
+class IntegratedDampedWienerProcess: public IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType
+{
+public:
+    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
+    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
+    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   PerturbationType;
+    typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
+    typedef GaussianType::OperatorType                                      OperatorType;
 
 public:
 
-    IntegratedDampedBrownianMotion():
+    IntegratedDampedWienerProcess():
         distribution_()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    IntegratedDampedBrownianMotion(int size):
+    IntegratedDampedWienerProcess(int size):
         distribution_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
 
-    virtual ~IntegratedDampedBrownianMotion() { }
+    virtual ~IntegratedDampedWienerProcess() { }
 
-    virtual VectorType MapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const PerturbationType& sample) const
     {
         return distribution_.MapNormal(sample);
     }
@@ -101,7 +114,7 @@ public:
     }
     virtual void parameters(
             const double& damping,
-            const CovarianceType& acceleration_covariance)
+            const OperatorType& acceleration_covariance)
     {
         damping_ = damping;
         acceleration_covariance_ = acceleration_covariance;
@@ -136,7 +149,7 @@ private:
         return expectation;
     }
 
-    CovarianceType Covariance(const double& delta_time)
+    OperatorType Covariance(const double& delta_time)
     {
         // the first argument to the gamma function should be equal to zero, which would not cause
         // the gamma function to diverge as long as the second argument is not zero, which will not
@@ -156,10 +169,10 @@ private:
 private:
     size_t n_variables_;
     // conditionals
-    GaussianDistribution<ScalarType, SIZE> distribution_;
+    GaussianType distribution_;
     // parameters
     double damping_;
-    CovarianceType acceleration_covariance_;
+    OperatorType acceleration_covariance_;
     // euler-mascheroni constant
     static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };

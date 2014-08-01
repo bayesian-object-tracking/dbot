@@ -73,7 +73,11 @@ struct GaussianDistributionTypes
     typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
     typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
 
-    typedef MomentsSolvable<ScalarType_, VectorType_, OperatorType_> MomentsSolvableType;
+    typedef MomentsSolvable<ScalarType, VectorType, OperatorType>   MomentsSolvableType;
+    typedef Evaluable<ScalarType, VectorType>                       EvaluableType;
+    typedef GaussianMappable<ScalarType, VectorType, SIZE>          GaussianMappableType;
+
+    typedef typename GaussianMappableType::PerturbationType SampleType;
 };
 
 
@@ -82,21 +86,17 @@ struct GaussianDistributionTypes
 
 
 template <typename ScalarType_, int SIZE>
-class GaussianDistribution: public MomentsSolvable<ScalarType_, SIZE>,
-                            public Evaluable<ScalarType_, SIZE>,
-                            public GaussianMappable<ScalarType_, SIZE, SIZE>
+class GaussianDistribution: public GaussianDistributionTypes<ScalarType_, SIZE>::MomentsSolvableType,
+                            public GaussianDistributionTypes<ScalarType_, SIZE>::EvaluableType,
+                            public GaussianDistributionTypes<ScalarType_, SIZE>::GaussianMappableType
 {
 public:
-    typedef MomentsSolvable<ScalarType_, SIZE>        MomentsBaseType;
-    typedef GaussianMappable<ScalarType_, SIZE, SIZE>   MappableBaseType;
+    typedef GaussianDistributionTypes<ScalarType_, SIZE>::ScalarType    ScalarType;
+    typedef GaussianDistributionTypes<ScalarType_, SIZE>::VectorType    VectorType;
+    typedef GaussianDistributionTypes<ScalarType_, SIZE>::OperatorType  OperatorType;
+    typedef GaussianDistributionTypes<ScalarType_, SIZE>::SampleType    PerturbationType;
 
-    typedef typename MomentsBaseType::ScalarType        ScalarType;
-    typedef typename MomentsBaseType::VectorType      VectorType;
-    typedef typename MomentsBaseType::OperatorType    OperatorType;
-    typedef typename MappableBaseType::Sample      Sample;
-
-
-
+public:
     GaussianDistribution()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
@@ -118,7 +118,7 @@ public:
 
     virtual ~GaussianDistribution() { }
 
-    virtual VectorType MapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const PerturbationType& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
@@ -168,10 +168,10 @@ public:
         return covariance_;
     }
 
-    virtual ScalarType LogProbability(const VectorType& sample) const
+    virtual ScalarType LogProbability(const VectorType& vector) const
     {
         if(full_rank_)
-            return log_normalizer_ - 0.5 * (sample - mean_).transpose() * precision_ * (sample - mean_);
+            return log_normalizer_ - 0.5 * (vector - mean_).transpose() * precision_ * (vector - mean_);
         else
             return -std::numeric_limits<ScalarType>::infinity();
     }

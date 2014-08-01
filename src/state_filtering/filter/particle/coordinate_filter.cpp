@@ -190,7 +190,7 @@ void CoordinateParticleFilter::Filter( const Control control,
             for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
                 noises_[particle_index](independent_blocks_[block_index][i]) = unit_gaussian_.Sample()(0);
 
-            process_model_->conditional(observation_time - particle_times_[particle_index],
+            process_model_->Conditional(observation_time - particle_times_[particle_index],
                                         particles_[particle_index],
                                         control);
             propagated_particles_[particle_index] = process_model_->MapNormal(noises_[particle_index]);
@@ -286,7 +286,7 @@ void CoordinateParticleFilter::Propagate(
     // we propagate the states to the current time, appying the control input ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     for(size_t state_index = 0; state_index < particles_.size(); state_index++)
     {        
-        process_model_->conditional(current_time - particle_times_[state_index], particles_[state_index], control);
+        process_model_->Conditional(current_time - particle_times_[state_index], particles_[state_index], control);
         particles_[state_index] = process_model_->Sample();
         particle_times_[state_index] = current_time;
     }

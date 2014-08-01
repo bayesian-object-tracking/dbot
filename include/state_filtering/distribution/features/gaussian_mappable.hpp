@@ -59,44 +59,38 @@
 namespace filter
 {
 
-/**
- * Mappable interface of a distribution
- */
 template <typename ScalarType_, typename VectorType_, int DIMENSION>
 class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
 {
 public:
-    typedef Sampleable<ScalarType_, VectorType_>       BaseType;
-    typedef typename BaseType::ScalarType              ScalarType;
-    typedef typename BaseType::VectorType              VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>    SampleType;
+    // types from parents
+    typedef Sampleable<ScalarType_, VectorType_>::ScalarType    ScalarType;
+    typedef Sampleable<ScalarType_, VectorType_>::VectorType    VectorType;
+    // new types
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>             PerturbationType;
 
+public:
+    // constructor and destructor
     GaussianMappable():
         generator_(RANDOM_SEED),
         gaussian_distribution_(0.0, 1.0),
-        gaussian_generator_(generator_, gaussian_distribution_)
-    {
-
-    }
-
+        gaussian_generator_(generator_, gaussian_distribution_) { }
     virtual ~GaussianMappable() { }
 
-    virtual VectorType MapNormal(const SampleType& sample) const = 0;
-
+    // purely virtual functions
+    virtual VectorType MapNormal(const PerturbationType& sample) const = 0;
     virtual int Dimension() const = 0;
 
-
-
+    // implementations
     virtual VectorType Sample()
     {
-        SampleType normal_sample(Dimension());
+        PerturbationType normal_sample(Dimension());
         for (int i = 0; i < Dimension(); i++)
         {
             normal_sample(i) = gaussian_generator_();
         }
         return MapNormal(normal_sample);
     }
-
 
 protected:
     boost::mt19937 generator_;

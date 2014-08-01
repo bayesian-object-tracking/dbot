@@ -235,7 +235,7 @@ public:
         vector<boost::shared_ptr<StationaryProcess<> > > partial_process_models(object_names_.size());
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
-            boost::shared_ptr<BrownianProcessModel<> > partial_process_model(new BrownianProcessModel<>);
+            boost::shared_ptr<BrownianObjectMotion<> > partial_process_model(new BrownianObjectMotion<>);
             partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
                                               damping,
                                               linear_acceleration_covariance,

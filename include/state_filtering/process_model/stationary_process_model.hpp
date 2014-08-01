@@ -59,33 +59,30 @@
 namespace filter
 {
 
-template <typename Scalar_ = double,
-          int VARIABLE_SIZE = Eigen::Dynamic,
-          int CONTROL_SIZE = Eigen::Dynamic,
-          int SAMPLE_SIZE = Eigen::Dynamic>
-class StationaryProcess:
-        public GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE>
+template <typename ScalarType_, typename VectorType_, int DIMENSION>
+class StationaryProcess: public GaussianMappable<ScalarType_, VectorType_, DIMENSION>
 {
 public:
-    typedef GaussianMappable<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE> BaseType;
+    // types from parents
+    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::ScalarType        ScalarType;
+    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::VectorType        VectorType;
+    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::PerturbationType  PerturbationType;
 
-    typedef typename BaseType::ScalarType                               ScalarType;
-    typedef typename BaseType::VectorType                             VectorType;
-    typedef typename BaseType::Sample                               Sample;
-    typedef Eigen::Matrix<ScalarType, CONTROL_SIZE, 1>              Control;
-
+public:
+    // constructor and destructor
     virtual ~StationaryProcess() { }
 
-    virtual void conditional(const double& delta_time,
-                             const VectorType& state,
-                             const Control& control) = 0;
+    // purely virtual functions
+    virtual void Conditional(const ScalarType&          delta_time,
+                             const VectorType&          state,
+                             const PerturbationType&    control) = 0;
 
-    virtual void conditional(const double& delta_time, const VectorType& state)
-    {
-        conditional(delta_time, state, Control::Zero(control_size()));
-    }
+//    virtual void Conditional(const double& delta_time, const VectorType& state)
+//    {
+//        Conditional(delta_time, state, Control::Zero(control_size()));
+//    }
 
-    virtual int control_size() const = 0;
+//    virtual int control_size() const = 0;
 };
 
 }

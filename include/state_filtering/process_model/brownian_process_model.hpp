@@ -56,147 +56,161 @@
 
 namespace filter
 {
-
-namespace internals
-{
-template <typename Scalar_, bool IS_DYNAMIC>
-struct BrownianProcessModelTypes
+template <int SIZE_OBJECTS, typename ScalarType_ = double>
+struct BrownianObjectMotionTypes
 {
     enum
     {
-        VARIABLE_SIZE = 12,
-        SAMPLE_SIZE = 6,
-        CONTROL_SIZE = 6
+        DIMENSION_PER_OBJECT = 6,
+        DIMENSION = SIZE_OBJECTS == -1 ? -1 : SIZE_OBJECTS * DIMENSION_PER_OBJECT
     };
 
-    typedef StationaryProcess<> Base;
+    typedef ScalarType_                                             ScalarType;
+    typedef FloatingBodySystem<SIZE_OBJECTS>                        VectorType;
+    typedef StationaryProcess<ScalarType, VectorType, DIMENSION>    StationaryProcessType;
+    typedef typename StationaryProcessType::PerturbationType        PerturbationType;
 };
 
-template <typename Scalar_>
-struct BrownianProcessModelTypes<Scalar_, false>
+
+template <int SIZE_OBJECTS = -1, typename ScalarType_ = double>
+class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType
 {
+public:
+    // types from parents
+    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::ScalarType        ScalarType;
+    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::VectorType        VectorType;
+    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  PerturbationType;
+
+    // new types
+    typedef typename Eigen::Quaternion<ScalarType>          Quaternion;
+    typedef IntegratedDampedWienerProcess<ScalarType, 3>   AccelerationDistribution;
+    typedef DampedWienerProcess<ScalarType, 3>             VelocityDistribution;
+
     enum
     {
-        VARIABLE_SIZE =BrownianProcessModelTypes<Scalar_, true>::VARIABLE_SIZE,
-        SAMPLE_SIZE = BrownianProcessModelTypes<Scalar_, true>::SAMPLE_SIZE,
-        CONTROL_SIZE = BrownianProcessModelTypes<Scalar_, true>::CONTROL_SIZE
+        DIMENSION_PER_OBJECT = BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::DIMENSION_PER_OBJECT
     };
 
-    typedef StationaryProcess<Scalar_, VARIABLE_SIZE, SAMPLE_SIZE, CONTROL_SIZE> Base;
-};
-}
-
-template <typename Scalar_ = double, bool IS_DYNAMIC = true>
-class BrownianProcessModel:
-        public internals::BrownianProcessModelTypes<Scalar_, IS_DYNAMIC>::Base
-{
 public:
-    typedef internals::BrownianProcessModelTypes<Scalar_, IS_DYNAMIC> Types;
-
-    typedef typename Types::Base            BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VectorType         VectorType;
-    typedef typename BaseType::Sample           Sample;
-    typedef typename BaseType::Control          Control;
-
-    typedef typename Eigen::Quaternion<ScalarType>      Quaternion;
-
-
-    typedef FloatingBodySystem<1> State;
-    typedef IntegratedDampedBrownianMotion<ScalarType, 3> AccelerationDistribution;
-    typedef DampedBrownianMotion<ScalarType, 3> VelocityDistribution;
-
-    using BaseType::conditional;
-
-public:
-    ~BrownianProcessModel() { }
-
-    virtual VectorType MapNormal(const Sample& randoms) const
+    BrownianObjectMotion()
     {
-        State state;
-        state.position() = state_.position() + delta_position_.MapNormal(randoms.topRows(3));
-        Quaternion updated_quaternion(state_.quaternion().coeffs()
-                                    + quaternion_map_ * delta_orientation_.MapNormal(randoms.template bottomRows(3)));
-        state.quaternion(updated_quaternion.normalized());
-        state.linear_velocity() = linear_velocity_.MapNormal(randoms.topRows(3));
-        state.angular_velocity() = angular_velocity_.MapNormal(randoms.bottomRows(3));
+        // todo: check whether this complains for dynamic size
 
-        // transform to external coordinate system
-        state.linear_velocity() -= state.angular_velocity().cross(state.position());
-        state.position() -= state.rotation_matrix()*rotation_center_;
-
-        return state;
+        quaternion_map_.resize(count_objects);
+        rotation_center_.resize(count_objects);
+        delta_position_.resize(SIZE_OBJECTS);
+        delta_orientation_.resize(SIZE_OBJECTS);
+        linear_velocity_.resize(SIZE_OBJECTS);
+        angular_velocity_.resize(SIZE_OBJECTS);
     }
 
-    virtual void conditional(const double& delta_time,
-                              const VectorType& state,
-                              const Control& control)
+    BrownianObjectMotion(unsigned count_objects): state_(count_objects)
+    {
+
+        quaternion_map_.resize(count_objects);
+        rotation_center_.resize(count_objects);
+        delta_position_.resize(count_objects);
+        delta_orientation_.resize(count_objects);
+        linear_velocity_.resize(count_objects);
+        angular_velocity_.resize(count_objects);
+    }
+
+    virtual ~BrownianObjectMotion() { }
+
+    virtual VectorType MapNormal(const PerturbationType& sample) const
+    {
+        for(size_t i = 0; i < state_.bodies_size(); i++)
+        {
+            state_.position(i) = state_.position(i) + delta_position_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT));
+            Quaternion updated_quaternion(state_.quaternion(i).coeffs()
+                       + quaternion_map_[i] * delta_orientation_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
+            state_.quaternion(updated_quaternion.normalized(), i);
+            state_.linear_velocity(i) = linear_velocity_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT));
+            state_.angular_velocity(i) = angular_velocity_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+
+            // transform to external coordinate system
+            state_.linear_velocity() -= state.angular_velocity().cross(state.position());
+            state_.position() -= state.rotation_matrix()*rotation_center_;
+        }
+
+        return state_;
+    }
+
+    virtual void Conditional( const ScalarType&         delta_time,
+                              const VectorType&         state,
+                              const PerturbationType&   control)
     {
         state_ = state;
-        quaternion_map_ = hf::QuaternionMatrix(state_.quaternion().coeffs());
 
-        // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
-        // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
-        state_.position() += state_.rotation_matrix()*rotation_center_;
-        state_.linear_velocity() += state_.angular_velocity().cross(state_.position());
+        for(size_t i = 0; i < state_.bodies_size(); i++)
+        {
+            quaternion_map_[i] = hf::QuaternionMatrix(state_.quaternion(i).coeffs());
 
-        // todo: should controls change coordintes as well?
-        linear_velocity_.conditional(delta_time,
-                                      state_.linear_velocity(),
-                                      control.topRows(3));
-        angular_velocity_.conditional(delta_time,
-                                       state_.angular_velocity(),
-                                       control.bottomRows(3));
-        delta_position_.conditionals(delta_time,
-                                     Eigen::Vector3d::Zero(),
-                                     state_.linear_velocity(),
-                                     control.topRows(3));
-        delta_orientation_.conditionals(delta_time,
-                                        Eigen::Vector3d::Zero(),
-                                        state_.angular_velocity(),
-                                        control.bottomRows(3));
+            // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
+            // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
+            state_.position(i) += state_.rotation_matrix(i)*rotation_center_[i];
+            state_.linear_velocity(i) += state_.angular_velocity(i).cross(state_.position(i));
+
+            // todo: should controls change coordintes as well?
+            linear_velocity_[i].Conditional( delta_time,
+                                             state_.linear_velocity(i),
+                                             control.middleRows<3>(i*DIMENSION_PER_OBJECT));
+            angular_velocity_[i].Conditional( delta_time,
+                                           state_.angular_velocity(i),
+                                           control.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+            delta_position_[i].conditionals(delta_time,
+                                         Eigen::Vector3d::Zero(),
+                                         state_.linear_velocity(i),
+                                         control.middleRows<3>(i*DIMENSION_PER_OBJECT));
+            delta_orientation_[i].conditionals(delta_time,
+                                            Eigen::Vector3d::Zero(),
+                                            state_.angular_velocity(i),
+                                            control.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+        }
+
     }
 
     virtual void parameters(
-                const Eigen::Matrix<ScalarType, 3, 1>& rotation_center,
-                const double& damping,
-                const typename AccelerationDistribution::CovarianceType& linear_acceleration_covariance,
-                const typename VelocityDistribution::Covariance& angular_acceleration_covariance)
+                const size_t&                                               object_index,
+                const Eigen::Matrix<ScalarType, 3, 1>&                      rotation_center,
+                const ScalarType&                                           damping,
+                const typename AccelerationDistribution::CovarianceType&    linear_acceleration_covariance,
+                const typename VelocityDistribution::Covariance&            angular_acceleration_covariance)
     {
-        rotation_center_ = rotation_center;
+        rotation_center_[object_index] = rotation_center;
 
-        delta_position_.parameters(damping, linear_acceleration_covariance);
-        delta_orientation_.parameters(damping, angular_acceleration_covariance);
-        linear_velocity_.parameters(damping, linear_acceleration_covariance);
-        angular_velocity_.parameters(damping, angular_acceleration_covariance);
+        delta_position_[object_index].parameters(damping, linear_acceleration_covariance);
+        delta_orientation_[object_index].parameters(damping, angular_acceleration_covariance);
+        linear_velocity_[object_index].parameters(damping, linear_acceleration_covariance);
+        angular_velocity_[object_index].parameters(damping, angular_acceleration_covariance);
     }
 
-    virtual int variable_size() const
-    {
-        return Types::VARIABLE_SIZE;
-    }
+//    virtual int variable_size() const
+//    {
+//        return state_.state_size();
+//    }
     virtual int Dimension() const
     {
-        return Types::SAMPLE_SIZE;
+        return state_.bodies_size()*DIMENSION_PER_OBJECT;
     }
-    virtual int control_size() const
-    {
-        return Types::CONTROL_SIZE;
-    }
+//    virtual int control_size() const
+//    {
+//        return Types::CONTROL_SIZE;
+//    }
 
 private:
     // conditionals
-    State state_;
-    Eigen::Matrix<ScalarType, 4, 3> quaternion_map_;
+    VectorType state_;
+    std::vector<Eigen::Matrix<ScalarType, 4, 3> > quaternion_map_;
 
     // parameters
-    Eigen::Matrix<ScalarType, 3, 1> rotation_center_;
+    std::vector<Eigen::Matrix<ScalarType, 3, 1> > rotation_center_;
 
     // distributions
-    AccelerationDistribution delta_position_;
-    AccelerationDistribution delta_orientation_;
-    VelocityDistribution linear_velocity_;
-    VelocityDistribution angular_velocity_;
+    std::vector<AccelerationDistribution>   delta_position_;
+    std::vector<AccelerationDistribution>   delta_orientation_;
+    std::vector<VelocityDistribution>       linear_velocity_;
+    std::vector<VelocityDistribution>       angular_velocity_;
 };
 
 }
