@@ -164,6 +164,11 @@ public:
                                                                            urdf_kinematics->num_joints(),
                                                                            urdf_kinematics));
 
+	// initialize the result container for the emperical mean
+	mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(part_meshes_.size(),
+								   urdf_kinematics->num_joints(),
+								   urdf_kinematics));
+
         boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,
                                                                                                     part_triangle_indices,
                                                                                                     robot_state));
@@ -353,10 +358,11 @@ public:
         /// the visualization will of course also have to be adapted to use the robot model
         ///
         
-        RobotState<> mean = filter_->stateDistribution().empiricalMean();
+        //RobotState<> mean = filter_->stateDistribution().empiricalMean();
+	*mean_ = filter_->stateDistribution().empiricalMean();
 	std::map<std::string, double> joint_positions;
-	mean.GetJointState(joint_positions);
-	robot_state_publisher_->publishTransforms(joint_positions, ros_image.header.stamp, tf_prefix_);
+	mean_->GetJointState(joint_positions);
+	robot_state_publisher_->publishTransforms(joint_positions,  ros::Time::now(), tf_prefix_);
 	robot_state_publisher_->publishFixedTransforms(tf_prefix_);
 	/*
 	// publish moving joints
@@ -383,6 +389,7 @@ public:
 
 
 private:  
+
     double duration_;
 
     boost::mutex mutex_;
@@ -391,6 +398,7 @@ private:
 
   boost::shared_ptr<FilterType> filter_;
   
+  boost::shared_ptr<RobotState<> > mean_;
   boost::shared_ptr<robot_state_pub::RobotStatePublisher> robot_state_publisher_;
     
 

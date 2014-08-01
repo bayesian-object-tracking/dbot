@@ -96,8 +96,10 @@ public:
     };
 
   // give access to base member functions (otherwise it is shadowed)
-  using Base::quaternion;
-  using Base::state_size;
+  //using Base::quaternion;
+  //using Base::state_size;
+  using Base::operator=;
+  
 
   // constructor for fixed size without initial value
   RobotState():
@@ -180,7 +182,7 @@ public:
     for(std::vector<std::string>::const_iterator it = joint_map_.begin();
 	it != joint_map_.end(); ++it)
       {
-	joint_positions[*it] = 0.0;//*this[it - joint_map_.begin()];
+	joint_positions[*it] = (*this)(it - joint_map_.begin(),0);
       }
   }
 

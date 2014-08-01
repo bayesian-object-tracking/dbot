@@ -66,7 +66,7 @@ public:
   {
     count_state_ = state_vector.rows();
     *((State*)(this)) = state_vector;
-    }
+  }
   
   // read
   virtual Vector       position            (const size_t& object_index = 0) const = 0;
