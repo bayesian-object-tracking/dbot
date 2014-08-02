@@ -81,11 +81,11 @@ template <typename ScalarType_, int SIZE>
 class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, SIZE>::MomentsSolvableType
 {
 public:
-    typedef SumOfDeltasTypes<ScalarType_, SIZE>::ScalarType      ScalarType;
-    typedef SumOfDeltasTypes<ScalarType_, SIZE>::VectorType      VectorType;
-    typedef SumOfDeltasTypes<ScalarType_, SIZE>::OperatorType    OperatorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::ScalarType      ScalarType;
+    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::VectorType      VectorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::OperatorType    OperatorType;
 
-    typedef typename std::vector<VectorType>   Deltas;
+    typedef std::vector<VectorType>   Deltas;
     typedef Eigen::Matrix<ScalarType, -1, 1>   Weights;
 
 public:

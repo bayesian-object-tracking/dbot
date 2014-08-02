@@ -71,11 +71,16 @@ namespace filter
  * manages the state internally. This may due to performance reasons such as in the case of
  * GPU implementations. Both, stateless and stateful filter can be used in the same fashion.
  */
+
+// TODO: THESE TEMPLATE PARAMETERS HAVE TO CHANGE!! FOR NOW FOR SIMPLICITY THE BELOW IS A HACK
 template <typename ScalarType_, int SIZE, typename MeasurementType, typename ControlType>
 class FilterContext
 {
 public:
-    typedef MomentsEstimable<ScalarType_, SIZE> StateDistribution;
+    typedef ScalarType_ ScalarType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1> VectorType;
+    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
+    typedef MomentsEstimable<ScalarType, VectorType, OperatorType> StateDistribution;
 
     virtual ~FilterContext() { }
 

@@ -63,7 +63,7 @@ struct IntegratedDampedWienerProcessTypes
     typedef ScalarType_                           ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
     typedef GaussianMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
-    typedef GaussianMappableType::PerturbationType PerturbationType;
+    typedef typename GaussianMappableType::PerturbationType PerturbationType;
 };
 
 
@@ -75,11 +75,11 @@ template <typename ScalarType_, int SIZE>
 class IntegratedDampedWienerProcess: public IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType
 {
 public:
-    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
-    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
-    typedef IntegratedDampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   PerturbationType;
+    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::ScalarType         ScalarType;
+    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::VectorType         VectorType;
+    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::PerturbationType   PerturbationType;
     typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
-    typedef GaussianType::OperatorType                                      OperatorType;
+    typedef typename GaussianType::OperatorType                                      OperatorType;
 
 public:
 

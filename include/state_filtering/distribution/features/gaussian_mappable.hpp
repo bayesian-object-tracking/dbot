@@ -64,17 +64,19 @@ class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
 {
 public:
     // types from parents
-    typedef Sampleable<ScalarType_, VectorType_>::ScalarType    ScalarType;
-    typedef Sampleable<ScalarType_, VectorType_>::VectorType    VectorType;
+    typedef typename Sampleable<ScalarType_, VectorType_>::ScalarType    ScalarType;
+    typedef typename Sampleable<ScalarType_, VectorType_>::VectorType    VectorType;
     // new types
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>             PerturbationType;
+    typedef typename Eigen::Matrix<ScalarType, DIMENSION, 1>             PerturbationType;
 
 public:
     // constructor and destructor
-    GaussianMappable():
+    GaussianMappable()
+        :
         generator_(RANDOM_SEED),
         gaussian_distribution_(0.0, 1.0),
-        gaussian_generator_(generator_, gaussian_distribution_) { }
+        gaussian_generator_(generator_, gaussian_distribution_)
+    { }
     virtual ~GaussianMappable() { }
 
     // purely virtual functions
@@ -95,7 +97,7 @@ public:
 protected:
     boost::mt19937 generator_;
     boost::normal_distribution<> gaussian_distribution_;
-    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > gaussian_generator_;
+    boost::variate_generator<boost::mt19937/*&*/, boost::normal_distribution<> > gaussian_generator_;
 };
 
 }

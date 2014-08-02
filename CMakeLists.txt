@@ -145,7 +145,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
 
     # process model implementations
-    include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
+#    include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
     include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
     include/${PROJECT_NAME}/process_model/occlusion_process_model.hpp
 
@@ -165,7 +165,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/observation_models/spkf/depth_measurement_model.hpp
 
     ## Particle specific implementations
-    include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
+#    include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
     include/${PROJECT_NAME}/filter/particle/coordinate_filter.hpp
 
     ## SPKF specific interface
@@ -205,7 +205,7 @@ set(state_filtering_headers
     include/${PROJECT_NAME}/tools/tracking_dataset.hpp
 
 
-    include/${PROJECT_NAME}/cpu_multi_object_tracker.hpp
+#    include/${PROJECT_NAME}/cpu_multi_object_tracker.hpp
 )
 
 set(state_filtering_sources
@@ -240,14 +240,14 @@ add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
 
 ## multi_object_tracker
-add_executable(cpu_multi_object_tracker
-    src/${PROJECT_NAME}/cpu_multi_object_tracker_node.cpp)
-target_link_libraries(cpu_multi_object_tracker
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS}
-    ${PCL_LIBRARIES}
-    yaml-cpp)
+#add_executable(cpu_multi_object_tracker
+#    src/${PROJECT_NAME}/cpu_multi_object_tracker_node.cpp)
+#target_link_libraries(cpu_multi_object_tracker
+#    ${PROJECT_NAME}
+#    ${catkin_LIBRARIES}
+#    ${OpenCV_LIBS}
+#    ${PCL_LIBRARIES}
+#    yaml-cpp)
 
 #set(CUDA_FOUND)
 
@@ -261,7 +261,8 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/object_rasterizer.hpp
         include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.hpp
         include/${PROJECT_NAME}/multi_object_tracker.hpp
-        include/${PROJECT_NAME}/robot_tracker.hpp)
+#        include/${PROJECT_NAME}/robot_tracker.hpp
+)
 
 
     set(state_filtering_gpu_SOURCES
@@ -300,29 +301,29 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 
 
-    ## robot_tracker
-    add_executable(robot_tracker
-        src/${PROJECT_NAME}/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
-        ${PROJECT_NAME}_gpu
-        ${PROJECT_NAME}_cuda
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-	${CUDA_LIBRARIES}
-        yaml-cpp)
+#    ## robot_tracker
+#    add_executable(robot_tracker
+#        src/${PROJECT_NAME}/robot_tracker_node.cpp)
+#    target_link_libraries(robot_tracker
+#        ${PROJECT_NAME}
+#        ${PROJECT_NAME}_gpu
+#        ${PROJECT_NAME}_cuda
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${PCL_LIBRARIES}
+#	${CUDA_LIBRARIES}
+#        yaml-cpp)
 else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
     ## robot_tracker
-    add_executable(robot_tracker
-      src/${PROJECT_NAME}/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
+#    add_executable(robot_tracker
+#      src/${PROJECT_NAME}/robot_tracker_node.cpp)
+#    target_link_libraries(robot_tracker
+#        ${PROJECT_NAME}
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${PCL_LIBRARIES}
+#        yaml-cpp)
 endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 ## Declare a cpp executable

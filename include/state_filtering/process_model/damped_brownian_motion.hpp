@@ -61,7 +61,7 @@ struct DampedWienerProcessTypes
     typedef ScalarType_                                         ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>                  VectorType;
     typedef StationaryProcess<ScalarType, VectorType, SIZE>     StationaryProcessType;
-    typedef StationaryProcessType::PerturbationType             PerturbationType;
+    typedef typename StationaryProcessType::PerturbationType             PerturbationType;
 };
 
 
@@ -70,11 +70,11 @@ template <int SIZE = -1, typename ScalarType_ = double>
 class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::StationaryProcessType
 {
 public:
-    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
-    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
-    typedef DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   PerturbationType;
+    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
+    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
+    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   PerturbationType;
     typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
-    typedef GaussianType::OperatorType                                      OperatorType;
+    typedef typename GaussianType::OperatorType                                      OperatorType;
 
 public:
     DampedWienerProcess(): gaussian_()

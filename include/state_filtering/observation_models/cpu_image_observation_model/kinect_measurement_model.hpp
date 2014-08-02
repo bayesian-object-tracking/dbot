@@ -38,10 +38,10 @@ using namespace std;
 namespace obs_mod
 {
 
-class KinectMeasurementModel: public filter::Evaluable<double, 1>
+class KinectMeasurementModel: public filter::Evaluable<double, Eigen::Matrix<double, 1, 1> >
 {
 public:
-    typedef Evaluable<double, 1>                BaseType;
+    typedef filter::Evaluable<double, Eigen::Matrix<double, 1, 1> >                BaseType;
     typedef typename BaseType::ScalarType       ScalarType;
     typedef typename BaseType::VectorType     VectorType;
 

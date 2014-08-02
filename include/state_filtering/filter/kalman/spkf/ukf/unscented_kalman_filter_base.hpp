@@ -30,7 +30,7 @@ namespace filter
          * @see SpkfInternals::
          */
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::Control& controlInput,
+                             const ProcessModel::PerturbationType &controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc);
 
@@ -56,7 +56,7 @@ namespace filter
          *
          */
         virtual void process(const SigmaPointMatrix& sigmaPoints,
-                             const ProcessModel::Control& control,
+                             const ProcessModel::PerturbationType& control,
                              const double deltaTime,
                              SigmaPointMatrix& processedSigmaPoints,
                              int stateDimension);

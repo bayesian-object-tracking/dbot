@@ -51,7 +51,7 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
     measurement_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
-    state_distribution_(process_model->variable_size()),
+    state_distribution_(process_model->Dimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
     max_kl_divergence_(max_kl_divergence)
 {
     // make sure sizes are consistent
@@ -360,10 +360,10 @@ CoordinateParticleFilter::StateDistribution &CoordinateParticleFilter::stateDist
     return state_distribution_;
 }
 
-size_t CoordinateParticleFilter::control_size()
-{
-    return process_model_->control_size();
-}
+//size_t CoordinateParticleFilter::control_size()
+//{
+//    return process_model_->control_size();
+//}
 
 
 // set and get fcts ==========================================================================================================================================================================================================================================================================================================================================================================================

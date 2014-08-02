@@ -32,7 +32,7 @@ void UkfInternalsBase::onBeginPredict(const DistributionDescriptor &stateDesc,
 }
 
 void UkfInternalsBase::process(DistributionDescriptor& currentStateDesc,
-                                   const ProcessModel::Control &controlInput,
+                                   const ProcessModel::PerturbationType &controlInput,
                                    const double deltaTime,
                                    DistributionDescriptor& predictedStateDesc)
 {
@@ -162,7 +162,7 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 }
 
 void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
-                           const ProcessModel::Control &control,
+                           const ProcessModel::PerturbationType &control,
                            const double deltaTime,
                            SigmaPointMatrix& processedSigmaPoints,
                            int stateDimension)
@@ -187,7 +187,7 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
 
         // Only for non-additive noise process models. For additive process model noise this
         // is not needed
-        ProcessModel::Sample processNoise =
+        ProcessModel::PerturbationType processNoise =
                 sigmaPoints.col(i).segment(stateDimension, processModel_->Dimension());
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());

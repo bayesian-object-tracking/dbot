@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl-1.6/pcl/point_types.h>
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
-#include <state_filtering/filter/particle/particle_filter_context.hpp>
+//#include <state_filtering/filter/particle/particle_filter_context.hpp>
 
 // observation model
 #include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
-#include <state_filtering/process_model/composed_stationary_process_model.hpp>
+//#include <state_filtering/process_model/composed_stationary_process_model.hpp>
 #include <state_filtering/process_model/brownian_process_model.hpp>
 
 #include <state_filtering/system_states/rigid_body_system.hpp>

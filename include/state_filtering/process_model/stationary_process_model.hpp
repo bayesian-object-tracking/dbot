@@ -64,9 +64,9 @@ class StationaryProcess: public GaussianMappable<ScalarType_, VectorType_, DIMEN
 {
 public:
     // types from parents
-    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::ScalarType        ScalarType;
-    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::VectorType        VectorType;
-    typedef GaussianMappable<ScalarType_, VectorType_, DIMENSION>::PerturbationType  PerturbationType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, DIMENSION>::ScalarType        ScalarType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, DIMENSION>::VectorType        VectorType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, DIMENSION>::PerturbationType  PerturbationType;
 
 public:
     // constructor and destructor
@@ -84,6 +84,7 @@ public:
 
 //    virtual int control_size() const = 0;
 };
+
 
 }
 

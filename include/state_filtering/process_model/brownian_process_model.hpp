@@ -56,7 +56,7 @@
 
 namespace filter
 {
-template <int SIZE_OBJECTS, typename ScalarType_ = double>
+template <int SIZE_OBJECTS, typename ScalarType_>
 struct BrownianObjectMotionTypes
 {
     enum
@@ -77,14 +77,14 @@ class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, Scala
 {
 public:
     // types from parents
-    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::ScalarType        ScalarType;
-    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::VectorType        VectorType;
-    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  PerturbationType;
+    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::ScalarType        ScalarType;
+    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::VectorType        VectorType;
+    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  PerturbationType;
 
     // new types
     typedef typename Eigen::Quaternion<ScalarType>          Quaternion;
     typedef IntegratedDampedWienerProcess<ScalarType, 3>   AccelerationDistribution;
-    typedef DampedWienerProcess<ScalarType, 3>             VelocityDistribution;
+    typedef DampedWienerProcess<3, ScalarType>             VelocityDistribution;
 
     enum
     {
@@ -96,8 +96,8 @@ public:
     {
         // todo: check whether this complains for dynamic size
 
-        quaternion_map_.resize(count_objects);
-        rotation_center_.resize(count_objects);
+        quaternion_map_.resize(SIZE_OBJECTS);
+        rotation_center_.resize(SIZE_OBJECTS);
         delta_position_.resize(SIZE_OBJECTS);
         delta_orientation_.resize(SIZE_OBJECTS);
         linear_velocity_.resize(SIZE_OBJECTS);
@@ -119,21 +119,22 @@ public:
 
     virtual VectorType MapNormal(const PerturbationType& sample) const
     {
+        VectorType new_state = state_;
         for(size_t i = 0; i < state_.bodies_size(); i++)
         {
-            state_.position(i) = state_.position(i) + delta_position_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT));
+            new_state.position(i) = state_.position(i) + delta_position_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
             Quaternion updated_quaternion(state_.quaternion(i).coeffs()
-                       + quaternion_map_[i] * delta_orientation_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
-            state_.quaternion(updated_quaternion.normalized(), i);
-            state_.linear_velocity(i) = linear_velocity_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT));
-            state_.angular_velocity(i) = angular_velocity_[i].MapNormal(sample.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+                       + quaternion_map_[i] * delta_orientation_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
+            new_state.quaternion(updated_quaternion.normalized(), i);
+            new_state.linear_velocity(i) = linear_velocity_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
+            new_state.angular_velocity(i) = angular_velocity_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
 
             // transform to external coordinate system
-            state_.linear_velocity() -= state.angular_velocity().cross(state.position());
-            state_.position() -= state.rotation_matrix()*rotation_center_;
+            new_state.linear_velocity(i) -= state_.angular_velocity(i).cross(state_.position(i));
+            new_state.position(i) -= state_.rotation_matrix(i)*rotation_center_[i];
         }
 
-        return state_;
+        return new_state;
     }
 
     virtual void Conditional( const ScalarType&         delta_time,
@@ -154,18 +155,18 @@ public:
             // todo: should controls change coordintes as well?
             linear_velocity_[i].Conditional( delta_time,
                                              state_.linear_velocity(i),
-                                             control.middleRows<3>(i*DIMENSION_PER_OBJECT));
+                                             control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
             angular_velocity_[i].Conditional( delta_time,
                                            state_.angular_velocity(i),
-                                           control.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
             delta_position_[i].conditionals(delta_time,
                                          Eigen::Vector3d::Zero(),
                                          state_.linear_velocity(i),
-                                         control.middleRows<3>(i*DIMENSION_PER_OBJECT));
+                                         control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
             delta_orientation_[i].conditionals(delta_time,
                                             Eigen::Vector3d::Zero(),
                                             state_.angular_velocity(i),
-                                            control.middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+                                            control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
 
     }
@@ -174,8 +175,8 @@ public:
                 const size_t&                                               object_index,
                 const Eigen::Matrix<ScalarType, 3, 1>&                      rotation_center,
                 const ScalarType&                                           damping,
-                const typename AccelerationDistribution::CovarianceType&    linear_acceleration_covariance,
-                const typename VelocityDistribution::Covariance&            angular_acceleration_covariance)
+                const typename AccelerationDistribution::OperatorType&    linear_acceleration_covariance,
+                const typename VelocityDistribution::OperatorType&            angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
 

@@ -91,10 +91,10 @@ class GaussianDistribution: public GaussianDistributionTypes<ScalarType_, SIZE>:
                             public GaussianDistributionTypes<ScalarType_, SIZE>::GaussianMappableType
 {
 public:
-    typedef GaussianDistributionTypes<ScalarType_, SIZE>::ScalarType    ScalarType;
-    typedef GaussianDistributionTypes<ScalarType_, SIZE>::VectorType    VectorType;
-    typedef GaussianDistributionTypes<ScalarType_, SIZE>::OperatorType  OperatorType;
-    typedef GaussianDistributionTypes<ScalarType_, SIZE>::SampleType    PerturbationType;
+    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::ScalarType    ScalarType;
+    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::VectorType    VectorType;
+    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::OperatorType  OperatorType;
+    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::SampleType    PerturbationType;
 
 public:
     GaussianDistribution()
@@ -130,12 +130,12 @@ public:
         Covariance(OperatorType::Identity(variable_size(), variable_size()));
     }
 
-    virtual void mean(const VectorType& mean)
+    virtual void Mean(const VectorType& mean)
     {
         mean_ = mean;
     }
 
-    virtual void covariance(const OperatorType& covariance)
+    virtual void Covariance(const OperatorType& covariance)
     {
         covariance_ = covariance;
 

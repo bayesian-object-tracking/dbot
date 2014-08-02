@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl-1.6/pcl/point_types.h>
 // filter
 #include <state_filtering/filter/particle/coordinate_filter.hpp>
-#include <state_filtering/filter/particle/particle_filter_context.hpp>
+//#include <state_filtering/filter/particle/particle_filter_context.hpp>
 
 // observation model
 #include <state_filtering/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp>
@@ -65,7 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/distribution/distribution.hpp>
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 #include <state_filtering/process_model/stationary_process_model.hpp>
-#include <state_filtering/process_model/composed_stationary_process_model.hpp>
+//#include <state_filtering/process_model/composed_stationary_process_model.hpp>
 #include <state_filtering/process_model/brownian_process_model.hpp>
 
 #include <state_filtering/system_states/rigid_body_system.hpp>
@@ -84,6 +84,12 @@ class MultiObjectTracker
 {
 public:
     typedef Eigen::Matrix<double, -1, -1> Image;
+    typedef double ScalarType;
+    typedef FloatingBodySystem<-1> VectorType;
+    typedef StationaryProcess<ScalarType, VectorType, -1> ProcessType;
+
+
+//    typedef BrownianObjectMotion<>
 
     MultiObjectTracker():
         node_handle_("~"),
@@ -228,27 +234,31 @@ public:
             observation_model = gpu_observation_model;
         }
 
+        cout << "initialized observation omodel " << endl;
+
         // initialize process model ========================================================================================================================================================================================================================================================================================================================================================================================================================
         MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
         MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-        vector<boost::shared_ptr<StationaryProcess<> > > partial_process_models(object_names_.size());
-        for(size_t i = 0; i < partial_process_models.size(); i++)
+        boost::shared_ptr<BrownianObjectMotion<> > process_model(new BrownianObjectMotion<>(object_names_.size()));
+        for(size_t i = 0; i < object_names_.size(); i++)
         {
-            boost::shared_ptr<BrownianObjectMotion<> > partial_process_model(new BrownianObjectMotion<>);
-            partial_process_model->parameters(object_renderer->object_center(i).cast<double>(),
-                                              damping,
-                                              linear_acceleration_covariance,
-                                              angular_acceleration_covariance);
-            partial_process_models[i] = partial_process_model;
+            process_model->parameters(i,
+                                   object_renderer->object_center(i).cast<double>(),
+                                   damping,
+                                   linear_acceleration_covariance,
+                                   angular_acceleration_covariance);
         }
-        boost::shared_ptr<ComposedStationaryProcessModel> process_model(new ComposedStationaryProcessModel(partial_process_models));
 
+        cout << "initialized process model " << endl;
+        boost::shared_ptr< ProcessType > bla;
+        bla = process_model;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<filter::CoordinateParticleFilter>
-                (new filter::CoordinateParticleFilter(observation_model, process_model, dependencies, max_kl_divergence));
+                (new filter::CoordinateParticleFilter(observation_model, bla, dependencies, max_kl_divergence));
 
 
+        cout << "initialized filter " << endl;
         if(state_is_partial)
         {
             // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -285,10 +295,15 @@ public:
         }
         else
         {
+            cout << "setting states " << endl;
             filter_->set_states(initial_states);
+            cout << "evaluating " << endl;
             filter_->Evaluate(image);
+            cout << "resampling " << endl;
             filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));// FOR TESTING ONLY
         }
+
+        cout << "digedidone " << endl;
     }
 
     VectorXd Filter(const sensor_msgs::Image& ros_image)

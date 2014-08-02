@@ -40,33 +40,36 @@ struct OcclusionProcessModelTypes
 {
     enum
     {
-        VARIABLE_SIZE = 1,
-        CONTROL_SIZE = 0,
-        SAMPLE_SIZE = 0
+        VECTOR_SIZE = 1, //TODO: DO WE NEED THIS?
+        DIMENSION = 0, //TODO: THIS IS A HACK
+//        CONTROL_SIZE = 0,
+//        SAMPLE_SIZE = 0
     };
 
-    typedef double Scalar;
-    typedef filter::StationaryProcess<Scalar, VARIABLE_SIZE, CONTROL_SIZE, SAMPLE_SIZE> Base;
+    typedef double ScalarType;
+    typedef Eigen::Matrix<ScalarType, VECTOR_SIZE, 1> VectorType;
+    typedef filter::StationaryProcess<ScalarType, VectorType, DIMENSION> StationaryProcessType;
+    typedef StationaryProcessType::PerturbationType PerturbationType;
 };
 
-class OcclusionProcessModel: public OcclusionProcessModelTypes::Base
+class OcclusionProcessModel: public OcclusionProcessModelTypes::StationaryProcessType
 {
 public:
-    typedef OcclusionProcessModelTypes Types;
-    typedef Types::Base BaseType;
-    typedef BaseType::ScalarType ScalarType;
-    typedef BaseType::VectorType VectorType;
-    typedef BaseType::Control Control;
-    typedef BaseType::Sample Sample;
+    typedef OcclusionProcessModelTypes::ScalarType ScalarType;
+    typedef OcclusionProcessModelTypes::VectorType VectorType;
+    typedef OcclusionProcessModelTypes::PerturbationType PerturbationType;
 
 
     enum
     {
-        VARIABLE_SIZE = Types::VARIABLE_SIZE,
-        CONTROL_SIZE = Types::CONTROL_SIZE,
-        SAMPLE_SIZE = Types::SAMPLE_SIZE
+        VECTOR_SIZE = OcclusionProcessModelTypes::VECTOR_SIZE,
+        DIMENSION = OcclusionProcessModelTypes::DIMENSION
+//        CONTROL_SIZE = Types::CONTROL_SIZE,
+//        SAMPLE_SIZE = Types::SAMPLE_SIZE
     };
 
+
+public:
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
     OcclusionProcessModel(ScalarType p_occluded_visible,
@@ -87,9 +90,9 @@ public:
     }
 
 
-    virtual void Conditional(const double& delta_time,
+    virtual void Conditional(const ScalarType& delta_time,
                               const VectorType& state,
-                              const Control& control)
+                              const PerturbationType& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
@@ -110,22 +113,22 @@ public:
     }
 
 
-    virtual VectorType MapNormal(const Sample& sample) const
+    virtual VectorType MapNormal(const PerturbationType& sample) const
     {
         return MapNormal();
     }
 
-    virtual int variable_size() const
-    {
-        return VARIABLE_SIZE;
-    }
-    virtual int control_size() const
-    {
-        return CONTROL_SIZE;
-    }
+//    virtual int vector_size() const
+//    {
+//        return VECTOR_SIZE;
+//    }
+//    virtual int control_size() const
+//    {
+//        return CONTROL_SIZE;
+//    }
     virtual int Dimension() const
     {
-        return SAMPLE_SIZE;
+        return DIMENSION;
     }
 
 private:

@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/distribution/implementations/gaussian_distribution.hpp>
 #include <state_filtering/distribution/implementations/sum_of_deltas.hpp>
 
+#include <state_filtering/system_states/floating_body_system.hpp>
+
 
 /// this namespace contains all the filters
 namespace filter
@@ -50,9 +52,14 @@ namespace filter
 class CoordinateParticleFilter
 {
 public:
+    typedef double ScalarType;
+    typedef FloatingBodySystem<-1> VectorType;
+
+
+
     typedef boost::shared_ptr<CoordinateParticleFilter> Ptr;
 
-    typedef StationaryProcess<> ProcessModel;
+    typedef StationaryProcess<ScalarType, VectorType, -1> ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef obs_mod::ImageObservationModel MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
@@ -60,9 +67,9 @@ public:
     typedef SumOfDeltas<double, -1> StateDistribution;
 
     typedef MeasurementModel::Measurement Measurement;
-    typedef ProcessModel::Control Control;
-    typedef ProcessModel::VectorType State;
-    typedef ProcessModel::Sample Noise;
+    typedef ProcessModel::PerturbationType Control;
+    typedef Eigen::VectorXd State;
+    typedef ProcessModel::PerturbationType Noise;
 //    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,
