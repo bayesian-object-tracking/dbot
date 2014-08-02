@@ -4,7 +4,7 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/models/process/stationary_process_model.hpp>
+#include <state_filtering/models/process/stationary_process.hpp>
 #include <state_filtering/models/measurement/spkf/measurement_model.hpp>
 
 #define DYNAMIC Eigen::Dynamic

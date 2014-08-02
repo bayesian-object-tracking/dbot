@@ -72,7 +72,7 @@ struct GaussianTypes
     typedef Evaluable<ScalarType, VectorType>                               EvaluableType;
     typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>       GaussianMappableType;
 
-    typedef typename GaussianMappableType::InputType                        InputType;
+    typedef typename GaussianMappableType::NoiseType                        InputType;
 };
 
 
@@ -91,7 +91,7 @@ public:
     typedef typename Types::ScalarType    ScalarType;
     typedef typename Types::VectorType    VectorType;
     typedef typename Types::OperatorType  OperatorType;
-    typedef typename Types::InputType     InputType;
+    typedef typename Types::InputType     NoiseType;
 
 public:
     Gaussian()
@@ -115,7 +115,7 @@ public:
 
     virtual ~Gaussian() { }
 
-    virtual VectorType MapGaussian(const InputType& sample) const
+    virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
@@ -175,7 +175,7 @@ public:
 
     virtual int Dimension() const
     {
-        return this->InputDimension(); // all dimensions are the same
+        return this->NoiseDimension(); // all dimensions are the same
     }
 
 

@@ -50,7 +50,7 @@
 
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/models/process/stationary_process_model.hpp>
+#include <state_filtering/models/process/stationary_process.hpp>
 #include <state_filtering/models/process/damped_brownian_motion.hpp>
 #include <state_filtering/models/process/integrated_damped_brownian_motion.hpp>
 
@@ -68,7 +68,7 @@ struct BrownianObjectMotionTypes
     typedef ScalarType_                                             ScalarType;
     typedef FloatingBodySystem<SIZE_OBJECTS>                        VectorType;
     typedef StationaryProcess<ScalarType, VectorType, DIMENSION>    StationaryProcessType;
-    typedef typename StationaryProcessType::InputType        PerturbationType;
+    typedef typename StationaryProcessType::NoiseType        PerturbationType;
 };
 
 
@@ -79,7 +79,7 @@ public:
     // types from parents
     typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::ScalarType        ScalarType;
     typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::VectorType        VectorType;
-    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  InputType;
+    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  NoiseType;
 
     // new types
     typedef typename Eigen::Quaternion<ScalarType>          Quaternion;
@@ -119,7 +119,7 @@ public:
 
     virtual ~BrownianObjectMotion() { }
 
-    virtual VectorType MapGaussian(const InputType& sample) const
+    virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         VectorType new_state = state_;
         for(size_t i = 0; i < state_.bodies_size(); i++)
@@ -141,7 +141,7 @@ public:
 
     virtual void Conditional( const ScalarType&         delta_time,
                               const VectorType&         state,
-                              const InputType&   control)
+                              const NoiseType&   control)
     {
         state_ = state;
 
@@ -192,7 +192,7 @@ public:
 //    {
 //        return state_.state_size();
 //    }
-    virtual int InputDimension() const
+    virtual int NoiseDimension() const
     {
         return state_.bodies_size()*DIMENSION_PER_OBJECT;
     }

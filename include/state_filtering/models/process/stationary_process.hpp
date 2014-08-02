@@ -47,11 +47,6 @@
 #ifndef STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
 #define STATE_FILTERING_PROCESS_MODEL_STATIONARY_PROCESS_MODEL_HPP
 
-// eigen
-#include <Eigen/Dense>
-
-// boost
-#include <boost/shared_ptr.hpp>
 
 // state_filtering
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
@@ -64,37 +59,27 @@ template <typename ScalarType_, typename VectorType_, int INPUT_DIMENSION_EIGEN>
 class StationaryProcess: public GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>
 {
 public:
-    // types from parents
-    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::ScalarType        ScalarType;
-    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::VectorType        VectorType;
-    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::InputType  InputType;
+    typedef GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN> BaseType;
+    typedef typename BaseType::ScalarType   ScalarType;
+    typedef typename BaseType::VectorType   VectorType;
+    typedef typename BaseType::NoiseType    NoiseType;
 
 public:
     // constructor and destructor
-
-    // constructor and destructor
     StationaryProcess()
     {
-        DISABLE_IF_DYNAMIC_SIZE(InputType);
+        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
     }
-    StationaryProcess(const unsigned& input_dimension):
-        GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>(input_dimension)
+    StationaryProcess(const unsigned& input_dimension): BaseType(input_dimension)
     {
-        DISABLE_IF_FIXED_SIZE(InputType);
+        DISABLE_IF_FIXED_SIZE(NoiseType);
     }
     virtual ~StationaryProcess() { }
 
     // purely virtual functions
-    virtual void Conditional(const ScalarType&          delta_time,
-                             const VectorType&          state,
-                             const InputType&    control) = 0;
-
-//    virtual void Conditional(const double& delta_time, const VectorType& state)
-//    {
-//        Conditional(delta_time, state, Control::Zero(control_size()));
-//    }
-
-//    virtual int control_size() const = 0;
+    virtual void Conditional(const ScalarType& delta_time,
+                             const VectorType& state,
+                             const NoiseType&  input) = 0;
 };
 
 

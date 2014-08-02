@@ -63,7 +63,7 @@ struct IntegratedDampedWienerProcessTypes
     typedef ScalarType_                           ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
     typedef GaussianMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
-    typedef typename GaussianMappableType::InputType PerturbationType;
+    typedef typename GaussianMappableType::NoiseType PerturbationType;
 };
 
 
@@ -78,7 +78,7 @@ class IntegratedDampedWienerProcess:
 public:
     typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::ScalarType         ScalarType;
     typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::VectorType         VectorType;
-    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::PerturbationType   InputType;
+    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::PerturbationType   NoiseType;
     typedef Gaussian<ScalarType, SIZE>                          GaussianType;
     typedef typename GaussianType::OperatorType                                      OperatorType;
 
@@ -98,7 +98,7 @@ public:
 
     virtual ~IntegratedDampedWienerProcess() { }
 
-    virtual VectorType MapGaussian(const InputType& sample) const
+    virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         return distribution_.MapGaussian(sample);
     }
@@ -126,7 +126,7 @@ public:
         return distribution_.Dimension();
     }
 
-    virtual int InputDimension() const
+    virtual int NoiseDimension() const
     {
         return variable_size();
     }

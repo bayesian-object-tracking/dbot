@@ -43,8 +43,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_SUM_OF_DELTAS_HPP
-#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_SUM_OF_DELTAS_HPP
+#ifndef DISTRIBUTIONS_IMPLEMENTATIONS_SUM_OF_DELTAS_HPP
+#define DISTRIBUTIONS_IMPLEMENTATIONS_SUM_OF_DELTAS_HPP
 
 // eigen
 #include <Eigen/Dense>
@@ -59,29 +59,25 @@ namespace distributions
 {
 
 
-template <typename ScalarType_, int DIMENSION>
+template <typename ScalarType_, typename VectorType_>
 struct SumOfDeltasTypes
 {
-    typedef ScalarType_                           ScalarType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>    VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, DIMENSION> OperatorType;
+    typedef ScalarType_    ScalarType;
+    typedef VectorType_    VectorType;
+    typedef Eigen::Matrix<ScalarType, VectorType::SizeAtCompileTime, VectorType::SizeAtCompileTime> OperatorType;
 
     typedef MomentsSolvable<ScalarType, VectorType, OperatorType>   MomentsSolvableType;
 };
 
-
-
-// TODO: THIS DISTRIBUTION COULD BE GENERALIZED SUCH THAT IT CAN DEAL WITH
-// ALL KINDS OF OBJECTS, NOT JUST EIGEN VECTORS
-template <typename ScalarType_, int DIMENSION>
-class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, DIMENSION>::MomentsSolvableType
+template <typename ScalarType_, typename VectorType_>
+class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, VectorType_>::MomentsSolvableType
 {
 public:
-    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::ScalarType      ScalarType;
-    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::VectorType      VectorType;
-    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::OperatorType    OperatorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, VectorType_>::ScalarType      ScalarType;
+    typedef typename SumOfDeltasTypes<ScalarType_, VectorType_>::VectorType      VectorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, VectorType_>::OperatorType    OperatorType;
 
-    typedef std::vector<VectorType>   Deltas;
+    typedef std::vector<VectorType>            Deltas;
     typedef Eigen::Matrix<ScalarType, -1, 1>   Weights;
 
 public:
@@ -94,12 +90,12 @@ public:
         weights_ = Weights::Ones(1);
     }
 
-    explicit SumOfDeltas(int variable_size)
+    explicit SumOfDeltas(const unsigned& dimension)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, VectorType::Zero(variable_size));
+        deltas_ = Deltas(1, VectorType::Zero(dimension));
         weights_ = Weights::Ones(1);
     }
 

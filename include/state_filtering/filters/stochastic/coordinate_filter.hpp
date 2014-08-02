@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <state_filtering/models/process/occlusion_process_model.hpp>
 
 #include <state_filtering/utils/rigid_body_renderer.hpp>
-#include <state_filtering/models/process/stationary_process_model.hpp>
+#include <state_filtering/models/process/stationary_process.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 #include <state_filtering/distributions/implementations/sum_of_deltas.hpp>
 
@@ -64,12 +64,12 @@ public:
     typedef obs_mod::ImageObservationModel MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
 
-    typedef SumOfDeltas<double, -1> StateDistribution;
+    typedef SumOfDeltas<double, Eigen::VectorXd> StateDistribution;
 
     typedef MeasurementModel::Measurement Measurement;
-    typedef ProcessModel::InputType Control;
+    typedef ProcessModel::NoiseType Control;
     typedef Eigen::VectorXd State;
-    typedef ProcessModel::InputType Noise;
+    typedef ProcessModel::NoiseType Noise;
 //    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,

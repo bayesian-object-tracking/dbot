@@ -49,7 +49,7 @@
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/models/process/stationary_process_model.hpp>
+#include <state_filtering/models/process/stationary_process.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 
 namespace distributions
@@ -61,7 +61,7 @@ struct DampedWienerProcessTypes
     typedef ScalarType_                                         ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>                  VectorType;
     typedef StationaryProcess<ScalarType, VectorType, SIZE>     StationaryProcessType;
-    typedef typename StationaryProcessType::InputType             PerturbationType;
+    typedef typename StationaryProcessType::NoiseType             PerturbationType;
 };
 
 
@@ -72,7 +72,7 @@ class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::S
 public:
     typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
     typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
-    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   InputType;
+    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   NoiseType;
     typedef Gaussian<ScalarType, SIZE>                          GaussianType;
     typedef typename GaussianType::OperatorType                                      OperatorType;
 
@@ -89,14 +89,14 @@ public:
 
     virtual ~DampedWienerProcess() { }
 
-    virtual VectorType MapGaussian(const InputType& sample) const
+    virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         return gaussian_.MapGaussian(sample);
     }
 
     virtual void Conditional(const ScalarType&       delta_time,
                              const VectorType&       state,
-                             const InputType& control)
+                             const NoiseType& control)
     {
         gaussian_.Mean(Mean(delta_time, state, control));
         gaussian_.Covariance(Covariance(delta_time));
@@ -113,7 +113,7 @@ public:
         return gaussian_.Dimension();
     }
 
-    virtual int InputDimension() const
+    virtual int NoiseDimension() const
     {
         return variable_size();
     }
@@ -126,7 +126,7 @@ public:
 private:
     VectorType Mean(const ScalarType& delta_time,
                          const VectorType& state,
-                         const InputType& control)
+                         const NoiseType& control)
     {
         VectorType state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
                                               + exp(-damping_*delta_time)*state;

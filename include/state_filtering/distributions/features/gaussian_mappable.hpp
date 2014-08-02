@@ -59,44 +59,44 @@
 namespace distributions
 {
 
-template <typename ScalarType_, typename VectorType_, int INPUT_DIMENSION_EIGEN>
+template <typename ScalarType_, typename VectorType_, int NOISE_DIMENSION_EIGEN>
 class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
 {
 public:
     typedef typename Sampleable<ScalarType_, VectorType_>::ScalarType       ScalarType;
     typedef typename Sampleable<ScalarType_, VectorType_>::VectorType       VectorType;
-    typedef typename Eigen::Matrix<ScalarType, INPUT_DIMENSION_EIGEN, 1>    InputType;
+    typedef typename Eigen::Matrix<ScalarType, NOISE_DIMENSION_EIGEN, 1>    NoiseType;
 
 public:
     // constructor and destructor
-    GaussianMappable(): input_dimension_(INPUT_DIMENSION_EIGEN),
+    GaussianMappable(): noise_dimension_(NOISE_DIMENSION_EIGEN),
                         generator_(RANDOM_SEED),
                         gaussian_distribution_(0.0, 1.0),
                         gaussian_generator_(generator_, gaussian_distribution_)
     {
-        DISABLE_IF_DYNAMIC_SIZE(InputType);
+        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
     }
-    GaussianMappable(const unsigned& input_dimension): input_dimension_(input_dimension),
+    GaussianMappable(const unsigned& noise_dimension): noise_dimension_(noise_dimension),
                                                        generator_(RANDOM_SEED),
                                                        gaussian_distribution_(0.0, 1.0),
                                                        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        DISABLE_IF_FIXED_SIZE(InputType);
+        DISABLE_IF_FIXED_SIZE(NoiseType);
     }
     virtual ~GaussianMappable() { }
 
     // purely virtual functions
-    virtual VectorType MapGaussian(const InputType& sample) const = 0;
+    virtual VectorType MapGaussian(const NoiseType& sample) const = 0;
 
     // implementations
-    virtual int InputDimension() const
+    virtual int NoiseDimension() const
     {
-        return input_dimension_;
+        return noise_dimension_;
     }
     virtual VectorType Sample()
     {
-        InputType gaussian_sample(InputDimension());
-        for (int i = 0; i < InputDimension(); i++)
+        NoiseType gaussian_sample(NoiseDimension());
+        for (int i = 0; i < NoiseDimension(); i++)
         {
             gaussian_sample(i) = gaussian_generator_();
         }
@@ -104,7 +104,7 @@ public:
     }
 
 private:
-    unsigned input_dimension_;
+    unsigned noise_dimension_;
 
     boost::mt19937 generator_;
     boost::normal_distribution<> gaussian_distribution_;

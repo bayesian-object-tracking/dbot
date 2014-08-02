@@ -51,7 +51,7 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
     measurement_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
-    state_distribution_(process_model->InputDimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
+    state_distribution_(process_model->NoiseDimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
     max_kl_divergence_(max_kl_divergence)
 {
     // make sure sizes are consistent
@@ -60,7 +60,7 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
         for(size_t j = 0; j < independent_blocks_[i].size(); j++)
             sample_size++;
 
-    if(sample_size != process_model_->InputDimension())
+    if(sample_size != process_model_->NoiseDimension())
     {
         cout << "the number of dof in the dependency specification does not correspond to" <<
                 " to the number of dof in the process model!!" << endl;
@@ -180,7 +180,7 @@ void CoordinateParticleFilter::Filter( const Control control,
     measurement_model_->measurement(observation, observation_time);
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
-    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(process_model_->InputDimension()));
+    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(process_model_->NoiseDimension()));
     propagated_particles_ = std::vector<State>(particles_.size());
 
     for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)

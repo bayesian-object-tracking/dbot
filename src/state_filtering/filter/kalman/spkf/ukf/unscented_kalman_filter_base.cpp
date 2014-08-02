@@ -32,7 +32,7 @@ void UkfInternalsBase::onBeginPredict(const DistributionDescriptor &stateDesc,
 }
 
 void UkfInternalsBase::process(DistributionDescriptor& currentStateDesc,
-                                   const ProcessModel::InputType &controlInput,
+                                   const ProcessModel::NoiseType &controlInput,
                                    const double deltaTime,
                                    DistributionDescriptor& predictedStateDesc)
 {
@@ -128,7 +128,7 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
     */
 
     // TODO update. in the mean time assume it's NonLinearNonAdditiveNoise
-    int augmentedDimension = stateDimension + processModel_->InputDimension();
+    int augmentedDimension = stateDimension + processModel_->NoiseDimension();
 
     // NOTE STDCOUT
     // std::cout << "augmentedDimension = " << augmentedDimension << std::endl;
@@ -138,12 +138,12 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     std::vector<int> segmentsDimensions;
     segmentsDimensions.push_back(stateDimension);
-    segmentsDimensions.push_back(processModel_->InputDimension());
+    segmentsDimensions.push_back(processModel_->NoiseDimension());
     ukfAugmentedStateDesc.segmentsDimensions(segmentsDimensions);
 
     // x' = [x 0]^T
     augmentedState.segment(0, stateDimension) = stateDesc.mean();
-    augmentedState.segment(stateDimension, processModel_->InputDimension()).setZero();
+    augmentedState.segment(stateDimension, processModel_->NoiseDimension()).setZero();
 
     //       | P  0 |
     // P^a = | 0  Q |, with Q = I
@@ -157,12 +157,12 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     augmentedCovariance.block(stateDimension,
                               stateDimension,
-                              processModel_->InputDimension(),
-                              processModel_->InputDimension()).setIdentity();
+                              processModel_->NoiseDimension(),
+                              processModel_->NoiseDimension()).setIdentity();
 }
 
 void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
-                           const ProcessModel::InputType &control,
+                           const ProcessModel::NoiseType &control,
                            const double deltaTime,
                            SigmaPointMatrix& processedSigmaPoints,
                            int stateDimension)
@@ -187,8 +187,8 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
 
         // Only for non-additive noise process models. For additive process model noise this
         // is not needed
-        ProcessModel::InputType processNoise =
-                sigmaPoints.col(i).segment(stateDimension, processModel_->InputDimension());
+        ProcessModel::NoiseType processNoise =
+                sigmaPoints.col(i).segment(stateDimension, processModel_->NoiseDimension());
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());
 
