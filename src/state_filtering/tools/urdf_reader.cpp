@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <state_filtering/tools/urdf_reader.hpp>
+#include <state_filtering/utils/urdf_reader.hpp>
 
 URDFReader::URDFReader()
   : nh_priv_("~")

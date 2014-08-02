@@ -4,15 +4,15 @@
 
 #include <Eigen/Eigen>
 
-#include <state_filtering/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp>
-#include <state_filtering/filter/kalman/spkf/ukf/unscented_kalman_filter_base.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/ukf_distribution_descriptor.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/unscented_kalman_filter_base.hpp>
 
-#include <state_filtering/tools/macros.hpp>
+#include <state_filtering/utils/macros.hpp>
 
 //#include "distributions/gaussian_distribution.hpp>
-#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/utils/helper_functions.hpp>
 
-using namespace filter;
+using namespace distributions;
 using namespace Eigen;
 
 /* ============================================================================================== */
@@ -32,7 +32,7 @@ void UkfInternalsBase::onBeginPredict(const DistributionDescriptor &stateDesc,
 }
 
 void UkfInternalsBase::process(DistributionDescriptor& currentStateDesc,
-                                   const ProcessModel::PerturbationType &controlInput,
+                                   const ProcessModel::InputType &controlInput,
                                    const double deltaTime,
                                    DistributionDescriptor& predictedStateDesc)
 {
@@ -128,7 +128,7 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
     */
 
     // TODO update. in the mean time assume it's NonLinearNonAdditiveNoise
-    int augmentedDimension = stateDimension + processModel_->Dimension();
+    int augmentedDimension = stateDimension + processModel_->InputDimension();
 
     // NOTE STDCOUT
     // std::cout << "augmentedDimension = " << augmentedDimension << std::endl;
@@ -138,12 +138,12 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     std::vector<int> segmentsDimensions;
     segmentsDimensions.push_back(stateDimension);
-    segmentsDimensions.push_back(processModel_->Dimension());
+    segmentsDimensions.push_back(processModel_->InputDimension());
     ukfAugmentedStateDesc.segmentsDimensions(segmentsDimensions);
 
     // x' = [x 0]^T
     augmentedState.segment(0, stateDimension) = stateDesc.mean();
-    augmentedState.segment(stateDimension, processModel_->Dimension()).setZero();
+    augmentedState.segment(stateDimension, processModel_->InputDimension()).setZero();
 
     //       | P  0 |
     // P^a = | 0  Q |, with Q = I
@@ -157,12 +157,12 @@ void UkfInternalsBase::augmentFilteringState(const DistributionDescriptor& state
 
     augmentedCovariance.block(stateDimension,
                               stateDimension,
-                              processModel_->Dimension(),
-                              processModel_->Dimension()).setIdentity();
+                              processModel_->InputDimension(),
+                              processModel_->InputDimension()).setIdentity();
 }
 
 void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
-                           const ProcessModel::PerturbationType &control,
+                           const ProcessModel::InputType &control,
                            const double deltaTime,
                            SigmaPointMatrix& processedSigmaPoints,
                            int stateDimension)
@@ -187,8 +187,8 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
 
         // Only for non-additive noise process models. For additive process model noise this
         // is not needed
-        ProcessModel::PerturbationType processNoise =
-                sigmaPoints.col(i).segment(stateDimension, processModel_->Dimension());
+        ProcessModel::InputType processNoise =
+                sigmaPoints.col(i).segment(stateDimension, processModel_->InputDimension());
 
         //processNoise = ProcessModel::NoiseVector::Zero(processModel_->noise_dimension(), processModel_->noise_dimension());
 

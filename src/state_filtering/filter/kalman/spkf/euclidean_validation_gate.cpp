@@ -1,7 +1,7 @@
 
-#include <state_filtering/filter/kalman/spkf/euclidean_validation_gate.hpp>
+#include <state_filtering/filters/deterministic/spkf/euclidean_validation_gate.hpp>
 
-using namespace filter;
+using namespace distributions;
 
 EuclideanValidationGate::EuclideanValidationGate(double distance_threshold,
                                                  double invalidating_variance):

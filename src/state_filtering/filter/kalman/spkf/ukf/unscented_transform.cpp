@@ -1,8 +1,8 @@
 
 
-#include <state_filtering/filter/kalman/spkf/ukf/unscented_transform.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/unscented_transform.hpp>
 
-using namespace filter;
+using namespace distributions;
 
 UnscentedTransform::UnscentedTransform(double _alpha, double _beta, double _kappa):
     alpha_(_alpha),

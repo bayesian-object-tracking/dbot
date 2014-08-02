@@ -4,10 +4,10 @@
 
 #include <Eigen/Eigen>
 
-#include <state_filtering/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp>
-#include <state_filtering/filter/kalman/spkf/ukf/unscented_kalman_filter.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/ukf_distribution_descriptor.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/unscented_kalman_filter.hpp>
 
-using namespace filter;
+using namespace distributions;
 
 /* ============================================================================================== */
 /* == SpkfInternals interface implementations =================================================== */

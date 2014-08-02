@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/tools/object_file_reader.hpp>
+#include <state_filtering/utils/object_file_reader.hpp>
 
 #include <iostream>
 #include <fstream>

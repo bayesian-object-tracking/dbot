@@ -26,13 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp>
+#include <state_filtering/models/measurement/cpu_image_observation_model/cpu_image_observation_model.hpp>
 
 #include <limits>
 
-#include <state_filtering/tools/macros.hpp>
-#include <state_filtering/tools/helper_functions.hpp>
-#include <state_filtering/tools/image_visualizer.hpp>
+#include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/helper_functions.hpp>
+#include <state_filtering/utils/image_visualizer.hpp>
 //#include "cloud_visualizer.hpp"
 
 using namespace std;

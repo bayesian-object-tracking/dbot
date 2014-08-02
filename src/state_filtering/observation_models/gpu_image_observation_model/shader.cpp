@@ -10,7 +10,7 @@
 #include <string.h>
 #include <GL/glew.h>
 
-#include <state_filtering/observation_models/gpu_image_observation_model/shader.hpp>
+#include <state_filtering/models/measurement/gpu_image_observation_model/shader.hpp>
 
 GLuint LoadShaders(std::vector<const char *> shaderFilePaths) {
 

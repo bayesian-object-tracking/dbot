@@ -1,8 +1,8 @@
 
 
-#include <state_filtering/filter/kalman/spkf/ukf/kappa_unscented_transform.hpp>
+#include <state_filtering/filters/deterministic/spkf/ukf/kappa_unscented_transform.hpp>
 
-using namespace filter;
+using namespace distributions;
 
 KappaUnscentedTransform::KappaUnscentedTransform(double _kappa):
     kappa_(_kappa)

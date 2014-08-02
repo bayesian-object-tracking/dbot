@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sensor_msgs/Image.h>
 
-#include <state_filtering/multi_object_tracker.hpp>
-#include <state_filtering/tools/cloud_visualizer.hpp>
+#include <state_filtering/trackers/multi_object_tracker.hpp>
+#include <state_filtering/utils/cloud_visualizer.hpp>
 
 
 #include <cv.h>
@@ -54,9 +54,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 
-#include "state_filtering/system_states/rigid_body_system.hpp"
+#include "state_filtering/states/rigid_body_system.hpp"
 
-#include <state_filtering/tools/tracking_dataset.hpp>
+#include <state_filtering/utils/tracking_dataset.hpp>
 
 #include <pcl_ros/point_cloud.h>
 

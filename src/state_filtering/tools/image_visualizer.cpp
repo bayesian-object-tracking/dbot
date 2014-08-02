@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/tools/image_visualizer.hpp>
-#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/utils/image_visualizer.hpp>
+#include <state_filtering/utils/helper_functions.hpp>
 
 #include <cv.h>
 #include <highgui.h>

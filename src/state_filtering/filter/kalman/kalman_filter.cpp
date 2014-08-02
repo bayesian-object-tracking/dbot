@@ -48,12 +48,12 @@
 
 #include <boost/static_assert.hpp>
 
-#include <state_filtering/filter/kalman/kalman_filter.hpp>
+#include <state_filtering/filters/deterministic/kalman_filter.hpp>
 
-#include <state_filtering/distribution/distribution.hpp>
-#include <state_filtering/process_model/brownian_process_model.hpp>
+#include <state_filtering/distributions/distribution.hpp>
+#include <state_filtering/models/process/brownian_process_model.hpp>
 
-namespace filter
+namespace distributions
 {
 
 void KalmanFilter::predict(const Estimate &prior_desc,

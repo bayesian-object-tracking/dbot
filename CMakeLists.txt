@@ -116,97 +116,7 @@ catkin_package(
 ## Build ##
 ###########
 include_directories(include)
-
-set(state_filtering_headers
-
-    # distribution
-    include/${PROJECT_NAME}/distribution/distribution.hpp
-
-    # distribution features
-    include/${PROJECT_NAME}/distribution/features/unnormalized_evaluable.hpp
-    include/${PROJECT_NAME}/distribution/features/evaluable.hpp
-    include/${PROJECT_NAME}/distribution/features/sampleable.hpp
-    include/${PROJECT_NAME}/distribution/features/gaussian_mappable.hpp
-    include/${PROJECT_NAME}/distribution/features/moments_estimable.hpp
-    include/${PROJECT_NAME}/distribution/features/moments_solvable.hpp
-
-    # distribution implementations
-    include/${PROJECT_NAME}/distribution/implementations/gaussian_distribution.hpp
-    include/${PROJECT_NAME}/distribution/implementations/sum_of_deltas.hpp
-    include/${PROJECT_NAME}/process_model/damped_brownian_motion.hpp
-    include/${PROJECT_NAME}/process_model/integrated_damped_brownian_motion.hpp
-
-    # filter interface
-    include/${PROJECT_NAME}/filter/types.hpp
-    include/${PROJECT_NAME}/filter/filter.hpp
-    include/${PROJECT_NAME}/filter/filter_context.hpp
-
-    # process model interface
-    include/${PROJECT_NAME}/process_model/stationary_process_model.hpp
-
-    # process model implementations
-#    include/${PROJECT_NAME}/process_model/composed_stationary_process_model.hpp
-    include/${PROJECT_NAME}/process_model/brownian_process_model.hpp
-    include/${PROJECT_NAME}/process_model/occlusion_process_model.hpp
-
-    # system state interface
-    include/${PROJECT_NAME}/system_states/floating_body_system.hpp
-    include/${PROJECT_NAME}/system_states/robot_kinematics.hpp
-    include/${PROJECT_NAME}/system_states/rigid_body_system.hpp
-
-    # measurement model interfaces
-    include/${PROJECT_NAME}/observation_models/image_observation_model.hpp
-
-    # measurement model specializations
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.hpp
-    include/${PROJECT_NAME}/observation_models/cpu_image_observation_model/kinect_measurement_model.hpp
-    include/${PROJECT_NAME}/observation_models/spkf/model_types.hpp
-    include/${PROJECT_NAME}/observation_models/spkf/measurement_model.hpp
-    include/${PROJECT_NAME}/observation_models/spkf/depth_measurement_model.hpp
-
-    ## Particle specific implementations
-#    include/${PROJECT_NAME}/filter/particle/particle_filter_context.hpp
-    include/${PROJECT_NAME}/filter/particle/coordinate_filter.hpp
-
-    ## SPKF specific interface
-    include/${PROJECT_NAME}/filter/kalman/kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/sp_kalman_filter_context.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/distribution_descriptor.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/euclidean_validation_gate.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ellipsoidal_validation_gate.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/types.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_matrix.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_transform.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/spkf_state_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/validation_gate_base.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/zero_validation_gate.hpp
-
-    # Spkf specific implementations
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_transform.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/kappa_unscented_transform.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter_base.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.hpp
-    include/${PROJECT_NAME}/filter/kalman/spkf/ukf/ukf_distribution_descriptor.hpp
-
-    # tools
-    include/${PROJECT_NAME}/tools/helper_functions.hpp
-    include/${PROJECT_NAME}/tools/image_visualizer.hpp
-    include/${PROJECT_NAME}/tools/cloud_visualizer.hpp
-    include/${PROJECT_NAME}/tools/log_erfc.hpp
-    include/${PROJECT_NAME}/tools/macros.hpp
-    include/${PROJECT_NAME}/tools/object_file_reader.hpp
-    include/${PROJECT_NAME}/tools/urdf_reader.hpp
-    include/${PROJECT_NAME}/tools/part_mesh_model.hpp
-    include/${PROJECT_NAME}/tools/pcl_interface.hpp
-    include/${PROJECT_NAME}/tools/rigid_body_renderer.hpp
-    include/${PROJECT_NAME}/tools/ros_interface.hpp
-    include/${PROJECT_NAME}/tools/tracking_dataset.hpp
-
-
-#    include/${PROJECT_NAME}/cpu_multi_object_tracker.hpp
-)
+file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
 set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
@@ -254,17 +164,6 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} as
 if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
-    set(state_filtering_gpu_HEADERS
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.hpp
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_filter.hpp
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_multiple_filter.hpp
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/object_rasterizer.hpp
-        include/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.hpp
-        include/${PROJECT_NAME}/multi_object_tracker.hpp
-#        include/${PROJECT_NAME}/robot_tracker.hpp
-)
-
-
     set(state_filtering_gpu_SOURCES
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.cpp
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_filter.cpp
@@ -273,7 +172,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.cpp)
 
     add_library(${PROJECT_NAME}_gpu
-        ${state_filtering_gpu_HEADERS}
+        ${state_filtering_headers}
         ${state_filtering_gpu_SOURCES})
 
     target_link_libraries(${PROJECT_NAME}_gpu

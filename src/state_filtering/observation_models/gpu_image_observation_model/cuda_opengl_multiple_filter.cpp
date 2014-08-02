@@ -1,9 +1,9 @@
 #define PROFILING_ACTIVE
 
-#include <state_filtering/observation_models/gpu_image_observation_model/cuda_opengl_multiple_filter.hpp>
+#include <state_filtering/models/measurement/gpu_image_observation_model/cuda_opengl_multiple_filter.hpp>
 #include "iostream"
 
-#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/utils/helper_functions.hpp>
 
 using namespace fil;
 using namespace std;

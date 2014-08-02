@@ -28,10 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define PROFILING_ON
 
-#include <state_filtering/filter/particle/coordinate_filter.hpp>
+#include <state_filtering/filters/stochastic/coordinate_filter.hpp>
 
-#include <state_filtering/tools/macros.hpp>
-#include <state_filtering/tools/helper_functions.hpp>
+#include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/helper_functions.hpp>
 
 //#include "image_visualizer.hpp"
 #include <omp.h>
@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 using namespace Eigen;
-using namespace filter;
+using namespace distributions;
 using namespace boost;
 
 CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr observation_model,
@@ -51,7 +51,7 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
     measurement_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
-    state_distribution_(process_model->Dimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
+    state_distribution_(process_model->InputDimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
     max_kl_divergence_(max_kl_divergence)
 {
     // make sure sizes are consistent
@@ -60,7 +60,7 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
         for(size_t j = 0; j < independent_blocks_[i].size(); j++)
             sample_size++;
 
-    if(sample_size != process_model_->Dimension())
+    if(sample_size != process_model_->InputDimension())
     {
         cout << "the number of dof in the dependency specification does not correspond to" <<
                 " to the number of dof in the process model!!" << endl;
@@ -180,7 +180,7 @@ void CoordinateParticleFilter::Filter( const Control control,
     measurement_model_->measurement(observation, observation_time);
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
-    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(process_model_->Dimension()));
+    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(process_model_->InputDimension()));
     propagated_particles_ = std::vector<State>(particles_.size());
 
     for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
