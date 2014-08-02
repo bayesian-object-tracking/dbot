@@ -73,7 +73,7 @@ public:
     typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
     typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
     typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   InputType;
-    typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
+    typedef Gaussian<ScalarType, SIZE>                          GaussianType;
     typedef typename GaussianType::OperatorType                                      OperatorType;
 
 public:
@@ -89,9 +89,9 @@ public:
 
     virtual ~DampedWienerProcess() { }
 
-    virtual VectorType MapNormal(const InputType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
-        return gaussian_.MapNormal(sample);
+        return gaussian_.MapGaussian(sample);
     }
 
     virtual void Conditional(const ScalarType&       delta_time,
@@ -110,7 +110,7 @@ public:
 
     virtual int variable_size() const
     {
-        return gaussian_.variable_size();
+        return gaussian_.Dimension();
     }
 
     virtual int InputDimension() const

@@ -56,11 +56,11 @@ template <typename ScalarType_, typename VectorType_, typename OperatorType_>
 class MomentsEstimable: public Distribution<ScalarType_, VectorType_>
 {
 public:
-    typedef Distribution<ScalarType_, VectorType_>  BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VectorType           VectorType;
-    typedef OperatorType_                           OperatorType;
+    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType  ScalarType;
+    typedef typename Distribution<ScalarType_, VectorType_>::VectorType  VectorType;
+    typedef OperatorType_                                                OperatorType;
 
+public:
     virtual ~MomentsEstimable() { }
 
     virtual VectorType   EmpiricalMean() = 0;

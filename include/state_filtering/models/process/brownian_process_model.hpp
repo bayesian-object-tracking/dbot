@@ -104,7 +104,9 @@ public:
         angular_velocity_.resize(SIZE_OBJECTS);
     }
 
-    BrownianObjectMotion(unsigned count_objects): state_(count_objects)
+    BrownianObjectMotion(const unsigned& count_objects):
+        BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType(count_objects*6),
+        state_(count_objects)
     {
 
         quaternion_map_.resize(count_objects);
@@ -117,17 +119,17 @@ public:
 
     virtual ~BrownianObjectMotion() { }
 
-    virtual VectorType MapNormal(const InputType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
         VectorType new_state = state_;
         for(size_t i = 0; i < state_.bodies_size(); i++)
         {
-            new_state.position(i) = state_.position(i) + delta_position_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
+            new_state.position(i) = state_.position(i) + delta_position_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
             Quaternion updated_quaternion(state_.quaternion(i).coeffs()
-                       + quaternion_map_[i] * delta_orientation_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
+                       + quaternion_map_[i] * delta_orientation_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
             new_state.quaternion(updated_quaternion.normalized(), i);
-            new_state.linear_velocity(i) = linear_velocity_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-            new_state.angular_velocity(i) = angular_velocity_[i].MapNormal(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+            new_state.linear_velocity(i) = linear_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
+            new_state.angular_velocity(i) = angular_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
 
             // transform to external coordinate system
             new_state.linear_velocity(i) -= state_.angular_velocity(i).cross(state_.position(i));

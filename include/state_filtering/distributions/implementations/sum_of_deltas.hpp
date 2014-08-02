@@ -49,10 +49,6 @@
 // eigen
 #include <Eigen/Dense>
 
-// boost
-#include <boost/assert.hpp>
-#include <boost/utility/enable_if.hpp>
-
 // std
 #include <vector>
 
@@ -63,12 +59,12 @@ namespace distributions
 {
 
 
-template <typename ScalarType_, int SIZE>
+template <typename ScalarType_, int DIMENSION>
 struct SumOfDeltasTypes
 {
     typedef ScalarType_                           ScalarType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>    VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, DIMENSION> OperatorType;
 
     typedef MomentsSolvable<ScalarType, VectorType, OperatorType>   MomentsSolvableType;
 };
@@ -77,13 +73,13 @@ struct SumOfDeltasTypes
 
 // TODO: THIS DISTRIBUTION COULD BE GENERALIZED SUCH THAT IT CAN DEAL WITH
 // ALL KINDS OF OBJECTS, NOT JUST EIGEN VECTORS
-template <typename ScalarType_, int SIZE>
-class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, SIZE>::MomentsSolvableType
+template <typename ScalarType_, int DIMENSION>
+class SumOfDeltas: public SumOfDeltasTypes<ScalarType_, DIMENSION>::MomentsSolvableType
 {
 public:
-    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::ScalarType      ScalarType;
-    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::VectorType      VectorType;
-    typedef typename SumOfDeltasTypes<ScalarType_, SIZE>::OperatorType    OperatorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::ScalarType      ScalarType;
+    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::VectorType      VectorType;
+    typedef typename SumOfDeltasTypes<ScalarType_, DIMENSION>::OperatorType    OperatorType;
 
     typedef std::vector<VectorType>   Deltas;
     typedef Eigen::Matrix<ScalarType, -1, 1>   Weights;
@@ -109,19 +105,19 @@ public:
 
     virtual ~SumOfDeltas() { }
 
-    virtual void setDeltas(const Deltas& deltas, const Weights& weights)
+    virtual void SetDeltas(const Deltas& deltas, const Weights& weights)
     {
         deltas_ = deltas;
         weights_ = weights.normalized();
     }
 
-    virtual void setDeltas(const Deltas& deltas)
+    virtual void SetDeltas(const Deltas& deltas)
     {
         deltas_ = deltas;
         weights_ = Weights::Ones(deltas_.size())/ScalarType_(deltas_.size());
     }
 
-    virtual void getDeltas(Deltas& deltas, Weights& weights) const
+    virtual void GetDeltas(Deltas& deltas, Weights& weights) const
     {
         deltas = deltas_;
         weights = weights_;
@@ -129,7 +125,7 @@ public:
 
     virtual VectorType Mean() const
     {
-        VectorType mean(VectorType::Zero(variable_size()));
+        VectorType mean(VectorType::Zero(Dimension()));
         for(size_t i = 0; i < deltas_.size(); i++)
             mean += weights_[i] * deltas_[i];
 
@@ -138,15 +134,15 @@ public:
 
     virtual OperatorType Covariance() const
     {
-        VectorType cached_mean = Mean();
-        OperatorType covariance(OperatorType::Zero(variable_size(), variable_size()));
+        VectorType mean = Mean();
+        OperatorType covariance(OperatorType::Zero(Dimension(), Dimension()));
         for(size_t i = 0; i < deltas_.size(); i++)
-            covariance += weights_[i] * (deltas_[i]-cached_mean) * (deltas_[i]-cached_mean).transpose();
+            covariance += weights_[i] * (deltas_[i]-mean) * (deltas_[i]-mean).transpose();
 
         return covariance;
     }
 
-    virtual int variable_size() const
+    virtual int Dimension() const
     {
         return deltas_[0].rows();
     }

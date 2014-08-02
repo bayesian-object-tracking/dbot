@@ -193,7 +193,7 @@ void CoordinateParticleFilter::Filter( const Control control,
             process_model_->Conditional(observation_time - particle_times_[particle_index],
                                         particles_[particle_index],
                                         control);
-            propagated_particles_[particle_index] = process_model_->MapNormal(noises_[particle_index]);
+            propagated_particles_[particle_index] = process_model_->MapGaussian(noises_[particle_index]);
         }
 
         RESET;
@@ -217,7 +217,7 @@ void CoordinateParticleFilter::Filter( const Control control,
     for(size_t i = 0; i < particle_times_.size(); i++)
         particle_times_[i] = observation_time;
 
-    state_distribution_.setDeltas(particles_); // not sure whether this is the right place
+    state_distribution_.SetDeltas(particles_); // not sure whether this is the right place
 }
 
 
@@ -350,7 +350,7 @@ void CoordinateParticleFilter::Resample(const int &new_state_count)
 //        weights(i) = parent_multiplicities_[i];
 //    weights /= weights.sum();
 
-    state_distribution_.setDeltas(particles_, weights);
+    state_distribution_.SetDeltas(particles_, weights);
 }
 
 

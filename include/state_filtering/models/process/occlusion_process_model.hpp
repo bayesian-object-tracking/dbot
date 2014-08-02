@@ -86,7 +86,7 @@ public:
     {
         delta_time_ = delta_time;
         occlusion_probability_ = occlusion_probability;
-        return MapNormal()(0);
+        return MapGaussian()(0);
     }
 
 
@@ -98,7 +98,7 @@ public:
         occlusion_probability_ = state(0);
     }
 
-    virtual VectorType MapNormal() const
+    virtual VectorType MapGaussian() const
     {
         VectorType state_vector;
 
@@ -113,9 +113,9 @@ public:
     }
 
 
-    virtual VectorType MapNormal(const InputType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
-        return MapNormal();
+        return MapGaussian();
     }
 
 //    virtual int vector_size() const

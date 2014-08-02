@@ -90,7 +90,7 @@ public: /* distribution traits */
 
     virtual ~ComposedStationaryProcessModel() {}
 
-    virtual VectorType MapNormal(const Sample& randoms) const
+    virtual VectorType MapGaussian(const Sample& randoms) const
     {
         VectorType variables(variable_size());
 

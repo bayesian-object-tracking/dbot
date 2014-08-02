@@ -61,6 +61,7 @@ public:
     typedef typename BaseType::VectorType                               VectorType;
     typedef typename BaseType::OperatorType                             OperatorType;
 
+public:
     virtual ~MomentsSolvable() { }
 
     virtual VectorType EmpiricalMean()

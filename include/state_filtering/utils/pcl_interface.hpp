@@ -632,8 +632,8 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
     // create gaussian for sampling
     Scalar standard_deviation_translation = 0.03;
     Scalar standard_deviation_rotation = 100.0;
-    distributions::GaussianDistribution<Scalar, 1> unit_gaussian;
-    unit_gaussian.setNormal();
+    distributions::Gaussian<Scalar, 1> unit_gaussian;
+    unit_gaussian.SetUnit();
 
     for(size_t cluster_index = 0; cluster_index < clusters.size(); cluster_index++)
     {

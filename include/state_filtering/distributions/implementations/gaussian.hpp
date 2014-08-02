@@ -44,18 +44,13 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_GAUSSIAN_DISTRIBUTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_GAUSSIAN_DISTRIBUTION_HPP
+#ifndef DISTRIBUTIONS_IMPLEMENTATIONS_GAUSSIAN_HPP
+#define DISTRIBUTIONS_IMPLEMENTATIONS_GAUSSIAN_HPP
 
 // eigen
 #include <Eigen/Dense>
 
-// boost
-#include <boost/assert.hpp>
-#include <boost/utility/enable_if.hpp>
-
 // state_filtering
-#include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/distributions/features/moments_solvable.hpp>
 #include <state_filtering/distributions/features/evaluable.hpp>
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
@@ -66,18 +61,18 @@ namespace distributions
 
 
 
-template <typename ScalarType_, int SIZE>
-struct GaussianDistributionTypes
+template <typename ScalarType_, int DIMENSION_EIGEN>
+struct GaussianTypes
 {
-    typedef ScalarType_                           ScalarType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
+    typedef ScalarType_                                                     ScalarType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>                   VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, DIMENSION_EIGEN>     OperatorType;
 
-    typedef MomentsSolvable<ScalarType, VectorType, OperatorType>   MomentsSolvableType;
-    typedef Evaluable<ScalarType, VectorType>                       EvaluableType;
-    typedef NormalMappable<ScalarType, VectorType, SIZE>          GaussianMappableType;
+    typedef MomentsSolvable<ScalarType, VectorType, OperatorType>           MomentsSolvableType;
+    typedef Evaluable<ScalarType, VectorType>                               EvaluableType;
+    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>       GaussianMappableType;
 
-    typedef typename GaussianMappableType::InputType SampleType;
+    typedef typename GaussianMappableType::InputType                        InputType;
 };
 
 
@@ -85,49 +80,51 @@ struct GaussianDistributionTypes
 
 
 
-template <typename ScalarType_, int SIZE>
-class GaussianDistribution: public GaussianDistributionTypes<ScalarType_, SIZE>::MomentsSolvableType,
-                            public GaussianDistributionTypes<ScalarType_, SIZE>::EvaluableType,
-                            public GaussianDistributionTypes<ScalarType_, SIZE>::GaussianMappableType
+template <typename ScalarType_, int DIMENSION_EIGEN>
+class Gaussian: public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::MomentsSolvableType,
+                public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::EvaluableType,
+                public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::GaussianMappableType
 {
 public:
-    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::ScalarType    ScalarType;
-    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::VectorType    VectorType;
-    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::OperatorType  OperatorType;
-    typedef typename GaussianDistributionTypes<ScalarType_, SIZE>::SampleType    InputType;
+    typedef GaussianTypes<ScalarType_, DIMENSION_EIGEN> Types;
+
+    typedef typename Types::ScalarType    ScalarType;
+    typedef typename Types::VectorType    VectorType;
+    typedef typename Types::OperatorType  OperatorType;
+    typedef typename Types::InputType     InputType;
 
 public:
-    GaussianDistribution()
+    Gaussian()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
 
-        setNormal();
+        SetUnit();
     }
 
-    explicit GaussianDistribution(int variable_size)
+    explicit Gaussian(const unsigned& dimension): Types::GaussianMappableType(dimension)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
 
-        mean_.resize(variable_size, 1);
-        covariance_.resize(variable_size, variable_size);
-        precision_.resize(variable_size, variable_size);
-        cholesky_factor_.resize(variable_size, variable_size);
+        mean_.resize(dimension, 1);
+        covariance_.resize(dimension, dimension);
+        precision_.resize(dimension, dimension);
+        cholesky_factor_.resize(dimension, dimension);
 
-        setNormal();
+        SetUnit();
     }
 
-    virtual ~GaussianDistribution() { }
+    virtual ~Gaussian() { }
 
-    virtual VectorType MapNormal(const InputType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
 
-    virtual void setNormal()
+    virtual void SetUnit()
     {
         full_rank_ = true;
-        Mean(VectorType::Zero(variable_size()));
-        Covariance(OperatorType::Identity(variable_size(), variable_size()));
+        Mean(VectorType::Zero(Dimension()));
+        Covariance(OperatorType::Identity(Dimension(), Dimension()));
     }
 
     virtual void Mean(const VectorType& mean)
@@ -176,23 +173,19 @@ public:
             return -std::numeric_limits<ScalarType>::infinity();
     }
 
-    virtual int variable_size() const
+    virtual int Dimension() const
     {
-        return mean_.rows();
+        return this->InputDimension(); // all dimensions are the same
     }
 
-    virtual int InputDimension() const
-    {
-        return variable_size();
-    }
 
-protected:
+private:
     VectorType mean_;
     OperatorType covariance_;
     bool full_rank_;
     OperatorType precision_;
     OperatorType cholesky_factor_;
-    double log_normalizer_;
+    ScalarType log_normalizer_;
 };
 
 }

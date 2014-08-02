@@ -60,7 +60,7 @@ namespace distributions
 {
 
 template <typename ScalarType_, typename VectorType_, int INPUT_DIMENSION_EIGEN>
-class NormalMappable: public Sampleable<ScalarType_, VectorType_>
+class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
 {
 public:
     typedef typename Sampleable<ScalarType_, VectorType_>::ScalarType       ScalarType;
@@ -69,24 +69,24 @@ public:
 
 public:
     // constructor and destructor
-    NormalMappable(): input_dimension_(INPUT_DIMENSION_EIGEN),
-                      generator_(RANDOM_SEED),
-                      gaussian_distribution_(0.0, 1.0),
-                      gaussian_generator_(generator_, gaussian_distribution_)
+    GaussianMappable(): input_dimension_(INPUT_DIMENSION_EIGEN),
+                        generator_(RANDOM_SEED),
+                        gaussian_distribution_(0.0, 1.0),
+                        gaussian_generator_(generator_, gaussian_distribution_)
     {
         DISABLE_IF_DYNAMIC_SIZE(InputType);
     }
-    NormalMappable(const unsigned& input_dimension): input_dimension_(input_dimension),
-                                                     generator_(RANDOM_SEED),
-                                                     gaussian_distribution_(0.0, 1.0),
-                                                     gaussian_generator_(generator_, gaussian_distribution_)
+    GaussianMappable(const unsigned& input_dimension): input_dimension_(input_dimension),
+                                                       generator_(RANDOM_SEED),
+                                                       gaussian_distribution_(0.0, 1.0),
+                                                       gaussian_generator_(generator_, gaussian_distribution_)
     {
         DISABLE_IF_FIXED_SIZE(InputType);
     }
-    virtual ~NormalMappable() { }
+    virtual ~GaussianMappable() { }
 
     // purely virtual functions
-    virtual VectorType MapNormal(const InputType& sample) const = 0;
+    virtual VectorType MapGaussian(const InputType& sample) const = 0;
 
     // implementations
     virtual int InputDimension() const
@@ -95,16 +95,16 @@ public:
     }
     virtual VectorType Sample()
     {
-        InputType normal_sample(InputDimension());
+        InputType gaussian_sample(InputDimension());
         for (int i = 0; i < InputDimension(); i++)
         {
-            normal_sample(i) = gaussian_generator_();
+            gaussian_sample(i) = gaussian_generator_();
         }
-        return MapNormal(normal_sample);
+        return MapGaussian(gaussian_sample);
     }
 
-protected:
-    const unsigned input_dimension_;
+private:
+    unsigned input_dimension_;
 
     boost::mt19937 generator_;
     boost::normal_distribution<> gaussian_distribution_;

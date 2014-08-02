@@ -55,21 +55,33 @@
 
 // state_filtering
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
+#include <state_filtering/utils/macros.hpp>
 
 namespace distributions
 {
 
-template <typename ScalarType_, typename VectorType_, int DIMENSION>
-class StationaryProcess: public NormalMappable<ScalarType_, VectorType_, DIMENSION>
+template <typename ScalarType_, typename VectorType_, int INPUT_DIMENSION_EIGEN>
+class StationaryProcess: public GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>
 {
 public:
     // types from parents
-    typedef typename NormalMappable<ScalarType_, VectorType_, DIMENSION>::ScalarType        ScalarType;
-    typedef typename NormalMappable<ScalarType_, VectorType_, DIMENSION>::VectorType        VectorType;
-    typedef typename NormalMappable<ScalarType_, VectorType_, DIMENSION>::InputType  InputType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::ScalarType        ScalarType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::VectorType        VectorType;
+    typedef typename GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>::InputType  InputType;
 
 public:
     // constructor and destructor
+
+    // constructor and destructor
+    StationaryProcess()
+    {
+        DISABLE_IF_DYNAMIC_SIZE(InputType);
+    }
+    StationaryProcess(const unsigned& input_dimension):
+        GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>(input_dimension)
+    {
+        DISABLE_IF_FIXED_SIZE(InputType);
+    }
     virtual ~StationaryProcess() { }
 
     // purely virtual functions

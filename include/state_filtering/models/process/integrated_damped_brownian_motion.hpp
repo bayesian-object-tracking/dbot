@@ -62,7 +62,7 @@ struct IntegratedDampedWienerProcessTypes
 {
     typedef ScalarType_                           ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
-    typedef NormalMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
+    typedef GaussianMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
     typedef typename GaussianMappableType::InputType PerturbationType;
 };
 
@@ -72,24 +72,25 @@ struct IntegratedDampedWienerProcessTypes
 
 // TODO: THIS SHOULD BE DERIVED FROM STATIONARY PROCESS
 template <typename ScalarType_, int SIZE>
-class IntegratedDampedWienerProcess: public IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType
+class IntegratedDampedWienerProcess:
+        public IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType
 {
 public:
     typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::ScalarType         ScalarType;
     typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::VectorType         VectorType;
     typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::PerturbationType   InputType;
-    typedef GaussianDistribution<ScalarType, SIZE>                          GaussianType;
+    typedef Gaussian<ScalarType, SIZE>                          GaussianType;
     typedef typename GaussianType::OperatorType                                      OperatorType;
 
 public:
 
-    IntegratedDampedWienerProcess():
-        distribution_()
+    IntegratedDampedWienerProcess()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    IntegratedDampedWienerProcess(int size):
+    IntegratedDampedWienerProcess(const unsigned& size):
+        IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType(size),
         distribution_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
@@ -97,9 +98,9 @@ public:
 
     virtual ~IntegratedDampedWienerProcess() { }
 
-    virtual VectorType MapNormal(const InputType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
-        return distribution_.MapNormal(sample);
+        return distribution_.MapGaussian(sample);
     }
 
     virtual void conditionals(const double& delta_time,
@@ -122,7 +123,7 @@ public:
 
     virtual int variable_size() const
     {
-        return distribution_.variable_size();
+        return distribution_.Dimension();
     }
 
     virtual int InputDimension() const

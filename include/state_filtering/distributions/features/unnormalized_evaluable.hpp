@@ -62,7 +62,7 @@ public:
     typedef typename BaseType::ScalarType           ScalarType;
     typedef typename BaseType::VectorType           VectorType;
 
-
+public:
     virtual ScalarType UnnormalizedProbability(const VectorType& vector) const
     {
         std::exp(LogUnnormalizedProbability(vector));
