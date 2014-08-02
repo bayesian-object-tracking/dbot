@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OCCLUSION_PROCESS_MODEL_HPP_
 #define OCCLUSION_PROCESS_MODEL_HPP_
 
+
+
 #include <state_filtering/models/process/stationary_process.hpp>
 
 
@@ -48,8 +50,10 @@ struct OcclusionProcessModelTypes
 
     typedef double ScalarType;
     typedef Eigen::Matrix<ScalarType, VECTOR_SIZE, 1> VectorType;
-    typedef distributions::StationaryProcess<ScalarType, VectorType, DIMENSION> StationaryProcessType;
-    typedef StationaryProcessType::NoiseType PerturbationType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1> InputType;
+
+    typedef distributions::StationaryProcess<ScalarType, VectorType, InputType> StationaryProcessType;
+
 };
 
 class OcclusionProcessModel: public OcclusionProcessModelTypes::StationaryProcessType
@@ -57,7 +61,7 @@ class OcclusionProcessModel: public OcclusionProcessModelTypes::StationaryProces
 public:
     typedef OcclusionProcessModelTypes::ScalarType ScalarType;
     typedef OcclusionProcessModelTypes::VectorType VectorType;
-    typedef OcclusionProcessModelTypes::PerturbationType NoiseType;
+    typedef OcclusionProcessModelTypes::InputType InputType;
 
 
     enum
@@ -90,9 +94,9 @@ public:
     }
 
 
-    virtual void Conditional(const ScalarType& delta_time,
+    virtual void Condition(const ScalarType& delta_time,
                               const VectorType& state,
-                              const NoiseType& control)
+                              const InputType& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
@@ -113,7 +117,7 @@ public:
     }
 
 
-    virtual VectorType MapGaussian(const NoiseType& sample) const
+    virtual VectorType MapGaussian(const InputType& sample) const
     {
         return MapGaussian();
     }

@@ -44,6 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/states/floating_body_system.hpp>
 
+#include <state_filtering/models/process/brownian_process_model.hpp>
+
 
 /// this namespace contains all the filters
 namespace distributions
@@ -54,12 +56,15 @@ class CoordinateParticleFilter
 public:
     typedef double ScalarType;
     typedef FloatingBodySystem<-1> VectorType;
+    typedef Eigen::VectorXd Control;
+    typedef Eigen::VectorXd Noise;
+
 
 
 
     typedef boost::shared_ptr<CoordinateParticleFilter> Ptr;
 
-    typedef StationaryProcess<ScalarType, VectorType, -1> ProcessModel;
+    typedef distributions::BrownianObjectMotion<-1, double> ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef obs_mod::ImageObservationModel MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
@@ -67,10 +72,7 @@ public:
     typedef SumOfDeltas<double, Eigen::VectorXd> StateDistribution;
 
     typedef MeasurementModel::Measurement Measurement;
-    typedef ProcessModel::NoiseType Control;
     typedef Eigen::VectorXd State;
-    typedef ProcessModel::NoiseType Noise;
-//    typedef Eigen::Matrix<double, -1, -1> Measurement;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
@@ -134,6 +136,9 @@ public:
     virtual StateDistribution& stateDistribution();
 
 private:
+
+    unsigned dimension_;
+
     // TODO this is not used properly yet
     StateDistribution state_distribution_;
 

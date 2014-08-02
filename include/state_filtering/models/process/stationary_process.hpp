@@ -49,37 +49,36 @@
 
 
 // state_filtering
-#include <state_filtering/distributions/features/gaussian_mappable.hpp>
+#include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/utils/macros.hpp>
 
 namespace distributions
 {
 
-template <typename ScalarType_, typename VectorType_, int INPUT_DIMENSION_EIGEN>
-class StationaryProcess: public GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN>
+template <typename ScalarType_, typename VectorType_, typename InputType_>
+class StationaryProcess: public Distribution<ScalarType_, VectorType_>
 {
 public:
-    typedef GaussianMappable<ScalarType_, VectorType_, INPUT_DIMENSION_EIGEN> BaseType;
-    typedef typename BaseType::ScalarType   ScalarType;
-    typedef typename BaseType::VectorType   VectorType;
-    typedef typename BaseType::NoiseType    NoiseType;
+    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType   ScalarType;
+    typedef typename Distribution<ScalarType_, VectorType_>::VectorType   VectorType;
+    typedef InputType_                                                    InputType;
 
 public:
     // constructor and destructor
-    StationaryProcess()
-    {
-        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
-    }
-    StationaryProcess(const unsigned& input_dimension): BaseType(input_dimension)
-    {
-        DISABLE_IF_FIXED_SIZE(NoiseType);
-    }
+//    StationaryProcess()
+//    {
+//        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
+//    }
+//    StationaryProcess(const unsigned& input_dimension): BaseType(input_dimension)
+//    {
+//        DISABLE_IF_FIXED_SIZE(NoiseType);
+//    }
     virtual ~StationaryProcess() { }
 
     // purely virtual functions
-    virtual void Conditional(const ScalarType& delta_time,
-                             const VectorType& state,
-                             const NoiseType&  input) = 0;
+    virtual void Condition(const ScalarType& delta_time,
+                           const VectorType& state,
+                           const InputType&  input) = 0;
 };
 
 

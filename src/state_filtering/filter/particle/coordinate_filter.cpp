@@ -51,21 +51,21 @@ CoordinateParticleFilter::CoordinateParticleFilter(const MeasurementModelPtr obs
     measurement_model_(observation_model),
     process_model_(process_model),
     independent_blocks_(independent_blocks),
-    state_distribution_(process_model->NoiseDimension() * 2), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
+    state_distribution_(1), //TODO: THIS IS A HACK, THIS IS NOT GENERAL!!
     max_kl_divergence_(max_kl_divergence)
 {
     // make sure sizes are consistent
-    size_t sample_size = 0;
+    dimension_ = 0;
     for(size_t i = 0; i < independent_blocks_.size(); i++)
         for(size_t j = 0; j < independent_blocks_[i].size(); j++)
-            sample_size++;
+            dimension_++;
 
-    if(sample_size != process_model_->NoiseDimension())
-    {
-        cout << "the number of dof in the dependency specification does not correspond to" <<
-                " to the number of dof in the process model!!" << endl;
-        exit(-1);
-    }
+//    if(sample_size != process_model_->NoiseDimension())
+//    {
+//        cout << "the number of dof in the dependency specification does not correspond to" <<
+//                " to the number of dof in the process model!!" << endl;
+//        exit(-1);
+//    }
 
 //    if(measurement_model_->state_size() != process_model_->variable_size())
 //    {
@@ -180,7 +180,7 @@ void CoordinateParticleFilter::Filter( const Control control,
     measurement_model_->measurement(observation, observation_time);
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
-    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(process_model_->NoiseDimension()));
+    noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(dimension_));
     propagated_particles_ = std::vector<State>(particles_.size());
 
     for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
@@ -190,7 +190,7 @@ void CoordinateParticleFilter::Filter( const Control control,
             for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
                 noises_[particle_index](independent_blocks_[block_index][i]) = unit_gaussian_.Sample()(0);
 
-            process_model_->Conditional(observation_time - particle_times_[particle_index],
+            process_model_->Condition(observation_time - particle_times_[particle_index],
                                         particles_[particle_index],
                                         control);
             propagated_particles_[particle_index] = process_model_->MapGaussian(noises_[particle_index]);
@@ -286,7 +286,7 @@ void CoordinateParticleFilter::Propagate(
     // we propagate the states to the current time, appying the control input ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     for(size_t state_index = 0; state_index < particles_.size(); state_index++)
     {        
-        process_model_->Conditional(current_time - particle_times_[state_index], particles_[state_index], control);
+        process_model_->Condition(current_time - particle_times_[state_index], particles_[state_index], control);
         particles_[state_index] = process_model_->Sample();
         particle_times_[state_index] = current_time;
     }

@@ -20,7 +20,7 @@ namespace distributions
 
     public:
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::NoiseType& controlInput,
+                             const ProcessModel::InputType& controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc) = 0;
 

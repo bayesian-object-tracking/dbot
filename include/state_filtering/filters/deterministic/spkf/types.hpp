@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 
 #include <state_filtering/models/process/stationary_process.hpp>
+#include <state_filtering/models/process/brownian_process_model.hpp>
 #include <state_filtering/models/measurement/spkf/measurement_model.hpp>
 
 #define DYNAMIC Eigen::Dynamic
@@ -14,9 +15,11 @@ namespace distributions
     typedef double ScalarType;
     typedef Eigen::Matrix<ScalarType, -1, 1> VectorType;
     typedef Eigen::Matrix<ScalarType, -1, -1> OperatorType;
+typedef Eigen::Matrix<ScalarType, -1, 1> InputType;
 
 
-    typedef StationaryProcess<ScalarType, VectorType, -1> ProcessModel;
+
+typedef distributions::BrownianObjectMotion<5, double> ProcessModel; // TODO: this is shit!!!
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>  MeasurementModel;
 

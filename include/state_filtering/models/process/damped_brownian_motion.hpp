@@ -60,19 +60,25 @@ struct DampedWienerProcessTypes
 {
     typedef ScalarType_                                         ScalarType;
     typedef Eigen::Matrix<ScalarType, SIZE, 1>                  VectorType;
-    typedef StationaryProcess<ScalarType, VectorType, SIZE>     StationaryProcessType;
-    typedef typename StationaryProcessType::NoiseType             PerturbationType;
+    typedef Eigen::Matrix<ScalarType, SIZE, 1>                  InputType;
+
+    typedef StationaryProcess<ScalarType, VectorType, InputType>     StationaryProcessType;
+    typedef GaussianMappable<ScalarType, VectorType, SIZE>     GaussianMappableType;
+
+    typedef typename GaussianMappableType::NoiseType             PerturbationType;
 };
 
 
 
 template <int SIZE = -1, typename ScalarType_ = double>
-class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::StationaryProcessType
+class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::StationaryProcessType,
+                           public DampedWienerProcessTypes<SIZE, ScalarType_>::GaussianMappableType
 {
 public:
-    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::ScalarType         ScalarType;
-    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::VectorType         VectorType;
-    typedef typename DampedWienerProcessTypes<SIZE, ScalarType_>::PerturbationType   NoiseType;
+    typedef DampedWienerProcessTypes<SIZE, ScalarType_> Types;
+    typedef typename Types::ScalarType         ScalarType;
+    typedef typename Types::VectorType         VectorType;
+    typedef typename Types::PerturbationType   NoiseType;
     typedef Gaussian<ScalarType, SIZE>                          GaussianType;
     typedef typename GaussianType::OperatorType                                      OperatorType;
 
@@ -82,7 +88,7 @@ public:
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    explicit DampedWienerProcess(int size): gaussian_(size)
+    explicit DampedWienerProcess(const unsigned& size): gaussian_(size), Types::GaussianMappableType(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
@@ -94,7 +100,7 @@ public:
         return gaussian_.MapGaussian(sample);
     }
 
-    virtual void Conditional(const ScalarType&       delta_time,
+    virtual void Condition(const ScalarType&       delta_time,
                              const VectorType&       state,
                              const NoiseType& control)
     {

@@ -30,7 +30,7 @@ namespace distributions
          * @see SpkfInternals::
          */
         virtual void process(DistributionDescriptor& currentStateDesc,
-                             const ProcessModel::NoiseType &controlInput,
+                             const ProcessModel::InputType &controlInput,
                              const double deltaTime,
                              DistributionDescriptor& predictedStateDesc);
 
@@ -56,7 +56,7 @@ namespace distributions
          *
          */
         virtual void process(const SigmaPointMatrix& sigmaPoints,
-                             const ProcessModel::NoiseType& control,
+                             const ProcessModel::InputType& control,
                              const double deltaTime,
                              SigmaPointMatrix& processedSigmaPoints,
                              int stateDimension);

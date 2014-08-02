@@ -67,13 +67,19 @@ struct BrownianObjectMotionTypes
 
     typedef ScalarType_                                             ScalarType;
     typedef FloatingBodySystem<SIZE_OBJECTS>                        VectorType;
-    typedef StationaryProcess<ScalarType, VectorType, DIMENSION>    StationaryProcessType;
-    typedef typename StationaryProcessType::NoiseType        PerturbationType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1> InputType;
+    typedef StationaryProcess<ScalarType, VectorType, InputType>    StationaryProcessType;
+    typedef GaussianMappable<ScalarType, VectorType, DIMENSION> GaussianMappableType;
+
+
+    typedef typename GaussianMappableType::NoiseType        PerturbationType;
 };
 
 
 template <int SIZE_OBJECTS = -1, typename ScalarType_ = double>
-class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType
+class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType,
+                            public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::GaussianMappableType
+
 {
 public:
     // types from parents
@@ -105,7 +111,7 @@ public:
     }
 
     BrownianObjectMotion(const unsigned& count_objects):
-        BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType(count_objects*6),
+        BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::GaussianMappableType(count_objects*6),
         state_(count_objects)
     {
 
@@ -139,7 +145,7 @@ public:
         return new_state;
     }
 
-    virtual void Conditional( const ScalarType&         delta_time,
+    virtual void Condition( const ScalarType&         delta_time,
                               const VectorType&         state,
                               const NoiseType&   control)
     {
@@ -155,10 +161,10 @@ public:
             state_.linear_velocity(i) += state_.angular_velocity(i).cross(state_.position(i));
 
             // todo: should controls change coordintes as well?
-            linear_velocity_[i].Conditional( delta_time,
+            linear_velocity_[i].Condition( delta_time,
                                              state_.linear_velocity(i),
                                              control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-            angular_velocity_[i].Conditional( delta_time,
+            angular_velocity_[i].Condition( delta_time,
                                            state_.angular_velocity(i),
                                            control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
             delta_position_[i].conditionals(delta_time,

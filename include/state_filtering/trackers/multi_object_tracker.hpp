@@ -86,7 +86,6 @@ public:
     typedef Eigen::Matrix<double, -1, -1> Image;
     typedef double ScalarType;
     typedef FloatingBodySystem<-1> VectorType;
-    typedef StationaryProcess<ScalarType, VectorType, -1> ProcessType;
 
 
 //    typedef BrownianObjectMotion<>
@@ -251,11 +250,9 @@ public:
         }
 
         cout << "initialized process model " << endl;
-        boost::shared_ptr< ProcessType > bla;
-        bla = process_model;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<distributions::CoordinateParticleFilter>
-                (new distributions::CoordinateParticleFilter(observation_model, bla, dependencies, max_kl_divergence));
+                (new distributions::CoordinateParticleFilter(observation_model, process_model, dependencies, max_kl_divergence));
 
 
         cout << "initialized filter " << endl;
