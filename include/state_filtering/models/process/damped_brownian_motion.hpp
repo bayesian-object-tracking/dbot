@@ -55,7 +55,7 @@
 namespace distributions
 {
 
-template <typename ScalarType_ = double, int DIMENSION_EIGEN = -1>
+template <typename ScalarType_, int DIMENSION_EIGEN>
 struct DampedWienerProcessTypes
 {
     typedef ScalarType_                                                 ScalarType;
@@ -117,19 +117,9 @@ public:
         noise_covariance_ = noise_covariance;
     }
 
-    virtual int variable_size() const
+    virtual unsigned Dimension() const
     {
-        return gaussian_.Dimension();
-    }
-
-    virtual int NoiseDimension() const
-    {
-        return variable_size();
-    }
-
-    virtual int control_size() const
-    {
-        return variable_size();
+        return this->NoiseDimension(); // all dimensions are the same
     }
 
 private:

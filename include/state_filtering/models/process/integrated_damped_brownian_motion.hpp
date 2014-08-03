@@ -56,42 +56,45 @@
 namespace distributions
 {
 
-
-template <typename ScalarType_, int SIZE>
+template <typename ScalarType_, int DIMENSION_EIGEN>
 struct IntegratedDampedWienerProcessTypes
 {
-    typedef ScalarType_                           ScalarType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1>    VectorType;
-    typedef GaussianMappable<ScalarType, VectorType, SIZE>  GaussianMappableType;
-    typedef typename GaussianMappableType::NoiseType PerturbationType;
+    typedef ScalarType_                                                 ScalarType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               InputType;
+
+    typedef StationaryProcess<ScalarType, VectorType, InputType>        StationaryProcessType;
+    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>   GaussianMappableType;
+
+    typedef typename GaussianMappableType::NoiseType                    NoiseType;
 };
 
 
 
 
-
 // TODO: THIS SHOULD BE DERIVED FROM STATIONARY PROCESS
-template <typename ScalarType_, int SIZE>
+template <typename ScalarType_ = double, int DIMENSION_EIGEN = -1>
 class IntegratedDampedWienerProcess:
-        public IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType
+        public IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::StationaryProcessType,
+        public IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::GaussianMappableType
 {
 public:
-    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::ScalarType         ScalarType;
-    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::VectorType         VectorType;
-    typedef typename IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::PerturbationType   NoiseType;
-    typedef Gaussian<ScalarType, SIZE>                          GaussianType;
-    typedef typename GaussianType::OperatorType                                      OperatorType;
+    typedef IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>    Types;
+    typedef typename Types::ScalarType                                          ScalarType;
+    typedef typename Types::VectorType                                          VectorType;
+    typedef typename Types::InputType                                           InputType;
+    typedef typename Types::NoiseType                                           NoiseType;
+    typedef Gaussian<ScalarType, DIMENSION_EIGEN>                               GaussianType;
+    typedef typename GaussianType::OperatorType                                 OperatorType;
 
 public:
-
     IntegratedDampedWienerProcess()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    IntegratedDampedWienerProcess(const unsigned& size):
-        IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType(size),
-        gaussian_(size)
+    IntegratedDampedWienerProcess(const unsigned& size): Types::GaussianMappableType(size),
+                                                         gaussian_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
@@ -103,7 +106,16 @@ public:
         return gaussian_.MapGaussian(sample);
     }
 
-    virtual void conditionals(const double& delta_time,
+
+    virtual void Condition(const ScalarType&  delta_time,
+                           const VectorType&  state,
+                           const InputType&   input)
+    {
+        // TODO!!!
+    }
+
+    // THIS SHOULD GO AWAY!!
+    virtual void conditionals(const ScalarType& delta_time,
                               const VectorType& state,
                               const VectorType& velocity,
                               const VectorType& acceleration)
@@ -111,7 +123,7 @@ public:
         gaussian_.Mean(Expectation(state, velocity, acceleration, delta_time));
         gaussian_.Covariance(Covariance(delta_time));
     }
-    virtual void parameters(
+    virtual void Parameters(
             const double& damping,
             const OperatorType& acceleration_covariance)
     {
@@ -119,14 +131,9 @@ public:
         acceleration_covariance_ = acceleration_covariance;
     }
 
-    virtual int variable_size() const
+    virtual unsigned Dimension() const
     {
-        return gaussian_.Dimension();
-    }
-
-    virtual int NoiseDimension() const
-    {
-        return variable_size();
+        return this->NoiseDimension(); // all dimensions are the same
     }
 
 private:
@@ -155,8 +162,8 @@ private:
         // be the case. boost however does not accept zero therefore we set it to a very small
         // value, which does not make a bit difference for any realistic delta_time
         double factor =
-                (-1.0 + exp(-2.0*damping_*delta_time))/(8.0*pow(damping_, 3)) +
-                (2.0 - exp(-2.0*damping_*delta_time))/(4.0*pow(damping_,2)) * delta_time +
+               (-1.0 + exp(-2.0*damping_*delta_time))/(8.0*pow(damping_, 3)) +
+                (2.0 - exp(-2.0*damping_*delta_time))/(4.0*pow(damping_, 2)) * delta_time +
                 (-1.5 + gamma_ + boost::math::tgamma(0.00000000001, 2.0*damping_*delta_time) +
                  log(2.0*damping_*delta_time))/(2.0*damping_)*pow(delta_time, 2);
         if(!std::isfinite(factor))

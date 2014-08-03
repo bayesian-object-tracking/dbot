@@ -188,8 +188,8 @@ public:
     {
         rotation_center_[object_index] = rotation_center;
 
-        delta_position_[object_index].parameters(damping, linear_acceleration_covariance);
-        delta_orientation_[object_index].parameters(damping, angular_acceleration_covariance);
+        delta_position_[object_index].Parameters(damping, linear_acceleration_covariance);
+        delta_orientation_[object_index].Parameters(damping, angular_acceleration_covariance);
         linear_velocity_[object_index].Parameters(damping, linear_acceleration_covariance);
         angular_velocity_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
