@@ -128,11 +128,11 @@ public:
     virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         VectorType new_state = state_;
-        for(size_t i = 0; i < state_.bodies_size(); i++)
+        for(size_t i = 0; i < new_state.bodies_size(); i++)
         {
-            new_state.position(i) = state_.position(i) +
+            new_state.position(i) = new_state.position(i) +
                     delta_position_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT)).topRows(3);
-            Quaternion updated_quaternion(state_.quaternion(i).coeffs()
+            Quaternion updated_quaternion(new_state.quaternion(i).coeffs()
                        + quaternion_map_[i] *
                        delta_orientation_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)).topRows(3));
             new_state.quaternion(updated_quaternion.normalized(), i);
@@ -140,8 +140,8 @@ public:
             new_state.angular_velocity(i) = angular_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
 
             // transform to external coordinate system
-            new_state.linear_velocity(i) -= state_.angular_velocity(i).cross(state_.position(i));
-            new_state.position(i) -= state_.rotation_matrix(i)*rotation_center_[i];
+            new_state.linear_velocity(i) -= new_state.angular_velocity(i).cross(state_.position(i));
+            new_state.position(i) -= new_state.rotation_matrix(i)*rotation_center_[i];
         }
 
         return new_state;
