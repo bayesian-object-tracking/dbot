@@ -90,7 +90,7 @@ public:
     // new types
     typedef typename Eigen::Quaternion<ScalarType>          Quaternion;
     typedef IntegratedDampedWienerProcess<ScalarType, 3>   AccelerationDistribution;
-    typedef DampedWienerProcess<3, ScalarType>             VelocityDistribution;
+    typedef DampedWienerProcess<ScalarType, 3>             VelocityDistribution;
 
     enum
     {
@@ -190,8 +190,8 @@ public:
 
         delta_position_[object_index].parameters(damping, linear_acceleration_covariance);
         delta_orientation_[object_index].parameters(damping, angular_acceleration_covariance);
-        linear_velocity_[object_index].parameters(damping, linear_acceleration_covariance);
-        angular_velocity_[object_index].parameters(damping, angular_acceleration_covariance);
+        linear_velocity_[object_index].Parameters(damping, linear_acceleration_covariance);
+        angular_velocity_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
 
 //    virtual int variable_size() const

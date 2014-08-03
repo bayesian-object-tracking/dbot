@@ -130,10 +130,10 @@ public:
 //    {
 //        return CONTROL_SIZE;
 //    }
-    virtual int NoiseDimension() const
-    {
-        return DIMENSION;
-    }
+//    virtual int NoiseDimension() const
+//    {
+//        return DIMENSION;
+//    }
 
 private:
     // conditionals

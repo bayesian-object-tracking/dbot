@@ -64,18 +64,8 @@ public:
     typedef InputType_                                                    InputType;
 
 public:
-    // constructor and destructor
-//    StationaryProcess()
-//    {
-//        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
-//    }
-//    StationaryProcess(const unsigned& input_dimension): BaseType(input_dimension)
-//    {
-//        DISABLE_IF_FIXED_SIZE(NoiseType);
-//    }
     virtual ~StationaryProcess() { }
 
-    // purely virtual functions
     virtual void Condition(const ScalarType& delta_time,
                            const VectorType& state,
                            const InputType&  input) = 0;

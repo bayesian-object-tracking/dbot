@@ -55,40 +55,42 @@
 namespace distributions
 {
 
-template <int SIZE = -1, typename ScalarType_ = double>
+template <typename ScalarType_ = double, int DIMENSION_EIGEN = -1>
 struct DampedWienerProcessTypes
 {
-    typedef ScalarType_                                         ScalarType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1>                  VectorType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1>                  InputType;
+    typedef ScalarType_                                                 ScalarType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               InputType;
 
-    typedef StationaryProcess<ScalarType, VectorType, InputType>     StationaryProcessType;
-    typedef GaussianMappable<ScalarType, VectorType, SIZE>     GaussianMappableType;
+    typedef StationaryProcess<ScalarType, VectorType, InputType>        StationaryProcessType;
+    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>   GaussianMappableType;
 
-    typedef typename GaussianMappableType::NoiseType             PerturbationType;
+    typedef typename GaussianMappableType::NoiseType                    NoiseType;
 };
 
 
 
-template <int SIZE = -1, typename ScalarType_ = double>
-class DampedWienerProcess: public DampedWienerProcessTypes<SIZE, ScalarType_>::StationaryProcessType,
-                           public DampedWienerProcessTypes<SIZE, ScalarType_>::GaussianMappableType
+template <typename ScalarType_ = double, int DIMENSION_EIGEN = -1>
+class DampedWienerProcess: public DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::StationaryProcessType,
+                           public DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::GaussianMappableType
 {
 public:
-    typedef DampedWienerProcessTypes<SIZE, ScalarType_> Types;
-    typedef typename Types::ScalarType         ScalarType;
-    typedef typename Types::VectorType         VectorType;
-    typedef typename Types::PerturbationType   NoiseType;
-    typedef Gaussian<ScalarType, SIZE>                          GaussianType;
-    typedef typename GaussianType::OperatorType                                      OperatorType;
+    typedef DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>  Types;
+    typedef typename Types::ScalarType                              ScalarType;
+    typedef typename Types::VectorType                              VectorType;
+    typedef typename Types::InputType                               InputType;
+    typedef typename Types::NoiseType                               NoiseType;
+    typedef Gaussian<ScalarType, DIMENSION_EIGEN>                   GaussianType;
+    typedef typename GaussianType::OperatorType                     OperatorType;
 
 public:
-    DampedWienerProcess(): gaussian_()
+    DampedWienerProcess()
     {
         DISABLE_IF_DYNAMIC_SIZE(VectorType);
     }
 
-    explicit DampedWienerProcess(const unsigned& size): gaussian_(size), Types::GaussianMappableType(size)
+    explicit DampedWienerProcess(const unsigned& dimension): Types::GaussianMappableType(dimension),
+                                                             gaussian_(dimension)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
@@ -100,15 +102,16 @@ public:
         return gaussian_.MapGaussian(sample);
     }
 
-    virtual void Condition(const ScalarType&       delta_time,
-                             const VectorType&       state,
-                             const NoiseType& control)
+    virtual void Condition(const ScalarType&  delta_time,
+                           const VectorType&  state,
+                           const InputType&   input)
     {
-        gaussian_.Mean(Mean(delta_time, state, control));
+        gaussian_.Mean(Mean(delta_time, state, input));
         gaussian_.Covariance(Covariance(delta_time));
     }
 
-    virtual void parameters(const ScalarType& damping, const OperatorType& noise_covariance)
+    virtual void Parameters(const ScalarType& damping,
+                            const OperatorType& noise_covariance)
     {
         damping_ = damping;
         noise_covariance_ = noise_covariance;
@@ -131,15 +134,15 @@ public:
 
 private:
     VectorType Mean(const ScalarType& delta_time,
-                         const VectorType& state,
-                         const NoiseType& control)
+                    const VectorType& state,
+                    const InputType& input)
     {
-        VectorType state_expectation =     (1.0 - exp(-damping_*delta_time)) / damping_ * control
-                                              + exp(-damping_*delta_time)*state;
+        VectorType state_expectation = (1.0 - exp(-damping_*delta_time)) / damping_ * input +
+                                              exp(-damping_*delta_time)  * state;
 
         // if the damping_ is too small, the result might be nan, we thus return the limit for damping_ -> 0
         if(!std::isfinite(state_expectation.norm()))
-            state_expectation = state + delta_time * control;
+            state_expectation = state + delta_time * input;
 
         return state_expectation;
     }

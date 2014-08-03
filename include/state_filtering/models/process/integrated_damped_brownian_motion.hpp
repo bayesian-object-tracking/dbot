@@ -42,8 +42,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
+#ifndef STATE_FILTERING_gaussian_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
+#define STATE_FILTERING_gaussian_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
 
 // boost
 #include <boost/math/special_functions/gamma.hpp>
@@ -91,7 +91,7 @@ public:
 
     IntegratedDampedWienerProcess(const unsigned& size):
         IntegratedDampedWienerProcessTypes<ScalarType_, SIZE>::GaussianMappableType(size),
-        distribution_(size)
+        gaussian_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
@@ -100,7 +100,7 @@ public:
 
     virtual VectorType MapGaussian(const NoiseType& sample) const
     {
-        return distribution_.MapGaussian(sample);
+        return gaussian_.MapGaussian(sample);
     }
 
     virtual void conditionals(const double& delta_time,
@@ -108,10 +108,8 @@ public:
                               const VectorType& velocity,
                               const VectorType& acceleration)
     {
-        distribution_.Mean(Expectation(state, velocity, acceleration, delta_time));
-        distribution_.Covariance(Covariance(delta_time));
-
-        n_variables_ = state.rows();
+        gaussian_.Mean(Expectation(state, velocity, acceleration, delta_time));
+        gaussian_.Covariance(Covariance(delta_time));
     }
     virtual void parameters(
             const double& damping,
@@ -123,7 +121,7 @@ public:
 
     virtual int variable_size() const
     {
-        return distribution_.Dimension();
+        return gaussian_.Dimension();
     }
 
     virtual int NoiseDimension() const
@@ -168,12 +166,13 @@ private:
     }
 
 private:
-    size_t n_variables_;
     // conditionals
-    GaussianType distribution_;
+    GaussianType gaussian_;
+
     // parameters
-    double damping_;
+    ScalarType damping_;
     OperatorType acceleration_covariance_;
+
     // euler-mascheroni constant
     static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
