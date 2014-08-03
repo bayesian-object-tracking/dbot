@@ -42,14 +42,14 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_gaussian_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
-#define STATE_FILTERING_gaussian_IMPLEMENTATIONS_BROWNIAN_DAMPED_BROWNIAN_MOTION_HPP
+#ifndef DISTRIBUTIONS_IMPLEMENTATIONS_DAMPED_WIENER_PROCESS_HPP
+#define DISTRIBUTIONS_IMPLEMENTATIONS_DAMPED_WIENER_PROCESS_HPP
 
 #include <Eigen/Dense>
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/models/process/stationary_process.hpp>
+#include <state_filtering/models/process/features/stationary_process.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 
 namespace distributions
@@ -154,7 +154,7 @@ private:
     ScalarType damping_;
     OperatorType noise_covariance_;
 
-    /** @brief euler-mascheroni constant */
+    // euler-mascheroni constant
     static const ScalarType gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 

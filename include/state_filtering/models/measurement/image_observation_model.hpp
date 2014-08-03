@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Core>
 
 #include <state_filtering/models/measurement/cpu_image_observation_model/kinect_measurement_model.hpp>
-#include <state_filtering/models/process/occlusion_process_model.hpp>
+#include <state_filtering/models/process/implementations/occlusion_process.hpp>
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/utils/rigid_body_renderer.hpp>
 

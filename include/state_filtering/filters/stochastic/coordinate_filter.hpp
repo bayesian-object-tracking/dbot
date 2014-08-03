@@ -35,16 +35,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/models/measurement/image_observation_model.hpp>
 //#include <state_filtering/models/measurement/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
-//#include <state_filtering/models/process/occlusion_process_model.hpp>
+//#include <state_filtering/models/process/implementations/occlusion_process.hpp>
 
 #include <state_filtering/utils/rigid_body_renderer.hpp>
-#include <state_filtering/models/process/stationary_process.hpp>
+#include <state_filtering/models/process/features/stationary_process.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 #include <state_filtering/distributions/implementations/sum_of_deltas.hpp>
 
 #include <state_filtering/states/floating_body_system.hpp>
 
-#include <state_filtering/models/process/brownian_process_model.hpp>
+#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
 
 
 /// this namespace contains all the filters

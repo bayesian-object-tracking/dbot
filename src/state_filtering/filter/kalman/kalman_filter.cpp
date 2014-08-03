@@ -51,7 +51,7 @@
 #include <state_filtering/filters/deterministic/kalman_filter.hpp>
 
 #include <state_filtering/distributions/distribution.hpp>
-#include <state_filtering/models/process/brownian_process_model.hpp>
+#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
 
 namespace distributions
 {

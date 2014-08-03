@@ -42,8 +42,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_gaussian_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
-#define STATE_FILTERING_gaussian_IMPLEMENTATIONS_INTEGRATED_DAMPED_BROWNIAN_MOTION_HPP
+#ifndef DISTRIBUTIONS_IMPLEMENTATIONS_INTEGRATED_DAMPED_WIENER_PROCESS_HPP
+#define DISTRIBUTIONS_IMPLEMENTATIONS_INTEGRATED_DAMPED_WIENER_PROCESS_HPP
 
 // boost
 #include <boost/math/special_functions/gamma.hpp>
@@ -52,7 +52,7 @@
 #include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
-#include <state_filtering/models/process/damped_brownian_motion.hpp>
+#include <state_filtering/models/process/implementations/damped_wiener_process.hpp>
 
 namespace distributions
 {
@@ -97,7 +97,7 @@ public:
 
     IntegratedDampedWienerProcess(const unsigned& size): Types::GaussianMappableType(size),
                                                          Types::DampedWienerProcessType(size),
-                                                         gaussian_(size)
+                                                         position_distribution_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
     }
@@ -107,8 +107,8 @@ public:
     virtual VectorType MapGaussian(const NoiseType& sample) const
     {
         VectorType state(StateDimension());
-        state.topRows(InputDimension())     = gaussian_.MapGaussian(sample);
-        state.bottomRows(InputDimension())  = damped_wiener_process_.MapGaussian(sample);
+        state.topRows(InputDimension())     = position_distribution_.MapGaussian(sample);
+        state.bottomRows(InputDimension())  = velocity_distribution_.MapGaussian(sample);
         return state;
     }
 
@@ -117,24 +117,15 @@ public:
                            const VectorType&  state,
                            const InputType&   input)
     {
-        gaussian_.Mean(Expectation(state.topRows(InputDimension()),
-                                   state.bottomRows(InputDimension()),
-                                   input,
-                                   delta_time));
-        gaussian_.Covariance(Covariance(delta_time));
+        position_distribution_.Mean(Mean(state.topRows(InputDimension()), // position
+                                                state.bottomRows(InputDimension()), // velocity
+                                                input, // acceleration
+                                                delta_time));
+        position_distribution_.Covariance(Covariance(delta_time));
 
-        damped_wiener_process_.Condition(delta_time, state.bottomRows(InputDimension()), input);
+        velocity_distribution_.Condition(delta_time, state.bottomRows(InputDimension()), input);
     }
 
-//    // THIS SHOULD GO AWAY!!
-//    virtual void conditionals(const ScalarType& delta_time,
-//                              const VectorType& state,
-//                              const VectorType& velocity,
-//                              const VectorType& acceleration)
-//    {
-//        gaussian_.Mean(Expectation(state, velocity, acceleration, delta_time));
-//        gaussian_.Covariance(Covariance(delta_time));
-//    }
     virtual void Parameters(
             const double& damping,
             const OperatorType& acceleration_covariance)
@@ -142,7 +133,7 @@ public:
         damping_ = damping;
         acceleration_covariance_ = acceleration_covariance;
 
-        damped_wiener_process_.Parameters(damping, acceleration_covariance);
+        velocity_distribution_.Parameters(damping, acceleration_covariance);
     }
 
     virtual unsigned InputDimension() const
@@ -156,22 +147,22 @@ public:
     }
 
 private:
-    InputType Expectation(const InputType& state,
-                           const InputType& velocity,
-                           const InputType& acceleration,
-                           const double& delta_time)
+    InputType Mean(const InputType& state,
+                   const InputType& velocity,
+                   const InputType& acceleration,
+                   const double& delta_time)
     {
-        InputType expectation;
-        expectation = state +
+        InputType mean;
+        mean = state +
                 (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
                 * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
 
-        if(!std::isfinite(expectation.norm()))
-            expectation = state +
+        if(!std::isfinite(mean.norm()))
+            mean = state +
                     0.5*delta_time*delta_time*acceleration +
                     delta_time*velocity;
 
-        return expectation;
+        return mean;
     }
 
     OperatorType Covariance(const ScalarType& delta_time)
@@ -192,17 +183,17 @@ private:
     }
 
 private:
-    DampedWienerProcessType damped_wiener_process_;
+    DampedWienerProcessType velocity_distribution_;
 
     // conditionals
-    GaussianType gaussian_;
+    GaussianType position_distribution_;
 
     // parameters
     ScalarType damping_;
     OperatorType acceleration_covariance_;
 
     // euler-mascheroni constant
-    static const double gamma_ = 0.57721566490153286060651209008240243104215933593992;
+    static const ScalarType gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 
 }

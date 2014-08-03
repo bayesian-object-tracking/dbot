@@ -4,8 +4,8 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/models/process/stationary_process.hpp>
-#include <state_filtering/models/process/brownian_process_model.hpp>
+#include <state_filtering/models/process/features/stationary_process.hpp>
+#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
 #include <state_filtering/models/measurement/spkf/measurement_model.hpp>
 
 #define DYNAMIC Eigen::Dynamic

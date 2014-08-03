@@ -50,9 +50,9 @@
 
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/models/process/stationary_process.hpp>
-#include <state_filtering/models/process/damped_brownian_motion.hpp>
-#include <state_filtering/models/process/integrated_damped_brownian_motion.hpp>
+#include <state_filtering/models/process/features/stationary_process.hpp>
+#include <state_filtering/models/process/implementations/damped_wiener_process.hpp>
+#include <state_filtering/models/process/implementations/integrated_damped_wiener_process.hpp>
 
 namespace distributions
 {
@@ -207,10 +207,10 @@ public:
 //    {
 //        return state_.state_size();
 //    }
-    virtual int NoiseDimension() const
-    {
-        return state_.bodies_size()*DIMENSION_PER_OBJECT;
-    }
+//    virtual int NoiseDimension() const
+//    {
+//        return state_.bodies_size()*DIMENSION_PER_OBJECT;
+//    }
 //    virtual int control_size() const
 //    {
 //        return Types::CONTROL_SIZE;
