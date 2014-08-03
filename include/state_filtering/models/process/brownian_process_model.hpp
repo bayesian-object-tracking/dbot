@@ -130,9 +130,11 @@ public:
         VectorType new_state = state_;
         for(size_t i = 0; i < state_.bodies_size(); i++)
         {
-            new_state.position(i) = state_.position(i) + delta_position_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
+            new_state.position(i) = state_.position(i) +
+                    delta_position_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT)).topRows(3);
             Quaternion updated_quaternion(state_.quaternion(i).coeffs()
-                       + quaternion_map_[i] * delta_orientation_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)));
+                       + quaternion_map_[i] *
+                       delta_orientation_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)).topRows(3));
             new_state.quaternion(updated_quaternion.normalized(), i);
             new_state.linear_velocity(i) = linear_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
             new_state.angular_velocity(i) = angular_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
@@ -167,13 +169,20 @@ public:
             angular_velocity_[i].Condition( delta_time,
                                            state_.angular_velocity(i),
                                            control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
-            delta_position_[i].conditionals(delta_time,
-                                         Eigen::Vector3d::Zero(),
-                                         state_.linear_velocity(i),
+
+            Eigen::Matrix<ScalarType, 6, 1> linear_state;
+            linear_state.topRows(3) = Eigen::Vector3d::Zero();
+            linear_state.bottomRows(3) = state_.linear_velocity(i);
+            delta_position_[i].Condition(delta_time,
+                                            linear_state,
                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-            delta_orientation_[i].conditionals(delta_time,
-                                            Eigen::Vector3d::Zero(),
-                                            state_.angular_velocity(i),
+
+
+            Eigen::Matrix<ScalarType, 6, 1> angular_state;
+            angular_state.topRows(3) = Eigen::Vector3d::Zero();
+            angular_state.bottomRows(3) = state_.angular_velocity(i);
+            delta_orientation_[i].Condition(delta_time,
+                                            angular_state,
                                             control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
 

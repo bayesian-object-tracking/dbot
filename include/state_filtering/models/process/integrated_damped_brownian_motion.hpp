@@ -52,39 +52,41 @@
 #include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
+#include <state_filtering/models/process/damped_brownian_motion.hpp>
 
 namespace distributions
 {
 
-template <typename ScalarType_, int DIMENSION_EIGEN>
+template <typename ScalarType_, int INPUT_DIM_EIGEN>
 struct IntegratedDampedWienerProcessTypes
 {
-    typedef ScalarType_                                                 ScalarType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               InputType;
+    typedef ScalarType_                                                                     ScalarType;
+    typedef Eigen::Matrix<ScalarType, INPUT_DIM_EIGEN == -1 ? -1 : 2 * INPUT_DIM_EIGEN, 1>  VectorType;
+    typedef Eigen::Matrix<ScalarType, INPUT_DIM_EIGEN, 1>                                   InputType;
 
-    typedef StationaryProcess<ScalarType, VectorType, InputType>        StationaryProcessType;
-    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>   GaussianMappableType;
+    typedef StationaryProcess<ScalarType, VectorType, InputType>                            StationaryProcessType;
+    typedef GaussianMappable<ScalarType, VectorType, INPUT_DIM_EIGEN>                       GaussianMappableType;
 
-    typedef typename GaussianMappableType::NoiseType                    NoiseType;
+    typedef typename GaussianMappableType::NoiseType                                        NoiseType;
+
+    typedef DampedWienerProcess<ScalarType, INPUT_DIM_EIGEN>                                DampedWienerProcessType;
 };
 
 
 
-
-// TODO: THIS SHOULD BE DERIVED FROM STATIONARY PROCESS
-template <typename ScalarType_ = double, int DIMENSION_EIGEN = -1>
+template <typename ScalarType_ = double, int INPUT_DIM_EIGEN = -1>
 class IntegratedDampedWienerProcess:
-        public IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::StationaryProcessType,
-        public IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>::GaussianMappableType
+        public IntegratedDampedWienerProcessTypes<ScalarType_, INPUT_DIM_EIGEN>::StationaryProcessType,
+        public IntegratedDampedWienerProcessTypes<ScalarType_, INPUT_DIM_EIGEN>::GaussianMappableType
 {
 public:
-    typedef IntegratedDampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>    Types;
+    typedef IntegratedDampedWienerProcessTypes<ScalarType_, INPUT_DIM_EIGEN>    Types;
     typedef typename Types::ScalarType                                          ScalarType;
     typedef typename Types::VectorType                                          VectorType;
     typedef typename Types::InputType                                           InputType;
     typedef typename Types::NoiseType                                           NoiseType;
-    typedef Gaussian<ScalarType, DIMENSION_EIGEN>                               GaussianType;
+    typedef typename Types::DampedWienerProcessType                             DampedWienerProcessType;
+    typedef Gaussian<ScalarType, INPUT_DIM_EIGEN>                               GaussianType;
     typedef typename GaussianType::OperatorType                                 OperatorType;
 
 public:
@@ -94,6 +96,7 @@ public:
     }
 
     IntegratedDampedWienerProcess(const unsigned& size): Types::GaussianMappableType(size),
+                                                         Types::DampedWienerProcessType(size),
                                                          gaussian_(size)
     {
         DISABLE_IF_FIXED_SIZE(VectorType);
@@ -103,7 +106,10 @@ public:
 
     virtual VectorType MapGaussian(const NoiseType& sample) const
     {
-        return gaussian_.MapGaussian(sample);
+        VectorType state(StateDimension());
+        state.topRows(InputDimension())     = gaussian_.MapGaussian(sample);
+        state.bottomRows(InputDimension())  = damped_wiener_process_.MapGaussian(sample);
+        return state;
     }
 
 
@@ -111,38 +117,51 @@ public:
                            const VectorType&  state,
                            const InputType&   input)
     {
-        // TODO!!!
+        gaussian_.Mean(Expectation(state.topRows(InputDimension()),
+                                   state.bottomRows(InputDimension()),
+                                   input,
+                                   delta_time));
+        gaussian_.Covariance(Covariance(delta_time));
+
+        damped_wiener_process_.Condition(delta_time, state.bottomRows(InputDimension()), input);
     }
 
-    // THIS SHOULD GO AWAY!!
-    virtual void conditionals(const ScalarType& delta_time,
-                              const VectorType& state,
-                              const VectorType& velocity,
-                              const VectorType& acceleration)
-    {
-        gaussian_.Mean(Expectation(state, velocity, acceleration, delta_time));
-        gaussian_.Covariance(Covariance(delta_time));
-    }
+//    // THIS SHOULD GO AWAY!!
+//    virtual void conditionals(const ScalarType& delta_time,
+//                              const VectorType& state,
+//                              const VectorType& velocity,
+//                              const VectorType& acceleration)
+//    {
+//        gaussian_.Mean(Expectation(state, velocity, acceleration, delta_time));
+//        gaussian_.Covariance(Covariance(delta_time));
+//    }
     virtual void Parameters(
             const double& damping,
             const OperatorType& acceleration_covariance)
     {
         damping_ = damping;
         acceleration_covariance_ = acceleration_covariance;
+
+        damped_wiener_process_.Parameters(damping, acceleration_covariance);
     }
 
-    virtual unsigned Dimension() const
+    virtual unsigned InputDimension() const
     {
-        return this->NoiseDimension(); // all dimensions are the same
+        return this->NoiseDimension();
+    }
+
+    virtual unsigned StateDimension() const
+    {
+        return this->NoiseDimension() * 2;
     }
 
 private:
-    VectorType Expectation(const VectorType& state,
-                           const VectorType& velocity,
-                           const VectorType& acceleration,
+    InputType Expectation(const InputType& state,
+                           const InputType& velocity,
+                           const InputType& acceleration,
                            const double& delta_time)
     {
-        VectorType expectation;
+        InputType expectation;
         expectation = state +
                 (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
                 * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;
@@ -155,13 +174,13 @@ private:
         return expectation;
     }
 
-    OperatorType Covariance(const double& delta_time)
+    OperatorType Covariance(const ScalarType& delta_time)
     {
         // the first argument to the gamma function should be equal to zero, which would not cause
         // the gamma function to diverge as long as the second argument is not zero, which will not
         // be the case. boost however does not accept zero therefore we set it to a very small
         // value, which does not make a bit difference for any realistic delta_time
-        double factor =
+        ScalarType factor =
                (-1.0 + exp(-2.0*damping_*delta_time))/(8.0*pow(damping_, 3)) +
                 (2.0 - exp(-2.0*damping_*delta_time))/(4.0*pow(damping_, 2)) * delta_time +
                 (-1.5 + gamma_ + boost::math::tgamma(0.00000000001, 2.0*damping_*delta_time) +
@@ -173,6 +192,8 @@ private:
     }
 
 private:
+    DampedWienerProcessType damped_wiener_process_;
+
     // conditionals
     GaussianType gaussian_;
 
