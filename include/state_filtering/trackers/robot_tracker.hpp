@@ -226,7 +226,7 @@ public:
         for(size_t i = 0; i < partial_process_models.size(); i++)
         {
             boost::shared_ptr<BrownianObjectMotion<> > partial_process_model(new BrownianObjectMotion<>);
-            partial_process_model->parameters(robot_renderer->object_center(i).cast<double>(),
+            partial_process_model->Parameters(robot_renderer->object_center(i).cast<double>(),
                                               damping,
                                               linear_acceleration_covariance,
                                               angular_acceleration_covariance);

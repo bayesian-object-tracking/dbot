@@ -89,8 +89,7 @@ public:
 
     // new types
     typedef typename Eigen::Quaternion<ScalarType>                 Quaternion;
-    typedef IntegratedDampedWienerProcess<ScalarType, 3>           PositionDistribution;
-    typedef DampedWienerProcess<ScalarType, 3>                     VelocityDistribution;
+    typedef IntegratedDampedWienerProcess<ScalarType, 3>           Process;
 
     enum
     {
@@ -100,48 +99,46 @@ public:
 public:
     BrownianObjectMotion()
     {
-        // todo: check whether this complains for dynamic size
+        DISABLE_IF_DYNAMIC_SIZE(VectorType);
 
         quaternion_map_.resize(SIZE_OBJECTS);
         rotation_center_.resize(SIZE_OBJECTS);
-        delta_position_.resize(SIZE_OBJECTS);
-        delta_orientation_.resize(SIZE_OBJECTS);
-        linear_velocity_.resize(SIZE_OBJECTS);
-        angular_velocity_.resize(SIZE_OBJECTS);
+        linear_process_.resize(SIZE_OBJECTS);
+        angular_process_.resize(SIZE_OBJECTS);
     }
 
-    BrownianObjectMotion(const unsigned& count_objects):
-        BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::GaussianMappableType(count_objects*6),
-        state_(count_objects)
+    BrownianObjectMotion(const unsigned& count_objects): Types::GaussianMappableType(count_objects*6),
+                                                         state_(count_objects)
     {
+        DISABLE_IF_FIXED_SIZE(VectorType);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
-        delta_position_.resize(count_objects);
-        delta_orientation_.resize(count_objects);
-        linear_velocity_.resize(count_objects);
-        angular_velocity_.resize(count_objects);
+        linear_process_.resize(count_objects);
+        angular_process_.resize(count_objects);
     }
 
     virtual ~BrownianObjectMotion() { }
 
     virtual VectorType MapGaussian(const NoiseType& sample) const
     {
-        VectorType new_state = state_;
+        VectorType new_state(state_.bodies_size());
         for(size_t i = 0; i < new_state.bodies_size(); i++)
         {
-            new_state.position(i) = new_state.position(i) +
-                    delta_position_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT)).topRows(3);
-            Quaternion updated_quaternion(new_state.quaternion(i).coeffs()
-                       + quaternion_map_[i] *
-                       delta_orientation_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3)).topRows(3));
+            Eigen::Matrix<ScalarType, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
+            Eigen::Matrix<ScalarType, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
+            Eigen::Matrix<ScalarType, 6, 1> linear_delta      = linear_process_[i].MapGaussian(position_noise);
+            Eigen::Matrix<ScalarType, 6, 1> angular_delta     = angular_process_[i].MapGaussian(orientation_noise);
+
+            new_state.position(i) = state_.position(i) + linear_delta.topRows(3);
+            Quaternion updated_quaternion(state_.quaternion(i).coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
             new_state.quaternion(updated_quaternion.normalized(), i);
-            new_state.linear_velocity(i) = linear_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-            new_state.angular_velocity(i) = angular_velocity_[i].MapGaussian(sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+            new_state.linear_velocity(i)  = linear_delta.bottomRows(3);
+            new_state.angular_velocity(i) = angular_delta.bottomRows(3);
 
             // transform to external coordinate system
             new_state.linear_velocity(i) -= new_state.angular_velocity(i).cross(state_.position(i));
-            new_state.position(i) -= new_state.rotation_matrix(i)*rotation_center_[i];
+            new_state.position(i)        -= new_state.rotation_matrix(i)*rotation_center_[i];
         }
 
         return new_state;
@@ -157,50 +154,38 @@ public:
         {
             quaternion_map_[i] = hf::QuaternionMatrix(state_.quaternion(i).coeffs());
 
-            // transform the state which is the pose and velocity with respecto to the origin into our internal representation,
-            // which is the position and velocity of the rotation_center and the orientation and angular velocity around the center
-            state_.position(i) += state_.rotation_matrix(i)*rotation_center_[i];
+            // transform the state, which is the pose and velocity with respect to to the origin,
+            // into internal representation, which is the position and velocity of the center
+            // and the orientation and angular velocity around the center
+            state_.position(i)        += state_.rotation_matrix(i)*rotation_center_[i];
             state_.linear_velocity(i) += state_.angular_velocity(i).cross(state_.position(i));
-
-            // todo: should controls change coordintes as well?
-            linear_velocity_[i].Condition( delta_time,
-                                             state_.linear_velocity(i),
-                                             control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-            angular_velocity_[i].Condition( delta_time,
-                                           state_.angular_velocity(i),
-                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
 
             Eigen::Matrix<ScalarType, 6, 1> linear_state;
             linear_state.topRows(3) = Eigen::Vector3d::Zero();
             linear_state.bottomRows(3) = state_.linear_velocity(i);
-            delta_position_[i].Condition(delta_time,
-                                            linear_state,
+            linear_process_[i].Condition(delta_time,
+                                         linear_state,
                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-
 
             Eigen::Matrix<ScalarType, 6, 1> angular_state;
             angular_state.topRows(3) = Eigen::Vector3d::Zero();
             angular_state.bottomRows(3) = state_.angular_velocity(i);
-            delta_orientation_[i].Condition(delta_time,
-                                            angular_state,
-                                            control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+            angular_process_[i].Condition(delta_time,
+                                          angular_state,
+                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
-
     }
 
 
-    virtual void parameters(const size_t&                                       object_index,
-                            const Eigen::Matrix<ScalarType, 3, 1>&              rotation_center,
-                            const ScalarType&                                   damping,
-                            const typename PositionDistribution::OperatorType&  linear_acceleration_covariance,
-                            const typename VelocityDistribution::OperatorType&  angular_acceleration_covariance)
+    virtual void Parameters(const size_t&                           object_index,
+                            const Eigen::Matrix<ScalarType, 3, 1>&  rotation_center,
+                            const ScalarType&                       damping,
+                            const typename Process::OperatorType&   linear_acceleration_covariance,
+                            const typename Process::OperatorType&   angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
-
-        delta_position_[object_index].Parameters(damping, linear_acceleration_covariance);
-        delta_orientation_[object_index].Parameters(damping, angular_acceleration_covariance);
-        linear_velocity_[object_index].Parameters(damping, linear_acceleration_covariance);
-        angular_velocity_[object_index].Parameters(damping, angular_acceleration_covariance);
+        linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
+        angular_process_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
 
 private:
@@ -211,11 +196,9 @@ private:
     // parameters
     std::vector<Eigen::Matrix<ScalarType, 3, 1> > rotation_center_;
 
-    // distributions
-    std::vector<PositionDistribution>   delta_position_;
-    std::vector<PositionDistribution>   delta_orientation_;
-    std::vector<VelocityDistribution>       linear_velocity_;
-    std::vector<VelocityDistribution>       angular_velocity_;
+    // processes
+    std::vector<Process>   linear_process_;
+    std::vector<Process>   angular_process_;
 };
 
 }

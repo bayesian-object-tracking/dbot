@@ -242,7 +242,7 @@ public:
         boost::shared_ptr<BrownianObjectMotion<> > process_model(new BrownianObjectMotion<>(object_names_.size()));
         for(size_t i = 0; i < object_names_.size(); i++)
         {
-            process_model->parameters(i,
+            process_model->Parameters(i,
                                    object_renderer->object_center(i).cast<double>(),
                                    damping,
                                    linear_acceleration_covariance,
