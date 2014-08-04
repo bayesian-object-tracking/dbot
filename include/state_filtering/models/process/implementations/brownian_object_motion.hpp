@@ -67,12 +67,11 @@ struct BrownianObjectMotionTypes
 
     typedef ScalarType_                                             ScalarType;
     typedef FloatingBodySystem<SIZE_OBJECTS>                        VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1> InputType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>                 InputType;
     typedef StationaryProcess<ScalarType, VectorType, InputType>    StationaryProcessType;
-    typedef GaussianMappable<ScalarType, VectorType, DIMENSION> GaussianMappableType;
+    typedef GaussianMappable<ScalarType, VectorType, DIMENSION>     GaussianMappableType;
 
-
-    typedef typename GaussianMappableType::NoiseType        PerturbationType;
+    typedef typename GaussianMappableType::NoiseType                NoiseType;
 };
 
 
@@ -83,18 +82,19 @@ class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, Scala
 {
 public:
     // types from parents
-    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::ScalarType        ScalarType;
-    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::VectorType        VectorType;
-    typedef typename BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::PerturbationType  NoiseType;
+    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>   Types;
+    typedef typename Types::ScalarType                             ScalarType;
+    typedef typename Types::VectorType                             VectorType;
+    typedef typename Types::NoiseType                              NoiseType;
 
     // new types
-    typedef typename Eigen::Quaternion<ScalarType>          Quaternion;
-    typedef IntegratedDampedWienerProcess<ScalarType, 3>   AccelerationDistribution;
-    typedef DampedWienerProcess<ScalarType, 3>             VelocityDistribution;
+    typedef typename Eigen::Quaternion<ScalarType>                 Quaternion;
+    typedef IntegratedDampedWienerProcess<ScalarType, 3>           PositionDistribution;
+    typedef DampedWienerProcess<ScalarType, 3>                     VelocityDistribution;
 
     enum
     {
-        DIMENSION_PER_OBJECT = BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::DIMENSION_PER_OBJECT
+        DIMENSION_PER_OBJECT = Types::DIMENSION_PER_OBJECT
     };
 
 public:
@@ -147,9 +147,9 @@ public:
         return new_state;
     }
 
-    virtual void Condition( const ScalarType&         delta_time,
-                              const VectorType&         state,
-                              const NoiseType&   control)
+    virtual void Condition(const ScalarType&  delta_time,
+                           const VectorType&  state,
+                           const NoiseType&   control)
     {
         state_ = state;
 
@@ -188,12 +188,12 @@ public:
 
     }
 
-    virtual void parameters(
-                const size_t&                                               object_index,
-                const Eigen::Matrix<ScalarType, 3, 1>&                      rotation_center,
-                const ScalarType&                                           damping,
-                const typename AccelerationDistribution::OperatorType&    linear_acceleration_covariance,
-                const typename VelocityDistribution::OperatorType&            angular_acceleration_covariance)
+
+    virtual void parameters(const size_t&                                       object_index,
+                            const Eigen::Matrix<ScalarType, 3, 1>&              rotation_center,
+                            const ScalarType&                                   damping,
+                            const typename PositionDistribution::OperatorType&  linear_acceleration_covariance,
+                            const typename VelocityDistribution::OperatorType&  angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
 
@@ -202,19 +202,6 @@ public:
         linear_velocity_[object_index].Parameters(damping, linear_acceleration_covariance);
         angular_velocity_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
-
-//    virtual int variable_size() const
-//    {
-//        return state_.state_size();
-//    }
-//    virtual int NoiseDimension() const
-//    {
-//        return state_.bodies_size()*DIMENSION_PER_OBJECT;
-//    }
-//    virtual int control_size() const
-//    {
-//        return Types::CONTROL_SIZE;
-//    }
 
 private:
     // conditionals
@@ -225,8 +212,8 @@ private:
     std::vector<Eigen::Matrix<ScalarType, 3, 1> > rotation_center_;
 
     // distributions
-    std::vector<AccelerationDistribution>   delta_position_;
-    std::vector<AccelerationDistribution>   delta_orientation_;
+    std::vector<PositionDistribution>   delta_position_;
+    std::vector<PositionDistribution>   delta_orientation_;
     std::vector<VelocityDistribution>       linear_velocity_;
     std::vector<VelocityDistribution>       angular_velocity_;
 };
