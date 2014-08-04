@@ -113,15 +113,16 @@ std::vector<float> CPUImageObservationModel::Evaluate(
                             1. - visibility_probs_[occlusion_indices[state_index]][intersect_indices[i]],
                             observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[i]]);
 
-                float p_obsIpred_vis = // prob of observation given prediction, knowing that the object is not occluded
-                        observation_model_->Probability(observations_[intersect_indices[i]], predictions[i], false)
-                        * visibility_prob;
-                float p_obsIpred_occl = // prob of observation given prediction, knowing that the object is occluded
-                        observation_model_->Probability(observations_[intersect_indices[i]], predictions[i], true)
-                        * (1-visibility_prob);
-                float p_obsIinf = // prob of observation given no intersection
-                        observation_model_->Probability(observations_[intersect_indices[i]],
-                        numeric_limits<float>::infinity(), true);
+                observation_model_->Condition(predictions[i], false);
+                float p_obsIpred_vis =
+                        observation_model_->Probability(observations_[intersect_indices[i]]) * visibility_prob;
+
+                observation_model_->Condition(predictions[i], true);
+                float p_obsIpred_occl =
+                        observation_model_->Probability(observations_[intersect_indices[i]]) * (1-visibility_prob);
+
+                observation_model_->Condition(numeric_limits<float>::infinity(), true);
+                float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
 
                 loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 

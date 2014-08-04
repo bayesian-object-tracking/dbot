@@ -26,24 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef GAUSSIAN_measurement_MODEL_HPP_
-#define GAUSSIAN_measurement_MODEL_HPP_
+#ifndef KINECT_MEASUREMENT_MODEL_HPP_
+#define KINECT_MEASUREMENT_MODEL_HPP_
 
 #include <state_filtering/distributions/features/evaluable.hpp>
 #include <cmath>
 
 #include <iostream>
-using namespace std;
 
 namespace obs_mod
 {
 
-class KinectMeasurementModel: public distributions::Evaluable<double, Eigen::Matrix<double, 1, 1> >
+class KinectMeasurementModel: public distributions::Evaluable<double, double>
 {
 public:
-    typedef distributions::Evaluable<double, Eigen::Matrix<double, 1, 1> >                BaseType;
-    typedef typename BaseType::ScalarType       ScalarType;
-    typedef typename BaseType::VectorType     VectorType;
+    typedef distributions::Evaluable<double, double >   BaseType;
+    typedef typename BaseType::ScalarType               ScalarType;
+    typedef typename BaseType::VectorType               VectorType;
 
 
     KinectMeasurementModel(ScalarType tail_weight = 0.01,
@@ -59,20 +58,19 @@ public:
 
     virtual ~KinectMeasurementModel() {}
 
-    virtual ScalarType LogProbability(const VectorType& measurement) const
+    virtual ScalarType Probability(const VectorType& measurement) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
-
         ScalarType probability;
-        ScalarType sigma = model_sigma_ + sigma_factor_*measurement(0)*measurement(0);
+        ScalarType sigma = model_sigma_ + sigma_factor_*measurement*measurement;
         if(!occlusion_)
         {
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
                 probability = tail_weight_/max_depth_;
             else
                 probability = tail_weight_/max_depth_
-                        + (1 - tail_weight_)*std::exp(-(pow(prediction_-measurement(0),2)/(2*sigma*sigma)))
+                        + (1 - tail_weight_)*std::exp(-(pow(prediction_-measurement,2)/(2*sigma*sigma)))
                         / (sqrt(2*M_PI) *sigma);
         }
         else
@@ -80,39 +78,35 @@ public:
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
                 probability = tail_weight_/max_depth_ +
                         (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(-2*measurement(0) + exponential_rate_*sigma*sigma));
+                        std::exp(0.5*exponential_rate_*(-2*measurement + exponential_rate_*sigma*sigma));
 
             else
                 probability = tail_weight_/max_depth_ +
                         (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(2*prediction_-2*measurement(0) + exponential_rate_*sigma*sigma))
-            *(1+erf((prediction_-measurement(0)+exponential_rate_*sigma*sigma)/(sqrt(2)*sigma)))
+                        std::exp(0.5*exponential_rate_*(2*prediction_-2*measurement + exponential_rate_*sigma*sigma))
+            *(1+erf((prediction_-measurement+exponential_rate_*sigma*sigma)/(sqrt(2)*sigma)))
             /(2*(std::exp(prediction_*exponential_rate_)-1));
         }
 
-        return std::log(probability);
+        return probability;
     }
 
+    virtual ScalarType LogProbability(const VectorType& measurement) const
+    {
+        return std::log(Probability(measurement));
+    }
 
-    virtual ScalarType Probability(ScalarType measurement, ScalarType prediction, bool occlusion)
+    virtual void Condition(const ScalarType& prediction, const bool& occlusion)
     {
         prediction_ = prediction;
         occlusion_ = occlusion;
-
-        VectorType measurement_vector;
-        measurement_vector(0) = measurement;
-        return std::exp(LogProbability(measurement_vector));
     }
 
-    virtual int variable_size() const
-    {
-        return 1;
-    }
 private:
+    const ScalarType exponential_rate_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
+
     ScalarType prediction_;
     bool occlusion_;
-
-    const ScalarType exponential_rate_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
 };
 
 }

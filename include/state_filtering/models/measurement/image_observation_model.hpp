@@ -78,7 +78,7 @@ public:
 
     virtual void measurement(const Measurement& image, const double& time)
     {
-        vector<float> std_measurement(image.size());
+        std::vector<float> std_measurement(image.size());
 
         for(size_t row = 0; row < image.rows(); row++)
             for(size_t col = 0; col < image.cols(); col++)

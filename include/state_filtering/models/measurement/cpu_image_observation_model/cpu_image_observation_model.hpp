@@ -81,6 +81,11 @@ public:
 	void measurement(const std::vector<float>& observations, const double& observation_time);
 
 private:
+
+
+
+
+
 	// models ============================================================================================================================================================================================================================================================
 	ObjectModel object_model_;
 	PixelObservationModel observation_model_;
