@@ -69,6 +69,9 @@ public:
     virtual void Condition(const ScalarType& delta_time,
                            const StateType& state,
                            const InputType&  input) = 0;
+
+    virtual void Condition(const ScalarType& delta_time,
+                           const StateType& state) = 0;
 };
 
 

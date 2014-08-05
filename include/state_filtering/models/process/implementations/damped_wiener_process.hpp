@@ -59,11 +59,11 @@ template <typename ScalarType_, int DIMENSION_EIGEN>
 struct DampedWienerProcessTypes
 {
     typedef ScalarType_                                                 ScalarType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               VectorType;
+    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               StateType;
     typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>               InputType;
 
-    typedef StationaryProcess<ScalarType, VectorType, InputType>        StationaryProcessType;
-    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>   GaussianMappableType;
+    typedef StationaryProcess<ScalarType, StateType, InputType>        StationaryProcessType;
+    typedef GaussianMappable<ScalarType, StateType, DIMENSION_EIGEN>   GaussianMappableType;
 
     typedef typename GaussianMappableType::NoiseType                    NoiseType;
 };
@@ -77,7 +77,7 @@ class DampedWienerProcess: public DampedWienerProcessTypes<ScalarType_, DIMENSIO
 public:
     typedef DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>  Types;
     typedef typename Types::ScalarType                              ScalarType;
-    typedef typename Types::VectorType                              StateType;
+    typedef typename Types::StateType                              StateType;
     typedef typename Types::InputType                               InputType;
     typedef typename Types::NoiseType                               NoiseType;
     typedef Gaussian<ScalarType, DIMENSION_EIGEN>                   GaussianType;
@@ -108,6 +108,11 @@ public:
     {
         gaussian_.Mean(Mean(delta_time, state, input));
         gaussian_.Covariance(Covariance(delta_time));
+    }
+    virtual void Condition(const ScalarType&  delta_time,
+                           const StateType&  state)
+    {
+        Condition(delta_time, state, InputType::Zero(Dimension()));
     }
 
     virtual void Parameters(const ScalarType& damping,

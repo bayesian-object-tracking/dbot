@@ -34,11 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/models/process/features/stationary_process.hpp>
 
 
-
+// TODO: THIS NEEDS TO BE CLEANED!!
 namespace proc_mod
 {
 
-struct OcclusionProcessModelTypes
+struct OcclusionProcessTypes
 {
     enum
     {
@@ -56,18 +56,18 @@ struct OcclusionProcessModelTypes
 
 };
 
-class OcclusionProcessModel: public OcclusionProcessModelTypes::StationaryProcessType
+class OcclusionProcess: public OcclusionProcessTypes::StationaryProcessType
 {
 public:
-    typedef OcclusionProcessModelTypes::ScalarType ScalarType;
-    typedef OcclusionProcessModelTypes::VectorType StateType;
-    typedef OcclusionProcessModelTypes::InputType InputType;
+    typedef OcclusionProcessTypes::ScalarType ScalarType;
+    typedef OcclusionProcessTypes::VectorType StateType;
+    typedef OcclusionProcessTypes::InputType InputType;
 
 
     enum
     {
-        VECTOR_SIZE = OcclusionProcessModelTypes::VECTOR_SIZE,
-        DIMENSION = OcclusionProcessModelTypes::DIMENSION
+        VECTOR_SIZE = OcclusionProcessTypes::VECTOR_SIZE,
+        DIMENSION = OcclusionProcessTypes::DIMENSION
 //        CONTROL_SIZE = Types::CONTROL_SIZE,
 //        SAMPLE_SIZE = Types::SAMPLE_SIZE
     };
@@ -76,14 +76,14 @@ public:
 public:
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
-    OcclusionProcessModel(ScalarType p_occluded_visible,
+    OcclusionProcess(ScalarType p_occluded_visible,
                           ScalarType p_occluded_occluded)
         : p_occluded_visible_(p_occluded_visible),
           p_occluded_occluded_(p_occluded_occluded),
           c_(p_occluded_occluded_ - p_occluded_visible_),
           log_c_(std::log(c_)) {}
 
-    virtual ~OcclusionProcessModel() {}
+    virtual ~OcclusionProcess() {}
 
 
     virtual ScalarType Propagate(ScalarType occlusion_probability, ScalarType delta_time /*in s*/)
@@ -97,6 +97,13 @@ public:
     virtual void Condition(const ScalarType& delta_time,
                               const StateType& state,
                               const InputType& control)
+    {
+        delta_time_ = delta_time;
+        occlusion_probability_ = state(0);
+    }
+
+    virtual void Condition(const ScalarType& delta_time,
+                              const StateType& state)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);

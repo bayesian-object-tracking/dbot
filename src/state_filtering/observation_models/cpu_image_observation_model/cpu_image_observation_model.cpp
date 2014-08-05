@@ -40,7 +40,8 @@ using namespace Eigen;
 using namespace distributions;
 
 
-ImageMeasurementModelCPU::ImageMeasurementModelCPU(const Eigen::Matrix3d& camera_matrix,
+ImageMeasurementModelCPU::ImageMeasurementModelCPU(
+        const Eigen::Matrix3d& camera_matrix,
         const size_t& n_rows,
         const size_t& n_cols,
         const size_t& max_sample_count,

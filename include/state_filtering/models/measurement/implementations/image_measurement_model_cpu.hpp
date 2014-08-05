@@ -67,7 +67,7 @@ public:
 
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRenderer;
     typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
-	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
+    typedef boost::shared_ptr<proc_mod::OcclusionProcess> OcclusionProcessModel;
 
     ImageMeasurementModelCPU(
 			const Eigen::Matrix3d& camera_matrix,

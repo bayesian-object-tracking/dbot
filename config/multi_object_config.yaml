@@ -1,35 +1,35 @@
 depth_image_topic: /XTION/depth/image 
 camera_info_topic: /XTION/depth/camera_info 
-source: camera #/home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
+source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
 
 object_names: [
  mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
-#,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
+,mugbox
 ]
 
 
-coordinate_sampling: false
+coordinate_sampling: true
 factor_evaluation_count: 1
 
 max_kl_divergence: 2.0
 
 
-use_gpu: false
-evaluation_count: 300 #the number of evaluations
+use_gpu: true
+evaluation_count: 2000 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8

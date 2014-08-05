@@ -125,6 +125,11 @@ public:
 
         velocity_distribution_.Condition(delta_time, state.bottomRows(InputDimension()), input);
     }
+    virtual void Condition(const ScalarType&  delta_time,
+                           const StateType&  state)
+    {
+        Condition(delta_time, state, InputType::Zero(InputDimension()));
+    }
 
     virtual void Parameters(
             const double& damping,
@@ -135,6 +140,7 @@ public:
 
         velocity_distribution_.Parameters(damping, acceleration_covariance);
     }
+
 
     virtual unsigned InputDimension() const
     {

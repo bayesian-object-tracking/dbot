@@ -66,10 +66,10 @@ struct BrownianObjectMotionTypes
     };
 
     typedef ScalarType_                                             ScalarType;
-    typedef FloatingBodySystem<SIZE_OBJECTS>                        VectorType;
+    typedef FloatingBodySystem<SIZE_OBJECTS>                        StateType;
     typedef Eigen::Matrix<ScalarType, DIMENSION, 1>                 InputType;
-    typedef StationaryProcess<ScalarType, VectorType, InputType>    StationaryProcessType;
-    typedef GaussianMappable<ScalarType, VectorType, DIMENSION>     GaussianMappableType;
+    typedef StationaryProcess<ScalarType, StateType, InputType>    StationaryProcessType;
+    typedef GaussianMappable<ScalarType, StateType, DIMENSION>     GaussianMappableType;
 
     typedef typename GaussianMappableType::NoiseType                NoiseType;
 };
@@ -84,7 +84,8 @@ public:
     // types from parents
     typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>   Types;
     typedef typename Types::ScalarType                             ScalarType;
-    typedef typename Types::VectorType                             StateType;
+    typedef typename Types::StateType                              StateType;
+    typedef typename Types::InputType                              InputType;
     typedef typename Types::NoiseType                              NoiseType;
 
     // new types
@@ -144,9 +145,9 @@ public:
         return new_state;
     }
 
-    virtual void Condition(const ScalarType&  delta_time,
+    virtual void Condition(const ScalarType& delta_time,
                            const StateType&  state,
-                           const NoiseType&   control)
+                           const InputType&  control)
     {
         state_ = state;
         for(size_t i = 0; i < state_.bodies_size(); i++)
@@ -174,6 +175,11 @@ public:
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
     }
+    virtual void Condition(const ScalarType&  delta_time,
+                           const StateType&  state)
+    {
+        Condition(delta_time, state, InputType::Zero(InputDimension()));
+    }
 
 
     virtual void Parameters(const size_t&                           object_index,
@@ -186,6 +192,12 @@ public:
         linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
         angular_process_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
+
+    virtual unsigned InputDimension() const
+    {
+        return this->NoiseDimension();
+    }
+
 
 private:
     // conditionals

@@ -118,7 +118,7 @@ public:
 
         // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to meters
+        MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_); // convert to meters
 
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -201,8 +201,8 @@ public:
             // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             boost::shared_ptr<distributions::KinectMeasurementModel>
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
-            boost::shared_ptr<proc_mod::OcclusionProcessModel>
-                    occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
+            boost::shared_ptr<proc_mod::OcclusionProcess>
+                    occlusion_process_model(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
             observation_model = boost::shared_ptr<MeasurementModelType>(new distributions::ImageMeasurementModelCPU(
                                                                                           camera_matrix,
                                                                                           image.rows(),
@@ -288,16 +288,26 @@ public:
                     multi_body_samples[state_index] = full_initial_state;
                 }
                 filter_->Samples(multi_body_samples);
+
+
+
+//                filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
                 filter_->Evaluate(image);
                 filter_->Resample(multi_body_samples.size());
+
                 multi_body_samples = filter_->Samples();
             }
 
             // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             cout << "evaluating initial particles cpu ..." << endl;
-            filter_->Samples(multi_body_samples);
+
+
+//            multi_body_samples.resize(evaluation_count_/dependencies.size());
+//            filter_->Samples(multi_body_samples);
+
+
             filter_->Evaluate(image);
-            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_)); // FOR TESTING ONLY
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));
         }
         else
         {
@@ -306,13 +316,21 @@ public:
                 multi_body_samples[i] = initial_states[i];
 
 
+//            cout << "setting states " << endl;
+//            filter_->Samples(multi_body_samples);
+//            multi_body_samples = filter_->Samples();
+//            multi_body_samples.resize(evaluation_count_/dependencies.size());
+//            filter_->Samples(multi_body_samples);
+
+
+
             cout << "setting states " << endl;
             filter_->Samples(multi_body_samples);
             cout << "evaluating " << endl;
             filter_->Evaluate(image);
             cout << "resampling " << endl;
-            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));// FOR TESTING ONLY
-        }
+            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));
+       }
 
         cout << "digedidone " << endl;
     }
@@ -330,7 +348,7 @@ public:
         ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // convert image
-        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
+        MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_); // convert to m
 
         // filter
         INIT_PROFILING;
