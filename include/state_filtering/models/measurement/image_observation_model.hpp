@@ -49,7 +49,7 @@ public:
 public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
-    virtual std::vector<float> Loglikes(const std::vector<Eigen::VectorXd >& states,
+    virtual std::vector<float> Loglikes(const std::vector<VectorType>& states,
                                         std::vector<size_t>& state_indices,
                                         const bool& update = false) = 0;
 

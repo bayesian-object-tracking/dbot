@@ -100,24 +100,21 @@ public:
 
     // constructor for fixed size without initial value
     FloatingBodySystem():
-        Base(State::Zero(SIZE_STATE)),
-        count_bodies_(SIZE_BODIES)
-    {
-        assert_fixed_size<true>();
-    }
+        Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE ))
+    {    }
+
 
     // constructor for dynamic size without initial value
     FloatingBodySystem(unsigned count_bodies):
-        Base(State::Zero(count_bodies * COUNT_PER_BODY)),
-        count_bodies_(count_bodies)
+        Base(State::Zero(count_bodies * COUNT_PER_BODY))
+//        count_bodies_(count_bodies)
     {
         assert_dynamic_size<true>();
     }
 
     // constructor with initial value
     template <typename T> FloatingBodySystem(const Eigen::MatrixBase<T>& state_vector):
-        Base(state_vector),
-        count_bodies_(state_vector.rows()/COUNT_PER_BODY){ }
+        Base(state_vector) { }
 
     virtual ~FloatingBodySystem() {}
 
@@ -200,10 +197,10 @@ public:
 
     virtual unsigned bodies_size() const
     {
-        return count_bodies_;
+        return ((State*)(this))->rows()/COUNT_PER_BODY;
     }
 private:
-    unsigned count_bodies_;
+//    unsigned count_bodies_;
 
     template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_bodies > -1);}
     template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_bodies == -1);}

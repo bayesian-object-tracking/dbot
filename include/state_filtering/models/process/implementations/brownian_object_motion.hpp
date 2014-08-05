@@ -149,7 +149,6 @@ public:
                            const NoiseType&   control)
     {
         state_ = state;
-
         for(size_t i = 0; i < state_.bodies_size(); i++)
         {
             quaternion_map_[i] = hf::QuaternionMatrix(state_.quaternion(i).coeffs());

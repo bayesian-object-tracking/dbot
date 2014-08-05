@@ -40,13 +40,12 @@ using namespace Eigen;
 using namespace distributions;
 
 
-ImageMeasurementModelCPU::ImageMeasurementModelCPU(
-        const Eigen::Matrix3d& camera_matrix,
+ImageMeasurementModelCPU::ImageMeasurementModelCPU(const Eigen::Matrix3d& camera_matrix,
         const size_t& n_rows,
         const size_t& n_cols,
         const size_t& max_sample_count,
         const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system,
-        const ObjectModel object_model,
+        const ObjectRenderer object_renderer,
         const PixelObservationModel observation_model,
         const OcclusionProcessModel occlusion_process_model,
         const float& initial_visibility_prob):
@@ -56,7 +55,7 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
     initial_visibility_prob_(initial_visibility_prob),
     max_sample_count_(max_sample_count),
     rigid_body_system_(rigid_body_system),
-    object_model_(object_model),
+    object_model_(object_renderer),
     observation_model_(observation_model),
     occlusion_process_model_(occlusion_process_model),
     observation_time_(0)
@@ -68,15 +67,10 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
 
-std::vector<float> ImageMeasurementModelCPU::Loglikes(
-        const std::vector<Eigen::VectorXd>& states,
+std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorType> &states,
         std::vector<size_t>& occlusion_indices,
         const bool& update_occlusions)
 {
-    // added for debugging the depth values !!!!!!!!!!!!!!!!!!!!!!!!!
-    states_ = states;
-    // ------------------------------------
-
     std::vector<std::vector<float> > new_visibility_probs(states.size());
     std::vector<std::vector<double> > new_visibility_update_times(states.size());
     vector<float> loglikes(states.size(),0);
@@ -158,17 +152,17 @@ const std::vector<float> ImageMeasurementModelCPU::get_occlusions(size_t index) 
     return visibility_probs_[index];
 }
 
-void ImageMeasurementModelCPU::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                                std::vector<std::vector<float> > &depth)
-{
-    intersect_indices.resize(states_.size());
-    depth.resize(states_.size());
+//void ImageMeasurementModelCPU::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+//                                                std::vector<std::vector<float> > &depth)
+//{
+//    intersect_indices.resize(states_.size());
+//    depth.resize(states_.size());
 
-    for (size_t i = 0; i < states_.size(); i++) {
-        object_model_->state(states_[i]);
-        object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices[i], depth[i]);
-    }
-}
+//    for (size_t i = 0; i < states_.size(); i++) {
+//        object_model_->state(states_[i]);
+//        object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices[i], depth[i]);
+//    }
+//}
 
 
 void ImageMeasurementModelCPU::Reset()

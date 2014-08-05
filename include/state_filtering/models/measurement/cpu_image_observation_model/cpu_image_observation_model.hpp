@@ -70,7 +70,7 @@ public:
 
 
 
-    typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectModel;
+    typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRenderer;
     typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
 	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
 
@@ -80,7 +80,7 @@ public:
 			const size_t& n_cols,
 			const size_t& max_sample_count,
             const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system,
-			const ObjectModel object_model,
+            const ObjectRenderer object_renderer,
 			const PixelObservationModel observation_model,
 			const OcclusionProcessModel occlusion_process_model,
 			const float& initial_visibility_prob);
@@ -88,20 +88,14 @@ public:
     ~ImageMeasurementModelCPU();
 
     std::vector<float> Loglikes(
-			const std::vector<Eigen::VectorXd >& states,
+            const std::vector<VectorType>& states,
 			std::vector<size_t>& occlusion_indices,
 			const bool& update_occlusions = false);
 
-//    std::vector<float> Evaluate_test(
-//            const std::vector<Eigen::VectorXd >& states,
-//            std::vector<size_t>& occlusion_indices,
-//            const bool& update_occlusions = false,
-//            std::vector<std::vector<int> > intersect_indices = 0,
-//            std::vector<std::vector<float> > predictions = 0);
 
 	// set and get functions =============================================================================================================================================================================================================================================================================================
-    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                          std::vector<std::vector<float> > &depth);
+//    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+//                          std::vector<std::vector<float> > &depth);
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
     void Measurement(const std::vector<float>& observations, const double& delta_time);
@@ -132,7 +126,7 @@ private:
 
 
 	// models ============================================================================================================================================================================================================================================================
-	ObjectModel object_model_;
+    ObjectRenderer object_model_;
 	PixelObservationModel observation_model_;
 	OcclusionProcessModel occlusion_process_model_;
 
@@ -144,8 +138,6 @@ private:
 	std::vector<float> observations_;
 	double observation_time_;
 
-    // internal copy of states
-    std::vector<Eigen::VectorXd> states_;
 };
 
 }

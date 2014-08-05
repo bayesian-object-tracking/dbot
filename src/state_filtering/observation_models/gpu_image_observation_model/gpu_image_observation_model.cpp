@@ -93,8 +93,7 @@ void ImageMeasurementModelGPU::Initialize() {
 }
 
 
-std::vector<float> ImageMeasurementModelGPU::Loglikes(
-        const std::vector<Eigen::VectorXd>& states,
+std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<VectorType> &states,
         std::vector<size_t>& occlusion_indices,
         const bool& update_occlusions)
 {
@@ -130,24 +129,21 @@ std::vector<float> ImageMeasurementModelGPU::Loglikes(
         // copy occlusion indices to GPU
         cuda_->set_prev_sample_indices(occlusion_indices_transformed.data());
 
-        // transform state format
-        vector<vector<vector<float> > > states_transformed (n_poses_,
-                                                            vector<vector<float> >(rigid_body_system_->bodies_size(),
-                                                            vector<float>(7, 0)));
+        // convert to internal state format
+        vector<vector<vector<float> > > states_internal_format( n_poses_,
+                                                                vector<vector<float> >(states[0].bodies_size(),
+                                                                vector<float>(7, 0)));
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-        {
-            *rigid_body_system_ = states[state_index];
-            for(size_t body_index = 0; body_index < rigid_body_system_->bodies_size(); body_index++)
+            for(size_t body_index = 0; body_index < states[state_index].bodies_size(); body_index++)
             {
-                states_transformed[state_index][body_index][0] = rigid_body_system_->quaternion(body_index).w();
-                states_transformed[state_index][body_index][1] = rigid_body_system_->quaternion(body_index).x();
-                states_transformed[state_index][body_index][2] = rigid_body_system_->quaternion(body_index).y();
-                states_transformed[state_index][body_index][3] = rigid_body_system_->quaternion(body_index).z();
-                states_transformed[state_index][body_index][4] = rigid_body_system_->position(body_index)[0];
-                states_transformed[state_index][body_index][5] = rigid_body_system_->position(body_index)[1];
-                states_transformed[state_index][body_index][6] = rigid_body_system_->position(body_index)[2];
+                states_internal_format[state_index][body_index][0] = states[state_index].quaternion(body_index).w();
+                states_internal_format[state_index][body_index][1] = states[state_index].quaternion(body_index).x();
+                states_internal_format[state_index][body_index][2] = states[state_index].quaternion(body_index).y();
+                states_internal_format[state_index][body_index][3] = states[state_index].quaternion(body_index).z();
+                states_internal_format[state_index][body_index][4] = states[state_index].position(body_index)[0];
+                states_internal_format[state_index][body_index][5] = states[state_index].position(body_index)[1];
+                states_internal_format[state_index][body_index][6] = states[state_index].position(body_index)[2];
             }
-        }
 
 #ifdef PROFILING_ACTIVE
         stop = hf::get_wall_time();
@@ -160,7 +156,7 @@ std::vector<float> ImageMeasurementModelGPU::Loglikes(
         start = hf::get_wall_time();
 #endif
 
-        opengl_->Render(states_transformed);
+        opengl_->Render(states_internal_format);
 
 #ifdef PROFILING_ACTIVE
         stop = hf::get_wall_time();

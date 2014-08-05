@@ -275,7 +275,7 @@ public:
                 default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
             cout << "creating intiial stuff" << endl;
-            vector<VectorXd> multi_body_samples(initial_states.size());
+            vector<FloatingBodySystem<> > multi_body_samples(initial_states.size());
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
                 multi_body_samples[state_index] = default_state;
 
@@ -303,8 +303,13 @@ public:
         }
         else
         {
+            vector<FloatingBodySystem<> > multi_body_samples(initial_states.size());
+            for(size_t i = 0; i < multi_body_samples.size(); i++)
+                multi_body_samples[i] = initial_states[i];
+
+
             cout << "setting states " << endl;
-            filter_->set_states(initial_states);
+            filter_->set_states(multi_body_samples);
             cout << "evaluating " << endl;
             filter_->Evaluate(image);
             cout << "resampling " << endl;
@@ -318,6 +323,7 @@ public:
     {
         boost::mutex::scoped_lock lock(mutex_);
         // the time since start is computed
+
 
 
         if(std::isnan(last_measurement_time_))
@@ -337,31 +343,8 @@ public:
 
         // filter
         INIT_PROFILING;
-        if(coordinate_sampling_)
-        {
-            cout << "CALLING ENCHILADISIMA" << endl;
-
-//            filter_->Enchiladisima(VectorXd::Zero(object_names_.size()*6),
-//                                   duration_,
-//                                   image,
-//                                   evaluation_count_,
-//                                   factor_evaluation_count_);
-            filter_->Filter(VectorXd::Zero(object_names_.size()*6),
-                                         duration_,
-                                         image);
-        }
-        else
-        {
-//            filter_->Enchilada(VectorXd::Zero(object_names_.size()*6),
-//                               duration_,
-//                               image,
-//                               evaluation_count_/dependencies.size());
-            filter_->Filter(VectorXd::Zero(object_names_.size()*6),
-                                         duration_,
-                                         image);
-        }
-
-
+        cout << "CALLING ENCHILADISIMA" << endl;
+        filter_->Filter(VectorXd::Zero(object_names_.size()*6), duration_, image);
         MEASURE("-----------------> total time for filtering");
 
         previous_image_time_ = ros_image.header.stamp.toSec();

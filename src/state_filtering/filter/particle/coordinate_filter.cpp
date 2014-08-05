@@ -125,12 +125,13 @@ void CoordinateParticleFilter::UpdateWeights(std::vector<float> log_weight_diffs
     if(kl_divergence > max_kl_divergence_)
     {
         cout << "resampling!! " << endl;
-        std::vector<State > new_particles(particles_.size());
+        std::vector<State > new_particles = particles_; // copying stuff around, solved like this because
+        // floating body system needs size
         std::vector<double> new_particle_times(particles_.size());
         std::vector<size_t> new_occlusion_indices(particles_.size());
 
         std::vector<Noise> new_noises(particles_.size());
-        std::vector<State> new_propagated_particles(particles_.size());
+        std::vector<State> new_propagated_particles = particles_; //dito
         std::vector<float> new_loglikes(particles_.size());
 
         hf::DiscreteSampler sampler(log_weights_); //TESTING
@@ -181,7 +182,8 @@ void CoordinateParticleFilter::Filter( const Control control,
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
     noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(dimension_));
-    propagated_particles_ = std::vector<State>(particles_.size());
+    propagated_particles_ = particles_;
+
 
     for(size_t block_index = 0; block_index < independent_blocks_.size(); block_index++)
     {
@@ -212,6 +214,8 @@ void CoordinateParticleFilter::Filter( const Control control,
         loglikes_ = new_loglikes;
         UpdateWeights(delta_loglikes);
     }
+
+    cout << "digedidone evaluation " << endl;
 
     particles_ = propagated_particles_;
     for(size_t i = 0; i < particle_times_.size(); i++)

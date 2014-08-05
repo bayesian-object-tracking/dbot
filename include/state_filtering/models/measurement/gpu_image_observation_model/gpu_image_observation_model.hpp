@@ -54,7 +54,7 @@ public:
 
     void Initialize();
 
-    std::vector<float> Loglikes(const std::vector<Eigen::VectorXd >& states,
+    std::vector<float> Loglikes(const std::vector<VectorType>& states,
                                 std::vector<size_t>& occlusion_indices,
                                 const bool& update_occlusions = false);
 

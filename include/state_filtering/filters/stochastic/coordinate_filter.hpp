@@ -72,10 +72,10 @@ public:
     typedef distributions::RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
 
-    typedef SumOfDeltas<double, Eigen::VectorXd> StateDistribution;
+    typedef SumOfDeltas<double, VectorType> StateDistribution;
 
     typedef MeasurementModel::MeasurementType Measurement;
-    typedef Eigen::VectorXd State;
+    typedef VectorType State;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
