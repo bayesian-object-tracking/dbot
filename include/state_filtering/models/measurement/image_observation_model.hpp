@@ -35,55 +35,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/distributions/distribution.hpp>
 
-#include <state_filtering/models/measurement/cpu_image_observation_model/kinect_measurement_model.hpp>
-#include <state_filtering/models/process/implementations/occlusion_process.hpp>
-#include <state_filtering/states/rigid_body_system.hpp>
-#include <state_filtering/utils/rigid_body_renderer.hpp>
-
 namespace distributions
 {
-template<typename ScalarType_, typename VectorType_, typename MeasurementType_>
+template<typename ScalarType_, typename VectorType_, typename MeasurementType_, typename IndexType_ = unsigned>
 class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, VectorType_>
 {
 public:
     typedef typename Distribution<ScalarType_, VectorType_>::ScalarType     ScalarType;
     typedef typename Distribution<ScalarType_, VectorType_>::VectorType     VectorType;
     typedef MeasurementType_                                                MeasurementType;
-
-    typedef Eigen::Matrix<double, -1, -1> Measurement;
+    typedef IndexType_                                                      IndexType;
 
 public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
-	virtual std::vector<float> Evaluate(
-			const std::vector<Eigen::VectorXd >& states,
-			std::vector<size_t>& occlusion_indices,
-			const bool& update_occlusions = false) = 0;
+    virtual std::vector<float> Loglikes(const std::vector<Eigen::VectorXd >& states,
+                                        std::vector<size_t>& state_indices,
+                                        const bool& update = false) = 0;
 
-	// set and get functions =============================================================================================================================================================================================================================================================================================
-//    virtual void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-//                                  std::vector<std::vector<float> > &depth) = 0;
-//    virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
-//	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
+    virtual void Measurement(const MeasurementType& image,
+                             const double& delta_time) = 0;
 
-    virtual void measurement(const Measurement& image, const double& time)
-    {
-        std::vector<float> std_measurement(image.size());
-
-        for(size_t row = 0; row < image.rows(); row++)
-            for(size_t col = 0; col < image.cols(); col++)
-                std_measurement[row*image.cols() + col] = image(row, col);
-
-        measurement(std_measurement, time);
-    }
-
+    // reset the latent variables
     virtual void Reset() = 0;
-
-
-
-    virtual void measurement(const std::vector<float>& observations, const double& time) = 0;
-
-
 };
 
 }

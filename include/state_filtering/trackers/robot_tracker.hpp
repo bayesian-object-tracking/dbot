@@ -177,7 +177,7 @@ public:
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcessModel>
                     occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<distributions::RaoBlackwellMeasurementModel>(new distributions::CPUImageObservationModel(
+            observation_model = boost::shared_ptr<distributions::RaoBlackwellMeasurementModel>(new distributions::ImageMeasurementModelCPU(
                                                                                           camera_matrix,
                                                                                           image.rows(),
                                                                                           image.cols(),

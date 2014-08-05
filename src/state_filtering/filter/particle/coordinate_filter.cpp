@@ -177,7 +177,7 @@ void CoordinateParticleFilter::Filter( const Control control,
                                        const Measurement& observation)
 {
     INIT_PROFILING;
-    measurement_model_->measurement(observation, delta_time);
+    measurement_model_->Measurement(observation, delta_time);
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
     noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(dimension_));
@@ -198,7 +198,7 @@ void CoordinateParticleFilter::Filter( const Control control,
 
         RESET;
         bool update_occlusions = (block_index == independent_blocks_.size()-1);
-        std::vector<float> new_loglikes = measurement_model_->Evaluate(propagated_particles_,
+        std::vector<float> new_loglikes = measurement_model_->Loglikes(propagated_particles_,
                                                                        occlusion_indices_,
                                                                        update_occlusions);
         MEASURE("evaluation ");
@@ -300,9 +300,9 @@ void CoordinateParticleFilter::Evaluate(
 {
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    measurement_model_->measurement(observation, delta_time);
+    measurement_model_->Measurement(observation, delta_time);
     INIT_PROFILING
-    family_loglikes_ = measurement_model_->Evaluate(particles_, occlusion_indices_, update_occlusions);
+    family_loglikes_ = measurement_model_->Loglikes(particles_, occlusion_indices_, update_occlusions);
     MEASURE("observation_model_->Evaluate")
 }
 

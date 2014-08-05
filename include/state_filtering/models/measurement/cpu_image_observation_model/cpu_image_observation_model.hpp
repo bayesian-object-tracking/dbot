@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace distributions
 {
 
-struct CPUImageObservationModelTypes
+struct ImageMeasurementModelCPUTypes
 {
     typedef double                              ScalarType;
     typedef FloatingBodySystem<-1>              VectorType;
@@ -56,12 +56,12 @@ struct CPUImageObservationModelTypes
 
 
 
-class CPUImageObservationModel: public CPUImageObservationModelTypes::RaoBlackwellMeasurementModelType
+class ImageMeasurementModelCPU: public ImageMeasurementModelCPUTypes::RaoBlackwellMeasurementModelType
 {
 public:
-    typedef typename CPUImageObservationModelTypes::ScalarType      ScalarType;
-    typedef typename CPUImageObservationModelTypes::VectorType      VectorType;
-    typedef typename CPUImageObservationModelTypes::MeasurementType MeasurementType;
+    typedef typename ImageMeasurementModelCPUTypes::ScalarType      ScalarType;
+    typedef typename ImageMeasurementModelCPUTypes::VectorType      VectorType;
+    typedef typename ImageMeasurementModelCPUTypes::MeasurementType MeasurementType;
 
 
 
@@ -74,7 +74,7 @@ public:
     typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
 	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
 
-	CPUImageObservationModel(
+    ImageMeasurementModelCPU(
 			const Eigen::Matrix3d& camera_matrix,
 			const size_t& n_rows,
 			const size_t& n_cols,
@@ -85,9 +85,9 @@ public:
 			const OcclusionProcessModel occlusion_process_model,
 			const float& initial_visibility_prob);
 
-	~CPUImageObservationModel();
+    ~ImageMeasurementModelCPU();
 
-	std::vector<float> Evaluate(
+    std::vector<float> Loglikes(
 			const std::vector<Eigen::VectorXd >& states,
 			std::vector<size_t>& occlusion_indices,
 			const bool& update_occlusions = false);
@@ -104,7 +104,7 @@ public:
                           std::vector<std::vector<float> > &depth);
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
-    void measurement(const std::vector<float>& observations, const double& delta_time);
+    void Measurement(const std::vector<float>& observations, const double& delta_time);
 
     size_t state_size();
 
@@ -113,6 +113,10 @@ public:
 
 
     virtual void Reset();
+
+
+    void Measurement(const MeasurementType& image, const double& delta_time);
+
 
 
 

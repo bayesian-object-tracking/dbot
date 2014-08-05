@@ -40,7 +40,7 @@ using namespace Eigen;
 using namespace distributions;
 
 
-CPUImageObservationModel::CPUImageObservationModel(
+ImageMeasurementModelCPU::ImageMeasurementModelCPU(
         const Eigen::Matrix3d& camera_matrix,
         const size_t& n_rows,
         const size_t& n_cols,
@@ -65,10 +65,10 @@ CPUImageObservationModel::CPUImageObservationModel(
 }
 
 
-CPUImageObservationModel::~CPUImageObservationModel() { }
+ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
 
-std::vector<float> CPUImageObservationModel::Evaluate(
+std::vector<float> ImageMeasurementModelCPU::Loglikes(
         const std::vector<Eigen::VectorXd>& states,
         std::vector<size_t>& occlusion_indices,
         const bool& update_occlusions)
@@ -153,12 +153,12 @@ std::vector<float> CPUImageObservationModel::Evaluate(
 
 
 // set and get functions =============================================================================================================================================================================================================================================================================================
-const std::vector<float> CPUImageObservationModel::get_occlusions(size_t index) const
+const std::vector<float> ImageMeasurementModelCPU::get_occlusions(size_t index) const
 {
     return visibility_probs_[index];
 }
 
-void CPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+void ImageMeasurementModelCPU::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                                                 std::vector<std::vector<float> > &depth)
 {
     intersect_indices.resize(states_.size());
@@ -171,7 +171,7 @@ void CPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &
 }
 
 
-void CPUImageObservationModel::Reset()
+void ImageMeasurementModelCPU::Reset()
 {
     set_occlusions();
     observation_time_ = 0;
@@ -179,7 +179,20 @@ void CPUImageObservationModel::Reset()
 
 
 
-void CPUImageObservationModel::set_occlusions(const float& visibility_prob)
+void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const double& delta_time)
+{
+    std::vector<float> std_measurement(image.size());
+
+    for(size_t row = 0; row < image.rows(); row++)
+        for(size_t col = 0; col < image.cols(); col++)
+            std_measurement[row*image.cols() + col] = image(row, col);
+
+    Measurement(std_measurement, delta_time);
+}
+
+
+
+void ImageMeasurementModelCPU::set_occlusions(const float& visibility_prob)
 {
     float p = visibility_prob == -1 ? initial_visibility_prob_ : visibility_prob;
     visibility_probs_ = vector<vector<float> >(1, vector<float>(n_rows_*n_cols_, p));
@@ -187,7 +200,7 @@ void CPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
-void CPUImageObservationModel::measurement(const std::vector<float>& observations, const double& delta_time)
+void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observations, const double& delta_time)
 {
     observations_ = observations;
     observation_time_ += delta_time;
@@ -196,17 +209,17 @@ void CPUImageObservationModel::measurement(const std::vector<float>& observation
 
 
 
-size_t CPUImageObservationModel::state_size()
+size_t ImageMeasurementModelCPU::state_size()
 {
     return rigid_body_system_->state_size();
 }
 
-size_t CPUImageObservationModel::measurement_rows()
+size_t ImageMeasurementModelCPU::measurement_rows()
 {
     return n_rows_;
 }
 
-size_t CPUImageObservationModel::measurement_cols()
+size_t ImageMeasurementModelCPU::measurement_cols()
 {
     return n_cols_;
 }

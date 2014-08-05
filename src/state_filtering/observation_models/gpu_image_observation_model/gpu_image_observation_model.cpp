@@ -18,13 +18,12 @@ using namespace Eigen;
 using namespace distributions;
 
 
-GPUImageObservationModel::GPUImageObservationModel(
-        const Eigen::Matrix3d& camera_matrix,
-        const size_t& n_rows,
-        const size_t& n_cols,
-        const size_t& max_sample_count,
-        const float& initial_visibility_prob,
-        const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system):
+ImageMeasurementModelGPU::ImageMeasurementModelGPU(const CameraMatrixType& camera_matrix,
+                                                       const IndexType& n_rows,
+                                                       const IndexType& n_cols,
+                                                       const IndexType& max_sample_count,
+                                                       const ScalarType& initial_visibility_prob,
+                                                       const boost::shared_ptr<RigidBodySystem<-1> > &rigid_body_system):
     camera_matrix_(camera_matrix),
     n_rows_(n_rows),
     n_cols_(n_cols),
@@ -45,11 +44,11 @@ GPUImageObservationModel::GPUImageObservationModel(
 }
 
 
-GPUImageObservationModel::~GPUImageObservationModel() { }
+ImageMeasurementModelGPU::~ImageMeasurementModelGPU() { }
 
 
 
-void GPUImageObservationModel::Initialize() {
+void ImageMeasurementModelGPU::Initialize() {
     if (constants_set_) {
         opengl_ = boost::shared_ptr<ObjectRasterizer> (new ObjectRasterizer(vertices_, indices_));
         cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
@@ -94,7 +93,7 @@ void GPUImageObservationModel::Initialize() {
 }
 
 
-std::vector<float> GPUImageObservationModel::Evaluate(
+std::vector<float> ImageMeasurementModelGPU::Loglikes(
         const std::vector<Eigen::VectorXd>& states,
         std::vector<size_t>& occlusion_indices,
         const bool& update_occlusions)
@@ -256,24 +255,13 @@ std::vector<float> GPUImageObservationModel::Evaluate(
 
 
 
-std::vector<float> GPUImageObservationModel::Evaluate_test(
-        const std::vector<Eigen::VectorXd>& states,
-        std::vector<size_t>& occlusion_indices,
-        const bool& update_occlusions,
-        vector<vector<int> > intersect_indices,
-        vector<vector<float> > predictions) {
-    vector<float> bla;
-    return bla;
-}
-
-
 
 // ===================================================================================== //
 // ====================================  SETTERS ======================================= //
 // ===================================================================================== //
 
 
-void GPUImageObservationModel::set_constants(
+void ImageMeasurementModelGPU::Constants(
         const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
         const std::vector<std::vector<std::vector<int> > > indices,
         const float p_visible_visible,
@@ -309,7 +297,7 @@ void GPUImageObservationModel::set_constants(
 }
 
 
-void GPUImageObservationModel::set_number_of_poses(int n_poses) {
+void ImageMeasurementModelGPU::set_number_of_poses(int n_poses) {
     if (initialized_) {
         n_poses_ = n_poses;
         opengl_->set_number_of_poses(n_poses_);
@@ -320,7 +308,7 @@ void GPUImageObservationModel::set_number_of_poses(int n_poses) {
     }
 }
 
-void GPUImageObservationModel::set_occlusions(const float& visibility_prob)
+void ImageMeasurementModelGPU::Occlusions(const float& visibility_prob)
 {
     float default_visibility_probability = visibility_prob;
     if (visibility_prob == -1) default_visibility_probability = initial_visibility_prob_;
@@ -332,14 +320,28 @@ void GPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
-void GPUImageObservationModel::Reset()
+void ImageMeasurementModelGPU::Measurement(const MeasurementType& image, const double& delta_time)
 {
-    set_occlusions();
+    std::vector<float> std_measurement(image.size());
+
+    for(size_t row = 0; row < image.rows(); row++)
+        for(size_t col = 0; col < image.cols(); col++)
+            std_measurement[row*image.cols() + col] = image(row, col);
+
+    Measurement(std_measurement, delta_time);
+}
+
+
+
+
+void ImageMeasurementModelGPU::Reset()
+{
+    Occlusions();
     observation_time_ = 0;
 }
 
 
-void GPUImageObservationModel::measurement(const std::vector<float>& observations, const double& delta_time)
+void ImageMeasurementModelGPU::Measurement(const std::vector<float>& observations, const double& delta_time)
 {
     observation_time_ += delta_time;
     if (initialized_)
@@ -356,14 +358,14 @@ void GPUImageObservationModel::measurement(const std::vector<float>& observation
 // ===================================================================================== //
 
 
-const std::vector<float> GPUImageObservationModel::get_occlusions(size_t index) const
+const std::vector<float> ImageMeasurementModelGPU::Occlusions(size_t index) const
 {
     vector<float> visibility_probs = cuda_->get_visibility_probabilities((int) index);
     return visibility_probs;
 }
 
 
-void GPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+void ImageMeasurementModelGPU::RangeImage(std::vector<std::vector<int> > &intersect_indices,
                                                 std::vector<std::vector<float> > &depth)
 {
     opengl_->get_depth_values(intersect_indices, depth);
@@ -377,7 +379,7 @@ void GPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &
 // ===================================================================================== //
 
 
-void GPUImageObservationModel::UnregisterResource() {
+void ImageMeasurementModelGPU::UnregisterResource() {
     if (resource_registered_) {
         cudaGraphicsUnregisterResource(combined_texture_resource_);
         checkCUDAError("cudaGraphicsUnregisterResource");
@@ -386,7 +388,7 @@ void GPUImageObservationModel::UnregisterResource() {
 }
 
 
-void GPUImageObservationModel::RegisterResource() {
+void ImageMeasurementModelGPU::RegisterResource() {
     if (!resource_registered_) {
         combined_texture_opengl_ = opengl_->get_combined_texture();
         cudaGraphicsGLRegisterImage(&combined_texture_resource_, combined_texture_opengl_, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsReadOnly);
@@ -399,27 +401,27 @@ void GPUImageObservationModel::RegisterResource() {
 
 
 
-size_t GPUImageObservationModel::state_size()
-{
-    return rigid_body_system_->state_size();
-}
+//size_t ImageMeasurementModelGPU::state_size()
+//{
+//    return rigid_body_system_->state_size();
+//}
 
-size_t GPUImageObservationModel::measurement_rows()
-{
-    return n_rows_;
-}
+//size_t ImageMeasurementModelGPU::measurement_rows()
+//{
+//    return n_rows_;
+//}
 
-size_t GPUImageObservationModel::measurement_cols()
-{
-    return n_cols_;
-}
+//size_t ImageMeasurementModelGPU::measurement_cols()
+//{
+//    return n_cols_;
+//}
 
 // ===================================================================================== //
 // ================================ HELPER FUNCTIONS =================================== //
 // ===================================================================================== //
 
 
-void GPUImageObservationModel::checkCUDAError(const char *msg)
+void ImageMeasurementModelGPU::checkCUDAError(const char *msg)
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err)

@@ -18,54 +18,63 @@ namespace distributions
 {
 
 
-struct GPUImageObservationModelTypes
+struct ImageMeasurementModelGPUTypes
 {
     typedef double                              ScalarType;
     typedef FloatingBodySystem<-1>              VectorType;
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+    typedef unsigned                            IndexType;
 
-    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> RaoBlackwellMeasurementModelType;
+
+    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType, IndexType>
+                                            RaoBlackwellMeasurementModelType;
 };
 
 
-class GPUImageObservationModel: public GPUImageObservationModelTypes::RaoBlackwellMeasurementModelType
+class ImageMeasurementModelGPU: public ImageMeasurementModelGPUTypes::RaoBlackwellMeasurementModelType
 {
 public:
-    typedef typename GPUImageObservationModelTypes::ScalarType ScalarType;
-    typedef typename GPUImageObservationModelTypes::VectorType VectorType;
-    typedef typename GPUImageObservationModelTypes::MeasurementType MeasurementType;
+    typedef typename ImageMeasurementModelGPUTypes::ScalarType ScalarType;
+    typedef typename ImageMeasurementModelGPUTypes::VectorType VectorType;
+    typedef typename ImageMeasurementModelGPUTypes::MeasurementType MeasurementType;
+    typedef typename ImageMeasurementModelGPUTypes::IndexType IndexType;
+
+    typedef typename Eigen::Matrix<ScalarType, 3, 3> CameraMatrixType;
 
 
-    GPUImageObservationModel(const Eigen::Matrix3d& camera_matrix,
-            const size_t& n_rows,
-            const size_t& n_cols,
-            const size_t& max_sample_count,
-            const float& initial_visibility_prob,
+
+    ImageMeasurementModelGPU(const CameraMatrixType& camera_matrix,
+            const IndexType& n_rows,
+            const IndexType& n_cols,
+            const IndexType& max_sample_count,
+            const ScalarType& initial_visibility_prob,
             const boost::shared_ptr<RigidBodySystem<-1> > &rigid_body_system);
 
-	~GPUImageObservationModel();
+    ~ImageMeasurementModelGPU();
 
     void Initialize();
 
-    std::vector<float> Evaluate(
-			const std::vector<Eigen::VectorXd >& states,
-			std::vector<size_t>& occlusion_indices,
-			const bool& update_occlusions = false);
+    std::vector<float> Loglikes(const std::vector<Eigen::VectorXd >& states,
+                                std::vector<size_t>& occlusion_indices,
+                                const bool& update_occlusions = false);
 
-    std::vector<float> Evaluate_test(
-            const std::vector<Eigen::VectorXd>& states,
-            std::vector<size_t>& occlusion_indices,
-            const bool& update_occlusions,
-            std::vector<std::vector<int> > intersect_indices = 0,
-            std::vector<std::vector<float> > predictions = 0);
+    // set and get functions
+    const std::vector<float> Occlusions(size_t index) const;
 
-	// set and get functions =============================================================================================================================================================================================================================================================================================
-    const std::vector<float> get_occlusions(size_t index) const;
-	void set_occlusions(const float& visibility_prob = -1);
-    void measurement(const std::vector<float>& observations, const double& delta_time);
+    // TODO: this should take the occlusion probability, not visibility
+    void Occlusions(const float& visibility_prob = -1);
+
+    void Measurement(const MeasurementType& image, const double& delta_time);
 
 
-    void set_constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
+
+    // TODO: this image should be in a different format
+    void RangeImage(std::vector<std::vector<int> > &intersect_indices,
+                    std::vector<std::vector<float> > &depth);
+
+    virtual void Reset();
+
+    void Constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
                        const std::vector<std::vector<std::vector<int> > > indices,
                        const float p_visible_visible,
                        const float p_visible_occluded,
@@ -75,16 +84,10 @@ public:
                        const float max_depth,
                        const float exponential_rate);
 
-    // [pose index][0] = intersect index, [pose_index][1] = depth value
-    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                          std::vector<std::vector<float> > &depth);
-
-
-    virtual void Reset();
-
-
-
 private:
+    // TODO: this function should disappear
+    void Measurement(const std::vector<float>& observations, const double& delta_time);
+
 
 
     const Eigen::Matrix3d camera_matrix_;
@@ -146,10 +149,10 @@ private:
 
 
 
-    size_t state_size();
+//    size_t state_size();
 
-    size_t measurement_rows();
-    size_t measurement_cols();
+//    size_t measurement_rows();
+//    size_t measurement_cols();
 
 
     // used for time measurements

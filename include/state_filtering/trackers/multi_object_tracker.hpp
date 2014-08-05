@@ -205,7 +205,7 @@ public:
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcessModel>
                     occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<MeasurementModelType>(new distributions::CPUImageObservationModel(
+            observation_model = boost::shared_ptr<MeasurementModelType>(new distributions::ImageMeasurementModelCPU(
                                                                                           camera_matrix,
                                                                                           image.rows(),
                                                                                           image.cols(),
@@ -222,7 +222,7 @@ public:
 
 
             // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            boost::shared_ptr<distributions::GPUImageObservationModel> gpu_observation_model(new distributions::GPUImageObservationModel(
+            boost::shared_ptr<distributions::ImageMeasurementModelGPU> gpu_observation_model(new distributions::ImageMeasurementModelGPU(
                                                                                            camera_matrix,
                                                                                            image.rows(),
                                                                                            image.cols(),
@@ -230,7 +230,7 @@ public:
                                                                                            p_visible_init,
                                                                                            rigid_body_system));
 
-            gpu_observation_model->set_constants(object_vertices,
+            gpu_observation_model->Constants(object_vertices,
                                                  object_triangle_indices,
                                                  p_visible_visible,
                                                  p_visible_occluded,

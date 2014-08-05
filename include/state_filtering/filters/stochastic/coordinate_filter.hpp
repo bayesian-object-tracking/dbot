@@ -74,7 +74,7 @@ public:
 
     typedef SumOfDeltas<double, Eigen::VectorXd> StateDistribution;
 
-    typedef MeasurementModel::Measurement Measurement;
+    typedef MeasurementModel::MeasurementType Measurement;
     typedef Eigen::VectorXd State;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,
