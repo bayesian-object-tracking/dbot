@@ -62,7 +62,7 @@ public:
 	// set and get functions =============================================================================================================================================================================================================================================================================================
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
-    void measurement(const std::vector<float>& observations, const double& time_since_start);
+    void measurement(const std::vector<float>& observations, const double& delta_time);
 
 
     void set_constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
@@ -140,6 +140,9 @@ private:
     GLuint combined_texture_opengl_;
     cudaGraphicsResource* combined_texture_resource_;
     cudaArray_t texture_array_;
+
+    double observation_time_;
+
 
 
 

@@ -98,7 +98,7 @@ public:
 
 
     void Filter(const Control control,
-                   const double &observation_time,
+                   const double &delta_time,
                    const Measurement& observation);
 
 
@@ -107,7 +107,9 @@ public:
 
 
     void Evaluate(const Measurement& observation,
-                  const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
+//                  const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
+                  const double& delta_time = 0,
+
                   const bool& update_occlusions = false);
 
 

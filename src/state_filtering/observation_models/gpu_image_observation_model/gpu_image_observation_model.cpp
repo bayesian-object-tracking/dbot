@@ -36,7 +36,8 @@ GPUImageObservationModel::GPUImageObservationModel(
     initialized_(false),
     observations_set_(false),
     resource_registered_(false),
-    nr_calls_set_observation_(0)
+    nr_calls_set_observation_(0),
+    observation_time_(0)
 {
     cout << "resize visprobs" << endl;
     visibility_probs_.resize(n_rows_ * n_cols_);
@@ -73,7 +74,8 @@ void GPUImageObservationModel::Initialize() {
 
         cout << "set occlusions..." << endl;
 
-        set_occlusions();
+//        set_occlusions();
+        Reset();
 
         float c = p_visible_visible_ - p_visible_occluded_;
         float log_c = log(c);
@@ -333,13 +335,16 @@ void GPUImageObservationModel::set_occlusions(const float& visibility_prob)
 void GPUImageObservationModel::Reset()
 {
     set_occlusions();
+    observation_time_ = 0;
 }
 
 
-void GPUImageObservationModel::measurement(const std::vector<float>& observations, const double& time_since_start)
+void GPUImageObservationModel::measurement(const std::vector<float>& observations, const double& delta_time)
 {
-    if (initialized_) {
-        cuda_->set_observations(observations.data(), time_since_start);
+    observation_time_ += delta_time;
+    if (initialized_)
+    {
+        cuda_->set_observations(observations.data(), observation_time_);
         observations_set_ = true;
     }
 }

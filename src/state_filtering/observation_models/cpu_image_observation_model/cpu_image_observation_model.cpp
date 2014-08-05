@@ -59,9 +59,9 @@ CPUImageObservationModel::CPUImageObservationModel(
     object_model_(object_model),
     observation_model_(observation_model),
     occlusion_process_model_(occlusion_process_model),
-    observation_time_(std::numeric_limits<double>::quiet_NaN())
+    observation_time_(0)
 {
-    set_occlusions();
+    Reset();
 }
 
 
@@ -174,6 +174,7 @@ void CPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &
 void CPUImageObservationModel::Reset()
 {
     set_occlusions();
+    observation_time_ = 0;
 }
 
 
@@ -186,10 +187,11 @@ void CPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
-void CPUImageObservationModel::measurement(const std::vector<float>& observations, const double& observation_time)
+void CPUImageObservationModel::measurement(const std::vector<float>& observations, const double& delta_time)
 {
     observations_ = observations;
-    observation_time_ = observation_time;
+    observation_time_ += delta_time;
+
 }
 
 

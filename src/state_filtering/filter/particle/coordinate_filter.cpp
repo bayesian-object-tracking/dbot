@@ -173,11 +173,11 @@ void CoordinateParticleFilter::UpdateWeights(std::vector<float> log_weight_diffs
 
 
 void CoordinateParticleFilter::Filter( const Control control,
-                                       const double &observation_time,
+                                       const double &delta_time,
                                        const Measurement& observation)
 {
     INIT_PROFILING;
-    measurement_model_->measurement(observation, observation_time);
+    measurement_model_->measurement(observation, delta_time);
 
     loglikes_ = std::vector<float>(particles_.size(), 0);
     noises_ = std::vector<Noise>(particles_.size(), Noise::Zero(dimension_));
@@ -190,7 +190,7 @@ void CoordinateParticleFilter::Filter( const Control control,
             for(size_t i = 0; i < independent_blocks_[block_index].size(); i++)
                 noises_[particle_index](independent_blocks_[block_index][i]) = unit_gaussian_.Sample()(0);
 
-            process_model_->Condition(observation_time - particle_times_[particle_index],
+            process_model_->Condition(delta_time,//observation_time - particle_times_[particle_index],
                                         particles_[particle_index],
                                         control);
             propagated_particles_[particle_index] = process_model_->MapGaussian(noises_[particle_index]);
@@ -215,7 +215,7 @@ void CoordinateParticleFilter::Filter( const Control control,
 
     particles_ = propagated_particles_;
     for(size_t i = 0; i < particle_times_.size(); i++)
-        particle_times_[i] = observation_time;
+        particle_times_[i] = delta_time;
 
     state_distribution_.SetDeltas(particles_); // not sure whether this is the right place
 }
@@ -295,12 +295,12 @@ void CoordinateParticleFilter::Propagate(
 
 void CoordinateParticleFilter::Evaluate(
         const Measurement& observation,
-        const double& observation_time,
+        const double& delta_time,
         const bool& update_occlusions)
 {
     // todo at the moment it is assumed that the state times are equal to the observation time
     // we set the observation and evaluate the states ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    measurement_model_->measurement(observation, observation_time);
+    measurement_model_->measurement(observation, delta_time);
     INIT_PROFILING
     family_loglikes_ = measurement_model_->Evaluate(particles_, occlusion_indices_, update_occlusions);
     MEASURE("observation_model_->Evaluate")

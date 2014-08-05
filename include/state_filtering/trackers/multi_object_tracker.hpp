@@ -92,12 +92,14 @@ public:
 
 
 
+
 //    typedef BrownianObjectMotion<>
 
     MultiObjectTracker():
         node_handle_("~"),
         is_first_iteration_(true),
-        duration_(0)
+        duration_(0),
+        last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
@@ -196,6 +198,8 @@ public:
 
         if(!use_gpu)
         {
+            cout << "NOT USING GPU" << endl;
+
             // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             boost::shared_ptr<distributions::KinectMeasurementModel>
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
@@ -214,6 +218,9 @@ public:
         }
         else
         {
+            cout << "USING GPU" << endl;
+
+
             // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             boost::shared_ptr<distributions::GPUImageObservationModel> gpu_observation_model(new distributions::GPUImageObservationModel(
                                                                                            camera_matrix,
@@ -312,12 +319,18 @@ public:
         boost::mutex::scoped_lock lock(mutex_);
         // the time since start is computed
 
+
+        if(std::isnan(last_measurement_time_))
+            last_measurement_time_ = ros_image.header.stamp.toSec();
+
         if(is_first_iteration_)
         {
             previous_image_time_ = ros_image.header.stamp.toSec();
             is_first_iteration_ = false;
         }
         duration_ += ros_image.header.stamp.toSec() - previous_image_time_;
+
+        duration_ = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // convert image
         MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
@@ -363,7 +376,12 @@ public:
                               i, 1, 0, 0);
         }
 
-        PRINT("sample count ") PRINT(evaluation_count_)
+        PRINT("sample count ") PRINT(evaluation_count_);
+
+
+        last_measurement_time_ = ros_image.header.stamp.toSec();
+
+
 
         return filter_->stateDistribution().EmpiricalMean();
     }
@@ -373,6 +391,8 @@ public:
 
 private:  
     double duration_;
+
+    ScalarType last_measurement_time_;
 
 
 

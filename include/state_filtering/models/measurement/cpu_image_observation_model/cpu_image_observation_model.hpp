@@ -104,7 +104,7 @@ public:
                           std::vector<std::vector<float> > &depth);
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
-	void measurement(const std::vector<float>& observations, const double& observation_time);
+    void measurement(const std::vector<float>& observations, const double& delta_time);
 
     size_t state_size();
 
