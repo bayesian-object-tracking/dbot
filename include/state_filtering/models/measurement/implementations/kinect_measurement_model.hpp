@@ -25,9 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
-#ifndef KINECT_MEASUREMENT_MODEL_HPP_
-#define KINECT_MEASUREMENT_MODEL_HPP_
+#ifndef MODELS_MEASUREMENT_IMPLEMENTATIONS_KINECT_MEASUREMENT_MODEL_HPP_
+#define MODELS_MEASUREMENT_IMPLEMENTATIONS_KINECT_MEASUREMENT_MODEL_HPP_
 
 #include <state_filtering/distributions/features/evaluable.hpp>
 #include <cmath>

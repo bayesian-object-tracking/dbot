@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/models/measurement/cpu_image_observation_model/cpu_image_observation_model.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_cpu.hpp>
 
 #include <limits>
 
@@ -44,7 +44,6 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(const Eigen::Matrix3d& camera
         const size_t& n_rows,
         const size_t& n_cols,
         const size_t& max_sample_count,
-        const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system,
         const ObjectRenderer object_renderer,
         const PixelObservationModel observation_model,
         const OcclusionProcessModel occlusion_process_model,
@@ -54,7 +53,6 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(const Eigen::Matrix3d& camera
     n_cols_(n_cols),
     initial_visibility_prob_(initial_visibility_prob),
     max_sample_count_(max_sample_count),
-    rigid_body_system_(rigid_body_system),
     object_model_(object_renderer),
     observation_model_(observation_model),
     occlusion_process_model_(occlusion_process_model),
@@ -67,9 +65,9 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(const Eigen::Matrix3d& camera
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
 
-std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorType> &states,
-        std::vector<size_t>& occlusion_indices,
-        const bool& update_occlusions)
+std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorType>& states,
+                                                      std::vector<IndexType>& indices,
+                                                      const bool& update)
 {
     std::vector<std::vector<float> > new_visibility_probs(states.size());
     std::vector<std::vector<double> > new_visibility_update_times(states.size());
@@ -78,10 +76,10 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorTy
     {
 
 
-        if(update_occlusions)
+        if(update)
         {
-            new_visibility_probs[state_index] = visibility_probs_[occlusion_indices[state_index]];
-            new_visibility_update_times[state_index] = visibility_update_times_[occlusion_indices[state_index]];
+            new_visibility_probs[state_index] = visibility_probs_[indices[state_index]];
+            new_visibility_update_times[state_index] = visibility_update_times_[indices[state_index]];
         }
         // we predict observations_ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         std::vector<int> intersect_indices;
@@ -109,8 +107,8 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorTy
                 // we predict the visiblity probability and set the time of the last update time to current
                 visibility_prob = 1. -
                         occlusion_process_model_->Propagate(
-                            1. - visibility_probs_[occlusion_indices[state_index]][intersect_indices[i]],
-                            observation_time_ - visibility_update_times_[occlusion_indices[state_index]][intersect_indices[i]]);
+                            1. - visibility_probs_[indices[state_index]][intersect_indices[i]],
+                            observation_time_ - visibility_update_times_[indices[state_index]][intersect_indices[i]]);
 
                 observation_model_->Condition(predictions[i], false);
                 float p_obsIpred_vis =
@@ -126,7 +124,7 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorTy
                 loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
                 // we update the visibiliy (occlusion) with the observations
-                if(update_occlusions)
+                if(update)
                 {
                     new_visibility_probs[state_index][intersect_indices[i]] = p_obsIpred_vis/(p_obsIpred_vis + p_obsIpred_occl);
                     new_visibility_update_times[state_index][intersect_indices[i]] = observation_time_;
@@ -134,12 +132,12 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorTy
             }
         }
     }
-    if(update_occlusions)
+    if(update)
     {
         visibility_probs_ = new_visibility_probs;
         visibility_update_times_ = new_visibility_update_times;
-        for(size_t state_index = 0; state_index < occlusion_indices.size(); state_index++)
-            occlusion_indices[state_index] = state_index;
+        for(size_t state_index = 0; state_index < indices.size(); state_index++)
+            indices[state_index] = state_index;
     }
     return loglikes;
 }
@@ -173,7 +171,7 @@ void ImageMeasurementModelCPU::Reset()
 
 
 
-void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const double& delta_time)
+void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const ScalarType &delta_time)
 {
     std::vector<float> std_measurement(image.size());
 
@@ -194,7 +192,7 @@ void ImageMeasurementModelCPU::set_occlusions(const float& visibility_prob)
 }
 
 
-void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observations, const double& delta_time)
+void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observations, const ScalarType &delta_time)
 {
     observations_ = observations;
     observation_time_ += delta_time;
@@ -203,18 +201,18 @@ void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observation
 
 
 
-size_t ImageMeasurementModelCPU::state_size()
-{
-    return rigid_body_system_->state_size();
-}
+//size_t ImageMeasurementModelCPU::state_size()
+//{
+//    return rigid_body_system_->state_size();
+//}
 
-size_t ImageMeasurementModelCPU::measurement_rows()
-{
-    return n_rows_;
-}
+//size_t ImageMeasurementModelCPU::measurement_rows()
+//{
+//    return n_rows_;
+//}
 
-size_t ImageMeasurementModelCPU::measurement_cols()
-{
-    return n_cols_;
-}
+//size_t ImageMeasurementModelCPU::measurement_cols()
+//{
+//    return n_cols_;
+//}
 

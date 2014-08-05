@@ -26,18 +26,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef IMAGE_OBSERVATION_MODEL_
-#define IMAGE_OBSERVATION_MODEL_
+#ifndef MODELS_MEASUREMENT_FEATURES_RAO_BLACKWELL_MEASUREMENT_MODEL_HPP
+#define MODELS_MEASUREMENT_FEATURES_RAO_BLACKWELL_MEASUREMENT_MODEL_HPP
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <Eigen/Core>
-
 #include <state_filtering/distributions/distribution.hpp>
 
 namespace distributions
 {
-template<typename ScalarType_, typename VectorType_, typename MeasurementType_, typename IndexType_ = unsigned>
+template<typename ScalarType_, typename VectorType_, typename MeasurementType_, typename IndexType_ = size_t>
 class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, VectorType_>
 {
 public:
@@ -45,16 +42,14 @@ public:
     typedef typename Distribution<ScalarType_, VectorType_>::VectorType     VectorType;
     typedef MeasurementType_                                                MeasurementType;
     typedef IndexType_                                                      IndexType;
-
-public:
+ public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
     virtual std::vector<float> Loglikes(const std::vector<VectorType>& states,
-                                        std::vector<size_t>& state_indices,
-                                        const bool& update = false) = 0;
+                                        std::vector<IndexType>&        indices,
+                                        const bool&                    update = false) = 0;
 
-    virtual void Measurement(const MeasurementType& image,
-                             const double& delta_time) = 0;
+    virtual void Measurement(const MeasurementType& image, const ScalarType& delta_time) = 0;
 
     // reset the latent variables
     virtual void Reset() = 0;

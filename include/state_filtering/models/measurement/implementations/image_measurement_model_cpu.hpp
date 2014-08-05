@@ -25,18 +25,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef CPU_IMAGE_OBSERVATION_MODEL_
-#define CPU_IMAGE_OBSERVATION_MODEL_
+#ifndef MODELS_MEASUREMENT_IMPLEMENTATIONS_IMAGE_MEASUREMENT_MODEL_CPU_HPP
+#define MODELS_MEASUREMENT_IMPLEMENTATIONS_IMAGE_MEASUREMENT_MODEL_CPU_HPP
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <state_filtering/models/measurement/cpu_image_observation_model/kinect_measurement_model.hpp>
+#include <state_filtering/models/measurement/implementations/kinect_measurement_model.hpp>
 #include <state_filtering/utils/rigid_body_renderer.hpp>
 #include <state_filtering/models/process/implementations/occlusion_process.hpp>
 
-#include <state_filtering/models/measurement/image_observation_model.hpp>
+#include <state_filtering/models/measurement/features/rao_blackwell_measurement_model.hpp>
 
 #include <state_filtering/states/floating_body_system.hpp>
 
@@ -49,8 +49,10 @@ struct ImageMeasurementModelCPUTypes
     typedef double                              ScalarType;
     typedef FloatingBodySystem<-1>              VectorType;
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+    typedef size_t                              IndexType;
 
-    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> RaoBlackwellMeasurementModelType;
+    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType, IndexType>
+                                            RaoBlackwellMeasurementModelType;
 };
 
 
@@ -63,13 +65,6 @@ public:
     typedef typename ImageMeasurementModelCPUTypes::VectorType      VectorType;
     typedef typename ImageMeasurementModelCPUTypes::MeasurementType MeasurementType;
 
-
-
-
-
-
-
-
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRenderer;
     typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
 	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
@@ -79,7 +74,6 @@ public:
 			const size_t& n_rows,
 			const size_t& n_cols,
 			const size_t& max_sample_count,
-            const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system,
             const ObjectRenderer object_renderer,
 			const PixelObservationModel observation_model,
 			const OcclusionProcessModel occlusion_process_model,
@@ -87,18 +81,16 @@ public:
 
     ~ImageMeasurementModelCPU();
 
-    std::vector<float> Loglikes(
-            const std::vector<VectorType>& states,
-			std::vector<size_t>& occlusion_indices,
-			const bool& update_occlusions = false);
+    std::vector<float> Loglikes(const std::vector<VectorType>& states,
+                                std::vector<IndexType>&        indices,
+                                const bool&                    update = false);
+
+    void Measurement(const MeasurementType& image, const ScalarType& delta_time);
 
 
-	// set and get functions =============================================================================================================================================================================================================================================================================================
-//    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-//                          std::vector<std::vector<float> > &depth);
+
     const std::vector<float> get_occlusions(size_t index) const;
 	void set_occlusions(const float& visibility_prob = -1);
-    void Measurement(const std::vector<float>& observations, const double& delta_time);
 
     size_t state_size();
 
@@ -109,12 +101,16 @@ public:
     virtual void Reset();
 
 
-    void Measurement(const MeasurementType& image, const double& delta_time);
 
 
 
 
 private:
+    // TODO: GET RID OF THIS
+    void Measurement(const std::vector<float>& observations, const ScalarType& delta_time);
+
+
+
     const Eigen::Matrix3d camera_matrix_;
     const size_t n_rows_;
     const size_t n_cols_;

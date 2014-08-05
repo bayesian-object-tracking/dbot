@@ -1,7 +1,8 @@
 
-#include <state_filtering/models/measurement/gpu_image_observation_model/gpu_image_observation_model.hpp>
-#include <state_filtering/models/measurement/gpu_image_observation_model/object_rasterizer.hpp>
-#include <state_filtering/models/measurement/gpu_image_observation_model/cuda_filter.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/image_measurement_model_gpu.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/cuda_filter.hpp>
+
 
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/utils/macros.hpp>
@@ -22,14 +23,12 @@ ImageMeasurementModelGPU::ImageMeasurementModelGPU(const CameraMatrixType& camer
                                                        const IndexType& n_rows,
                                                        const IndexType& n_cols,
                                                        const IndexType& max_sample_count,
-                                                       const ScalarType& initial_visibility_prob,
-                                                       const boost::shared_ptr<RigidBodySystem<-1> > &rigid_body_system):
+                                                       const ScalarType& initial_visibility_prob):
     camera_matrix_(camera_matrix),
     n_rows_(n_rows),
     n_cols_(n_cols),
     initial_visibility_prob_(initial_visibility_prob),
     max_sample_count_(max_sample_count),
-    rigid_body_system_(rigid_body_system),
     n_poses_(max_sample_count),
     constants_set_(false),
     initialized_(false),
@@ -38,9 +37,7 @@ ImageMeasurementModelGPU::ImageMeasurementModelGPU(const CameraMatrixType& camer
     nr_calls_set_observation_(0),
     observation_time_(0)
 {
-    cout << "resize visprobs" << endl;
     visibility_probs_.resize(n_rows_ * n_cols_);
-    cout << "successfully resized visprobs" << endl;
 }
 
 
@@ -94,7 +91,7 @@ void ImageMeasurementModelGPU::Initialize() {
 
 
 std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<VectorType> &states,
-        std::vector<size_t>& occlusion_indices,
+        std::vector<IndexType> &occlusion_indices,
         const bool& update_occlusions)
 {
     n_poses_ = states.size();
@@ -337,7 +334,7 @@ void ImageMeasurementModelGPU::Reset()
 }
 
 
-void ImageMeasurementModelGPU::Measurement(const std::vector<float>& observations, const double& delta_time)
+void ImageMeasurementModelGPU::Measurement(const std::vector<float>& observations, const ScalarType &delta_time)
 {
     observation_time_ += delta_time;
     if (initialized_)

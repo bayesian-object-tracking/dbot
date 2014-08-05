@@ -5,8 +5,8 @@
 #include <Eigen/Dense>
 #include "boost/shared_ptr.hpp"
 
-#include <state_filtering/models/measurement/gpu_image_observation_model/object_rasterizer.hpp>
-#include <state_filtering/models/measurement/gpu_image_observation_model/cuda_filter.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/cuda_filter.hpp>
 
 namespace fil {
 

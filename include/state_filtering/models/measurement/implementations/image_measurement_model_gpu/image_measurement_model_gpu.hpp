@@ -1,14 +1,14 @@
-#ifndef GPU_IMAGE_OBSERVATION_MODEL_
-#define GPU_IMAGE_OBSERVATION_MODEL_
+#ifndef MODELS_MEASUREMENT_IMPLEMENTATIONS_IMAGE_MEASUREMENT_MODEL_GPU_HPP
+#define MODELS_MEASUREMENT_IMPLEMENTATIONS_IMAGE_MEASUREMENT_MODEL_GPU_HPP
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
 #include "Eigen/Core"
 
 
-#include <state_filtering/models/measurement/image_observation_model.hpp>
-#include <state_filtering/models/measurement/gpu_image_observation_model/object_rasterizer.hpp>
-#include <state_filtering/models/measurement/gpu_image_observation_model/cuda_filter.hpp>
+#include <state_filtering/models/measurement/features/rao_blackwell_measurement_model.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/cuda_filter.hpp>
 
 #include <state_filtering/states/floating_body_system.hpp>
 
@@ -23,7 +23,7 @@ struct ImageMeasurementModelGPUTypes
     typedef double                              ScalarType;
     typedef FloatingBodySystem<-1>              VectorType;
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
-    typedef unsigned                            IndexType;
+    typedef size_t                              IndexType;
 
 
     typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType, IndexType>
@@ -44,18 +44,17 @@ public:
 
 
     ImageMeasurementModelGPU(const CameraMatrixType& camera_matrix,
-            const IndexType& n_rows,
-            const IndexType& n_cols,
-            const IndexType& max_sample_count,
-            const ScalarType& initial_visibility_prob,
-            const boost::shared_ptr<RigidBodySystem<-1> > &rigid_body_system);
+                             const IndexType& n_rows,
+                             const IndexType& n_cols,
+                             const IndexType& max_sample_count,
+                             const ScalarType& initial_visibility_prob);
 
     ~ImageMeasurementModelGPU();
 
     void Initialize();
 
     std::vector<float> Loglikes(const std::vector<VectorType>& states,
-                                std::vector<size_t>& occlusion_indices,
+                                std::vector<IndexType>& occlusion_indices,
                                 const bool& update_occlusions = false);
 
     // set and get functions
@@ -86,7 +85,7 @@ public:
 
 private:
     // TODO: this function should disappear
-    void Measurement(const std::vector<float>& observations, const double& delta_time);
+    void Measurement(const std::vector<float>& observations, const ScalarType& delta_time);
 
 
 
@@ -95,8 +94,6 @@ private:
     const size_t n_cols_;
     const float initial_visibility_prob_;
     const size_t max_sample_count_;
-    const boost::shared_ptr<RigidBodySystem<-1> > rigid_body_system_;
-
 
     void set_number_of_poses(int n_poses);
     void checkCUDAError(const char *msg);

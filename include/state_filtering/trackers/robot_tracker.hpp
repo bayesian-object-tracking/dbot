@@ -48,10 +48,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <state_filtering/filters/stochastic/particle_filter_context.hpp>
 
 // observation model
-#include <state_filtering/models/measurement/cpu_image_observation_model/kinect_measurement_model.hpp>
-#include <state_filtering/models/measurement/image_observation_model.hpp>
-#include <state_filtering/models/measurement/cpu_image_observation_model/cpu_image_observation_model.hpp>
-//#include <state_filtering/models/measurement/gpu_image_observation_model/gpu_image_observation_model.hpp>
+#include <state_filtering/models/measurement/implementations/kinect_measurement_model.hpp>
+#include <state_filtering/models/measurement/features/rao_blackwell_measurement_model.hpp>
+#include <state_filtering/models/measurement/implementations/image_measurement_model_cpu.hpp>
+//#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/image_measurement_model_gpu.hpp>
 
 // tools
 #include <state_filtering/utils/object_file_reader.hpp>
