@@ -55,11 +55,28 @@ class CoordinateParticleFilter
 {
 public:
     typedef double ScalarType;
-    typedef FloatingBodySystem<-1> VectorType;
+    typedef size_t IndexType;
+    typedef FloatingBodySystem<-1> StateType;
+
+
+
+    typedef Eigen::VectorXd InputType;
+
 
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
 
-    typedef Eigen::VectorXd Control;
+
+    typedef distributions::BrownianObjectMotion<-1, ScalarType> ProcessModel;
+
+    typedef distributions::RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType> MeasurementModel;
+
+
+    typedef SumOfDeltas<ScalarType, StateType> StateDistributionType;
+
+    typedef MeasurementModel::MeasurementType Measurement;
+
+
+
     typedef Eigen::VectorXd Noise;
 
 
@@ -67,53 +84,28 @@ public:
 
     typedef boost::shared_ptr<CoordinateParticleFilter> Ptr;
 
-    typedef distributions::BrownianObjectMotion<-1, double> ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
-    typedef distributions::RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
 
-    typedef SumOfDeltas<double, VectorType> StateDistribution;
-
-    typedef MeasurementModel::MeasurementType Measurement;
-    typedef VectorType State;
 
     CoordinateParticleFilter(const MeasurementModelPtr observation_model,
                      const ProcessModelPtr process_model,
-                     const std::vector<std::vector<size_t> >& independent_blocks,
+                     const std::vector<std::vector<IndexType> >& independent_blocks,
                      const double& max_kl_divergence = 0);
 
     ~CoordinateParticleFilter();
 
-    void Enchilada(const Control control,
-                   const double &observation_time,
-                   const Measurement& observation,
-                   const size_t &evaluation_count);
 
 
-    void Enchiladisima(const Control control,
-                   const double &observation_time,
-                   const Measurement& observation,
-                   const size_t &evaluation_count,
-                   const size_t &factor_evaluation_count);
-
-
-    void Filter(const Control control,
-                   const double &delta_time,
-                   const Measurement& observation);
-
-
-    void Propagate(const Control control,
-                   const double &current_time);
-
+    void Filter(const Measurement& measurement,
+                const ScalarType&  delta_time,
+                const InputType&   input);
 
     void Evaluate(const Measurement& observation,
-//                  const double& observation_time = std::numeric_limits<double>::quiet_NaN(),
                   const double& delta_time = 0,
-
                   const bool& update_occlusions = false);
 
 
-    void UpdateWeights(std::vector<float> log_weight_diffs);
 
 
     void Resample(const int &new_state_count = -1);
@@ -121,59 +113,54 @@ public:
     size_t control_size();
 
     // set and get fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    void get(MeasurementModelPtr& observation_model) const;
-    void get(ProcessModelPtr& process_model) const;
-    void get(std::vector<State >& states) const;
-    void get(std::vector<double>& state_times) const;
-    void get(std::vector<float>& loglikes) const;
-    const State& get_state(size_t index) const;
-//    const std::vector<float> get_occlusions(size_t index) const;
-//    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-//                          std::vector<std::vector<float> > &depth);
+//    void get(MeasurementModelPtr& observation_model) const;
+//    void get(ProcessModelPtr& process_model) const;
+//    void get(std::vector<float>& loglikes) const;
+//    const StateType& get_state(size_t index) const;
 
-    void set_states(const std::vector<State >& states,
-                    const std::vector<double>& state_times = std::vector<double>(),
-                    const std::vector<float>& loglikes = std::vector<float>());
-    void set_independence(const std::vector<std::vector<size_t> >& independent_blocks);
-    void set(const MeasurementModelPtr& observation_model);
-    void set(const ProcessModelPtr& process_model);
 
-    virtual StateDistribution& stateDistribution();
+
+    const std::vector<StateType>& Samples() const;
+    void Samples(const std::vector<StateType >& states);
+
+
+    virtual StateDistributionType& StateDistribution();
 
 private:
+
+    void UpdateWeights(std::vector<float> log_weight_diffs);
+
 
     unsigned dimension_;
 
     // TODO this is not used properly yet
-    StateDistribution state_distribution_;
+    StateDistributionType state_distribution_;
 
 
     // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    std::vector<State > particles_;
-    std::vector<double> particle_times_;
-    std::vector<size_t> occlusion_indices_;
+    std::vector<StateType > samples_;
+    std::vector<IndexType> indices_;
     std::vector<float>  log_weights_;
 
     std::vector<Noise> noises_;
-    std::vector<State> propagated_particles_;
+    std::vector<StateType> propagated_samples_;
     std::vector<float> loglikes_;
 
 
 
 
-    // partial evaluate
-    std::vector< std::vector< std::vector <float> > > partial_children_loglikes_;
+    // TODO: THIS SHOULD GO AWAY
     std::vector<float> family_loglikes_;
 
-    // process and observation models ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // process and observation models
     MeasurementModelPtr measurement_model_;
     ProcessModelPtr process_model_;
+
+    // distribution for sampling
     Gaussian<double, 1> unit_gaussian_;
 
-    // parameters ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // parameters
     std::vector<std::vector<size_t> > independent_blocks_;
-
-
     const double max_kl_divergence_;
 };
 

@@ -84,7 +84,7 @@ public:
     // types from parents
     typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>   Types;
     typedef typename Types::ScalarType                             ScalarType;
-    typedef typename Types::VectorType                             VectorType;
+    typedef typename Types::VectorType                             StateType;
     typedef typename Types::NoiseType                              NoiseType;
 
     // new types
@@ -99,7 +99,7 @@ public:
 public:
     BrownianObjectMotion()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VectorType);
+        DISABLE_IF_DYNAMIC_SIZE(StateType);
 
         quaternion_map_.resize(SIZE_OBJECTS);
         rotation_center_.resize(SIZE_OBJECTS);
@@ -110,7 +110,7 @@ public:
     BrownianObjectMotion(const unsigned& count_objects): Types::GaussianMappableType(count_objects*6),
                                                          state_(count_objects)
     {
-        DISABLE_IF_FIXED_SIZE(VectorType);
+        DISABLE_IF_FIXED_SIZE(StateType);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
@@ -120,9 +120,9 @@ public:
 
     virtual ~BrownianObjectMotion() { }
 
-    virtual VectorType MapGaussian(const NoiseType& sample) const
+    virtual StateType MapGaussian(const NoiseType& sample) const
     {
-        VectorType new_state(state_.bodies_size());
+        StateType new_state(state_.bodies_size());
         for(size_t i = 0; i < new_state.bodies_size(); i++)
         {
             Eigen::Matrix<ScalarType, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
@@ -145,7 +145,7 @@ public:
     }
 
     virtual void Condition(const ScalarType&  delta_time,
-                           const VectorType&  state,
+                           const StateType&  state,
                            const NoiseType&   control)
     {
         state_ = state;
@@ -189,7 +189,7 @@ public:
 
 private:
     // conditionals
-    VectorType state_;
+    StateType state_;
     std::vector<Eigen::Matrix<ScalarType, 4, 3> > quaternion_map_;
 
     // parameters

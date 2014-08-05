@@ -82,7 +82,7 @@ class IntegratedDampedWienerProcess:
 public:
     typedef IntegratedDampedWienerProcessTypes<ScalarType_, INPUT_DIM_EIGEN>    Types;
     typedef typename Types::ScalarType                                          ScalarType;
-    typedef typename Types::VectorType                                          VectorType;
+    typedef typename Types::VectorType                                          StateType;
     typedef typename Types::InputType                                           InputType;
     typedef typename Types::NoiseType                                           NoiseType;
     typedef typename Types::DampedWienerProcessType                             DampedWienerProcessType;
@@ -92,21 +92,21 @@ public:
 public:
     IntegratedDampedWienerProcess()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VectorType);
+        DISABLE_IF_DYNAMIC_SIZE(StateType);
     }
 
     IntegratedDampedWienerProcess(const unsigned& size): Types::GaussianMappableType(size),
                                                          Types::DampedWienerProcessType(size),
                                                          position_distribution_(size)
     {
-        DISABLE_IF_FIXED_SIZE(VectorType);
+        DISABLE_IF_FIXED_SIZE(StateType);
     }
 
     virtual ~IntegratedDampedWienerProcess() { }
 
-    virtual VectorType MapGaussian(const NoiseType& sample) const
+    virtual StateType MapGaussian(const NoiseType& sample) const
     {
-        VectorType state(StateDimension());
+        StateType state(StateDimension());
         state.topRows(InputDimension())     = position_distribution_.MapGaussian(sample);
         state.bottomRows(InputDimension())  = velocity_distribution_.MapGaussian(sample);
         return state;
@@ -114,7 +114,7 @@ public:
 
 
     virtual void Condition(const ScalarType&  delta_time,
-                           const VectorType&  state,
+                           const StateType&  state,
                            const InputType&   input)
     {
         position_distribution_.Mean(Mean(state.topRows(InputDimension()), // position

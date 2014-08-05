@@ -60,7 +60,7 @@ class OcclusionProcessModel: public OcclusionProcessModelTypes::StationaryProces
 {
 public:
     typedef OcclusionProcessModelTypes::ScalarType ScalarType;
-    typedef OcclusionProcessModelTypes::VectorType VectorType;
+    typedef OcclusionProcessModelTypes::VectorType StateType;
     typedef OcclusionProcessModelTypes::InputType InputType;
 
 
@@ -95,16 +95,16 @@ public:
 
 
     virtual void Condition(const ScalarType& delta_time,
-                              const VectorType& state,
+                              const StateType& state,
                               const InputType& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
     }
 
-    virtual VectorType MapGaussian() const
+    virtual StateType MapGaussian() const
     {
-        VectorType state_vector;
+        StateType state_vector;
 
         if(isnan(delta_time_))
             state_vector(0) =  occlusion_probability_;
@@ -117,7 +117,7 @@ public:
     }
 
 
-    virtual VectorType MapGaussian(const InputType& sample) const
+    virtual StateType MapGaussian(const InputType& sample) const
     {
         return MapGaussian();
     }

@@ -60,14 +60,14 @@ class StationaryProcess: public Distribution<ScalarType_, VectorType_>
 {
 public:
     typedef typename Distribution<ScalarType_, VectorType_>::ScalarType   ScalarType;
-    typedef typename Distribution<ScalarType_, VectorType_>::VectorType   VectorType;
+    typedef typename Distribution<ScalarType_, VectorType_>::VectorType   StateType;
     typedef InputType_                                                    InputType;
 
 public:
     virtual ~StationaryProcess() { }
 
     virtual void Condition(const ScalarType& delta_time,
-                           const VectorType& state,
+                           const StateType& state,
                            const InputType&  input) = 0;
 };
 

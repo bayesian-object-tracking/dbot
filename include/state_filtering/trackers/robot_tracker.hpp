@@ -277,16 +277,16 @@ public:
                 full_initial_state[body_index] = single_body_samples[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
-            filter_->set_states(multi_body_samples);
+            filter_->Samples(multi_body_samples);
             filter_->Evaluate(image);
             filter_->Resample(multi_body_samples.size());
-            filter_->get(multi_body_samples);
+            multi_body_samples = filter_->Samples();
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
-        filter_->set_states(multi_body_samples);
+        filter_->Samples(multi_body_samples);
         filter_->Evaluate(image);
         filter_->Resample(sample_count_);
     }
@@ -308,7 +308,7 @@ public:
 
         // filter
         INIT_PROFILING;
-        filter_->Enchilada(FilterType::Control::Zero(filter_->control_size()),
+        filter_->Enchilada(FilterType::InputType::Zero(filter_->control_size()),
                            duration_,
                            image,
                            sample_count_);
@@ -320,7 +320,7 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// the visualization will of course also have to be adapted to use the robot model
         ///
-        RobotState<> mean = filter_->stateDistribution().EmpiricalMean();
+        RobotState<> mean = filter_->StateDistribution().EmpiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";

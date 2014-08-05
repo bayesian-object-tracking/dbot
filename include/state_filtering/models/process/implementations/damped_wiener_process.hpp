@@ -77,7 +77,7 @@ class DampedWienerProcess: public DampedWienerProcessTypes<ScalarType_, DIMENSIO
 public:
     typedef DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>  Types;
     typedef typename Types::ScalarType                              ScalarType;
-    typedef typename Types::VectorType                              VectorType;
+    typedef typename Types::VectorType                              StateType;
     typedef typename Types::InputType                               InputType;
     typedef typename Types::NoiseType                               NoiseType;
     typedef Gaussian<ScalarType, DIMENSION_EIGEN>                   GaussianType;
@@ -86,24 +86,24 @@ public:
 public:
     DampedWienerProcess()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VectorType);
+        DISABLE_IF_DYNAMIC_SIZE(StateType);
     }
 
     explicit DampedWienerProcess(const unsigned& dimension): Types::GaussianMappableType(dimension),
                                                              gaussian_(dimension)
     {
-        DISABLE_IF_FIXED_SIZE(VectorType);
+        DISABLE_IF_FIXED_SIZE(StateType);
     }
 
     virtual ~DampedWienerProcess() { }
 
-    virtual VectorType MapGaussian(const NoiseType& sample) const
+    virtual StateType MapGaussian(const NoiseType& sample) const
     {
         return gaussian_.MapGaussian(sample);
     }
 
     virtual void Condition(const ScalarType&  delta_time,
-                           const VectorType&  state,
+                           const StateType&  state,
                            const InputType&   input)
     {
         gaussian_.Mean(Mean(delta_time, state, input));
@@ -123,11 +123,11 @@ public:
     }
 
 private:
-    VectorType Mean(const ScalarType& delta_time,
-                    const VectorType& state,
+    StateType Mean(const ScalarType& delta_time,
+                    const StateType& state,
                     const InputType& input)
     {
-        VectorType state_expectation = (1.0 - exp(-damping_*delta_time)) / damping_ * input +
+        StateType state_expectation = (1.0 - exp(-damping_*delta_time)) / damping_ * input +
                                               exp(-damping_*delta_time)  * state;
 
         // if the damping_ is too small, the result might be nan, we thus return the limit for damping_ -> 0

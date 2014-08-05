@@ -97,8 +97,6 @@ public:
 
     MultiObjectTracker():
         node_handle_("~"),
-        is_first_iteration_(true),
-        duration_(0),
         last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
@@ -289,15 +287,15 @@ public:
                     full_initial_state[body_index] = initial_states[state_index];
                     multi_body_samples[state_index] = full_initial_state;
                 }
-                filter_->set_states(multi_body_samples);
+                filter_->Samples(multi_body_samples);
                 filter_->Evaluate(image);
                 filter_->Resample(multi_body_samples.size());
-                filter_->get(multi_body_samples);
+                multi_body_samples = filter_->Samples();
             }
 
             // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             cout << "evaluating initial particles cpu ..." << endl;
-            filter_->set_states(multi_body_samples);
+            filter_->Samples(multi_body_samples);
             filter_->Evaluate(image);
             filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_)); // FOR TESTING ONLY
         }
@@ -309,7 +307,7 @@ public:
 
 
             cout << "setting states " << endl;
-            filter_->set_states(multi_body_samples);
+            filter_->Samples(multi_body_samples);
             cout << "evaluating " << endl;
             filter_->Evaluate(image);
             cout << "resampling " << endl;
@@ -329,14 +327,7 @@ public:
         if(std::isnan(last_measurement_time_))
             last_measurement_time_ = ros_image.header.stamp.toSec();
 
-        if(is_first_iteration_)
-        {
-            previous_image_time_ = ros_image.header.stamp.toSec();
-            is_first_iteration_ = false;
-        }
-        duration_ += ros_image.header.stamp.toSec() - previous_image_time_;
-
-        duration_ = ros_image.header.stamp.toSec() - last_measurement_time_;
+        ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // convert image
         MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
@@ -344,13 +335,12 @@ public:
         // filter
         INIT_PROFILING;
         cout << "CALLING ENCHILADISIMA" << endl;
-        filter_->Filter(VectorXd::Zero(object_names_.size()*6), duration_, image);
+        filter_->Filter(image, delta_time, VectorXd::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
 
-        previous_image_time_ = ros_image.header.stamp.toSec();
 
         // visualize the mean state
-        FloatingBodySystem<> mean = filter_->stateDistribution().EmpiricalMean();
+        FloatingBodySystem<> mean = filter_->StateDistribution().EmpiricalMean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -366,15 +356,13 @@ public:
 
 
 
-        return filter_->stateDistribution().EmpiricalMean();
+        return filter_->StateDistribution().EmpiricalMean();
     }
 
 
 
 
 private:  
-    double duration_;
-
     ScalarType last_measurement_time_;
 
 
@@ -384,9 +372,6 @@ private:
     ros::Publisher object_publisher_;
 
     boost::shared_ptr<distributions::CoordinateParticleFilter> filter_;
-
-    bool is_first_iteration_;
-    double previous_image_time_;
 
     // parameters
     vector<string> object_names_;
