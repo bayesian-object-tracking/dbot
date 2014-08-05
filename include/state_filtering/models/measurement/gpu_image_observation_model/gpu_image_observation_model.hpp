@@ -10,12 +10,31 @@
 #include <state_filtering/models/measurement/gpu_image_observation_model/object_rasterizer.hpp>
 #include <state_filtering/models/measurement/gpu_image_observation_model/cuda_filter.hpp>
 
+#include <state_filtering/states/floating_body_system.hpp>
 
-namespace obs_mod
+
+
+namespace distributions
 {
-class GPUImageObservationModel: public ImageObservationModel
+
+
+struct GPUImageObservationModelTypes
+{
+    typedef double                              ScalarType;
+    typedef FloatingBodySystem<-1>              VectorType;
+    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+
+    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> RaoBlackwellMeasurementModelType;
+};
+
+
+class GPUImageObservationModel: public GPUImageObservationModelTypes::RaoBlackwellMeasurementModelType
 {
 public:
+    typedef typename GPUImageObservationModelTypes::ScalarType ScalarType;
+    typedef typename GPUImageObservationModelTypes::VectorType VectorType;
+    typedef typename GPUImageObservationModelTypes::MeasurementType MeasurementType;
+
 
     GPUImageObservationModel(const Eigen::Matrix3d& camera_matrix,
             const size_t& n_rows,
@@ -61,7 +80,19 @@ public:
                           std::vector<std::vector<float> > &depth);
 
 
+    virtual void Reset();
+
+
+
 private:
+
+
+    const Eigen::Matrix3d camera_matrix_;
+    const size_t n_rows_;
+    const size_t n_cols_;
+    const float initial_visibility_prob_;
+    const size_t max_sample_count_;
+    const boost::shared_ptr<RigidBodySystem<-1> > rigid_body_system_;
 
 
     void set_number_of_poses(int n_poses);
@@ -109,6 +140,14 @@ private:
     GLuint combined_texture_opengl_;
     cudaGraphicsResource* combined_texture_resource_;
     cudaArray_t texture_array_;
+
+
+
+    size_t state_size();
+
+    size_t measurement_rows();
+    size_t measurement_cols();
+
 
     // used for time measurements
     static const int TIME_MEASUREMENTS_COUNT = 8;

@@ -83,9 +83,13 @@ using namespace distributions;
 class MultiObjectTracker
 {
 public:
-    typedef Eigen::Matrix<double, -1, -1> Image;
-    typedef double ScalarType;
-    typedef FloatingBodySystem<-1> VectorType;
+    typedef double                              ScalarType;
+    typedef FloatingBodySystem<-1>              VectorType;
+    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+
+    typedef typename distributions::RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> MeasurementModelType;
+
+
 
 
 //    typedef BrownianObjectMotion<>
@@ -114,7 +118,7 @@ public:
 
         // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to meters
+        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to meters
 
         // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -188,16 +192,16 @@ public:
                                                                           object_triangle_indices,
                                                                           rigid_body_system));
 
-        boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
+        boost::shared_ptr<MeasurementModelType> observation_model;
 
         if(!use_gpu)
         {
             // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            boost::shared_ptr<obs_mod::KinectMeasurementModel>
-                    kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
+            boost::shared_ptr<distributions::KinectMeasurementModel>
+                    kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcessModel>
                     occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<obs_mod::ImageObservationModel>(new obs_mod::CPUImageObservationModel(
+            observation_model = boost::shared_ptr<MeasurementModelType>(new distributions::CPUImageObservationModel(
                                                                                           camera_matrix,
                                                                                           image.rows(),
                                                                                           image.cols(),
@@ -211,7 +215,7 @@ public:
         else
         {
             // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            boost::shared_ptr<obs_mod::GPUImageObservationModel> gpu_observation_model(new obs_mod::GPUImageObservationModel(
+            boost::shared_ptr<distributions::GPUImageObservationModel> gpu_observation_model(new distributions::GPUImageObservationModel(
                                                                                            camera_matrix,
                                                                                            image.rows(),
                                                                                            image.cols(),
@@ -316,7 +320,7 @@ public:
         duration_ += ros_image.header.stamp.toSec() - previous_image_time_;
 
         // convert image
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
+        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_); // convert to m
 
         // filter
         INIT_PROFILING;

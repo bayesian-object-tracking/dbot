@@ -169,15 +169,15 @@ public:
                                                                           part_triangle_indices,
                                                                           robot_state));
 
-        boost::shared_ptr<obs_mod::ImageObservationModel> observation_model;
+        boost::shared_ptr<distributions::RaoBlackwellMeasurementModel> observation_model;
         if(!use_gpu)
         {
             // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            boost::shared_ptr<obs_mod::KinectMeasurementModel>
-                    kinect_measurement_model(new obs_mod::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
+            boost::shared_ptr<distributions::KinectMeasurementModel>
+                    kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcessModel>
                     occlusion_process_model(new proc_mod::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<obs_mod::ImageObservationModel>(new obs_mod::CPUImageObservationModel(
+            observation_model = boost::shared_ptr<distributions::RaoBlackwellMeasurementModel>(new distributions::CPUImageObservationModel(
                                                                                           camera_matrix,
                                                                                           image.rows(),
                                                                                           image.cols(),

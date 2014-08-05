@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 
-namespace obs_mod
+namespace distributions
 {
 
 class KinectMeasurementModel: public distributions::Evaluable<double, double>

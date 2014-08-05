@@ -234,7 +234,7 @@ void CoordinateParticleFilter::set_states(const std::vector<State >& states,
     // we copy the new states ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     particles_ = states;
     particle_times_ = state_times;
-    occlusion_indices_ = vector<size_t>(particles_.size(), 0); measurement_model_->set_occlusions();
+    occlusion_indices_ = vector<size_t>(particles_.size(), 0); measurement_model_->Reset();
     family_loglikes_ = loglikes;
 
     // if some arguments have not been passed we set to default values ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -391,15 +391,15 @@ const CoordinateParticleFilter::State& CoordinateParticleFilter::get_state(size_
 {
     return particles_[index];
 }
-const std::vector<float> CoordinateParticleFilter::get_occlusions(size_t index) const
-{
-    return measurement_model_->get_occlusions(occlusion_indices_[index]	);
-}
-void CoordinateParticleFilter::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                             std::vector<std::vector<float> > &depth)
-{
-    measurement_model_->get_depth_values(intersect_indices, depth);
-}
+//const std::vector<float> CoordinateParticleFilter::get_occlusions(size_t index) const
+//{
+//    return measurement_model_->get_occlusions(occlusion_indices_[index]	);
+//}
+//void CoordinateParticleFilter::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+//                                             std::vector<std::vector<float> > &depth)
+//{
+//    measurement_model_->get_depth_values(intersect_indices, depth);
+//}
 
 void CoordinateParticleFilter::set_independence(const std::vector<std::vector<size_t> >& independent_blocks)
 {

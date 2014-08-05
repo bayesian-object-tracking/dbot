@@ -56,6 +56,9 @@ class CoordinateParticleFilter
 public:
     typedef double ScalarType;
     typedef FloatingBodySystem<-1> VectorType;
+
+    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+
     typedef Eigen::VectorXd Control;
     typedef Eigen::VectorXd Noise;
 
@@ -66,7 +69,7 @@ public:
 
     typedef distributions::BrownianObjectMotion<-1, double> ProcessModel;
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
-    typedef obs_mod::ImageObservationModel MeasurementModel;
+    typedef distributions::RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> MeasurementModel;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
 
     typedef SumOfDeltas<double, Eigen::VectorXd> StateDistribution;
@@ -122,9 +125,9 @@ public:
     void get(std::vector<double>& state_times) const;
     void get(std::vector<float>& loglikes) const;
     const State& get_state(size_t index) const;
-    const std::vector<float> get_occlusions(size_t index) const;
-    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                          std::vector<std::vector<float> > &depth);
+//    const std::vector<float> get_occlusions(size_t index) const;
+//    void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+//                          std::vector<std::vector<float> > &depth);
 
     void set_states(const std::vector<State >& states,
                     const std::vector<double>& state_times = std::vector<double>(),

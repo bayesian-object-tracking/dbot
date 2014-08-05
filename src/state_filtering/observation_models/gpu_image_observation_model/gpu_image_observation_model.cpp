@@ -15,7 +15,7 @@
 
 using namespace std;
 using namespace Eigen;
-using namespace obs_mod;
+using namespace distributions;
 
 
 GPUImageObservationModel::GPUImageObservationModel(
@@ -25,8 +25,12 @@ GPUImageObservationModel::GPUImageObservationModel(
         const size_t& max_sample_count,
         const float& initial_visibility_prob,
         const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system):
-    ImageObservationModel(camera_matrix, n_rows, n_cols, initial_visibility_prob, max_sample_count, rigid_body_system),
-
+    camera_matrix_(camera_matrix),
+    n_rows_(n_rows),
+    n_cols_(n_cols),
+    initial_visibility_prob_(initial_visibility_prob),
+    max_sample_count_(max_sample_count),
+    rigid_body_system_(rigid_body_system),
     n_poses_(max_sample_count),
     constants_set_(false),
     initialized_(false),
@@ -326,6 +330,12 @@ void GPUImageObservationModel::set_occlusions(const float& visibility_prob)
 }
 
 
+void GPUImageObservationModel::Reset()
+{
+    set_occlusions();
+}
+
+
 void GPUImageObservationModel::measurement(const std::vector<float>& observations, const double& time_since_start)
 {
     if (initialized_) {
@@ -378,6 +388,25 @@ void GPUImageObservationModel::RegisterResource() {
         checkCUDAError("cudaGraphicsGLRegisterImage)");
         resource_registered_ = true;
     }
+}
+
+
+
+
+
+size_t GPUImageObservationModel::state_size()
+{
+    return rigid_body_system_->state_size();
+}
+
+size_t GPUImageObservationModel::measurement_rows()
+{
+    return n_rows_;
+}
+
+size_t GPUImageObservationModel::measurement_cols()
+{
+    return n_cols_;
 }
 
 // ===================================================================================== //

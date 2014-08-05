@@ -33,37 +33,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
+#include <state_filtering/distributions/distribution.hpp>
+
 #include <state_filtering/models/measurement/cpu_image_observation_model/kinect_measurement_model.hpp>
 #include <state_filtering/models/process/implementations/occlusion_process.hpp>
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/utils/rigid_body_renderer.hpp>
 
-namespace obs_mod
+namespace distributions
 {
-class ImageObservationModel
+template<typename ScalarType_, typename VectorType_, typename MeasurementType_>
+class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, VectorType_>
 {
 public:
+    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType     ScalarType;
+    typedef typename Distribution<ScalarType_, VectorType_>::VectorType     VectorType;
+    typedef MeasurementType_                                                MeasurementType;
+
     typedef Eigen::Matrix<double, -1, -1> Measurement;
 
-
-
-
-	ImageObservationModel(
-			const Eigen::Matrix3d& camera_matrix,
-			const size_t& n_rows,
-			const size_t& n_cols,
-			const float& initial_visibility_prob,
-            const size_t& max_sample_count,
-            const boost::shared_ptr<RigidBodySystem<-1> >& rigid_body_system
-            ):
-			camera_matrix_(camera_matrix),
-			n_rows_(n_rows),
-			n_cols_(n_cols),
-			initial_visibility_prob_(initial_visibility_prob),
-            max_sample_count_(max_sample_count),
-            rigid_body_system_(rigid_body_system){}
-
-	virtual ~ImageObservationModel() {}
+public:
+    virtual ~RaoBlackwellMeasurementModel() {}
 
 	virtual std::vector<float> Evaluate(
 			const std::vector<Eigen::VectorXd >& states,
@@ -71,10 +61,10 @@ public:
 			const bool& update_occlusions = false) = 0;
 
 	// set and get functions =============================================================================================================================================================================================================================================================================================
-    virtual void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                  std::vector<std::vector<float> > &depth) = 0;
-    virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
-	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
+//    virtual void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+//                                  std::vector<std::vector<float> > &depth) = 0;
+//    virtual const std::vector<float> get_occlusions(size_t index) const = 0 ;
+//	virtual void set_occlusions(const float& visibility_prob = -1) = 0;
 
     virtual void measurement(const Measurement& image, const double& time)
     {
@@ -87,33 +77,13 @@ public:
         measurement(std_measurement, time);
     }
 
+    virtual void Reset() = 0;
+
 
 
     virtual void measurement(const std::vector<float>& observations, const double& time) = 0;
 
-    size_t state_size()
-    {
-        return rigid_body_system_->state_size();
-    }
 
-    size_t measurement_rows()
-    {
-        return n_rows_;
-    }
-
-    size_t measurement_cols()
-    {
-        return n_cols_;
-    }
-
-protected:
-	// constant parameters ===========================================================================================================================================================================================================================================================================================================================
-	const Eigen::Matrix3d camera_matrix_;
-	const size_t n_rows_;
-	const size_t n_cols_;
-	const float initial_visibility_prob_;
-	const size_t max_sample_count_;
-    const boost::shared_ptr<RigidBodySystem<-1> > rigid_body_system_;
 };
 
 }

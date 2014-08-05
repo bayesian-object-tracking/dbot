@@ -38,14 +38,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/models/measurement/image_observation_model.hpp>
 
+#include <state_filtering/states/floating_body_system.hpp>
 
-namespace obs_mod
+
+namespace distributions
 {
-class CPUImageObservationModel: public ImageObservationModel
+
+struct CPUImageObservationModelTypes
+{
+    typedef double                              ScalarType;
+    typedef FloatingBodySystem<-1>              VectorType;
+    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+
+    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> RaoBlackwellMeasurementModelType;
+};
+
+
+
+
+class CPUImageObservationModel: public CPUImageObservationModelTypes::RaoBlackwellMeasurementModelType
 {
 public:
+    typedef typename CPUImageObservationModelTypes::ScalarType      ScalarType;
+    typedef typename CPUImageObservationModelTypes::VectorType      VectorType;
+    typedef typename CPUImageObservationModelTypes::MeasurementType MeasurementType;
+
+
+
+
+
+
+
+
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectModel;
-    typedef boost::shared_ptr<obs_mod::KinectMeasurementModel> PixelObservationModel;
+    typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
 	typedef boost::shared_ptr<proc_mod::OcclusionProcessModel> OcclusionProcessModel;
 
 	CPUImageObservationModel(
@@ -80,8 +106,23 @@ public:
 	void set_occlusions(const float& visibility_prob = -1);
 	void measurement(const std::vector<float>& observations, const double& observation_time);
 
-private:
+    size_t state_size();
 
+    size_t measurement_rows();
+    size_t measurement_cols();
+
+
+    virtual void Reset();
+
+
+
+private:
+    const Eigen::Matrix3d camera_matrix_;
+    const size_t n_rows_;
+    const size_t n_cols_;
+    const float initial_visibility_prob_;
+    const size_t max_sample_count_;
+    const boost::shared_ptr<RigidBodySystem<-1> > rigid_body_system_;
 
 
 

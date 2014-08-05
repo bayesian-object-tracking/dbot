@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 using namespace Eigen;
-using namespace obs_mod;
+using namespace distributions;
 
 
 CPUImageObservationModel::CPUImageObservationModel(
@@ -50,7 +50,12 @@ CPUImageObservationModel::CPUImageObservationModel(
         const PixelObservationModel observation_model,
         const OcclusionProcessModel occlusion_process_model,
         const float& initial_visibility_prob):
-    ImageObservationModel(camera_matrix, n_rows, n_cols, initial_visibility_prob, max_sample_count, rigid_body_system),
+    camera_matrix_(camera_matrix),
+    n_rows_(n_rows),
+    n_cols_(n_cols),
+    initial_visibility_prob_(initial_visibility_prob),
+    max_sample_count_(max_sample_count),
+    rigid_body_system_(rigid_body_system),
     object_model_(object_model),
     observation_model_(observation_model),
     occlusion_process_model_(occlusion_process_model),
@@ -166,6 +171,13 @@ void CPUImageObservationModel::get_depth_values(std::vector<std::vector<int> > &
 }
 
 
+void CPUImageObservationModel::Reset()
+{
+    set_occlusions();
+}
+
+
+
 void CPUImageObservationModel::set_occlusions(const float& visibility_prob)
 {
     float p = visibility_prob == -1 ? initial_visibility_prob_ : visibility_prob;
@@ -179,3 +191,21 @@ void CPUImageObservationModel::measurement(const std::vector<float>& observation
     observations_ = observations;
     observation_time_ = observation_time;
 }
+
+
+
+size_t CPUImageObservationModel::state_size()
+{
+    return rigid_body_system_->state_size();
+}
+
+size_t CPUImageObservationModel::measurement_rows()
+{
+    return n_rows_;
+}
+
+size_t CPUImageObservationModel::measurement_cols()
+{
+    return n_cols_;
+}
+
