@@ -99,18 +99,10 @@ public:
     using Base::state_size;
 
     // constructor for fixed size without initial value
-    FloatingBodySystem():
-        Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE ))
-    {    }
-
+    FloatingBodySystem(): Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE )) { }
 
     // constructor for dynamic size without initial value
-    FloatingBodySystem(unsigned count_bodies):
-        Base(State::Zero(count_bodies * COUNT_PER_BODY))
-//        count_bodies_(count_bodies)
-    {
-        assert_dynamic_size<true>();
-    }
+    FloatingBodySystem(unsigned count_bodies): Base(State::Zero(count_bodies * COUNT_PER_BODY)) { }
 
     // constructor with initial value
     template <typename T> FloatingBodySystem(const Eigen::MatrixBase<T>& state_vector):

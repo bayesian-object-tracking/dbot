@@ -66,7 +66,7 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
 
-std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorType>& states,
+std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
                                                       std::vector<IndexType>& indices,
                                                       const bool& update)
 {
@@ -146,7 +146,7 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<VectorTy
 
 
 // set and get functions =============================================================================================================================================================================================================================================================================================
-const std::vector<float> ImageMeasurementModelCPU::get_occlusions(size_t index) const
+const std::vector<float> ImageMeasurementModelCPU::Occlusions(size_t index) const
 {
     return visibility_probs_[index];
 }
@@ -166,7 +166,7 @@ const std::vector<float> ImageMeasurementModelCPU::get_occlusions(size_t index) 
 
 void ImageMeasurementModelCPU::Reset()
 {
-    set_occlusions();
+    Occlusions();
     observation_time_ = 0;
 }
 
@@ -185,7 +185,7 @@ void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const S
 
 
 
-void ImageMeasurementModelCPU::set_occlusions(const float& visibility_prob)
+void ImageMeasurementModelCPU::Occlusions(const float& visibility_prob)
 {
     float p = visibility_prob == -1 ? initial_visibility_prob_ : visibility_prob;
     visibility_probs_ = vector<vector<float> >(1, vector<float>(n_rows_*n_cols_, p));
@@ -199,21 +199,3 @@ void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observation
     observation_time_ += delta_time;
 
 }
-
-
-
-//size_t ImageMeasurementModelCPU::state_size()
-//{
-//    return rigid_body_system_->state_size();
-//}
-
-//size_t ImageMeasurementModelCPU::measurement_rows()
-//{
-//    return n_rows_;
-//}
-
-//size_t ImageMeasurementModelCPU::measurement_cols()
-//{
-//    return n_cols_;
-//}
-

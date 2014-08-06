@@ -39,13 +39,13 @@ class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, VectorType_
 {
 public:
     typedef typename Distribution<ScalarType_, VectorType_>::ScalarType     ScalarType;
-    typedef typename Distribution<ScalarType_, VectorType_>::VectorType     VectorType;
+    typedef typename Distribution<ScalarType_, VectorType_>::VectorType     StateType;
     typedef MeasurementType_                                                MeasurementType;
     typedef IndexType_                                                      IndexType;
  public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
-    virtual std::vector<float> Loglikes(const std::vector<VectorType>& states,
+    virtual std::vector<float> Loglikes(const std::vector<StateType>&  states,
                                         std::vector<IndexType>&        indices,
                                         const bool&                    update = false) = 0;
 

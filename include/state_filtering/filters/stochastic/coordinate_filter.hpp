@@ -51,12 +51,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace distributions
 {
 
-class CoordinateParticleFilter
+class RaoBlackwellCoordinateParticleFilter
 {
 public:
     typedef double ScalarType;
     typedef size_t IndexType;
     typedef FloatingBodySystem<-1> StateType;
+
+    // TODO: MAKE SURE THAT STATE TYPE FROM OBSERVATION MODEL AND PROCESS MODEL ARE THE SAME
 
 
 
@@ -77,91 +79,69 @@ public:
 
 
 
-    typedef Eigen::VectorXd Noise;
+    typedef Eigen::VectorXd NoiseType;
 
 
 
 
-    typedef boost::shared_ptr<CoordinateParticleFilter> Ptr;
+    typedef boost::shared_ptr<RaoBlackwellCoordinateParticleFilter> Ptr;
 
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
 
+public:
+    RaoBlackwellCoordinateParticleFilter(const MeasurementModelPtr observation_model,
+                            const ProcessModelPtr process_model,
+                            const std::vector<std::vector<IndexType> >& sampling_blocks,
+                            const ScalarType& max_kl_divergence = 0);
+    ~RaoBlackwellCoordinateParticleFilter();
 
-    CoordinateParticleFilter(const MeasurementModelPtr observation_model,
-                     const ProcessModelPtr process_model,
-                     const std::vector<std::vector<IndexType> >& independent_blocks,
-                     const double& max_kl_divergence = 0);
-
-    ~CoordinateParticleFilter();
-
-
-
+public:
+    // main functions
     void Filter(const Measurement& measurement,
                 const ScalarType&  delta_time,
                 const InputType&   input);
-
-    void Evaluate(const Measurement& observation,
-                  const double& delta_time = 0,
-                  const bool& update_occlusions = false);
-
-
-
-
-    void Resample(const int &new_state_count = -1);
-
-    size_t control_size();
-
-    // set and get fcts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-//    void get(MeasurementModelPtr& observation_model) const;
-//    void get(ProcessModelPtr& process_model) const;
-//    void get(std::vector<float>& loglikes) const;
-//    const StateType& get_state(size_t index) const;
-
-
-
-    const std::vector<StateType>& Samples() const;
-    void Samples(const std::vector<StateType >& states);
-
-
-    virtual StateDistributionType& StateDistribution();
-
+    void Resample(const IndexType& new_sample_count);
 private:
-
     void UpdateWeights(std::vector<float> log_weight_diffs);
 
+public:
+    // set
+    void Samples(const std::vector<StateType >& samples);
+    void SamplingBlocks(const std::vector<std::vector<IndexType> >& sampling_blocks);
 
+    // get
+    const std::vector<StateType>& Samples() const;
+    StateDistributionType& StateDistribution();
+
+private:
     unsigned dimension_;
 
     // TODO this is not used properly yet
     StateDistributionType state_distribution_;
 
 
-    // internal state ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // TODO: THE FLOAT SHOULD ALSO BE SCALAR TYPE?
     std::vector<StateType > samples_;
     std::vector<IndexType> indices_;
     std::vector<float>  log_weights_;
 
-    std::vector<Noise> noises_;
-    std::vector<StateType> propagated_samples_;
+    // TODO: THESE DO NOT HAVE TO BE MEMBERS
+    std::vector<NoiseType> noises_;
+    std::vector<StateType> next_samples_;
     std::vector<float> loglikes_;
 
-
-
-
-    // TODO: THIS SHOULD GO AWAY
-    std::vector<float> family_loglikes_;
 
     // process and observation models
     MeasurementModelPtr measurement_model_;
     ProcessModelPtr process_model_;
 
     // distribution for sampling
-    Gaussian<double, 1> unit_gaussian_;
+    Gaussian<ScalarType, 1> unit_gaussian_;
 
     // parameters
-    std::vector<std::vector<size_t> > independent_blocks_;
-    const double max_kl_divergence_;
+    std::vector<std::vector<IndexType> > sampling_blocks_;
+    ScalarType max_kl_divergence_;
 };
 
 }

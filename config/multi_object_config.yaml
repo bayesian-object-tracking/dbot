@@ -13,20 +13,16 @@ object_names: [
 ,mugbox
 ,mugbox
 ,mugbox
-,mugbox
-,mugbox
-,mugbox
-,mugbox
-,mugbox
-,mugbox
+#,mugbox
+#,mugbox
+#,mugbox
+#,mugbox
+#,mugbox
+#,mugbox
 ]
 
-
-coordinate_sampling: true
-factor_evaluation_count: 1
-
+coordinate_sampling: false
 max_kl_divergence: 2.0
-
 
 use_gpu: true
 evaluation_count: 2000 #the number of evaluations
@@ -36,11 +32,14 @@ downsampling_factor: 8 #8
 initial_sample_count: 1000 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 
-
 # process model parameters ------------------------------------------------------------------
-linear_acceleration_sigma:   0.4 #0.1  0.2  1.0 2.0
-angular_acceleration_sigma: 6.0 #1.5  3.0  15.0 30.0
-damping: 5.0 #5.0  20.0  1000.0 1000.0
+linear_acceleration_sigma:   2.0 #0.1  0.2  1.0 2.0
+angular_acceleration_sigma: 30.0 #1.5  3.0  15.0 30.0
+damping: 1000.0 #5.0  20.0  1000.0 1000.0
+
+#linear_acceleration_sigma:   0.4 #0.1  0.2  1.0 2.0
+#angular_acceleration_sigma: 6.0 #1.5  3.0  15.0 30.0
+#damping: 5.0 #5.0  20.0  1000.0 1000.0
 
 # observation model parameters --------------------------------------------------------------
 tail_weight: 0.01 #0.01, 0.998

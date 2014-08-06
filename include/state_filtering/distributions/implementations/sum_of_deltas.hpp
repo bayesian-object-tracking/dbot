@@ -83,10 +83,11 @@ public:
 public:
     SumOfDeltas()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VectorType);
+//        DISABLE_IF_DYNAMIC_SIZE(VectorType);
 
         // initialize with one delta at zero
-        deltas_ = Deltas(1, VectorType::Zero());
+        deltas_ = Deltas(1, VectorType::Zero(VectorType::SizeAtCompileTime == Eigen::Dynamic ?
+                                                 0 : VectorType::SizeAtCompileTime));
         weights_ = Weights::Ones(1);
     }
 

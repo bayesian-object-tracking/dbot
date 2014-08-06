@@ -47,11 +47,11 @@ namespace distributions
 struct ImageMeasurementModelCPUTypes
 {
     typedef double                              ScalarType;
-    typedef FloatingBodySystem<-1>              VectorType;
+    typedef FloatingBodySystem<-1>              StateType;
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
     typedef size_t                              IndexType;
 
-    typedef RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType, IndexType>
+    typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType, IndexType>
                                             RaoBlackwellMeasurementModelType;
 };
 
@@ -62,13 +62,14 @@ class ImageMeasurementModelCPU: public ImageMeasurementModelCPUTypes::RaoBlackwe
 {
 public:
     typedef typename ImageMeasurementModelCPUTypes::ScalarType      ScalarType;
-    typedef typename ImageMeasurementModelCPUTypes::VectorType      VectorType;
+    typedef typename ImageMeasurementModelCPUTypes::StateType       StateType;
     typedef typename ImageMeasurementModelCPUTypes::MeasurementType MeasurementType;
 
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRenderer;
     typedef boost::shared_ptr<distributions::KinectMeasurementModel> PixelObservationModel;
     typedef boost::shared_ptr<proc_mod::OcclusionProcess> OcclusionProcessModel;
 
+    // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
     ImageMeasurementModelCPU(
 			const Eigen::Matrix3d& camera_matrix,
 			const size_t& n_rows,
@@ -81,36 +82,23 @@ public:
 
     ~ImageMeasurementModelCPU();
 
-    std::vector<float> Loglikes(const std::vector<VectorType>& states,
+    std::vector<float> Loglikes(const std::vector<StateType>& states,
                                 std::vector<IndexType>&        indices,
                                 const bool&                    update = false);
 
     void Measurement(const MeasurementType& image, const ScalarType& delta_time);
 
-
-
-    const std::vector<float> get_occlusions(size_t index) const;
-	void set_occlusions(const float& visibility_prob = -1);
-
-    size_t state_size();
-
-    size_t measurement_rows();
-    size_t measurement_cols();
-
-
     virtual void Reset();
 
-
-
-
-
+    //TODO: TYPES
+    const std::vector<float> Occlusions(size_t index) const;
 
 private:
     // TODO: GET RID OF THIS
+    void Occlusions(const float& visibility_prob = -1);
     void Measurement(const std::vector<float>& observations, const ScalarType& delta_time);
 
-
-
+    // TODO: WE PROBABLY DONT NEED ALL OF THIS
     const Eigen::Matrix3d camera_matrix_;
     const size_t n_rows_;
     const size_t n_cols_;
@@ -118,22 +106,18 @@ private:
     const size_t max_sample_count_;
     const boost::shared_ptr<RigidBodySystem<-1> > rigid_body_system_;
 
-
-
-
-	// models ============================================================================================================================================================================================================================================================
+    // models
     ObjectRenderer object_model_;
 	PixelObservationModel observation_model_;
 	OcclusionProcessModel occlusion_process_model_;
 
-	// occlusion parameters ===========================================================================================================================================================================================================================================================================================================================
+    // occlusion parameters
 	std::vector<std::vector<float> > visibility_probs_;
 	std::vector<std::vector<double> > visibility_update_times_;
 
-	// observed data ==================================================================================================================================================================
+    // observed data
 	std::vector<float> observations_;
 	double observation_time_;
-
 };
 
 }
