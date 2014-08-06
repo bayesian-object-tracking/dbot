@@ -3,7 +3,7 @@
   <arg name="camera_matrix_topic" />
 
   <!-- Hardcoding which robot we are using-->
-  <param name="robot_description" type="string" value="$(find state_filtering)/config/darpa.urdf" />
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find arm_robot_model)/models/DarpaRobot.urdf.xacro'" />
   <!-- Pose Estimation Node-->
   <node name="robot_tracker" type="robot_tracker" pkg="state_filtering" output="screen" respawn="false"><!--launch-prefix="gdb -ex run args">< launch-prefix="valgrind"-->
     <!--param name="tf_correction_root" type="string" value="BASE" /-->

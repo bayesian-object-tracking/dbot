@@ -114,7 +114,7 @@ private:
 
   ros::NodeHandle nh_;
   ros::NodeHandle nh_priv_;
-  std::string tf_correction_root_;
+  //std::string tf_correction_root_;
   std::string description_path_;
 
   // model as constructed form the robot urdf description

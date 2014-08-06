@@ -119,6 +119,7 @@ public:
 
         // convert camera matrix and image to desired format ----------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
+	camera_matrix_ = camera_matrix;
         // TODO: Fix with non-fake arm_rgbd node
         Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
 
@@ -175,22 +176,23 @@ public:
 								   urdf_kinematics->num_joints(),
 								   urdf_kinematics));
 
-        boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer(new obj_mod::RigidBodyRenderer(part_vertices,
-                                                                                                    part_triangle_indices,
-                                                                                                    robot_state));
+        robot_renderer_ = boost::shared_ptr<obj_mod::RigidBodyRenderer>(new obj_mod::RigidBodyRenderer(part_vertices,
+												       part_triangle_indices,
+												       robot_state));
 
         // FOR DEBUGGING
 	
         std::cout << "Image rows and cols " << image.rows() << " " << image.cols() << std::endl;
 
-        robot_renderer->state(single_body_samples[0]);
+        robot_renderer_->state(single_body_samples[0]);
         std::vector<int> indices;
         std::vector<float> depth;
-        robot_renderer->Render(camera_matrix,
-                               image.rows(),
-                               image.cols(),
-                               indices,
-                               depth);
+        robot_renderer_->Render(camera_matrix,
+				image.rows(),
+				image.cols(),
+				indices,
+				depth);
+	//image_viz_ = boost::shared_ptr<vis::ImageVisualizer>(new vis::ImageVisualizer(image.rows(),image.cols()));
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
@@ -223,7 +225,7 @@ public:
                                                                                       image.cols(),
                                                                                       single_body_samples.size(),
                                                                                       robot_state,
-                                                                                      robot_renderer,
+                                                                                      robot_renderer_,
                                                                                       kinect_measurement_model,
                                                                                       occlusion_process_model,
                                                                                       p_visible_init));
@@ -314,6 +316,23 @@ public:
 
 	// get the mean estimation for the robot joints
 	*mean_ = filter_->stateDistribution().empiricalMean();
+
+	// DEBUG to see depth images
+	robot_renderer_->state(*mean_);
+        std::vector<int> indices;
+        std::vector<float> depth;
+        robot_renderer_->Render(camera_matrix_,
+				image.rows(),
+				image.cols(),
+				indices,
+				depth);
+	//image_viz_ = boost::shared_ptr<vis::ImageVisualizer>(new vis::ImageVisualizer(image.rows(),image.cols()));
+        vis::ImageVisualizer image_viz(image.rows(),image.cols());
+        image_viz.set_image(image);
+        image_viz.add_points(indices, depth);
+	image_viz.show_image("enchilada ");
+	//////
+
 	std::map<std::string, double> joint_positions;
 	mean_->GetJointState(joint_positions);
 	ros::Time t = ros::Time::now();
@@ -394,6 +413,7 @@ private:
 	  else 
 	    {
 	      // depth is valid
+	      // BAAAD Jeannette BAAAAD. Hard-coded camera parameters TODO: Get this from a camera model
 	      float x = ((float)u - 40.0) * depth / 75.0;
 	      float y = ((float)v - 30.0) * depth / 75.0;
 	      memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[0].offset], &x, sizeof (float));
@@ -422,10 +442,17 @@ private:
 
   std::string tf_prefix_;
   std::string root_;
+
+  // Camera parameters
+  Matrix3d camera_matrix_;
   
   // parameters
   int downsampling_factor_;
   int sample_count_;
+
+  // For debugging
+  //boost::shared_ptr<vis::ImageVisualizer> image_viz_;
+  boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer_;
 };
 
 #endif

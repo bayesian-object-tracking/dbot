@@ -44,7 +44,7 @@ KinematicsFromURDF::KinematicsFromURDF()
     ROS_ERROR("Could not get urdf from param server at %s", desc_string.c_str());
 
   // Initialize URDF object from robot description
-  if (!urdf_.initFile(desc_string))
+  if (!urdf_.initString(desc_string))
     ROS_ERROR("Failed to parse urdf");
  
   // set up kinematic tree from URDF
@@ -55,7 +55,7 @@ KinematicsFromURDF::KinematicsFromURDF()
 
   // setup path fro robot description and root of the tree
   nh_priv_.param<std::string>("robot_description_package_path", description_path_, "..");
-  nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
+  //nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
 
 
   // create segment map for correct ordering of joints
@@ -113,7 +113,7 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
     {
       // keep only the links descending from our root
       boost::shared_ptr<urdf::Link> tmp_link = links[i];
-      while(tmp_link->name.compare(tf_correction_root_)!=0 && 
+      while(//tmp_link->name.compare(tf_correction_root_)!=0 && 
 	    tmp_link->name.compare(global_root)!=0)
 	{
 	  tmp_link = tmp_link->getParent();
@@ -134,6 +134,18 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
 void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
 {
   // Internally, KDL array use Eigen Vectors
+
+
+  // DEBUG: randomly shuffle Vector to see if it has a noticable effect
+  /*  std::vector<int> vec(joint_state.rows());
+  for (int i = 0; i < vec.size(); ++i)
+    vec[i] = i;
+  std::random_shuffle(vec.begin(),vec.end());
+  
+  jnt_array_.data.resize(joint_state.rows());
+  for (int i = 0; i < vec.size(); ++i)
+    jnt_array_.data(i) = joint_state(vec[i]);
+  */
   jnt_array_.data = joint_state;
   // Get the transform from the robot base to the camera frame
   SetCameraTransform();
