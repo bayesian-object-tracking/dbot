@@ -192,14 +192,13 @@ public:
 				image.cols(),
 				indices,
 				depth);
-	//image_viz_ = boost::shared_ptr<vis::ImageVisualizer>(new vis::ImageVisualizer(image.rows(),image.cols()));
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
 	image_viz.show_image("enchilada ");
 
 	/*
-        std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer->vertices();
+        std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer_->vertices();
         vis::CloudVisualizer cloud_vis;
         std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
         for(; it!=vertices.end();++it){
@@ -330,7 +329,7 @@ public:
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
-	image_viz.show_image("enchilada ");
+	image_viz.show_image("enchilada ", 500, 500, 1.0);
 	//////
 
 	std::map<std::string, double> joint_positions;
@@ -451,7 +450,6 @@ private:
   int sample_count_;
 
   // For debugging
-  //boost::shared_ptr<vis::ImageVisualizer> image_viz_;
   boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer_;
 };
 

@@ -235,7 +235,11 @@ void ImageVisualizer::add_points(
     cvNamedWindow(window_name.c_str(), CV_WINDOW_NORMAL);
     cvShowImage(window_name.c_str(), ((IplImage*)(image_)));
     cvResizeWindow(window_name.c_str(), window_width, window_height);
-    char out = cvWaitKey(delay);
+    char out('l');
+    if(delay>0.0)
+      sleep(delay);
+    else 
+      out = cvWaitKey(delay);
     cvDestroyWindow(window_name.c_str());
     cvReleaseImage(((IplImage**)(&image_)));
     return out;
