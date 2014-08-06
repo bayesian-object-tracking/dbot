@@ -65,7 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 #include <state_filtering/models/process/features/stationary_process.hpp>
-//#include <state_filtering/models/process/implementations/composed_stationary_process_model.hpp>
+//#include <state_filtering/models/process/implementations/composed_stationary_process.hpp>
 #include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
 
 #include <state_filtering/states/rigid_body_system.hpp>
@@ -90,7 +90,7 @@ public:
     typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
     typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
     typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
-    typedef MeasurementModelCPUType::IndexType                                    IndexType;
+    typedef MeasurementModelCPUType::IndexType                                          IndexType;
 
 
     typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType, IndexType> MeasurementModelType;
@@ -104,8 +104,6 @@ public:
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
-        ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
-
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
 
@@ -117,47 +115,15 @@ public:
     {
         boost::mutex::scoped_lock lock(mutex_);
 
-        // convert camera matrix and image to desired format ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // convert camera matrix and image to desired format
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
         MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_); // convert to meters
 
-        // read some parameters ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // read some parameters
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
-
-//        dependencies; ri::ReadParameter("dependencies", dependencies, node_handle_);
-
-
-
-
-        ri::ReadParameter("coordinate_sampling", coordinate_sampling_, node_handle_);
-
-        double max_kl_divergence;
-        ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
-
-
-        vector<vector<size_t> > sampling_blocks;
-        if(coordinate_sampling_)
-        {
-            sampling_blocks.resize(object_names_.size()*6);
-            for(size_t i = 0; i < sampling_blocks.size(); i++)
-                sampling_blocks[i] = vector<size_t>(1, i);
-        }
-        else
-        {
-            sampling_blocks.resize(1);
-            sampling_blocks[0].resize(object_names_.size()*6);
-
-            for(size_t i = 0; i < sampling_blocks[0].size(); i++)
-                sampling_blocks[0][i] = i;
-        }
-        cout << "sampling blocks: " << endl;
-        hf::PrintVector(sampling_blocks);
-
-        vector<vector<size_t> > dependent_sampling_blocks(1);
-        dependent_sampling_blocks[0].resize(object_names_.size()*6);
-        for(size_t i = 0; i < dependent_sampling_blocks[0].size(); i++)
-            dependent_sampling_blocks[0][i] = i;
-
+        int evaluation_count; ri::ReadParameter("evaluation_count", evaluation_count, node_handle_);
+        vector<vector<size_t> > sampling_blocks; ri::ReadParameter("dependencies", sampling_blocks, node_handle_);
+        double max_kl_divergence; ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
 
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
@@ -173,8 +139,12 @@ public:
         double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
         double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
 
+
+        cout << "sampling blocks: " << endl;
+        hf::PrintVector(sampling_blocks);
+
         // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-        // load object mesh ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // load object mesh
         vector<vector<Vector3d> > object_vertices(object_names_.size());
         vector<vector<vector<int> > > object_triangle_indices(object_names_.size());
         for(size_t i = 0; i < object_names_.size(); i++)
@@ -189,49 +159,39 @@ public:
             object_triangle_indices[i] = *file_reader.get_indices();
         } 
 
-        // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
-        // the poses of the rigid objects
-        boost::shared_ptr<RigidBodySystem<> > rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
-
+        boost::shared_ptr<StateType> rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
         boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
                                                                           object_vertices,
                                                                           object_triangle_indices,
                                                                           rigid_body_system));
 
         boost::shared_ptr<MeasurementModelType> observation_model;
-
         if(!use_gpu)
         {
-            cout << "NOT USING GPU" << endl;
-
-            // cpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            // cpu obseration model
             boost::shared_ptr<distributions::KinectMeasurementModel>
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcess>
-                    occlusion_process_model(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<MeasurementModelType>(new distributions::ImageMeasurementModelCPU(
-                                                                                          camera_matrix,
-                                                                                          image.rows(),
-                                                                                          image.cols(),
-                                                                                          initial_states.size(),
-                                                                                          object_renderer,
-                                                                                          kinect_measurement_model,
-                                                                                          occlusion_process_model,
-                                                                                          p_visible_init));
+                    occlusion_process(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
+            observation_model = boost::shared_ptr<MeasurementModelType>(
+                        new distributions::ImageMeasurementModelCPU(camera_matrix,
+                                                                    image.rows(),
+                                                                    image.cols(),
+                                                                    initial_states.size(),
+                                                                    object_renderer,
+                                                                    kinect_measurement_model,
+                                                                    occlusion_process,
+                                                                    p_visible_init));
         }
         else
         {
-            cout << "USING GPU" << endl;
-
-
-            // gpu obseration model -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            // gpu obseration model
             boost::shared_ptr<distributions::ImageMeasurementModelGPU>
-                    gpu_observation_model(new distributions::ImageMeasurementModelGPU(
-                                                                                           camera_matrix,
-                                                                                           image.rows(),
-                                                                                           image.cols(),
-                                                                                           max_sample_count,
-                                                                                           p_visible_init));
+                    gpu_observation_model(new distributions::ImageMeasurementModelGPU(camera_matrix,
+                                                                                      image.rows(),
+                                                                                      image.cols(),
+                                                                                      max_sample_count,
+                                                                                      p_visible_init));
 
             gpu_observation_model->Constants(object_vertices,
                                                  object_triangle_indices,
@@ -253,11 +213,10 @@ public:
         MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
         MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-        boost::shared_ptr<BrownianObjectMotion<> > process_model(new BrownianObjectMotion<>(object_names_.size()));
+        boost::shared_ptr<ProcessType> process(new ProcessType(object_names_.size()));
         for(size_t i = 0; i < object_names_.size(); i++)
         {
-            process_model->Parameters(i,
-                                   object_renderer->object_center(i).cast<double>(),
+            process->Parameters(i, object_renderer->object_center(i).cast<double>(),
                                    damping,
                                    linear_acceleration_covariance,
                                    angular_acceleration_covariance);
@@ -266,9 +225,13 @@ public:
         cout << "initialized process model " << endl;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<FilterType>
-                (new FilterType(process_model, observation_model, sampling_blocks, max_kl_divergence));
+                (new FilterType(process, observation_model, sampling_blocks, max_kl_divergence));
 
         // for the initialization we do standard sampling
+        vector<vector<size_t> > dependent_sampling_blocks(1);
+        dependent_sampling_blocks[0].resize(object_names_.size()*6);
+        for(size_t i = 0; i < dependent_sampling_blocks[0].size(); i++)
+            dependent_sampling_blocks[0][i] = i;
         filter_->SamplingBlocks(dependent_sampling_blocks);
         if(state_is_partial)
         {
@@ -307,21 +270,16 @@ public:
             filter_->Samples(multi_body_samples);
             filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
        }
-
-        filter_->Resample(evaluation_count_/sampling_blocks.size());
+        filter_->Resample(evaluation_count/sampling_blocks.size());
         filter_->SamplingBlocks(sampling_blocks);
     }
 
     VectorXd Filter(const sensor_msgs::Image& ros_image)
     {
         boost::mutex::scoped_lock lock(mutex_);
-        // the time since start is computed
-
-
 
         if(std::isnan(last_measurement_time_))
             last_measurement_time_ = ros_image.header.stamp.toSec();
-
         ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // convert image
@@ -329,7 +287,6 @@ public:
 
         // filter
         INIT_PROFILING;
-        cout << "CALLING ENCHILADISIMA" << endl;
         filter_->Filter(image, delta_time, VectorXd::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
 
@@ -344,23 +301,12 @@ public:
                               i, 1, 0, 0);
         }
 
-        PRINT("sample count ") PRINT(evaluation_count_);
-
-
         last_measurement_time_ = ros_image.header.stamp.toSec();
-
-
-
         return filter_->StateDistribution().EmpiricalMean();
     }
 
-
-
-
 private:  
     ScalarType last_measurement_time_;
-
-
 
     boost::mutex mutex_;
     ros::NodeHandle node_handle_;
@@ -371,9 +317,6 @@ private:
     // parameters
     vector<string> object_names_;
     int downsampling_factor_;
-    int evaluation_count_;
-
-    bool coordinate_sampling_;
 };
 
 #endif

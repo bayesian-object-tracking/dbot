@@ -45,9 +45,9 @@ public:
  public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
-    virtual std::vector<float> Loglikes(const std::vector<StateType>&  states,
-                                        std::vector<IndexType>&        indices,
-                                        const bool&                    update = false) = 0;
+    virtual std::vector<ScalarType> Loglikes(const std::vector<StateType>&  states,
+                                             std::vector<IndexType>&        indices,
+                                             const bool&                    update = false) = 0;
 
     virtual void Measurement(const MeasurementType& image, const ScalarType& delta_time) = 0;
 

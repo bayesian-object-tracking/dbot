@@ -61,9 +61,9 @@ public:
                        const float max_depth,
                        const float exponential_rate);
 
-    std::vector<float> Loglikes(const std::vector<StateType>& states,
-                                std::vector<IndexType>& occlusion_indices,
-                                const bool& update_occlusions = false);
+    std::vector<ScalarType> Loglikes(const std::vector<StateType>& states,
+                                     std::vector<IndexType>& occlusion_indices,
+                                     const bool& update_occlusions = false);
 
     void Measurement(const MeasurementType& image, const double& delta_time);
 

@@ -64,13 +64,14 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
 
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
-std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
-                                                      std::vector<IndexType>& indices,
-                                                      const bool& update)
+std::vector<ImageMeasurementModelCPU::ScalarType>
+ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
+                                   std::vector<IndexType>& indices,
+                                   const bool& update)
 {
     std::vector<std::vector<float> > new_visibility_probs(states.size());
     std::vector<std::vector<double> > new_visibility_update_times(states.size());
-    vector<float> loglikes(states.size(),0);
+    vector<ScalarType> loglikes(states.size(),0);
     for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
     {
         if(update)

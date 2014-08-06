@@ -90,12 +90,12 @@ void ImageMeasurementModelGPU::Initialize() {
 }
 
 
-std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<StateType> &states,
+std::vector<ImageMeasurementModelGPU::ScalarType> ImageMeasurementModelGPU::Loglikes(const std::vector<StateType> &states,
         std::vector<IndexType> &occlusion_indices,
         const bool& update_occlusions)
 {
     n_poses_ = states.size();
-    vector<float> log_likelihoods (n_poses_, 0);
+    vector<float> flog_likelihoods (n_poses_, 0);
 
     if (initialized_ && observations_set_) {
 
@@ -185,7 +185,7 @@ std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<StateTyp
 #endif
 
 
-        cuda_->CompareMultiple(update_occlusions, log_likelihoods);
+        cuda_->CompareMultiple(update_occlusions, flog_likelihoods);
         cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
 
         if(update_occlusions) {
@@ -239,8 +239,10 @@ std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<StateTyp
         cout << "WARNING: GPUImageObservationModel::EvaluateMultiple() was not executed, because GPUImageObservationModel::Initialize() or GPUImageObservationModel::set_observations() has not been called previously." << endl;
     }
 
-
-
+    // convert
+    vector<ScalarType> log_likelihoods(flog_likelihoods.size());
+    for(IndexType i = 0; i < flog_likelihoods.size(); i++)
+        log_likelihoods[i] = flog_likelihoods[i];
 
     return log_likelihoods;
 }

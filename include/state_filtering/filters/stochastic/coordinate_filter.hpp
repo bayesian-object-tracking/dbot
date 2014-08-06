@@ -111,7 +111,7 @@ public:
         INIT_PROFILING;
         measurement_model_->Measurement(measurement, delta_time);
 
-        loglikes_ = std::vector<float>(samples_.size(), 0);
+        loglikes_ = std::vector<ScalarType>(samples_.size(), 0);
         noises_ = std::vector<NoiseType>(samples_.size(), NoiseType::Zero(mappable_process_->NoiseDimension()));
         next_samples_ = samples_;
 
@@ -131,11 +131,11 @@ public:
             bool update_occlusions = (block_index == sampling_blocks_.size()-1);
             std::cout << "evaluating with " << next_samples_.size() << " samples " << std::endl;
             RESET;
-            std::vector<float> new_loglikes = measurement_model_->Loglikes(next_samples_,
+            std::vector<ScalarType> new_loglikes = measurement_model_->Loglikes(next_samples_,
                                                                            indices_,
                                                                            update_occlusions);
             MEASURE("evaluation");
-            std::vector<float> delta_loglikes(new_loglikes.size());
+            std::vector<ScalarType> delta_loglikes(new_loglikes.size());
             for(size_t i = 0; i < delta_loglikes.size(); i++)
                 delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
             loglikes_ = new_loglikes;
@@ -152,7 +152,7 @@ public:
         std::vector<IndexType> indices(sample_count);
         std::vector<NoiseType> noises(sample_count);
         std::vector<StateType> next_samples(sample_count);
-        std::vector<float> loglikes(sample_count);
+        std::vector<ScalarType> loglikes(sample_count);
 
         hf::DiscreteSampler sampler(log_weights_);
 
@@ -172,31 +172,31 @@ public:
         next_samples_   = next_samples;
         loglikes_       = loglikes;
 
-        log_weights_        = std::vector<float>(samples_.size(), 0.);
+        log_weights_        = std::vector<ScalarType>(samples_.size(), 0.);
 
         state_distribution_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
 private:
-    void UpdateWeights(std::vector<float> log_weight_diffs)
+    void UpdateWeights(std::vector<ScalarType> log_weight_diffs)
     {
         for(size_t i = 0; i < log_weight_diffs.size(); i++)
             log_weights_[i] += log_weight_diffs[i];
 
-        std::vector<float> weights = log_weights_;
+        std::vector<ScalarType> weights = log_weights_;
         hf::Sort(weights, 1);
 
         for(int i = weights.size() - 1; i >= 0; i--)
             weights[i] -= weights[0];
 
-        weights = hf::Apply<float, float>(weights, std::exp);
-        weights = hf::SetSum(weights, float(1));
+        weights = hf::Apply<ScalarType, ScalarType>(weights, std::exp);
+        weights = hf::SetSum(weights, ScalarType(1));
 
         // compute KL divergence to uniform distribution KL(p|u)
-        float kl_divergence = std::log(float(weights.size()));
+        ScalarType kl_divergence = std::log(ScalarType(weights.size()));
         for(size_t i = 0; i < weights.size(); i++)
         {
-            float information = - std::log(weights[i]) * weights[i];
+            ScalarType information = - std::log(weights[i]) * weights[i];
             if(!std::isfinite(information))
                 information = 0; // the limit for weight -> 0 is equal to 0
             kl_divergence -= information;
@@ -213,7 +213,7 @@ public:
     {
         samples_ = samples;
         indices_ = std::vector<size_t>(samples_.size(), 0); measurement_model_->Reset();
-        log_weights_ = std::vector<float>(samples_.size(), 0);
+        log_weights_ = std::vector<ScalarType>(samples_.size(), 0);
     }
     void SamplingBlocks(const std::vector<std::vector<IndexType> >& sampling_blocks)
     {
@@ -245,19 +245,15 @@ public:
     }
 
 private:
-    // internal state
-    // TODO this is not used properly yet
+    // internal state TODO: THIS COULD BE MADE MORE COMPACT!!
     StateDistributionType state_distribution_;
 
-    // TODO: THE FLOAT SHOULD ALSO BE SCALAR TYPE?
     std::vector<StateType > samples_;
     std::vector<IndexType> indices_;
-    std::vector<float>  log_weights_;
-
-    // TODO: THESE DO NOT HAVE TO BE MEMBERS
+    std::vector<ScalarType>  log_weights_;
     std::vector<NoiseType> noises_;
     std::vector<StateType> next_samples_;
-    std::vector<float> loglikes_;
+    std::vector<ScalarType> loglikes_;
 
 
     // measurement model
