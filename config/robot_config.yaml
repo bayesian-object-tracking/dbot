@@ -1,5 +1,5 @@
-object_names: [impact_battery, battery, canteen]
-dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
+#object_names: [impact_battery, battery, canteen]
+#dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
 
 #object_names: [battery, canteen]
 #dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]]
@@ -8,7 +8,7 @@ use_gpu: false
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
-initial_sample_count: 1000 #10000 this is the number of samples for the initialization
+initial_sample_count: 1 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 sample_count: 50 #the number of particles (1500)
 
@@ -25,12 +25,11 @@ linear_acceleration_sigma: 0.1 #0.1  0.2  1.0
 angular_acceleration_sigma: 1.5 #1.5  3.0  15.0
 damping: 5.0 #5.0  20.0  1000.0
 
-joint_angle_sigma: 0.1
+joint_angle_sigma: 0.01
 
 
 # observation model parameters --------------------------------------------------------------
 tail_weight: 0.01 #0.01, 0.998
 model_sigma: 0.003 #0.003, 0.005
 sigma_factor: 0.00142478 #0.0014247
-
-
+ 

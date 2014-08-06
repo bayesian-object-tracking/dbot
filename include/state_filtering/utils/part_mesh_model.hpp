@@ -56,10 +56,11 @@ public:
   PartMeshModel(const boost::shared_ptr<urdf::Link> p_link,
 		const std::string &p_description_path,
 		unsigned p_index)
-  : link_(p_link)
-  , name_(p_link->name)
-  , vertices_(new std::vector<Vector3d>)
-  , indices_(new std::vector<std::vector<int> >)
+    : proper_(false) 
+    , link_(p_link)
+    , name_(p_link->name)
+    , vertices_(new std::vector<Vector3d>)
+    , indices_(new std::vector<std::vector<int> >)
   {
     
     if ((link_->visual.get() != NULL) &&
@@ -68,6 +69,7 @@ public:
       { 
         boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh> (link_->visual->geometry);
         std::string filename (mesh->filename);
+	filename_ = filename;
 
         if (filename.substr(filename.size() - 4 , 4) == ".stl" || 
 	    filename.substr(filename.size() - 4 , 4) == ".dae")
@@ -76,21 +78,20 @@ public:
 	      filename.replace(filename.size() - 4 , 4, ".stl");
 	    filename.erase(0,25);
 	    filename = p_description_path + filename;
-	    
+	    	    
 	    scene_ =  aiImportFile(filename.c_str(),
 				   aiProcessPreset_TargetRealtime_Quality);
 	    numFaces_ = scene_->mMeshes[0]->mNumFaces;
 
-	    /*
-	    tf::Vector3 origin(link_->visual->origin.position.x, 
-			       link_->visual->origin.position.y, 
-			       link_->visual->origin.position.z);
-	    tf::Quaternion orientation(link_->visual->origin.rotation.x, 
-				       link_->visual->origin.rotation.y, 
-				       link_->visual->origin.rotation.z, 
-				       link_->visual->origin.rotation.w);
-	    original_transform_ = tf::Transform(orientation,origin);
-	    */
+	    original_transform_.linear() = Eigen::Quaterniond(link_->visual->origin.rotation.w,
+							      link_->visual->origin.rotation.x, 
+							      link_->visual->origin.rotation.y, 
+							      link_->visual->origin.rotation.z).toRotationMatrix(); 
+	    original_transform_.translation() = Eigen::Vector3d(link_->visual->origin.position.x, 
+								link_->visual->origin.position.y, 
+								link_->visual->origin.position.z);
+
+	    proper_=true;
 	  }
       }
   }
@@ -106,7 +107,7 @@ public:
 	point(0) = mesh->mVertices[v].x;
 	point(1) = mesh->mVertices[v].y;
 	point(2) = mesh->mVertices[v].z;
-	vertices_->at(v) = point;
+	vertices_->at(v) = original_transform_ * point;
       }
     return vertices_;
   }
@@ -136,6 +137,10 @@ public:
     return indices_;
   }
 
+  const std::string& get_name(){return name_;}
+
+  bool proper_;
+
 private:
   const boost::shared_ptr<urdf::Link> link_;
   const struct aiScene* scene_;
@@ -144,9 +149,11 @@ private:
   boost::shared_ptr<std::vector<Eigen::Vector3d> > vertices_;
   boost::shared_ptr<std::vector<std::vector<int> > > indices_;
 
-  //tf::Transform original_transform_;
-  //tf::Transform transform_;
+  Eigen::Affine3d original_transform_;
+
   std::string name_;
+
+  std::string filename_;
   
 };
 

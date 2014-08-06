@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
 set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 ) #print profiling output
 
-find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters)
+find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters robot_state_pub)
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -24,9 +23,8 @@ set(GLEW_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 find_package(CUDA)
-#find_package(GLEW REQUIRED)
 find_package(GLEW)
-find_package(OpenGL REQUIRED)
+find_package(OpenGL)
 
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${OpenGL_INCLUDE_DIRS})
@@ -106,6 +104,7 @@ catkin_package(
     orocos_kdl
     kdl_parser
     message_filters
+    robot_state_pub
   DEPENDS 
     OpenCV 
     eigen 
@@ -115,7 +114,10 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-include_directories(include)
+
+include_directories(include ${catkin_INCLUDE_DIRS} )
+#include_directories(${catkin_INCLUDE_DIRS})
+
 file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
 set(state_filtering_sources
@@ -138,13 +140,13 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/tools/image_visualizer.cpp
     src/${PROJECT_NAME}/tools/cloud_visualizer.cpp
     src/${PROJECT_NAME}/tools/object_file_reader.cpp
-    src/${PROJECT_NAME}/tools/urdf_reader.cpp
+    src/${PROJECT_NAME}/tools/kinematics_from_urdf.cpp
     src/${PROJECT_NAME}/tools/rigid_body_renderer.cpp
 )
 
 
 ## state_filtering
-message("CATKING LIBRARIES" ${catkin_LIBRARIES})
+#message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
 add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
@@ -159,7 +161,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} as
 #    ${PCL_LIBRARIES}
 #    yaml-cpp)
 
-#set(CUDA_FOUND)
+#set(CUDA_FOUND False)
 
 if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
@@ -224,63 +226,3 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 #        ${PCL_LIBRARIES}
 #        yaml-cpp)
 endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-
-## Declare a cpp executable
-# add_executable(state_filtering_node src/state_filtering_node.cpp)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(state_filtering_node state_filtering_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(state_filtering_node
-#   ${catkin_LIBRARIES}
-# )
-
-#############
-## Install ##
-#############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables and/or libraries for installation
-# install(TARGETS state_filtering state_filtering_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_state_filtering.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

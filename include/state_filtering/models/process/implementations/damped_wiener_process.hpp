@@ -77,7 +77,7 @@ class DampedWienerProcess: public DampedWienerProcessTypes<ScalarType_, DIMENSIO
 public:
     typedef DampedWienerProcessTypes<ScalarType_, DIMENSION_EIGEN>  Types;
     typedef typename Types::ScalarType                              ScalarType;
-    typedef typename Types::StateType                              StateType;
+    typedef typename Types::StateType                               StateType;
     typedef typename Types::InputType                               InputType;
     typedef typename Types::NoiseType                               NoiseType;
     typedef Gaussian<ScalarType, DIMENSION_EIGEN>                   GaussianType;

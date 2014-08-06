@@ -110,6 +110,8 @@ void ImageVisualizer::set_image(
         min = min_value;
     }
 
+    //std::cout << "Min and Max of depth image " << max << " " << min << std::endl;
+
 	for(size_t i = 0; i < display_image.size(); i++)
 		display_image[i] = (display_image[i] - min) / (max-min) * 255.;
 
@@ -211,6 +213,8 @@ void ImageVisualizer::add_points(
 	}
 	if(min == max) min = 0;
 
+	std::cout << "Min and max of generated depth " << min << " " << max << std::endl;
+
 	for(int i = 0; i < int(point_indices.size()); i++)
 	{
 		int row = point_indices[i]/n_cols_;
@@ -222,16 +226,24 @@ void ImageVisualizer::add_points(
 	}
 }
 
-char ImageVisualizer::show_image(
-		const std::string &window_name,
-		const int &window_width, const int &window_height,
-		const int &delay) const
-{
-	cvNamedWindow(window_name.c_str(), CV_WINDOW_NORMAL);
+  char ImageVisualizer::show_image(
+				   const std::string &window_name,
+				   const int &window_width, const int &window_height,
+				   const int &delay) const
+  {
+    cvStartWindowThread();
+    cvNamedWindow(window_name.c_str(), CV_WINDOW_NORMAL);
     cvShowImage(window_name.c_str(), ((IplImage*)(image_)));
-	cvResizeWindow(window_name.c_str(), window_width, window_height);
-	return cvWaitKey(delay);
-}
+    cvResizeWindow(window_name.c_str(), window_width, window_height);
+    char out('l');
+    if(delay>0.0)
+      sleep(delay);
+    else 
+      out = cvWaitKey(delay);
+    cvDestroyWindow(window_name.c_str());
+    cvReleaseImage(((IplImage**)(&image_)));
+    return out;
+  }
 
 void ImageVisualizer::Cart2Index(
 		const Eigen::Vector3f &cart,

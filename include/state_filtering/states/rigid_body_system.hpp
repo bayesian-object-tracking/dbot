@@ -61,24 +61,26 @@ public:
     }
     virtual ~RigidBodySystem() {}
 
-    template <typename T> void operator = (const Eigen::MatrixBase<T>& state_vector)
-    {
-        count_state_ = state_vector.rows();
-        *((State*)(this)) = state_vector;
-    }
-
-    // read
-    virtual Vector  position            (const size_t& object_index = 0) const = 0;
-    virtual Vector  euler_vector        (const size_t& object_index = 0) const = 0;
+  template <typename T> 
+  void operator = (const Eigen::MatrixBase<T>& state_vector)
+  {
+    count_state_ = state_vector.rows();
+    *((State*)(this)) = state_vector;
+  }
+  
+  // read
+  virtual Vector       position            (const size_t& object_index = 0) const = 0;
+  virtual Vector       euler_vector        (const size_t& object_index = 0) const = 0;
+  virtual void  update        () const = 0;
 
     // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const
     {
         Scalar angle = euler_vector(object_index).norm();
         Vector axis = euler_vector(object_index).normalized();
-        if(std::isfinite(axis.norm()))
-            return Quaternion(AngleAxis(angle, axis));
-        else
+        if(std::isfinite(axis.norm())) 
+	  return Quaternion(AngleAxis(angle, axis));
+	else
             return Quaternion::Identity();
     }
     virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
