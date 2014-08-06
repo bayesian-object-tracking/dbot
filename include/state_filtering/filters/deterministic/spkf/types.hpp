@@ -19,7 +19,7 @@ typedef Eigen::Matrix<ScalarType, -1, 1> InputType;
 
 
 
-typedef distributions::BrownianObjectMotion<5, double> ProcessModel; // TODO: this is shit!!!
+typedef distributions::BrownianObjectMotion<double, 5> ProcessModel; // TODO: this is shit!!!
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
     typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>  MeasurementModel;
 

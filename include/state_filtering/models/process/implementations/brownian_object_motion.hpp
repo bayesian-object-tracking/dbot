@@ -56,17 +56,17 @@
 
 namespace distributions
 {
-template <int SIZE_OBJECTS, typename ScalarType_>
+template <typename ScalarType_, int OBJECTS_SIZE_EIGEN>
 struct BrownianObjectMotionTypes
 {
     enum
     {
         DIMENSION_PER_OBJECT = 6,
-        DIMENSION = SIZE_OBJECTS == -1 ? -1 : SIZE_OBJECTS * DIMENSION_PER_OBJECT
+        DIMENSION = OBJECTS_SIZE_EIGEN == -1 ? -1 : OBJECTS_SIZE_EIGEN * DIMENSION_PER_OBJECT
     };
 
     typedef ScalarType_                                             ScalarType;
-    typedef FloatingBodySystem<SIZE_OBJECTS>                        StateType;
+    typedef FloatingBodySystem<OBJECTS_SIZE_EIGEN>                        StateType;
     typedef Eigen::Matrix<ScalarType, DIMENSION, 1>                 InputType;
     typedef StationaryProcess<ScalarType, StateType, InputType>    StationaryProcessType;
     typedef GaussianMappable<ScalarType, StateType, DIMENSION>     GaussianMappableType;
@@ -75,14 +75,14 @@ struct BrownianObjectMotionTypes
 };
 
 
-template <int SIZE_OBJECTS = -1, typename ScalarType_ = double>
-class BrownianObjectMotion: public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::StationaryProcessType,
-                            public BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>::GaussianMappableType
+template <typename ScalarType_ = double, int OBJECTS_SIZE_EIGEN = -1>
+class BrownianObjectMotion: public BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>::StationaryProcessType,
+                            public BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>::GaussianMappableType
 
 {
 public:
     // types from parents
-    typedef BrownianObjectMotionTypes<SIZE_OBJECTS, ScalarType_>   Types;
+    typedef BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>   Types;
     typedef typename Types::ScalarType                             ScalarType;
     typedef typename Types::StateType                              StateType;
     typedef typename Types::InputType                              InputType;
@@ -102,10 +102,10 @@ public:
     {
         DISABLE_IF_DYNAMIC_SIZE(StateType);
 
-        quaternion_map_.resize(SIZE_OBJECTS);
-        rotation_center_.resize(SIZE_OBJECTS);
-        linear_process_.resize(SIZE_OBJECTS);
-        angular_process_.resize(SIZE_OBJECTS);
+        quaternion_map_.resize(OBJECTS_SIZE_EIGEN);
+        rotation_center_.resize(OBJECTS_SIZE_EIGEN);
+        linear_process_.resize(OBJECTS_SIZE_EIGEN);
+        angular_process_.resize(OBJECTS_SIZE_EIGEN);
     }
 
     BrownianObjectMotion(const unsigned& count_objects): Types::GaussianMappableType(count_objects*6),

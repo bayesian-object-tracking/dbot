@@ -21,7 +21,7 @@ object_names: [
 #,mugbox
 ]
 
-coordinate_sampling: false
+coordinate_sampling: true
 max_kl_divergence: 2.0
 
 use_gpu: true

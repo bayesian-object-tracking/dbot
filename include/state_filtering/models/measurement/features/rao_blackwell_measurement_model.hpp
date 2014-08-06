@@ -34,12 +34,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace distributions
 {
-template<typename ScalarType_, typename VectorType_, typename MeasurementType_, typename IndexType_ = size_t>
-class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, VectorType_>
+template<typename ScalarType_, typename StateType_, typename MeasurementType_, typename IndexType_ = size_t>
+class RaoBlackwellMeasurementModel: public Distribution<ScalarType_, StateType_>
 {
 public:
-    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType     ScalarType;
-    typedef typename Distribution<ScalarType_, VectorType_>::VectorType     StateType;
+    typedef typename Distribution<ScalarType_, StateType_>::ScalarType     ScalarType;
+    typedef typename Distribution<ScalarType_, StateType_>::VectorType     StateType;
     typedef MeasurementType_                                                MeasurementType;
     typedef IndexType_                                                      IndexType;
  public:

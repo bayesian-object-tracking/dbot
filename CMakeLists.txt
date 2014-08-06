@@ -122,7 +122,7 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
 
     ## Particle specific implementations
-    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
+#    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
     ## SPKF specific implementations
     src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp

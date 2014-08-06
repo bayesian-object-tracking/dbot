@@ -83,17 +83,17 @@ using namespace distributions;
 class MultiObjectTracker
 {
 public:
-    typedef double                              ScalarType;
-    typedef FloatingBodySystem<-1>              VectorType;
-    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
+    typedef double                                                                      ScalarType;
+    typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;
+    typedef typename ProcessType::StateType                                             StateType;
+    typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
+    typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
+    typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
 
-    typedef typename distributions::RaoBlackwellMeasurementModel<ScalarType, VectorType, MeasurementType> MeasurementModelType;
+    typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType> MeasurementModelType;
 
-
-
-
-
-//    typedef BrownianObjectMotion<>
+    typedef distributions::RaoBlackwellCoordinateParticleFilter
+    <ScalarType, StateType, MeasurementType, Eigen::Dynamic> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
@@ -262,8 +262,8 @@ public:
 
         cout << "initialized process model " << endl;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter>
-                (new distributions::RaoBlackwellCoordinateParticleFilter(observation_model, process_model, sampling_blocks, max_kl_divergence));
+        filter_ = boost::shared_ptr<FilterType>
+                (new FilterType(observation_model, process_model, sampling_blocks, max_kl_divergence));
 
         // for the initialization we do standard sampling
         filter_->SamplingBlocks(dependent_sampling_blocks);
@@ -363,7 +363,7 @@ private:
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter> filter_;
+    boost::shared_ptr<FilterType> filter_;
 
     // parameters
     vector<string> object_names_;
