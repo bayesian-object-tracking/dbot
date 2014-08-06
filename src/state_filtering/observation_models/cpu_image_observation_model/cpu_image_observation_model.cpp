@@ -62,9 +62,7 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
     Reset();
 }
 
-
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
-
 
 std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
                                                       std::vector<IndexType>& indices,
@@ -75,8 +73,6 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateTyp
     vector<float> loglikes(states.size(),0);
     for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
     {
-
-
         if(update)
         {
             new_visibility_probs[state_index] = visibility_probs_[indices[state_index]];
@@ -87,15 +83,6 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateTyp
         std::vector<float> predictions;
         object_model_->state(states[state_index]);
         object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
-
-
-        // added for debugging
-        //        if (state_index == 0) {
-        //            for (int i = 0; i < predictions.size(); i++) {
-        //                cout << "(CPU) index: " << intersect_indices[i] << ", depth: " << predictions[i] << endl;
-        //            }
-        //        }
-        // ----------------------------
 
         // we loop through all the pixels which intersect the object model ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         for(size_t i = 0; i < size_t(predictions.size()); i++)
@@ -144,33 +131,17 @@ std::vector<float> ImageMeasurementModelCPU::Loglikes(const std::vector<StateTyp
 }
 
 
-
-// set and get functions =============================================================================================================================================================================================================================================================================================
+// set and get functions
 const std::vector<float> ImageMeasurementModelCPU::Occlusions(size_t index) const
 {
     return visibility_probs_[index];
 }
-
-//void ImageMeasurementModelCPU::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-//                                                std::vector<std::vector<float> > &depth)
-//{
-//    intersect_indices.resize(states_.size());
-//    depth.resize(states_.size());
-
-//    for (size_t i = 0; i < states_.size(); i++) {
-//        object_model_->state(states_[i]);
-//        object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices[i], depth[i]);
-//    }
-//}
-
 
 void ImageMeasurementModelCPU::Reset()
 {
     Occlusions();
     observation_time_ = 0;
 }
-
-
 
 void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const ScalarType &delta_time)
 {
@@ -183,15 +154,12 @@ void ImageMeasurementModelCPU::Measurement(const MeasurementType& image, const S
     Measurement(std_measurement, delta_time);
 }
 
-
-
 void ImageMeasurementModelCPU::Occlusions(const float& visibility_prob)
 {
     float p = visibility_prob == -1 ? initial_visibility_prob_ : visibility_prob;
     visibility_probs_ = vector<vector<float> >(1, vector<float>(n_rows_*n_cols_, p));
     visibility_update_times_ = vector<vector<double> >(1, vector<double>(n_rows_*n_cols_, 0));
 }
-
 
 void ImageMeasurementModelCPU::Measurement(const std::vector<float>& observations, const ScalarType &delta_time)
 {

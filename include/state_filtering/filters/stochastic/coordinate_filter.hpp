@@ -51,6 +51,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
 
+#include <state_filtering/distributions/features/gaussian_mappable.hpp>
+
 //#include "image_visualizer.hpp"
 #include <omp.h>
 #include <string>
@@ -62,55 +64,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace distributions
 {
 
-template<typename ScalarType_, typename StateType_, typename MeasurementType_, int NOISE_DIMENSION_EIGEN>
+template<typename ScalarType_, typename StateType_, typename InputType_,
+         typename MeasurementType_, typename IndexType_, int NOISE_DIMENSION_EIGEN>
 class RaoBlackwellCoordinateParticleFilter
 {
-    // TODO: CHECK THAT PROCESS DERIVES FROM STATIONARY AND GAUSSIAN MAPPABLE
-    // AND MEASUREMENT MODEL FROM RAOBLACKWELLMEASUREMENT MODEL
 public:
-//    typedef typename ProcessType::ScalarType ScalarType;
-    typedef double ScalarType;
-    typedef size_t IndexType;
-    typedef FloatingBodySystem<-1> StateType;
+    // basic types
+    typedef ScalarType_         ScalarType;
+    typedef StateType_          StateType;
+    typedef InputType_          InputType;
+    typedef MeasurementType_    MeasurementType;
+    typedef IndexType_          IndexType;
 
-    // TODO: MAKE SURE THAT STATE TYPE FROM OBSERVATION MODEL AND PROCESS MODEL ARE THE SAME
+    // process model
+    typedef StationaryProcess<ScalarType, StateType, InputType>             StationaryType;
+    typedef GaussianMappable<ScalarType, StateType, NOISE_DIMENSION_EIGEN>  MappableType;
+    typedef typename MappableType::NoiseType                                NoiseType;
 
+    // measurement model
+    typedef distributions::RaoBlackwellMeasurementModel
+            <ScalarType, StateType, MeasurementType, IndexType>     MeasurementModelType;
 
-
-    typedef Eigen::VectorXd InputType;
-
-
-    typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
-
-
-    typedef distributions::BrownianObjectMotion<ScalarType, -1> ProcessModel;
-
-    typedef distributions::RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType> MeasurementModel;
-
-
-    typedef SumOfDeltas<ScalarType, StateType> StateDistributionType;
-
-    typedef MeasurementModel::MeasurementType Measurement;
-
-
-
-    typedef Eigen::VectorXd NoiseType;
-
-
-
-
-    typedef boost::shared_ptr<RaoBlackwellCoordinateParticleFilter> Ptr;
-
-    typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
-    typedef boost::shared_ptr<MeasurementModel> MeasurementModelPtr;
+    // state distribution
+    typedef SumOfDeltas<ScalarType, StateType>                      StateDistributionType;
 
 public:
-    RaoBlackwellCoordinateParticleFilter(const MeasurementModelPtr observation_model,
-                            const ProcessModelPtr process_model,
-                            const std::vector<std::vector<IndexType> >& sampling_blocks,
-                            const ScalarType& max_kl_divergence = 0):
+    template<typename ProcessPointer, typename MeasurementModelPointer>
+    RaoBlackwellCoordinateParticleFilter(const ProcessPointer           process_model,
+                                         const MeasurementModelPointer  observation_model,
+                                         const std::vector<std::vector<IndexType> >& sampling_blocks,
+                                         const ScalarType& max_kl_divergence = 0):
         measurement_model_(observation_model),
-        process_model_(process_model),
+        stationary_process_(process_model),
+        mappable_process_(process_model),
         max_kl_divergence_(max_kl_divergence)
     {
         SamplingBlocks(sampling_blocks);
@@ -118,8 +104,7 @@ public:
     virtual ~RaoBlackwellCoordinateParticleFilter() {}
 
 public:
-    // main functions
-    void Filter(const Measurement& measurement,
+    void Filter(const MeasurementType& measurement,
                 const ScalarType&  delta_time,
                 const InputType&   input)
     {
@@ -127,7 +112,7 @@ public:
         measurement_model_->Measurement(measurement, delta_time);
 
         loglikes_ = std::vector<float>(samples_.size(), 0);
-        noises_ = std::vector<NoiseType>(samples_.size(), NoiseType::Zero(dimension_));
+        noises_ = std::vector<NoiseType>(samples_.size(), NoiseType::Zero(mappable_process_->NoiseDimension()));
         next_samples_ = samples_;
 
         for(size_t block_index = 0; block_index < sampling_blocks_.size(); block_index++)
@@ -137,10 +122,10 @@ public:
                 for(size_t i = 0; i < sampling_blocks_[block_index].size(); i++)
                     noises_[particle_index](sampling_blocks_[block_index][i]) = unit_gaussian_.Sample()(0);
 
-                process_model_->Condition(delta_time,
+                stationary_process_->Condition(delta_time,
                                           samples_[particle_index],
                                           input);
-                next_samples_[particle_index] = process_model_->MapGaussian(noises_[particle_index]);
+                next_samples_[particle_index] = mappable_process_->MapGaussian(noises_[particle_index]);
             }
 
             bool update_occlusions = (block_index == sampling_blocks_.size()-1);
@@ -230,18 +215,23 @@ public:
         indices_ = std::vector<size_t>(samples_.size(), 0); measurement_model_->Reset();
         log_weights_ = std::vector<float>(samples_.size(), 0);
     }
-
     void SamplingBlocks(const std::vector<std::vector<IndexType> >& sampling_blocks)
     {
         sampling_blocks_ = sampling_blocks;
 
         // make sure sizes are consistent
-        dimension_ = 0;
+        IndexType dimension = 0;
         for(size_t i = 0; i < sampling_blocks_.size(); i++)
             for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
-                dimension_++;
+                dimension++;
 
-        // TODO: COMPARE THIS TO NOISE DIMENSION OF THE GAUSSIAN MAPPABLE PROCESS
+        if(dimension != mappable_process_->NoiseDimension())
+        {
+            std::cout << "the dimension of the sampling blocks is " << dimension
+                      << " while the dimension of the noise is "
+                      << mappable_process_->NoiseDimension() << std::endl;
+            exit(-1);
+        }
     }
 
     // get
@@ -255,11 +245,9 @@ public:
     }
 
 private:
-    unsigned dimension_;
-
+    // internal state
     // TODO this is not used properly yet
     StateDistributionType state_distribution_;
-
 
     // TODO: THE FLOAT SHOULD ALSO BE SCALAR TYPE?
     std::vector<StateType > samples_;
@@ -272,16 +260,19 @@ private:
     std::vector<float> loglikes_;
 
 
-    // process and observation models
-    MeasurementModelPtr measurement_model_;
-    ProcessModelPtr process_model_;
+    // measurement model
+    boost::shared_ptr<MeasurementModelType> measurement_model_;
 
-    // distribution for sampling
-    Gaussian<ScalarType, 1> unit_gaussian_;
+    // process model
+    boost::shared_ptr<StationaryType>   stationary_process_;
+    boost::shared_ptr<MappableType>     mappable_process_;
 
     // parameters
     std::vector<std::vector<IndexType> > sampling_blocks_;
     ScalarType max_kl_divergence_;
+
+    // distribution for sampling
+    Gaussian<ScalarType, 1> unit_gaussian_;
 };
 
 }

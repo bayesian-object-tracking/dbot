@@ -55,12 +55,12 @@
 namespace distributions
 {
 
-template <typename ScalarType_, typename VectorType_, typename InputType_>
-class StationaryProcess: public Distribution<ScalarType_, VectorType_>
+template <typename ScalarType_, typename StateType_, typename InputType_>
+class StationaryProcess: public Distribution<ScalarType_, StateType_>
 {
 public:
-    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType   ScalarType;
-    typedef typename Distribution<ScalarType_, VectorType_>::VectorType   StateType;
+    typedef typename Distribution<ScalarType_, StateType_>::ScalarType   ScalarType;
+    typedef typename Distribution<ScalarType_, StateType_>::VectorType   StateType;
     typedef InputType_                                                    InputType;
 
 public:

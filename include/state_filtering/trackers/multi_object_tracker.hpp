@@ -86,14 +86,17 @@ public:
     typedef double                                                                      ScalarType;
     typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;
     typedef typename ProcessType::StateType                                             StateType;
+    typedef typename ProcessType::InputType                                             InputType;
     typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
     typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
     typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
+    typedef MeasurementModelCPUType::IndexType                                    IndexType;
 
-    typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType> MeasurementModelType;
+
+    typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType, IndexType> MeasurementModelType;
 
     typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, MeasurementType, Eigen::Dynamic> FilterType;
+    <ScalarType, StateType, InputType, MeasurementType, IndexType, Eigen::Dynamic> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
@@ -263,7 +266,7 @@ public:
         cout << "initialized process model " << endl;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<FilterType>
-                (new FilterType(observation_model, process_model, sampling_blocks, max_kl_divergence));
+                (new FilterType(process_model, observation_model, sampling_blocks, max_kl_divergence));
 
         // for the initialization we do standard sampling
         filter_->SamplingBlocks(dependent_sampling_blocks);

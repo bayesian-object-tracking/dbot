@@ -57,7 +57,7 @@ RaoBlackwellCoordinateParticleFilter::RaoBlackwellCoordinateParticleFilter(const
 RaoBlackwellCoordinateParticleFilter::~RaoBlackwellCoordinateParticleFilter() { }
 
 
-void RaoBlackwellCoordinateParticleFilter::Filter(const Measurement& measurement,
+void RaoBlackwellCoordinateParticleFilter::Filter(const MeasurementType& measurement,
                                       const ScalarType&  delta_time,
                                       const InputType& input)
 {
