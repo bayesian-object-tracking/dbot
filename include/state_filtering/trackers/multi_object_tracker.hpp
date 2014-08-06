@@ -165,7 +165,7 @@ public:
                                                                           object_triangle_indices,
                                                                           rigid_body_system));
 
-        boost::shared_ptr<MeasurementModelType> observation_model;
+        boost::shared_ptr<MeasurementModelType> measurement_model;
         if(!use_gpu)
         {
             // cpu obseration model
@@ -173,7 +173,7 @@ public:
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcess>
                     occlusion_process(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<MeasurementModelType>(
+            measurement_model = boost::shared_ptr<MeasurementModelType>(
                         new distributions::ImageMeasurementModelCPU(camera_matrix,
                                                                     image.rows(),
                                                                     image.cols(),
@@ -187,13 +187,13 @@ public:
         {
             // gpu obseration model
             boost::shared_ptr<distributions::ImageMeasurementModelGPU>
-                    gpu_observation_model(new distributions::ImageMeasurementModelGPU(camera_matrix,
+                    gpu_measurement_model(new distributions::ImageMeasurementModelGPU(camera_matrix,
                                                                                       image.rows(),
                                                                                       image.cols(),
                                                                                       max_sample_count,
                                                                                       p_visible_init));
 
-            gpu_observation_model->Constants(object_vertices,
+            gpu_measurement_model->Constants(object_vertices,
                                                  object_triangle_indices,
                                                  p_visible_visible,
                                                  p_visible_occluded,
@@ -203,8 +203,8 @@ public:
                                                  6.0f,         // max_depth
                                                  -log(0.5));   // exponential_rate
 
-            gpu_observation_model->Initialize();
-            observation_model = gpu_observation_model;
+            gpu_measurement_model->Initialize();
+            measurement_model = gpu_measurement_model;
         }
 
         cout << "initialized observation omodel " << endl;
@@ -225,7 +225,7 @@ public:
         cout << "initialized process model " << endl;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
         filter_ = boost::shared_ptr<FilterType>
-                (new FilterType(process, observation_model, sampling_blocks, max_kl_divergence));
+                (new FilterType(process, measurement_model, sampling_blocks, max_kl_divergence));
 
         // for the initialization we do standard sampling
         vector<vector<size_t> > dependent_sampling_blocks(1);

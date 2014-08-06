@@ -54,7 +54,7 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 
 // tools
-#include <state_filtering/tools/part_mesh_model.hpp>
+#include <state_filtering/utils/part_mesh_model.hpp>
 
 class KinematicsFromURDF
 {

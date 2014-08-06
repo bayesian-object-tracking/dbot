@@ -83,8 +83,8 @@ public:
     ~ImageMeasurementModelCPU();
 
     std::vector<ScalarType> Loglikes(const std::vector<StateType>& states,
-                                std::vector<IndexType>&        indices,
-                                const bool&                    update = false);
+                                     std::vector<IndexType>&        indices,
+                                     const bool&                    update = false);
 
     void Measurement(const MeasurementType& image, const ScalarType& delta_time);
 

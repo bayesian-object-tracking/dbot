@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <state_filtering/tools/kinematics_from_urdf.hpp>
+#include <state_filtering/utils/kinematics_from_urdf.hpp>
 #include <boost/random/normal_distribution.hpp>
 
 KinematicsFromURDF::KinematicsFromURDF()

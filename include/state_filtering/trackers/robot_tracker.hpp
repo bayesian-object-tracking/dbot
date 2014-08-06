@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // tools
 #include <state_filtering/utils/object_file_reader.hpp>
-#include <state_filtering/tools/kinematics_from_urdf.hpp>
+#include <state_filtering/utils/kinematics_from_urdf.hpp>
 #include <state_filtering/utils/part_mesh_model.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/utils/pcl_interface.hpp>
@@ -95,29 +95,28 @@ class RobotTracker
 public:
     typedef double                                                                  ScalarType;
     typedef typename distributions::DampedWienerProcess<ScalarType, Eigen::Dynamic> ProcessType;
+    typedef typename ProcessType::StateType                                         StateType;
+    typedef typename ProcessType::InputType                                         InputType;
+    typedef typename distributions::ImageMeasurementModelCPU                        MeasurementModelType;
+    typedef MeasurementModelType::MeasurementType                                   MeasurementType;
+    typedef MeasurementModelType::IndexType                                         IndexType;
 
-
-
-
-
-    typedef Eigen::Matrix<double, -1, -1> Image;
-    typedef distributions::RaoBlackwellCoordinateParticleFilter FilterType;
+    typedef distributions::RaoBlackwellCoordinateParticleFilter
+    <ScalarType, StateType, InputType, MeasurementType, IndexType, Eigen::Dynamic> FilterType;
 
     RobotTracker():
         node_handle_("~"),
-        is_first_iteration_(true),
-        duration_(0),
-	tf_prefix_("MEAN")
+        tf_prefix_("MEAN"),
+        last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
     {
-        //ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("sample_count", sample_count_, node_handle_);
 	
-	pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
-	*pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
+        pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
+        *pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
     }
 
-    void Initialize(vector<VectorXd> single_body_samples,
+    void Initialize(vector<VectorXd> initial_samples,
                     const sensor_msgs::Image& ros_image,
                     Matrix3d camera_matrix,
                     boost::shared_ptr<KinematicsFromURDF> &urdf_kinematics)
@@ -126,9 +125,9 @@ public:
 
         // convert camera matrix and image to desired format ----------------------------------------------------------------------------
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-	camera_matrix_ = camera_matrix;
+        camera_matrix_ = camera_matrix;
         // TODO: Fix with non-fake arm_rgbd node
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
+        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
 
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -145,22 +144,22 @@ public:
         double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
 
         // initialize observation model =================================================================================================
-
         // Read the URDF for the specific robot and get part meshes
         std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
         urdf_kinematics->GetPartMeshes(part_meshes_);
         ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
-	// get the name of the root frame
-	root_ = urdf_kinematics->GetRootFrameID();
+        // get the name of the root frame
+        root_ = urdf_kinematics->GetRootFrameID();
 
-	// initialize the robot state publisher
-	robot_state_publisher_ = boost::shared_ptr<robot_state_pub::RobotStatePublisher>
-	  (new robot_state_pub::RobotStatePublisher(urdf_kinematics->GetTree()));
+        // initialize the robot state publisher
+        robot_state_publisher_ = boost::shared_ptr<robot_state_pub::RobotStatePublisher>
+        (new robot_state_pub::RobotStatePublisher(urdf_kinematics->GetTree()));
 
-        vector<vector<size_t> > dependencies;
-        urdf_kinematics->GetDependencies(dependencies);
+        // TODO: THIS SHOULD BE READ FROM CONFIG FILE
+        vector<vector<size_t> > sampling_blocks;
+        urdf_kinematics->GetDependencies(sampling_blocks);
 
         vector<vector<Vector3d> > part_vertices(part_meshes_.size());
         vector<vector<vector<int> > > part_triangle_indices(part_meshes_.size());
@@ -177,23 +176,22 @@ public:
         boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(),
                                                                            urdf_kinematics->num_joints(),
                                                                            urdf_kinematics));
-
         dimension_ = robot_state->state_size();
 
-	// initialize the result container for the emperical mean
-	mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(part_meshes_.size(),
-								   urdf_kinematics->num_joints(),
-								   urdf_kinematics));
+        // initialize the result container for the emperical mean
+        mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(part_meshes_.size(),
+                                                  urdf_kinematics->num_joints(),
+                                                  urdf_kinematics));
 
-        robot_renderer_ = boost::shared_ptr<obj_mod::RigidBodyRenderer>(new obj_mod::RigidBodyRenderer(part_vertices,
-												       part_triangle_indices,
-												       robot_state));
+        robot_renderer_ = boost::shared_ptr<obj_mod::RigidBodyRenderer>(
+                    new obj_mod::RigidBodyRenderer(part_vertices,
+                                                   part_triangle_indices,
+                                                   robot_state));
 
         // FOR DEBUGGING
-	
         std::cout << "Image rows and cols " << image.rows() << " " << image.cols() << std::endl;
 
-        robot_renderer_->state(single_body_samples[0]);
+        robot_renderer_->state(initial_samples[0]);
         std::vector<int> indices;
         std::vector<float> depth;
         robot_renderer_->Render(camera_matrix,
@@ -204,7 +202,7 @@ public:
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
-	image_viz.show_image("enchilada ");
+        image_viz.show_image("enchilada ");
 
 	/*
         std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer_->vertices();
@@ -218,68 +216,39 @@ public:
         cloud_vis.show();
 	*/
 
+        boost::shared_ptr<MeasurementModelType> measurement_model;
 
-        boost::shared_ptr<distributions::RaoBlackwellMeasurementModel> observation_model;
-        if(!use_gpu)
-        {
-            // cpu obseration model -----------------------------------------------------------------------------------------------------
-            boost::shared_ptr<distributions::KinectMeasurementModel>
-                    kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
-            boost::shared_ptr<proc_mod::OcclusionProcess>
-                    occlusion_process_model(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<distributions::RaoBlackwellMeasurementModel>(new distributions::ImageMeasurementModelCPU(
-                                                                                      camera_matrix,
-                                                                                      image.rows(),
-                                                                                      image.cols(),
-                                                                                      single_body_samples.size(),
-                                                                                      robot_state,
-                                                                                      robot_renderer_,
-                                                                                      kinect_measurement_model,
-                                                                                      occlusion_process_model,
-                                                                                      p_visible_init));
-        }
-        else
-        {
-            /*
-            // gpu obseration model -----------------------------------------------------------------------------------------------------
-            boost::shared_ptr<obs_mod::GPUImageObservationModel> gpu_observation_model(new obs_mod::GPUImageObservationModel(
-                                                                                           camera_matrix,
-                                                                                           image.rows(),
-                                                                                           image.cols(),
-                                                                                           max_sample_count,
-                                                                                           p_visible_init,
-                                                                                           robot_state));
+        // cpu obseration model -----------------------------------------------------------------------------------------------------
+        boost::shared_ptr<distributions::KinectMeasurementModel> kinect_measurement_model(
+                    new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<proc_mod::OcclusionProcess> occlusion_process_model(
+                    new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
+        measurement_model = boost::shared_ptr<MeasurementModelType>(
+                    new MeasurementModelType(camera_matrix,
+                                             image.rows(),
+                                             image.cols(),
+                                             initial_samples.size(),
+                                             robot_renderer_,
+                                             kinect_measurement_model,
+                                             occlusion_process_model,
+                                             p_visible_init));
 
-            gpu_observation_model->set_constants(object_vertices,
-                                                 object_triangle_indices,
-                                                 p_visible_visible,
-                                                 p_visible_occluded,
-                                                 tail_weight,
-                                                 model_sigma,
-                                                 sigma_factor,
-                                                 6.0f,         // max_depth
-                                                 -log(0.5));   // exponential_rate
-
-            gpu_observation_model->Initialize();
-            observation_model = gpu_observation_model;
-      */
-        }
 
         // initialize process model =====================================================================================================
         boost::shared_ptr<ProcessType> process(new ProcessType(dimension_));
-        MatrixXd joint_covariance = MatrixXd::Identity(process->variable_size(), process->Dimension())
-                                                                 * pow(joint_angle_sigma, 2);
+        MatrixXd joint_covariance = MatrixXd::Identity(dimension_, dimension_) * pow(joint_angle_sigma, 2);
         process->Parameters(0., joint_covariance);
 
         // initialize coordinate_filter =================================================================================================
-        filter_ = boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter>
-                (new distributions::RaoBlackwellCoordinateParticleFilter(observation_model, process, dependencies));
-
+        // TODO: THIS HAS TO BE READ FROM CONFIG FILE
+        double max_kl_divergence = 2.0;
+        filter_ = boost::shared_ptr<FilterType>(
+                    new FilterType(process, measurement_model, sampling_blocks, max_kl_divergence));
 
         // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
-        filter_->Samples(single_body_samples);
-        filter_->Filter(image, 0.0, VectorXd::Zero(dimension_));
+        filter_->Samples(initial_samples);
+        filter_->Filter(image, 0.0, InputType::Zero(dimension_));
         filter_->Resample(sample_count_);
     }
 
@@ -288,29 +257,17 @@ public:
         std::cout << "Calling the filter function " << std::endl;
         boost::mutex::scoped_lock lock(mutex_);
 
-        // convert imagex
-        Image image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_) / 1000.; // convert to m
+        if(std::isnan(last_measurement_time_))
+            last_measurement_time_ = ros_image.header.stamp.toSec();
+        ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
-        // the time since start is computed
-        if(is_first_iteration_)
-        {
-            previous_time_ = ros_image.header.stamp.toSec();
-            is_first_iteration_ = false;
-        }
-        duration_ += ros_image.header.stamp.toSec() - previous_time_;
+        // convert image
+        MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_) / 1000.; // convert to m
 
         // filter
         INIT_PROFILING;
-        filter_->Enchilada(FilterType::InputType::Zero(dimension_),
-                           duration_,
-                           image,
-                           sample_count_);
+        filter_->Filter(image, delta_time, VectorXd::Zero(dimension_));
         MEASURE("-----------------> total time for filtering");
-
-        previous_time_ = ros_image.header.stamp.toSec();
-
-
-
 
 
 	// get the mean estimation for the robot joints
@@ -346,9 +303,6 @@ public:
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
-
-
-
 private:  
 
   void publishTransform(const ros::Time& time,
@@ -361,7 +315,7 @@ private:
     br.sendTransform(tf::StampedTransform(transform, time, from, to));
   }
 
-  void publishPointCloud(const Image&       image,
+  void publishPointCloud(const MeasurementType&       image,
 			 const std::string& frame_id,
 			 const ros::Time&   stamp)
   {
@@ -424,8 +378,9 @@ private:
     if (  pub_point_cloud_->getNumSubscribers () > 0)
       pub_point_cloud_->publish (points);
   }
+
+  ScalarType last_measurement_time_;
   
-  double duration_;
 
   boost::mutex mutex_;
   ros::NodeHandle node_handle_;
@@ -435,9 +390,6 @@ private:
   boost::shared_ptr<RobotState<> > mean_;
   boost::shared_ptr<robot_state_pub::RobotStatePublisher> robot_state_publisher_;
   boost::shared_ptr<ros::Publisher> pub_point_cloud_;
-
-  bool is_first_iteration_;
-  double previous_time_;
 
   std::string tf_prefix_;
   std::string root_;
