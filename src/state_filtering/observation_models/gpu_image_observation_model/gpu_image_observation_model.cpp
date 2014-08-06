@@ -90,7 +90,7 @@ void ImageMeasurementModelGPU::Initialize() {
 }
 
 
-std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<VectorType> &states,
+std::vector<float> ImageMeasurementModelGPU::Loglikes(const std::vector<StateType> &states,
         std::vector<IndexType> &occlusion_indices,
         const bool& update_occlusions)
 {

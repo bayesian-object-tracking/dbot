@@ -102,8 +102,6 @@ public:
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
-        ri::ReadParameter("factor_evaluation_count", factor_evaluation_count_, node_handle_);
-
 
         object_publisher_ = node_handle_.advertise<visualization_msgs::Marker>("object_model", 0);
     }
@@ -134,23 +132,28 @@ public:
         ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
 
 
+        vector<vector<size_t> > sampling_blocks;
         if(coordinate_sampling_)
         {
-            dependencies.resize(object_names_.size()*6);
-            for(size_t i = 0; i < dependencies.size(); i++)
-                dependencies[i] = vector<size_t>(1, i);
+            sampling_blocks.resize(object_names_.size()*6);
+            for(size_t i = 0; i < sampling_blocks.size(); i++)
+                sampling_blocks[i] = vector<size_t>(1, i);
         }
         else
         {
-            dependencies.resize(1);
-            dependencies[0].resize(object_names_.size()*6);
+            sampling_blocks.resize(1);
+            sampling_blocks[0].resize(object_names_.size()*6);
 
-            for(size_t i = 0; i < dependencies[0].size(); i++)
-                dependencies[0][i] = i;
+            for(size_t i = 0; i < sampling_blocks[0].size(); i++)
+                sampling_blocks[0][i] = i;
         }
+        cout << "sampling blocks: " << endl;
+        hf::PrintVector(sampling_blocks);
 
-        cout << "depencies: " << endl;
-        hf::PrintVector(dependencies);
+        vector<vector<size_t> > dependent_sampling_blocks(1);
+        dependent_sampling_blocks[0].resize(object_names_.size()*6);
+        for(size_t i = 0; i < dependent_sampling_blocks[0].size(); i++)
+            dependent_sampling_blocks[0][i] = i;
 
 
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
@@ -208,7 +211,6 @@ public:
                                                                                           image.rows(),
                                                                                           image.cols(),
                                                                                           initial_states.size(),
-//                                                                                          rigid_body_system,
                                                                                           object_renderer,
                                                                                           kinect_measurement_model,
                                                                                           occlusion_process_model,
@@ -260,11 +262,11 @@ public:
 
         cout << "initialized process model " << endl;
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<distributions::CoordinateParticleFilter>
-                (new distributions::CoordinateParticleFilter(observation_model, process_model, dependencies, max_kl_divergence));
+        filter_ = boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter>
+                (new distributions::RaoBlackwellCoordinateParticleFilter(observation_model, process_model, sampling_blocks, max_kl_divergence));
 
-
-        cout << "initialized filter " << endl;
+        // for the initialization we do standard sampling
+        filter_->SamplingBlocks(dependent_sampling_blocks);
         if(state_is_partial)
         {
             // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -272,7 +274,6 @@ public:
             for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
                 default_state.position(object_index) = Vector3d(0, 0, 1.5); // outside of image
 
-            cout << "creating intiial stuff" << endl;
             vector<FloatingBodySystem<> > multi_body_samples(initial_states.size());
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
                 multi_body_samples[state_index] = default_state;
@@ -288,26 +289,11 @@ public:
                     multi_body_samples[state_index] = full_initial_state;
                 }
                 filter_->Samples(multi_body_samples);
-
-
-
-//                filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
-                filter_->Evaluate(image);
+                filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
                 filter_->Resample(multi_body_samples.size());
 
                 multi_body_samples = filter_->Samples();
             }
-
-            // we evaluate the initial particles and resample ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            cout << "evaluating initial particles cpu ..." << endl;
-
-
-//            multi_body_samples.resize(evaluation_count_/dependencies.size());
-//            filter_->Samples(multi_body_samples);
-
-
-            filter_->Evaluate(image);
-            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));
         }
         else
         {
@@ -315,24 +301,12 @@ public:
             for(size_t i = 0; i < multi_body_samples.size(); i++)
                 multi_body_samples[i] = initial_states[i];
 
-
-//            cout << "setting states " << endl;
-//            filter_->Samples(multi_body_samples);
-//            multi_body_samples = filter_->Samples();
-//            multi_body_samples.resize(evaluation_count_/dependencies.size());
-//            filter_->Samples(multi_body_samples);
-
-
-
-            cout << "setting states " << endl;
             filter_->Samples(multi_body_samples);
-            cout << "evaluating " << endl;
-            filter_->Evaluate(image);
-            cout << "resampling " << endl;
-            filter_->Resample(evaluation_count_/(dependencies.size() * factor_evaluation_count_));
+            filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
        }
 
-        cout << "digedidone " << endl;
+        filter_->Resample(evaluation_count_/sampling_blocks.size());
+        filter_->SamplingBlocks(sampling_blocks);
     }
 
     VectorXd Filter(const sensor_msgs::Image& ros_image)
@@ -389,15 +363,12 @@ private:
     ros::NodeHandle node_handle_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<distributions::CoordinateParticleFilter> filter_;
+    boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter> filter_;
 
     // parameters
     vector<string> object_names_;
     int downsampling_factor_;
     int evaluation_count_;
-    int factor_evaluation_count_;
-
-    vector<vector<size_t> > dependencies;
 
     bool coordinate_sampling_;
 };

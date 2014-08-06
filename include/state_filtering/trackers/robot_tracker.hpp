@@ -88,7 +88,7 @@ class RobotTracker
 {
 public:
     typedef Eigen::Matrix<double, -1, -1> Image;
-    typedef distributions::CoordinateParticleFilter FilterType;
+    typedef distributions::RaoBlackwellCoordinateParticleFilter FilterType;
 
     RobotTracker():
         node_handle_("~"),
@@ -248,8 +248,8 @@ public:
 
 
         // initialize coordinate_filter ============================================================================================================================================================================================================================================================
-        filter_ = boost::shared_ptr<distributions::CoordinateParticleFilter>
-                (new distributions::CoordinateParticleFilter(observation_model, process_model, dependencies));
+        filter_ = boost::shared_ptr<distributions::RaoBlackwellCoordinateParticleFilter>
+                (new distributions::RaoBlackwellCoordinateParticleFilter(observation_model, process_model, dependencies));
 
 
 
@@ -279,7 +279,7 @@ public:
             }
             filter_->Samples(multi_body_samples);
             filter_->Evaluate(image);
-            filter_->Resample(multi_body_samples.size());
+            filter_->ResampleEnchilada(multi_body_samples.size());
             multi_body_samples = filter_->Samples();
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,7 +288,7 @@ public:
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->Samples(multi_body_samples);
         filter_->Evaluate(image);
-        filter_->Resample(sample_count_);
+        filter_->ResampleEnchilada(sample_count_);
     }
 
     void Filter(const sensor_msgs::Image& ros_image)
