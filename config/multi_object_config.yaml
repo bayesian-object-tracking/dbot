@@ -4,7 +4,7 @@ source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/h
 
 max_kl_divergence: 2.0
 
-use_gpu: true
+use_gpu: false
 evaluation_count: 2000 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
