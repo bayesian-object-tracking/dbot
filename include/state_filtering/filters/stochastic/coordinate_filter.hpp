@@ -64,29 +64,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace distributions
 {
 
-template<typename ScalarType_, typename StateType_, typename InputType_,
-         typename MeasurementType_, typename MeasurementStateType_,typename IndexType_, int NOISE_DIMENSION_EIGEN>
+
+template<typename ScalarType_, typename StateType_, typename ProcessType_, typename ObserverType_>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
-    // basic types
-    typedef ScalarType_         ScalarType;
-    typedef StateType_          StateType;
-    typedef InputType_          InputType;
-    typedef MeasurementType_    MeasurementType;
-    typedef IndexType_          IndexType;
 
-    // process model
-    typedef StationaryProcess<ScalarType, StateType, InputType>             StationaryType;
-    typedef GaussianMappable<ScalarType, StateType, NOISE_DIMENSION_EIGEN>  MappableType;
-    typedef typename MappableType::NoiseType                                NoiseType;
 
-    // measurement model
+    // process model features
+    typedef StationaryProcess<typename ProcessType_::ScalarType,
+                              typename ProcessType_::StateType, typename ProcessType_::InputType>               StationaryType;
+    typedef GaussianMappable< typename ProcessType_::ScalarType,
+                              typename ProcessType_::StateType, ProcessType_::NoiseType::SizeAtCompileTime>     MappableType;
+
+    // measurement model features
     typedef distributions::RaoBlackwellMeasurementModel
-            <ScalarType, MeasurementStateType_, MeasurementType, IndexType>     MeasurementModelType;
+                                 <typename ObserverType_::ScalarType,      typename ObserverType_::StateType,
+                                  typename ObserverType_::MeasurementType, typename ObserverType_::IndexType>   ObserverType;
+
+    // basic types
+    typedef ScalarType_                              ScalarType;
+    typedef StateType_                               StateType;
+    typedef typename StationaryType::InputType       InputType;
+    typedef typename MappableType::NoiseType         NoiseType;
+    typedef typename ObserverType::MeasurementType   MeasurementType;
+    typedef typename ObserverType::IndexType         IndexType;
 
     // state distribution
-    typedef SumOfDeltas<ScalarType, StateType>                      StateDistributionType;
+    typedef SumOfDeltas<ScalarType, StateType>       StateDistributionType;
 
 public:
     template<typename ProcessPointer, typename MeasurementModelPointer>
@@ -257,7 +262,7 @@ private:
 
 
     // measurement model
-    boost::shared_ptr<MeasurementModelType> measurement_model_;
+    boost::shared_ptr<ObserverType> measurement_model_;
 
     // process model
     boost::shared_ptr<StationaryType>   stationary_process_;

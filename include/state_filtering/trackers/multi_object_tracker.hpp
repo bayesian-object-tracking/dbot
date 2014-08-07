@@ -84,11 +84,12 @@ class MultiObjectTracker
 {
 public:
     typedef double                                                                      ScalarType;
+    typedef FloatingBodySystem<Eigen::Dynamic>                                          StateType;
+
     typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;
-    typedef typename ProcessType::StateType                                             StateType;
-    typedef typename ProcessType::InputType                                             InputType;
     typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
     typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
+
     typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
     typedef MeasurementModelCPUType::StateType                                          MeasurementStateType;
     typedef MeasurementModelCPUType::IndexType                                          IndexType;
@@ -98,7 +99,7 @@ public:
                         MeasurementModelType;
 
     typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, InputType, MeasurementType, MeasurementStateType, IndexType, Eigen::Dynamic> FilterType;
+    <ScalarType, StateType, ProcessType, MeasurementModelCPUType> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
@@ -175,7 +176,7 @@ public:
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
             boost::shared_ptr<proc_mod::OcclusionProcess>
                     occlusion_process(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-            measurement_model = boost::shared_ptr<MeasurementModelType>(
+            measurement_model = boost::shared_ptr<distributions::ImageMeasurementModelCPU>(
                         new distributions::ImageMeasurementModelCPU(camera_matrix,
                                                                     image.rows(),
                                                                     image.cols(),
