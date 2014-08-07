@@ -99,10 +99,12 @@ public:
     typedef typename ProcessType::InputType                                         InputType;
     typedef typename distributions::ImageMeasurementModelCPU                        MeasurementModelType;
     typedef MeasurementModelType::MeasurementType                                   MeasurementType;
+    typedef MeasurementModelType::StateType                                         MeasurementStateType;
     typedef MeasurementModelType::IndexType                                         IndexType;
 
+
     typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, InputType, MeasurementType, IndexType, Eigen::Dynamic> FilterType;
+    <ScalarType, StateType, InputType, MeasurementType, MeasurementStateType, IndexType, Eigen::Dynamic> FilterType;
 
     RobotTracker():
         node_handle_("~"),

@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 
 class RobotTrackerNode

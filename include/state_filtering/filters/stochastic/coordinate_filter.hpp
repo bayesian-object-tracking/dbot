@@ -65,7 +65,7 @@ namespace distributions
 {
 
 template<typename ScalarType_, typename StateType_, typename InputType_,
-         typename MeasurementType_, typename IndexType_, int NOISE_DIMENSION_EIGEN>
+         typename MeasurementType_, typename MeasurementStateType_,typename IndexType_, int NOISE_DIMENSION_EIGEN>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
@@ -83,7 +83,7 @@ public:
 
     // measurement model
     typedef distributions::RaoBlackwellMeasurementModel
-            <ScalarType, StateType, MeasurementType, IndexType>     MeasurementModelType;
+            <ScalarType, MeasurementStateType_, MeasurementType, IndexType>     MeasurementModelType;
 
     // state distribution
     typedef SumOfDeltas<ScalarType, StateType>                      StateDistributionType;

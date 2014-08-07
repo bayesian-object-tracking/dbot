@@ -90,13 +90,15 @@ public:
     typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
     typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
     typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
+    typedef MeasurementModelCPUType::StateType                                          MeasurementStateType;
     typedef MeasurementModelCPUType::IndexType                                          IndexType;
 
 
-    typedef RaoBlackwellMeasurementModel<ScalarType, StateType, MeasurementType, IndexType> MeasurementModelType;
+    typedef RaoBlackwellMeasurementModel<ScalarType, MeasurementStateType, MeasurementType, IndexType>
+                        MeasurementModelType;
 
     typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, InputType, MeasurementType, IndexType, Eigen::Dynamic> FilterType;
+    <ScalarType, StateType, InputType, MeasurementType, MeasurementStateType, IndexType, Eigen::Dynamic> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
