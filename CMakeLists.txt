@@ -192,26 +192,26 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         yaml-cpp)
 
     ## robot_tracker
-    add_executable(robot_tracker
-        src/${PROJECT_NAME}/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
-        ${PROJECT_NAME}_gpu
-        ${PROJECT_NAME}_cuda
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        ${CUDA_LIBRARIES}
-        yaml-cpp)
+#    add_executable(robot_tracker
+#        src/${PROJECT_NAME}/robot_tracker_node.cpp)
+#    target_link_libraries(robot_tracker
+#        ${PROJECT_NAME}
+#        ${PROJECT_NAME}_gpu
+#        ${PROJECT_NAME}_cuda
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${PCL_LIBRARIES}
+#        ${CUDA_LIBRARIES}
+#        yaml-cpp)
 else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
     ## robot_tracker
-    add_executable(robot_tracker
-      src/${PROJECT_NAME}/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
+#    add_executable(robot_tracker
+#      src/${PROJECT_NAME}/robot_tracker_node.cpp)
+#    target_link_libraries(robot_tracker
+#        ${PROJECT_NAME}
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${PCL_LIBRARIES}
+#        yaml-cpp)
 endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)

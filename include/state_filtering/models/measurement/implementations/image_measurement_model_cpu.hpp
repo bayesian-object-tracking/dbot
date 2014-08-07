@@ -47,7 +47,7 @@ namespace distributions
 struct ImageMeasurementModelCPUTypes
 {
     typedef double                              ScalarType;
-    typedef FloatingBodySystem<-1>              StateType;
+    typedef RigidBodySystem<-1>                 StateType;
     typedef Eigen::Matrix<ScalarType, -1, -1>   MeasurementType;
     typedef size_t                              IndexType;
 
@@ -82,7 +82,7 @@ public:
 
     ~ImageMeasurementModelCPU();
 
-    std::vector<ScalarType> Loglikes(const std::vector<StateType>& states,
+    std::vector<ScalarType> Loglikes(const std::vector<const StateType*>& states,
                                      std::vector<IndexType>&        indices,
                                      const bool&                    update = false);
 

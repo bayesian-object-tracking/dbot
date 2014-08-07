@@ -90,7 +90,8 @@ void ImageMeasurementModelGPU::Initialize() {
 }
 
 
-std::vector<ImageMeasurementModelGPU::ScalarType> ImageMeasurementModelGPU::Loglikes(const std::vector<StateType> &states,
+std::vector<ImageMeasurementModelGPU::ScalarType>
+ImageMeasurementModelGPU::Loglikes(const std::vector<const StateType *> &states,
         std::vector<IndexType> &occlusion_indices,
         const bool& update_occlusions)
 {
@@ -128,18 +129,18 @@ std::vector<ImageMeasurementModelGPU::ScalarType> ImageMeasurementModelGPU::Logl
 
         // convert to internal state format
         vector<vector<vector<float> > > states_internal_format( n_poses_,
-                                                                vector<vector<float> >(states[0].bodies_size(),
+                                                                vector<vector<float> >(states[0]->bodies_size(),
                                                                 vector<float>(7, 0)));
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-            for(size_t body_index = 0; body_index < states[state_index].bodies_size(); body_index++)
+            for(size_t body_index = 0; body_index < states[state_index]->bodies_size(); body_index++)
             {
-                states_internal_format[state_index][body_index][0] = states[state_index].quaternion(body_index).w();
-                states_internal_format[state_index][body_index][1] = states[state_index].quaternion(body_index).x();
-                states_internal_format[state_index][body_index][2] = states[state_index].quaternion(body_index).y();
-                states_internal_format[state_index][body_index][3] = states[state_index].quaternion(body_index).z();
-                states_internal_format[state_index][body_index][4] = states[state_index].position(body_index)[0];
-                states_internal_format[state_index][body_index][5] = states[state_index].position(body_index)[1];
-                states_internal_format[state_index][body_index][6] = states[state_index].position(body_index)[2];
+                states_internal_format[state_index][body_index][0] = states[state_index]->quaternion(body_index).w();
+                states_internal_format[state_index][body_index][1] = states[state_index]->quaternion(body_index).x();
+                states_internal_format[state_index][body_index][2] = states[state_index]->quaternion(body_index).y();
+                states_internal_format[state_index][body_index][3] = states[state_index]->quaternion(body_index).z();
+                states_internal_format[state_index][body_index][4] = states[state_index]->position(body_index)[0];
+                states_internal_format[state_index][body_index][5] = states[state_index]->position(body_index)[1];
+                states_internal_format[state_index][body_index][6] = states[state_index]->position(body_index)[2];
             }
 
 #ifdef PROFILING_ACTIVE

@@ -65,7 +65,7 @@ ImageMeasurementModelCPU::ImageMeasurementModelCPU(
 ImageMeasurementModelCPU::~ImageMeasurementModelCPU() { }
 
 std::vector<ImageMeasurementModelCPU::ScalarType>
-ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
+ImageMeasurementModelCPU::Loglikes(const std::vector<const StateType *> &states,
                                    std::vector<IndexType>& indices,
                                    const bool& update)
 {
@@ -82,7 +82,8 @@ ImageMeasurementModelCPU::Loglikes(const std::vector<StateType>& states,
         // we predict observations_ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         std::vector<int> intersect_indices;
         std::vector<float> predictions;
-        object_model_->state(states[state_index]);
+        //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
+        object_model_->state(*states[state_index]);
         object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
 
         // we loop through all the pixels which intersect the object model ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
