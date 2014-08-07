@@ -66,10 +66,10 @@ struct BrownianObjectMotionTypes
     };
 
     typedef ScalarType_                                             ScalarType;
-    typedef FloatingBodySystem<OBJECTS_SIZE_EIGEN>                        StateType;
+    typedef FloatingBodySystem<OBJECTS_SIZE_EIGEN>                  StateType;
     typedef Eigen::Matrix<ScalarType, DIMENSION, 1>                 InputType;
-    typedef StationaryProcess<ScalarType, StateType, InputType>    StationaryProcessType;
-    typedef GaussianMappable<ScalarType, StateType, DIMENSION>     GaussianMappableType;
+    typedef StationaryProcess<ScalarType, StateType, InputType>     StationaryProcessType;
+    typedef GaussianMappable<ScalarType, StateType, DIMENSION>      GaussianMappableType;
 
     typedef typename GaussianMappableType::NoiseType                NoiseType;
 };

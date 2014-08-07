@@ -45,9 +45,24 @@ public:
  public:
     virtual ~RaoBlackwellMeasurementModel() {}
 
-    virtual std::vector<ScalarType> Loglikes(const std::vector<StateType>&  states,
-                                             std::vector<IndexType>&        indices,
-                                             const bool&                    update = false) = 0;
+    // since we can not implicitly cast a vector globally we do it here locally
+    template<typename Type>
+    std::vector<ScalarType> Loglikes(const std::vector<Type>&  states,
+                                     std::vector<IndexType>&   indices,
+                                     const bool&               update = false)
+    {
+        std::vector<const StateType*>  state_pointers(states.size());
+        for(IndexType i = 0; i < states.size(); i++)
+        {
+            state_pointers[i] = &(states[i]);
+        }
+
+        return Loglikes(state_pointers, indices, update);
+    }
+    virtual std::vector<ScalarType> Loglikes(const std::vector<const StateType*>&  states,
+                                             std::vector<IndexType>&   indices,
+                                             const bool&               update = false) = 0;
+
 
     virtual void Measurement(const MeasurementType& image, const ScalarType& delta_time) = 0;
 

@@ -82,7 +82,7 @@ public:
 
     ~ImageMeasurementModelCPU();
 
-    std::vector<ScalarType> Loglikes(const std::vector<StateType>& states,
+    std::vector<ScalarType> Loglikes(const std::vector<const StateType*>& states,
                                      std::vector<IndexType>&        indices,
                                      const bool&                    update = false);
 

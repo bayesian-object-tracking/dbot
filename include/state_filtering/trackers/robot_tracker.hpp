@@ -93,9 +93,14 @@ using namespace distributions;
 class RobotTracker
 {
 public:
+    // TODO: STATE TYPE OF THE PROCESS MODEL IS NOT THE SAME AS THE STATE TYPE WE HAVE HERE
     typedef double                                                                  ScalarType;
     typedef typename distributions::DampedWienerProcess<ScalarType, Eigen::Dynamic> ProcessType;
-    typedef typename ProcessType::StateType                                         StateType;
+
+
+//    typedef RobotState<>                                                            StateType;
+    typedef ProcessType::StateType                                                  StateType;
+
     typedef typename ProcessType::InputType                                         InputType;
     typedef typename distributions::ImageMeasurementModelCPU                        MeasurementModelType;
     typedef MeasurementModelType::MeasurementType                                   MeasurementType;

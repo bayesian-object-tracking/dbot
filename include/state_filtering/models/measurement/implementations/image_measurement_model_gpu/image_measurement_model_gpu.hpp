@@ -61,7 +61,7 @@ public:
                        const float max_depth,
                        const float exponential_rate);
 
-    std::vector<ScalarType> Loglikes(const std::vector<StateType>& states,
+    std::vector<ScalarType> Loglikes(const std::vector<const StateType*>& states,
                                      std::vector<IndexType>& occlusion_indices,
                                      const bool& update_occlusions = false);
 
