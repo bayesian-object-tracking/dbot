@@ -54,8 +54,7 @@ class RobotTrackerNode
   string camera_info_topic_;
   int initial_sample_count_;
 
-  Matrix3d camera_matrix_;
-  
+ 
   sensor_msgs::Image ros_image_;
 
   sensor_msgs::JointState joint_state_;
@@ -82,7 +81,7 @@ public:
 									      this);
     // initialize the kinematics 
     boost::shared_ptr<KinematicsFromURDF> urdf_kinematics(new KinematicsFromURDF());
-   
+
     // read the node parameters
     ri::ReadParameter("depth_image_topic", depth_image_topic_, priv_nh_);
     ri::ReadParameter("camera_info_topic", camera_info_topic_, priv_nh_);
@@ -92,9 +91,10 @@ public:
 									     1,
 									     &RobotTrackerNode::depthImageCallback, 
 									     this);
-
+    Matrix3d camera_matrix = Matrix3d::Zero();
     // get the camera parameters
-    camera_matrix_ = ri::GetCameraMatrix<double>(camera_info_topic_, nh_, 2.0);
+    while(camera_matrix.sum() == 0.0)
+      camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic_, nh_, 2.0);
     
     while(!(has_joints_ & has_image_))
       {
@@ -110,7 +110,7 @@ public:
       initial_states = urdf_kinematics->GetInitialJoints(joint_state_copy_);
 
     // intialize the filter
-    robot_tracker_.Initialize(initial_states, ros_image_, camera_matrix_, urdf_kinematics);
+    robot_tracker_.Initialize(initial_states, ros_image_, camera_matrix, urdf_kinematics);
     cout << "done initializing" << endl;
    
     

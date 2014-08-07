@@ -140,14 +140,22 @@ GetCameraMatrix(const std::string& camera_info_topic,
                 ros::NodeHandle& node_handle,
                 const Scalar& seconds)
 {
+  // TODO: Check if const pointer is valid before accessing memory
     sensor_msgs::CameraInfo::ConstPtr camera_info =
             ros::topic::waitForMessage<sensor_msgs::CameraInfo> (camera_info_topic,
                                                                  node_handle,
                                                                  ros::Duration(seconds));
-    Eigen::Matrix<Scalar, 3, 3> camera_matrix;
+    
+    Eigen::Matrix<Scalar, 3, 3> camera_matrix = Eigen::Matrix<Scalar, 3, 3>::Zero();
+    
+    if(!camera_info) {
+      // if not topic was received within <seconds>
+      return camera_matrix;
+    }
+    
     for(size_t col = 0; col < 3; col++)
         for(size_t row = 0; row < 3; row++)
-            camera_matrix(row,col) = camera_info->K[col+row*3];
+	  camera_matrix(row,col) = camera_info->K[col+row*3];
 
     return camera_matrix;
 }

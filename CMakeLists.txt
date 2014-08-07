@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(state_filtering)
 
 set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 ) #print profiling output
 
 find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters robot_state_pub)
