@@ -81,6 +81,19 @@ void ReadParameter< std::vector<std::string> >(const std::string& path,
         parameter[i] = std::string(ros_parameter[i]);
 }
 
+
+template<>
+void ReadParameter< std::vector<double> >(const std::string& path,
+                                               std::vector<double>& parameter,
+                                               ros::NodeHandle node_handle)
+{
+    XmlRpc::XmlRpcValue ros_parameter;
+    node_handle.getParam(path, ros_parameter);
+    parameter.resize(ros_parameter.size());
+    for(size_t i = 0; i < parameter.size(); i++)
+        parameter[i] = double(ros_parameter[i]);
+}
+
 template<>
 void ReadParameter< std::vector<std::vector<size_t> > >(const std::string& path,
                                                         std::vector<std::vector<size_t> >& parameter,
