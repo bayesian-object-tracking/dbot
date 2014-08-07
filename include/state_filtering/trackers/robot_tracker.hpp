@@ -147,6 +147,12 @@ public:
         double tail_weight; ri::ReadParameter("tail_weight", tail_weight, node_handle_);
         double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
         double sigma_factor; ri::ReadParameter("sigma_factor", sigma_factor, node_handle_);
+        vector<vector<size_t> > sampling_blocks;
+        ri::ReadParameter("sampling_blocks", sampling_blocks, node_handle_);
+        vector<double> joint_sigmas;
+        node_handle_.getParam("joint_sigmas", joint_sigmas);
+        double max_kl_divergence; ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
+
 
         // initialize observation model =================================================================================================
         // Read the URDF for the specific robot and get part meshes
@@ -162,10 +168,6 @@ public:
         // initialize the robot state publisher
         robot_state_publisher_ = boost::shared_ptr<robot_state_pub::RobotStatePublisher>
         (new robot_state_pub::RobotStatePublisher(urdf_kinematics->GetTree()));
-
-        // TODO: THIS SHOULD BE READ FROM CONFIG FILE
-        vector<vector<size_t> > sampling_blocks;
-        urdf_kinematics->GetDependencies(sampling_blocks);
 
         vector<vector<Vector3d> > part_vertices(part_meshes_.size());
         vector<vector<vector<int> > > part_triangle_indices(part_meshes_.size());
@@ -241,13 +243,19 @@ public:
 
 
         // initialize process model =====================================================================================================
+        if(dimension_ != joint_sigmas.size())
+        {
+            cout << "the dimension of the joint sigmas is " << joint_sigmas.size()
+                 << " while the state dimension is " << dimension_ << endl;
+            exit(-1);
+        }
         boost::shared_ptr<ProcessType> process(new ProcessType(dimension_));
-        MatrixXd joint_covariance = MatrixXd::Identity(dimension_, dimension_) * pow(joint_angle_sigma, 2);
+        MatrixXd joint_covariance = MatrixXd::Zero(dimension_, dimension_);
+        for(size_t i = 0; i < dimension_; i++)
+            joint_covariance(i, i) = pow(joint_sigmas[i], 2);
         process->Parameters(damping, joint_covariance);
 
         // initialize coordinate_filter =================================================================================================
-        // TODO: THIS HAS TO BE READ FROM CONFIG FILE
-        double max_kl_divergence = 2.0;
         filter_ = boost::shared_ptr<FilterType>(
                     new FilterType(process, measurement_model, sampling_blocks, max_kl_divergence));
 
@@ -255,7 +263,7 @@ public:
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->Samples(initial_samples);
         filter_->Filter(image, 0.0, InputType::Zero(dimension_));
-        filter_->Resample(evaluation_count_);
+        filter_->Resample(evaluation_count_/sampling_blocks.size());
     }
 
     void Filter(const sensor_msgs::Image& ros_image)
@@ -266,6 +274,10 @@ public:
         if(std::isnan(last_measurement_time_))
             last_measurement_time_ = ros_image.header.stamp.toSec();
         ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+
+        // TODO: THIS IS JUST FOR DEBUGGING, SINCE OTHERWISE LARGE DELAYS
+        // MAKE IT GO WILD
+        delta_time = 0.03;
 
         // convert image
         MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_) / 1000.; // convert to m
@@ -294,7 +306,7 @@ public:
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
-	image_viz.show_image("enchilada ", 500, 500, 1.0);
+    image_viz.show_image("enchilada ", 500, 500, 1.0);
 	//////
 
 	std::map<std::string, double> joint_positions;
