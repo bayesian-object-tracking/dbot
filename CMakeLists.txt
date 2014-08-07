@@ -96,18 +96,18 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS 
-    roscpp 
-    roslib 
+  CATKIN_DEPENDS
+    roscpp
+    roslib
     sensor_msgs
     urdf
     orocos_kdl
     kdl_parser
     message_filters
     robot_state_pub
-  DEPENDS 
-    OpenCV 
-    eigen 
+  DEPENDS
+    OpenCV
+    eigen
     assimp
 )
 
@@ -155,6 +155,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} as
 #set(CUDA_FOUND False)
 
 if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+    add_definitions( -DBUILD_GPU=1 )
     message("building cuda implementation")
 
     set(state_filtering_gpu_SOURCES
@@ -188,7 +189,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
-	${CUDA_LIBRARIES}
+    ${CUDA_LIBRARIES}
         yaml-cpp)
 
     ## robot_tracker
@@ -209,6 +210,16 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(robot_tracker
       src/${PROJECT_NAME}/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        yaml-cpp)
+
+    ## multi_object_tracker
+    add_executable(multi_object_tracker
+        src/${PROJECT_NAME}/multi_object_tracker_node.cpp)
+    target_link_libraries(multi_object_tracker
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}

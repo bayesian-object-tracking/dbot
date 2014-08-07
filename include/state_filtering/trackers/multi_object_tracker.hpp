@@ -51,7 +51,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/models/measurement/implementations/kinect_measurement_model.hpp>
 #include <state_filtering/models/measurement/features/rao_blackwell_measurement_model.hpp>
 #include <state_filtering/models/measurement/implementations/image_measurement_model_cpu.hpp>
+
+#ifdef BUILD_GPU
 #include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/image_measurement_model_gpu.hpp>
+#endif
 
 // tools
 #include <state_filtering/utils/object_file_reader.hpp>
@@ -86,9 +89,11 @@ public:
     typedef double                                                                      ScalarType;
     typedef FloatingBodySystem<Eigen::Dynamic>                                          StateType;
 
-    typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;
+    typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;    
     typedef typename distributions::ImageMeasurementModelCPU                            MeasurementModelCPUType;
+#ifdef BUILD_GPU
     typedef typename distributions::ImageMeasurementModelGPU                            MeasurementModelGPUType;
+#endif
 
     typedef MeasurementModelCPUType::MeasurementType                                    MeasurementType;
     typedef MeasurementModelCPUType::StateType                                          MeasurementStateType;
@@ -169,8 +174,13 @@ public:
                                                                           rigid_body_system));
 
         boost::shared_ptr<MeasurementModelType> measurement_model;
+#ifndef BUILD_GPU
+use_gpu = false;
+#endif
+
         if(!use_gpu)
         {
+
             // cpu obseration model
             boost::shared_ptr<distributions::KinectMeasurementModel>
                     kinect_measurement_model(new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
@@ -188,6 +198,7 @@ public:
         }
         else
         {
+#ifdef BUILD_GPU
             // gpu obseration model
             boost::shared_ptr<distributions::ImageMeasurementModelGPU>
                     gpu_measurement_model(new distributions::ImageMeasurementModelGPU(camera_matrix,
@@ -208,6 +219,7 @@ public:
 
             gpu_measurement_model->Initialize();
             measurement_model = gpu_measurement_model;
+#endif
         }
 
         cout << "initialized observation omodel " << endl;
