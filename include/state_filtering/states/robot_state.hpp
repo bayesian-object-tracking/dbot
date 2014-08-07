@@ -99,29 +99,25 @@ public:
   // give access to base member functions (otherwise it is shadowed)
   //using Base::quaternion;
   //using Base::state_size;
+
+  //TODO: SHOULD THIS BE ALLOWED?
   using Base::operator=;
   
-
-  // constructor for fixed size without initial value
-  RobotState():
-    Base(State::Zero(SIZE_STATE)),
-    num_bodies_(SIZE_BODIES),
-    num_joints_(SIZE_JOINTS)
-  {
-    assert_fixed_size<true>();
-  }
+  RobotState(): Base(State::Zero(0)),
+                initialized_(false) {  }
 
   // constructor for dynamic size without initial value
+
+  // TODO: COULD WE GET THE NUMBER OF BODIES AND THE NUMBER OF JOINTS FROM THE KINEMATICS?
   RobotState(unsigned num_bodies, 
-	     unsigned num_joints,
-	     const boost::shared_ptr<KinematicsFromURDF> &kinematics_ptr):
-    Base(State::Zero(num_joints * COUNT_PER_JOINT)),
-    num_bodies_(num_bodies),
-    num_joints_(num_joints),
-    kinematics_(kinematics_ptr)
+             unsigned num_joints,
+             const boost::shared_ptr<KinematicsFromURDF> &kinematics_ptr): Base(State::Zero(num_joints * COUNT_PER_JOINT)),
+                                                                           num_bodies_(num_bodies),
+                                                                           num_joints_(num_joints),
+                                                                           kinematics_(kinematics_ptr),
+                                                                           initialized_(true)
   {
-    joint_map_ = kinematics_->GetJointMap();
-    assert_dynamic_size<true>();
+      joint_map_ = kinematics_->GetJointMap();
   }
 
   // constructor with initial value
@@ -135,6 +131,7 @@ public:
 
   virtual void update() const
   {
+    CheckInitialization();
     kinematics_->InitKDLData(*this);
   }
 
@@ -148,6 +145,7 @@ public:
   // this returns the position (translation) part of the pose of the link.
   virtual Vector position(const size_t& object_index = 0) const
   {
+    CheckInitialization();
     return kinematics_->GetLinkPosition(object_index);
   }
   // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
@@ -155,6 +153,7 @@ public:
   // which implements the transformation
   virtual Vector euler_vector(const size_t& object_index = 0) const
   {
+    CheckInitialization();
     return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,18 +167,20 @@ public:
 
   virtual unsigned bodies_size() const
   {
+    CheckInitialization();
     return num_bodies_;
   }
 
   virtual unsigned joints_size() const
   {
+    CheckInitialization();
     return num_joints_;
   }
 
 
   void GetJointState(std::map<std::string, double>& joint_positions)
   {
-
+    CheckInitialization();
     for(std::vector<std::string>::const_iterator it = joint_map_.begin();
 	it != joint_map_.end(); ++it)
       {
@@ -189,13 +190,24 @@ public:
 
 
 private:
+  void CheckInitialization() const
+  {
+      if(!initialized_)
+      {
+          std::cout << "the kinematics were not passed in the constructor of robot state " << std::endl;
+          exit(-1);
+      }
+  }
+
+  bool initialized_;
+
   unsigned num_bodies_;
   unsigned num_joints_;
 
   std::vector<std::string> joint_map_;
 
   // pointer to the robot kinematic
-  const boost::shared_ptr<KinematicsFromURDF>  kinematics_;
+  boost::shared_ptr<KinematicsFromURDF>  kinematics_;
 
   template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_joints > -1);}
   template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_joints == -1);}

@@ -1,17 +1,26 @@
-#object_names: [impact_battery, battery, canteen]
-#dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11], [12, 13, 14, 15, 16, 17] ]
+depth_image_topic: /XTION/depth/image 
+camera_info_topic: /XTION/depth/camera_info 
+#source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
 
-#object_names: [battery, canteen]
-#dependencies: [ [0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]]
+max_kl_divergence: 2.0
 
 use_gpu: false
+evaluation_count: 100 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
 initial_sample_count: 1 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
-sample_count: 50 #the number of particles (1500)
 
+# process model parameters ------------------------------------------------------------------
+joint_angle_sigma: 0.01
+damping: 0.0
+
+# observation model parameters --------------------------------------------------------------
+tail_weight: 0.01 #0.01, 0.998
+model_sigma: 0.003 #0.003, 0.005
+sigma_factor: 0.00142478 #0.0014247
+ 
 # visibility process model stuff ------------------------------------------------------------
 # initial prob of the source being the object for each pixels
 p_visible_init: 0.9 #0.9
@@ -20,16 +29,22 @@ p_visible_visible: 0.9 #0.9
 # prob of source being object given that one second ago source was not object
 p_visible_occluded: 0.3 #0.3
 
-# process model parameters ------------------------------------------------------------------
-linear_acceleration_sigma: 0.1 #0.1  0.2  1.0
-angular_acceleration_sigma: 1.5 #1.5  3.0  15.0
-damping: 5.0 #5.0  20.0  1000.0
 
-joint_angle_sigma: 0.01
-
-
-# observation model parameters --------------------------------------------------------------
-tail_weight: 0.01 #0.01, 0.998
-model_sigma: 0.003 #0.003, 0.005
-sigma_factor: 0.00142478 #0.0014247
- 
+sampling_blocks: [
+ [ 0], [ 1], [ 2], [ 3], [ 4], [ 5]
+,[ 6], [ 7], [ 8], [ 9], [10], [11]
+,[12], [13], [14], [15], [16], [17]
+,[18], [19], [20], [21], [22], [23]
+,[24], [25], [26], [27], [28], [29]
+,[30], [31], [32], [33], [34], [35]
+,[36], [37], [38], [39], [40], [41]
+,[42], [43], [44], [45], [46], [47]
+,[48], [49], [50], [51], [52], [53]
+,[54], [55], [56], [57], [58], [59]
+,[60], [61], [62], [63], [64], [65]
+,[66], [67], [68], [69], [70], [71]
+,[72], [73], [74], [75], [76], [77]
+,[78], [79], [80], [81], [82], [83]
+,[84], [85], [86], [87], [88], [89]
+,[90], [91], [92], [93], [94], [95]
+]

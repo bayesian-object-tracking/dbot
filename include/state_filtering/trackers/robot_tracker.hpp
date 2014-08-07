@@ -93,23 +93,18 @@ using namespace distributions;
 class RobotTracker
 {
 public:
-    // TODO: STATE TYPE OF THE PROCESS MODEL IS NOT THE SAME AS THE STATE TYPE WE HAVE HERE
-    typedef double                                                                  ScalarType;
+    typedef double                                                        ScalarType;
+    typedef RobotState<>                                                  StateType;
+
     typedef typename distributions::DampedWienerProcess<ScalarType, Eigen::Dynamic> ProcessType;
+    typedef typename distributions::ImageMeasurementModelCPU                        ObserverType;
 
-
-//    typedef RobotState<>                                                            StateType;
-    typedef ProcessType::StateType                                                  StateType;
-
-    typedef typename ProcessType::InputType                                         InputType;
-    typedef typename distributions::ImageMeasurementModelCPU                        MeasurementModelType;
-    typedef MeasurementModelType::MeasurementType                                   MeasurementType;
-    typedef MeasurementModelType::StateType                                         MeasurementStateType;
-    typedef MeasurementModelType::IndexType                                         IndexType;
-
+    typedef typename ProcessType::InputType                                 InputType;
+    typedef ObserverType::MeasurementType                                   MeasurementType;
+    typedef ObserverType::IndexType                                         IndexType;
 
     typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, InputType, MeasurementType, MeasurementStateType, IndexType, Eigen::Dynamic> FilterType;
+    <ScalarType, StateType, ProcessType, ObserverType> FilterType;
 
     RobotTracker():
         node_handle_("~"),
@@ -117,20 +112,25 @@ public:
         last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
     {
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
-        ri::ReadParameter("sample_count", sample_count_, node_handle_);
+        ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
 	
         pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
         *pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
     }
 
-    void Initialize(vector<VectorXd> initial_samples,
+    void Initialize(vector<VectorXd> initial_samples_eigen,
                     const sensor_msgs::Image& ros_image,
                     Matrix3d camera_matrix,
                     boost::shared_ptr<KinematicsFromURDF> &urdf_kinematics)
     {
         boost::mutex::scoped_lock lock(mutex_);
 
-        // convert camera matrix and image to desired format ----------------------------------------------------------------------------
+        // convert initial samples to our state format
+        vector<StateType> initial_samples(initial_samples_eigen.size());
+        for(size_t i = 0; i < initial_samples.size(); i++)
+            initial_samples[i] = initial_samples_eigen[i];
+
+        // convert camera matrix and image to desired format
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
         camera_matrix_ = camera_matrix;
         // TODO: Fix with non-fake arm_rgbd node
@@ -143,8 +143,6 @@ public:
         double p_visible_visible; ri::ReadParameter("p_visible_visible", p_visible_visible, node_handle_);
         double p_visible_occluded; ri::ReadParameter("p_visible_occluded", p_visible_occluded, node_handle_);
         double joint_angle_sigma; ri::ReadParameter("joint_angle_sigma", joint_angle_sigma, node_handle_);
-        double linear_acceleration_sigma; ri::ReadParameter("linear_acceleration_sigma", linear_acceleration_sigma, node_handle_);
-        double angular_acceleration_sigma; ri::ReadParameter("angular_acceleration_sigma", angular_acceleration_sigma, node_handle_);
         double damping; ri::ReadParameter("damping", damping, node_handle_);
         double tail_weight; ri::ReadParameter("tail_weight", tail_weight, node_handle_);
         double model_sigma; ri::ReadParameter("model_sigma", model_sigma, node_handle_);
@@ -223,15 +221,15 @@ public:
         cloud_vis.show();
 	*/
 
-        boost::shared_ptr<MeasurementModelType> measurement_model;
+        boost::shared_ptr<ObserverType> measurement_model;
 
         // cpu obseration model -----------------------------------------------------------------------------------------------------
         boost::shared_ptr<distributions::KinectMeasurementModel> kinect_measurement_model(
                     new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
         boost::shared_ptr<proc_mod::OcclusionProcess> occlusion_process_model(
                     new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-        measurement_model = boost::shared_ptr<MeasurementModelType>(
-                    new MeasurementModelType(camera_matrix,
+        measurement_model = boost::shared_ptr<ObserverType>(
+                    new ObserverType(camera_matrix,
                                              image.rows(),
                                              image.cols(),
                                              initial_samples.size(),
@@ -244,7 +242,7 @@ public:
         // initialize process model =====================================================================================================
         boost::shared_ptr<ProcessType> process(new ProcessType(dimension_));
         MatrixXd joint_covariance = MatrixXd::Identity(dimension_, dimension_) * pow(joint_angle_sigma, 2);
-        process->Parameters(0., joint_covariance);
+        process->Parameters(damping, joint_covariance);
 
         // initialize coordinate_filter =================================================================================================
         // TODO: THIS HAS TO BE READ FROM CONFIG FILE
@@ -256,7 +254,7 @@ public:
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->Samples(initial_samples);
         filter_->Filter(image, 0.0, InputType::Zero(dimension_));
-        filter_->Resample(sample_count_);
+        filter_->Resample(evaluation_count_);
     }
 
     void Filter(const sensor_msgs::Image& ros_image)
@@ -406,7 +404,7 @@ private:
   
   // parameters
   int downsampling_factor_;
-  int sample_count_;
+  int evaluation_count_;
 
   int dimension_;
 

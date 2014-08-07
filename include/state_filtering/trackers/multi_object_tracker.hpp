@@ -125,7 +125,7 @@ public:
         // read some parameters
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
         int evaluation_count; ri::ReadParameter("evaluation_count", evaluation_count, node_handle_);
-        vector<vector<size_t> > sampling_blocks; ri::ReadParameter("dependencies", sampling_blocks, node_handle_);
+        vector<vector<size_t> > sampling_blocks; ri::ReadParameter("sampling_blocks", sampling_blocks, node_handle_);
         double max_kl_divergence; ri::ReadParameter("max_kl_divergence", max_kl_divergence, node_handle_);
 
         int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);

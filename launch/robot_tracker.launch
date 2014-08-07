@@ -1,7 +1,7 @@
 <launch>
+  <arg name="config_file" default="$(find state_filtering)/config/robot_config.yaml"/>
+
   <param name="use_sim_time" type="bool" value="true" />
-  <arg name="depth_image_topic" />
-  <arg name="camera_matrix_topic" />
   <arg name="camera" default="XTION" />
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find arm_robot_model)/models/DarpaRobot.urdf.xacro'" />
   <!-- Pose Estimation Node-->
@@ -10,10 +10,9 @@
     
     <!--param name="tf_correction_root" type="string" value="BASE" /-->
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
-    <param name="depth_image_topic"    type="string"  value="$(arg depth_image_topic)" />
-    <param name="camera_info_topic"  type="string"  value="$(arg camera_info_topic)" /> 
     <!--param name="camera_frame"  type="string"  value="$(arg camera)_RGB" /--> 
-    <rosparam command="load" file="$(find state_filtering)/config/robot_config.yaml" />
+    <rosparam command="load" file="$(arg config_file)" />
+    <param name="config_file"  type="string"  value="$(arg config_file)" />   
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
   </node>
 
