@@ -155,6 +155,7 @@ public:
         ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
+	
         // get the name of the root frame
         root_ = urdf_kinematics->GetRootFrameID();
 
@@ -276,7 +277,9 @@ public:
 
 
 	// get the mean estimation for the robot joints
-    *mean_ = filter_->StateDistribution().EmpiricalMean();
+	// Casting is a disgusting hack to make sure that the correct equal-operator is used
+	// TODO: Make this right 
+	*mean_ = (Eigen::VectorXd)(filter_->StateDistribution().EmpiricalMean());
 
 	// DEBUG to see depth images
 	robot_renderer_->state(*mean_);
@@ -296,6 +299,8 @@ public:
 
 	std::map<std::string, double> joint_positions;
 	mean_->GetJointState(joint_positions);
+
+
 	ros::Time t = ros::Time::now();
 	// publish movable joints
 	robot_state_publisher_->publishTransforms(joint_positions,  t, tf_prefix_);
