@@ -117,7 +117,7 @@ public:
                                                                            kinematics_(kinematics_ptr),
                                                                            initialized_(true)
   {
-      joint_map_ = kinematics_->GetJointMap();
+    joint_map_ = kinematics_->GetJointMap();
   }
 
   // constructor with initial value
@@ -131,7 +131,7 @@ public:
 
   virtual void update() const
   {
-    CheckInitialization();
+    CheckInitialization("update");
     kinematics_->InitKDLData(*this);
   }
 
@@ -145,7 +145,7 @@ public:
   // this returns the position (translation) part of the pose of the link.
   virtual Vector position(const size_t& object_index = 0) const
   {
-    CheckInitialization();
+    CheckInitialization("position");
     return kinematics_->GetLinkPosition(object_index);
   }
   // this returns the orientation part of the pose of the link. the format is euler vector, the norm of the vector is the
@@ -153,7 +153,7 @@ public:
   // which implements the transformation
   virtual Vector euler_vector(const size_t& object_index = 0) const
   {
-    CheckInitialization();
+    CheckInitialization("euler_vector");
     return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,20 +167,20 @@ public:
 
   virtual unsigned bodies_size() const
   {
-    CheckInitialization();
+    CheckInitialization("bodies_size");
     return num_bodies_;
   }
 
   virtual unsigned joints_size() const
   {
-    CheckInitialization();
+    CheckInitialization("joints_size");
     return num_joints_;
   }
 
 
   void GetJointState(std::map<std::string, double>& joint_positions)
   {
-    CheckInitialization();
+    CheckInitialization("GetJointState");
     for(std::vector<std::string>::const_iterator it = joint_map_.begin();
 	it != joint_map_.end(); ++it)
       {
@@ -190,11 +190,11 @@ public:
 
 
 private:
-  void CheckInitialization() const
+  void CheckInitialization(const std::string &func) const
   {
       if(!initialized_)
       {
-          std::cout << "the kinematics were not passed in the constructor of robot state " << std::endl;
+	std::cout << func << " the kinematics were not passed in the constructor of robot state " << std::endl;
           exit(-1);
       }
   }
