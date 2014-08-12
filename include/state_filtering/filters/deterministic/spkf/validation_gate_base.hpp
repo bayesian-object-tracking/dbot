@@ -23,11 +23,11 @@ namespace distributions
         virtual ~ValidationGate() { }
 
         /**
-         * @brief validate Determines wheather to pass a measurement or not
+         * @brief validate Determines wheather to pass a observation or not
          *
          * @param residual          Residual error or innovation value
          * @param invCov            Inverse of the covariance matrix
-         * @param validInvCov       Updated inverse covariance matrix including rejected measurements
+         * @param validInvCov       Updated inverse covariance matrix including rejected observations
          */
         virtual void validate(const distributions::DynamicVector& residual,
                               const distributions::DynamicVector& invCov,

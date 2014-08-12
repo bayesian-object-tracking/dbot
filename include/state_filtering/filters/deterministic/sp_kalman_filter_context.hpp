@@ -57,9 +57,9 @@ namespace distributions
  * @brief SpKalmanFilterContext is specialization of @ref filter::FilterContext for Sigma Point
  *        Kalman Filters
  */
-template <typename ScalarType_, int SIZE, typename MeasurementType>
+template <typename ScalarType_, int SIZE, typename ObservationType>
 class SpKalmanFilterContext:
-        public FilterContext<ScalarType_, SIZE, MeasurementType>
+        public FilterContext<ScalarType_, SIZE, ObservationType>
 {
 public:
     virtual ~SpKalmanFilterContext() { }
@@ -75,7 +75,7 @@ public:
     /**
      * @brief @ref FilterContext::predictAndUpdate()
      */
-    virtual void predictAndUpdate(const MeasurementType& measurement, double delta_time)
+    virtual void predictAndUpdate(const ObservationType& observation, double delta_time)
     {
 
     }

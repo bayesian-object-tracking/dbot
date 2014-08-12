@@ -17,7 +17,7 @@ namespace distributions
 
     public:
         /**
-         * @brief validate Passthrough all measurement without validation
+         * @brief validate Passthrough all observation without validation
          *
          * @see ValidationGate::validate()
          */

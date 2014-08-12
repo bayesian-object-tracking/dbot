@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
@@ -145,13 +145,15 @@ GetCameraMatrix(const std::string& camera_info_topic,
             ros::topic::waitForMessage<sensor_msgs::CameraInfo> (camera_info_topic,
                                                                  node_handle,
                                                                  ros::Duration(seconds));
-    
+   
     Eigen::Matrix<Scalar, 3, 3> camera_matrix = Eigen::Matrix<Scalar, 3, 3>::Zero();
     
     if(!camera_info) {
       // if not topic was received within <seconds>
+      ROS_WARN("CameraInfo wasn't received within %f seconds. Returning default Zero message.", seconds);
       return camera_matrix;
     }
+    ROS_INFO("Valid CameraInfo was received");
     
     for(size_t col = 0; col < 3; col++)
         for(size_t row = 0; row < 3; row++)

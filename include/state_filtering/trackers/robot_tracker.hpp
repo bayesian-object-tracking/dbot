@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
@@ -38,6 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <image_transport/image_transport.h>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 #include <pcl-1.6/pcl/ros/conversions.h>
@@ -50,14 +54,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // filter
-#include <state_filtering/filters/stochastic/coordinate_filter.hpp>
+#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 //#include <state_filtering/filters/stochastic/particle_filter_context.hpp>
 
 // observation model
-#include <state_filtering/models/measurement/implementations/kinect_measurement_model.hpp>
-#include <state_filtering/models/measurement/features/rao_blackwell_measurement_model.hpp>
-#include <state_filtering/models/measurement/implementations/image_measurement_model_cpu.hpp>
-//#include <state_filtering/models/measurement/implementations/image_measurement_model_gpu/image_measurement_model_gpu.hpp>
+#include <state_filtering/models/observers/implementations/kinect_observer.hpp>
+#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/implementations/image_observer_cpu.hpp>
+//#include <state_filtering/models/observers/implementations/image_observer_gpu/image_observer_gpu.hpp>
 
 // tools
 #include <state_filtering/utils/object_file_reader.hpp>
@@ -72,9 +76,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // distributions
 #include <state_filtering/distributions/distribution.hpp>
 #include <state_filtering/distributions/implementations/gaussian.hpp>
-#include <state_filtering/models/process/features/stationary_process.hpp>
-//#include <state_filtering/models/process/implementations/composed_stationary_process_model.hpp>
-#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
+#include <state_filtering/models/processes/features/stationary_process.hpp>
+//#include <state_filtering/models/processes/implementations/composed_stationary_process_model.hpp>
+#include <state_filtering/models/processes/implementations/brownian_object_motion.hpp>
 
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
@@ -97,10 +101,10 @@ public:
     typedef RobotState<>                                                  StateType;
 
     typedef typename distributions::DampedWienerProcess<ScalarType, Eigen::Dynamic> ProcessType;
-    typedef typename distributions::ImageMeasurementModelCPU                        ObserverType;
+    typedef typename distributions::ImageObserverCPU                        ObserverType;
 
     typedef typename ProcessType::InputType                                 InputType;
-    typedef ObserverType::MeasurementType                                   MeasurementType;
+    typedef ObserverType::ObservationType                                   ObservationType;
     typedef ObserverType::IndexType                                         IndexType;
 
     typedef distributions::RaoBlackwellCoordinateParticleFilter
@@ -113,9 +117,15 @@ public:
     {
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
+        ri::ReadParameter("camera_frame", camera_frame_, node_handle_);
 	
-        pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
-        *pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
+	pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
+	*pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
+	
+	
+	boost::shared_ptr<image_transport::ImageTransport> it(new image_transport::ImageTransport(node_handle_));
+	pub_rgb_image_ = it->advertise ("/XTION/depth/image_color", 5);
+	
     }
 
     void Initialize(vector<VectorXd> initial_samples_eigen,
@@ -134,7 +144,7 @@ public:
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
         camera_matrix_ = camera_matrix;
         // TODO: Fix with non-fake arm_rgbd node
-        MeasurementType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
+        ObservationType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
 
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -161,6 +171,9 @@ public:
         ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
         ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
+        std::vector<std::string> joints = urdf_kinematics->GetJointMap();
+        hf::PrintVector(joints);
+
 	
         // get the name of the root frame
         root_ = urdf_kinematics->GetRootFrameID();
@@ -173,7 +186,6 @@ public:
         vector<vector<vector<int> > > part_triangle_indices(part_meshes_.size());
         for(size_t i = 0; i < part_meshes_.size(); i++)
         {
-            std::cout << "The single part added : " << part_meshes_[i]->get_name() << std::endl;
             part_vertices[i] = *(part_meshes_[i]->get_vertices());
             part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
         }
@@ -224,20 +236,20 @@ public:
         cloud_vis.show();
 	*/
 
-        boost::shared_ptr<ObserverType> measurement_model;
+        boost::shared_ptr<ObserverType> observation_model;
 
         // cpu obseration model -----------------------------------------------------------------------------------------------------
-        boost::shared_ptr<distributions::KinectMeasurementModel> kinect_measurement_model(
-                    new distributions::KinectMeasurementModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<distributions::KinectObserver> kinect_observer(
+                    new distributions::KinectObserver(tail_weight, model_sigma, sigma_factor));
         boost::shared_ptr<proc_mod::OcclusionProcess> occlusion_process_model(
                     new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-        measurement_model = boost::shared_ptr<ObserverType>(
+        observation_model = boost::shared_ptr<ObserverType>(
                     new ObserverType(camera_matrix,
                                              image.rows(),
                                              image.cols(),
                                              initial_samples.size(),
                                              robot_renderer_,
-                                             kinect_measurement_model,
+                                             kinect_observer,
                                              occlusion_process_model,
                                              p_visible_init));
 
@@ -257,7 +269,7 @@ public:
 
         // initialize coordinate_filter =================================================================================================
         filter_ = boost::shared_ptr<FilterType>(
-                    new FilterType(process, measurement_model, sampling_blocks, max_kl_divergence));
+                    new FilterType(process, observation_model, sampling_blocks, max_kl_divergence));
 
         // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
@@ -280,7 +292,7 @@ public:
         delta_time = 0.03;
 
         // convert image
-        MeasurementType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_) / 1000.; // convert to m
+        ObservationType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_) / 1000.; // convert to m
 
         // filter
         INIT_PROFILING;
@@ -306,7 +318,7 @@ public:
         vis::ImageVisualizer image_viz(image.rows(),image.cols());
         image_viz.set_image(image);
         image_viz.add_points(indices, depth);
-    image_viz.show_image("enchilada ", 500, 500, 1.0);
+	//image_viz.show_image("enchilada ", 500, 500, 1.0);
 	//////
 
 	std::map<std::string, double> joint_positions;
@@ -316,16 +328,29 @@ public:
 	ros::Time t = ros::Time::now();
 	// publish movable joints
 	robot_state_publisher_->publishTransforms(joint_positions,  t, tf_prefix_);
-	// make sure there is a valid transformation between base of real robot and estimated robot
+	// make sure there is a identity transformation between base of real robot and estimated robot
 	publishTransform(t, root_, tf::resolve(tf_prefix_, root_));
 	// publish fixed transforms
 	robot_state_publisher_->publishFixedTransforms(tf_prefix_);
+	// publish image
+	sensor_msgs::Image overlay;
+	image_viz.get_image(overlay);
+	publishImage(t, overlay);
+	
 	// publish point cloud
-	publishPointCloud(image, ros_image.header.frame_id, ros_image.header.stamp);
+	publishPointCloud(image, t);
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
 private:  
+
+  void publishImage(const ros::Time& time,
+		    sensor_msgs::Image &image)
+  {
+    image.header.frame_id = tf::resolve(tf_prefix_, camera_frame_);
+    image.header.stamp = time;
+    pub_rgb_image_.publish (image);
+  }
 
   void publishTransform(const ros::Time& time,
 			const std::string& from,
@@ -337,15 +362,14 @@ private:
     br.sendTransform(tf::StampedTransform(transform, time, from, to));
   }
 
-  void publishPointCloud(const MeasurementType&       image,
-			 const std::string& frame_id,
-			 const ros::Time&   stamp)
+  void publishPointCloud(const ObservationType&       image,
+			 const ros::Time&             stamp)
   {
     
     float bad_point = std::numeric_limits<float>::quiet_NaN();
  
     sensor_msgs::PointCloud2Ptr points = boost::make_shared<sensor_msgs::PointCloud2 > ();
-    points->header.frame_id = frame_id;
+    points->header.frame_id =  tf::resolve(tf_prefix_, camera_frame_);
     points->header.stamp = stamp;
     points->width        = image.cols();
     points->height       = image.rows();
@@ -388,9 +412,8 @@ private:
 	  else 
 	    {
 	      // depth is valid
-	      // BAAAD Jeannette BAAAAD. Hard-coded camera parameters TODO: Get this from a camera model
-	      float x = ((float)u - 40.0) * depth / 75.0;
-	      float y = ((float)v - 30.0) * depth / 75.0;
+	      float x = ((float)u - camera_matrix_(0,2)) * depth / camera_matrix_(0,0);
+	      float y = ((float)v - camera_matrix_(1,2)) * depth / camera_matrix_(1,1);
 	      memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[0].offset], &x, sizeof (float));
 	      memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[1].offset], &y, sizeof (float));
 	      memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[2].offset], &depth, sizeof (float));
@@ -412,13 +435,17 @@ private:
   boost::shared_ptr<RobotState<> > mean_;
   boost::shared_ptr<robot_state_pub::RobotStatePublisher> robot_state_publisher_;
   boost::shared_ptr<ros::Publisher> pub_point_cloud_;
+  
+  image_transport::Publisher pub_rgb_image_;
 
   std::string tf_prefix_;
   std::string root_;
 
   // Camera parameters
   Matrix3d camera_matrix_;
-  
+  std::string camera_frame_;
+
+
   // parameters
   int downsampling_factor_;
   int evaluation_count_;

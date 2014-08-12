@@ -56,7 +56,7 @@ namespace distributions
 {
 
 struct Estimate { };
-struct Measurement { };
+struct Observation { };
 
 /**
  * @brief The KalmanFilter interface
@@ -73,7 +73,7 @@ public:
      * @brief Predicts the state given a delta t and the prior
      *
      * @param [in]  prior_desc        Current prior
-     * @param [in]  delta_time        Delta t since the past measurement
+     * @param [in]  delta_time        Delta t since the past observation
      * @param [out] prediction_desc   Predicted state
      */
     virtual void predict(const Estimate& prior_desc,
@@ -81,13 +81,13 @@ public:
                          Estimate& prediction_desc);
 
     /**
-     * @brief Updates the prediction given a new measurement
+     * @brief Updates the prediction given a new observation
      *
-     * @param [in]  measurement       New measurement
+     * @param [in]  observation       New observation
      * @param [in]  prediction_desc   Current predicted state
      * @param [out] posterior_desc    State posterior, i.e the updated prediction
      */
-    virtual void update(const Measurement& measurement,
+    virtual void update(const Observation& observation,
                         const Estimate& prediction_desc,
                         Estimate& posterior_desc);
 };

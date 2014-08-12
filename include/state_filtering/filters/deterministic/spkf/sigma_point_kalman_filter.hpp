@@ -25,12 +25,12 @@ namespace distributions
                              DistributionDescriptor& predictedStateDesc) = 0;
 
         virtual void update(DistributionDescriptor& predictedStateDesc,
-                            DistributionDescriptor& measurementDesc,
-                            const MeasurementModel::MeasurementVector& measurement,
+                            DistributionDescriptor& observationDesc,
+                            const Observer::ObservationVector& observation,
                             DistributionDescriptor& updatedStateDesc) = 0;
 
-        virtual void predictMeasurement(const SigmaPointMatrix& predictedStateSigmaPoints,
-                                        SigmaPointMatrix& measurementSigmaPoints) = 0;
+        virtual void predictObservation(const SigmaPointMatrix& predictedStateSigmaPoints,
+                                        SigmaPointMatrix& observationSigmaPoints) = 0;
 
         virtual void onBeginPredict(const DistributionDescriptor& stateDesc,
                                     DistributionDescriptor& predictedStateDesc) = 0;
@@ -39,9 +39,9 @@ namespace distributions
                                        DistributionDescriptor& predictedStateDesc) = 0;
 
         virtual void onBeginUpdate(DistributionDescriptor& updatedStatem,
-                                   DistributionDescriptor& measurementDesc) = 0;
+                                   DistributionDescriptor& observationDesc) = 0;
 
-        virtual void onFinalizeUpdate(DistributionDescriptor& measurementDesc,
+        virtual void onFinalizeUpdate(DistributionDescriptor& observationDesc,
                                       DistributionDescriptor& updatedState) = 0;
 
         /**
@@ -52,11 +52,11 @@ namespace distributions
         /**
          * Sets the used observation model
          *
-         * @param measurementModel  Used measurement model model
+         * @param Observer  Used observation model model
          */
-        virtual void measurementModel(const MeasurementModel::Ptr& _measurementModel)
+        virtual void Observer(const Observer::Ptr& _Observer)
         {
-            measurementModel_ = _measurementModel;
+            Observer_ = _Observer;
         }
 
         /**
@@ -91,9 +91,9 @@ namespace distributions
         /**
          * Returns the used observation model
          */
-        virtual MeasurementModel::Ptr measurementModel()
+        virtual Observer::Ptr Observer()
         {
-            return measurementModel_;
+            return Observer_;
         }
 
         /**
@@ -130,7 +130,7 @@ namespace distributions
     protected:
         SpkfInternals::Ptr internalFilter;
         ProcessModelPtr processModel_;
-        MeasurementModel::Ptr measurementModel_;
+        Observer::Ptr Observer_;
         SigmaPointTransform::Ptr sigmaPointTransform_;
         ValidationGate::Ptr validationGate_;
     };

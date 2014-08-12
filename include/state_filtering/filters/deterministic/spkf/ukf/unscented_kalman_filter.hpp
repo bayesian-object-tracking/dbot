@@ -24,35 +24,35 @@ namespace distributions
          * @see SpkfInternals::
          */
         virtual void update(DistributionDescriptor& predictedStateDesc,
-                            DistributionDescriptor& measurementDesc,
-                            const MeasurementModel::MeasurementVector& measurement,
+                            DistributionDescriptor& observationDesc,
+                            const Observer::ObservationVector& observation,
                             DistributionDescriptor& updatedStateDesc);
 
         /**
          * @see SpkfInternals::
          */
         virtual void onBeginUpdate(DistributionDescriptor &updatedStatem,
-                                   DistributionDescriptor& measurementDesc);
+                                   DistributionDescriptor& observationDesc);
 
         /**
          * @see SpkfInternals::
          */
-        virtual void onFinalizeUpdate(DistributionDescriptor& measurementDesc,
+        virtual void onFinalizeUpdate(DistributionDescriptor& observationDesc,
                                       DistributionDescriptor& updatedState);
 
     public:/* UKF internal specifics */
         /**
          *
          */
-        virtual void applyMeasurementUncertainty(DistributionDescriptor& measurementDesc);
+        virtual void applyObservationUncertainty(DistributionDescriptor& observationDesc);
 
         /**
          *
          */
         virtual void computeCrossCovariance(const SigmaPointMatrix& predictedStateSigmaPoints,
-                                           const SigmaPointMatrix& measurementSigmaPoints,
+                                           const SigmaPointMatrix& observationSigmaPoints,
                                            const DynamicVector& stateMean,
-                                           const MeasurementVector& measurementMean,
+                                           const ObservationVector& observationMean,
                                            CovarianceMatrix& measureStateCovariance);
 
         /**
@@ -66,9 +66,9 @@ namespace distributions
          *
          */
         virtual void update(const DistributionDescriptor& predictedStateDesc,
-                            const DistributionDescriptor& measurementDesc,
+                            const DistributionDescriptor& observationDesc,
                             const DynamicMatrix& kalmanGain,
-                            const MeasurementModel::MeasurementVector& measurement,
+                            const Observer::ObservationVector& observation,
                             DistributionDescriptor& updatedStateDesc);
     };
 }

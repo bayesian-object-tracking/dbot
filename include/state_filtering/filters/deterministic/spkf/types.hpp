@@ -4,9 +4,9 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/models/process/features/stationary_process.hpp>
-#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
-#include <state_filtering/models/measurement/spkf/measurement_model.hpp>
+#include <state_filtering/models/processes/features/stationary_process.hpp>
+#include <state_filtering/models/processes/implementations/brownian_object_motion.hpp>
+#include <state_filtering/models/observers/spkf/measurement_model.hpp>
 
 #define DYNAMIC Eigen::Dynamic
 
@@ -21,7 +21,7 @@ typedef Eigen::Matrix<ScalarType, -1, 1> InputType;
 
 typedef distributions::BrownianObjectMotion<double, 5> ProcessModel; // TODO: this is shit!!!
     typedef boost::shared_ptr<ProcessModel> ProcessModelPtr;
-    typedef distr::MeasurementModelBase<DYNAMIC, DYNAMIC, DYNAMIC>  MeasurementModel;
+    typedef distr::ObserverBase<DYNAMIC, DYNAMIC, DYNAMIC>  Observer;
 
     typedef Eigen::VectorXd                     DynamicVector;
     typedef Eigen::MatrixXd                     DynamicMatrix;
@@ -33,8 +33,8 @@ typedef distributions::BrownianObjectMotion<double, 5> ProcessModel; // TODO: th
     typedef DynamicVector                       StateVector;
     typedef CovarianceMatrix                    StateCovariance;
 
-    typedef MeasurementModel::MeasurementVector MeasurementVector;
-    typedef CovarianceMatrix                    MeasurementCovariance;
+    typedef Observer::ObservationVector ObservationVector;
+    typedef CovarianceMatrix                    ObservationCovariance;
 }
 
 #endif

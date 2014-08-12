@@ -29,20 +29,20 @@ namespace distributions
          * @see SpkfInternals::
          */
         virtual void update(DistributionDescriptor& predictedStateDesc,
-                            DistributionDescriptor& measurementDesc,
-                            const MeasurementModel::MeasurementVector& measurement,
+                            DistributionDescriptor& observationDesc,
+                            const Observer::ObservationVector& observation,
                             DistributionDescriptor& updatedStateDesc);
 
         /**
          * @see SpkfInternals::
          */
         virtual void onBeginUpdate(DistributionDescriptor &updatedStatem,
-                                   DistributionDescriptor& measurementDesc);
+                                   DistributionDescriptor& observationDesc);
 
         /**
          * @see SpkfInternals::
          */
-        virtual void onFinalizeUpdate(DistributionDescriptor& measurementDesc,
+        virtual void onFinalizeUpdate(DistributionDescriptor& observationDesc,
                                       DistributionDescriptor& updatedState);
 
     public:/* P-UKF internal specifics */
@@ -60,7 +60,7 @@ namespace distributions
         DynamicMatrix zmY;
         DynamicVector invW;
         DynamicVector predictedState;
-        DynamicVector predictedMeasurement;
+        DynamicVector predictedObservation;
         DynamicVector innovation;
 
         double sigma;

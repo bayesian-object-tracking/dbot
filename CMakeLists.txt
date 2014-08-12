@@ -5,7 +5,19 @@ set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 ) #print profiling output
 
-find_package(catkin REQUIRED roscpp roslib sensor_msgs cv_bridge urdf orocos_kdl kdl_parser rosbag message_filters robot_state_pub)
+find_package(catkin REQUIRED
+    roscpp
+    roslib
+    sensor_msgs
+    cv_bridge
+    urdf
+    orocos_kdl
+    kdl_parser
+    rosbag
+    message_filters
+    robot_state_pub
+    image_transport
+)
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
@@ -95,21 +107,24 @@ endif()
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    roscpp
-    roslib
-    sensor_msgs
-    urdf
-    orocos_kdl
-    kdl_parser
-    message_filters
-    robot_state_pub
-  DEPENDS
-    OpenCV
-    eigen
-    assimp
+    INCLUDE_DIRS
+        include
+    LIBRARIES
+        ${PROJECT_NAME}
+    CATKIN_DEPENDS
+        roscpp
+        roslib
+        sensor_msgs
+        urdf
+        orocos_kdl
+        kdl_parser
+        message_filters
+        robot_state_pub
+        image_transport
+    DEPENDS
+        OpenCV
+        eigen
+        assimp
 )
 
 ###########
@@ -117,12 +132,11 @@ catkin_package(
 ###########
 
 include_directories(include ${catkin_INCLUDE_DIRS} )
-#include_directories(${catkin_INCLUDE_DIRS})
 
 file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
 set(state_filtering_sources
-    src/${PROJECT_NAME}/observation_models/cpu_image_observation_model/cpu_image_observation_model.cpp
+    src/${PROJECT_NAME}/models/observers/implementations/image_observer_cpu.cpp
 
     ## Particle specific implementations
 #    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
@@ -160,11 +174,11 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
     set(state_filtering_gpu_SOURCES
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/gpu_image_observation_model.cpp
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_opengl_multiple_filter.cpp
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/object_rasterizer.cpp
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/shader.cpp)
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/image_observer_gpu.cpp
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_opengl_filter.cpp
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_opengl_multiple_filter.cpp
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/object_rasterizer.cpp
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/shader.cpp)
 
     add_library(${PROJECT_NAME}_gpu
         ${state_filtering_headers}
@@ -177,13 +191,13 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${GLEW_LIBRARIES})
 
     cuda_add_library(${PROJECT_NAME}_cuda
-        src/${PROJECT_NAME}/observation_models/gpu_image_observation_model/cuda_filter.cu)
+        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_filter.cu)
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_cuda)
 
-    ## multi_object_tracker
-    add_executable(multi_object_tracker
-        src/${PROJECT_NAME}/multi_object_tracker_node.cpp)
-    target_link_libraries(multi_object_tracker
+    ## object_tracker
+    add_executable(object_tracker
+        src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
+    target_link_libraries(object_tracker
         ${PROJECT_NAME}
         ${PROJECT_NAME}_gpu
         ${PROJECT_NAME}_cuda
@@ -195,7 +209,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
     ## robot_tracker
     add_executable(robot_tracker
-        src/${PROJECT_NAME}/robot_tracker_node.cpp)
+        src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
         ${PROJECT_NAME}
         ${PROJECT_NAME}_gpu
@@ -209,7 +223,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
     ## robot_tracker
     add_executable(robot_tracker
-      src/${PROJECT_NAME}/robot_tracker_node.cpp)
+      src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
@@ -217,10 +231,10 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${PCL_LIBRARIES}
         yaml-cpp)
 
-    ## multi_object_tracker
-    add_executable(multi_object_tracker
-        src/${PROJECT_NAME}/multi_object_tracker_node.cpp)
-    target_link_libraries(multi_object_tracker
+    ## object_tracker
+    add_executable(object_tracker
+        src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
+    target_link_libraries(object_tracker
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}

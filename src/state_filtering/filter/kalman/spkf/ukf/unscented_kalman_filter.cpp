@@ -14,37 +14,37 @@ using namespace distributions;
 /* ============================================================================================== */
 
 void UkfInternals::onBeginUpdate(DistributionDescriptor& updatedState,
-                                 DistributionDescriptor& measurementDesc)
+                                 DistributionDescriptor& observationDesc)
 {
-    sigmaPointTransform()->backward(measurementDesc.sigmaPoints(),
-                                    measurementDesc);
+    sigmaPointTransform()->backward(observationDesc.sigmaPoints(),
+                                    observationDesc);
 
-    applyMeasurementUncertainty(measurementDesc);
+    applyObservationUncertainty(observationDesc);
 }
 
 void UkfInternals::update(DistributionDescriptor& predictedStateDesc,
-                          DistributionDescriptor& measurementDesc,
-                          const MeasurementModel::MeasurementVector& measurement,
+                          DistributionDescriptor& observationDesc,
+                          const Observer::ObservationVector& observation,
                           DistributionDescriptor& updatedStateDesc)
 {
-    //DistributionDescriptor::Ptr measurementDesc = createDistributionDescriptor();
+    //DistributionDescriptor::Ptr observationDesc = createDistributionDescriptor();
     CovarianceMatrix measureStateCovariance;
     DynamicMatrix kalmanGain;
 
     computeCrossCovariance(predictedStateDesc.sigmaPoints(),
-                           measurementDesc.sigmaPoints(),
+                           observationDesc.sigmaPoints(),
                            predictedStateDesc.mean(),
-                           measurementDesc.mean(),
+                           observationDesc.mean(),
                            measureStateCovariance);
 
-    computeKalmanGain(measurementDesc.covariance(),
+    computeKalmanGain(observationDesc.covariance(),
                                    measureStateCovariance,
                                    kalmanGain);
 
-    update(predictedStateDesc, measurementDesc, kalmanGain, measurement, updatedStateDesc);
+    update(predictedStateDesc, observationDesc, kalmanGain, observation, updatedStateDesc);
 }
 
-void UkfInternals::onFinalizeUpdate(DistributionDescriptor& measurementDesc,
+void UkfInternals::onFinalizeUpdate(DistributionDescriptor& observationDesc,
                                     DistributionDescriptor& updatedState)
 {
 
@@ -54,27 +54,27 @@ void UkfInternals::onFinalizeUpdate(DistributionDescriptor& measurementDesc,
 /* == Canonical UKF specifics implementation ==================================================== */
 /* ============================================================================================== */
 
-void UkfInternals::applyMeasurementUncertainty(DistributionDescriptor& measurementDesc)
+void UkfInternals::applyObservationUncertainty(DistributionDescriptor& observationDesc)
 {
-    // apply noise additive noise on measurement model with additive noise
-    switch (measurementModel_->modelType())
+    // apply noise additive noise on observation model with additive noise
+    switch (Observer_->modelType())
     {
     case distr::Linear:
     case distr::NonLinearWithAdditiveNoise:
     {        
-        CovarianceMatrix& covariance = measurementDesc.covariance();
+        CovarianceMatrix& covariance = observationDesc.covariance();
 
-        ROS_ASSERT(covariance.rows() == measurementModel_->noiseCovariance(measurementDesc.mean()).rows());
+        ROS_ASSERT(covariance.rows() == Observer_->noiseCovariance(observationDesc.mean()).rows());
 
         ROS_ASSERT(covariance.rows() == covariance.cols());
 
-        if (measurementModel_->noiseCovariance(measurementDesc.mean()).cols() == 1)
+        if (Observer_->noiseCovariance(observationDesc.mean()).cols() == 1)
         {
-            covariance += measurementModel_->noiseCovariance(measurementDesc.mean()).asDiagonal();
+            covariance += Observer_->noiseCovariance(observationDesc.mean()).asDiagonal();
         }
         else
         {
-            covariance += measurementModel_->noiseCovariance(measurementDesc.mean());
+            covariance += Observer_->noiseCovariance(observationDesc.mean());
         }
     }break;
 
@@ -86,46 +86,46 @@ void UkfInternals::applyMeasurementUncertainty(DistributionDescriptor& measureme
 }
 
 void UkfInternals::computeCrossCovariance(const SigmaPointMatrix& predictedStateSigmaPoints,
-                                    const SigmaPointMatrix& measurementSigmaPoints,
+                                    const SigmaPointMatrix& observationSigmaPoints,
                                     const DynamicVector& stateMean,
-                                    const MeasurementVector& measurementMean,
+                                    const ObservationVector& observationMean,
                                     CovarianceMatrix& measureStateCovariance)
 {
-    measureStateCovariance.setZero(stateMean.rows(), measurementMean.rows());
+    measureStateCovariance.setZero(stateMean.rows(), observationMean.rows());
 
     ProcessModel::StateType zeroMeanState;
-    MeasurementModel::MeasurementVector zeroMeanMeasurement;
+    Observer::ObservationVector zeroMeanObservation;
 
     for (int i = 0; i < predictedStateSigmaPoints.cols(); i++)
     {
         zeroMeanState = predictedStateSigmaPoints.col(i) - stateMean;
-        zeroMeanMeasurement = measurementSigmaPoints.col(i) - measurementMean;
+        zeroMeanObservation = observationSigmaPoints.col(i) - observationMean;
 
         measureStateCovariance +=
-              measurementSigmaPoints.covWeight(i) * zeroMeanState * zeroMeanMeasurement.transpose();
+              observationSigmaPoints.covWeight(i) * zeroMeanState * zeroMeanObservation.transpose();
     }
 }
 
-void UkfInternals::computeKalmanGain(const CovarianceMatrix& measurementCovariance,
+void UkfInternals::computeKalmanGain(const CovarianceMatrix& observationCovariance,
                                      const CovarianceMatrix& measureStateCovariance,
                                      DynamicMatrix& kalmanGain)
 {
-    kalmanGain = measureStateCovariance * measurementCovariance.inverse();
+    kalmanGain = measureStateCovariance * observationCovariance.inverse();
 }
 
 void UkfInternals::update(const DistributionDescriptor& predictedStateDesc,
-                          const DistributionDescriptor& measurementDesc,
+                          const DistributionDescriptor& observationDesc,
                           const DynamicMatrix & kalmanGain,
-                          const MeasurementModel::MeasurementVector& measurement,
+                          const Observer::ObservationVector& observation,
                           DistributionDescriptor& updatedStateDesc)
 {
     updatedStateDesc.mean(
                 predictedStateDesc.mean() +
-                kalmanGain * (measurement - measurementDesc.mean()));
+                kalmanGain * (observation - observationDesc.mean()));
 
     updatedStateDesc.covariance(
                 predictedStateDesc.covariance() -
-                kalmanGain * measurementDesc.covariance() * kalmanGain.transpose());
+                kalmanGain * observationDesc.covariance() * kalmanGain.transpose());
 
     /*
      * Joseph form
@@ -137,6 +137,6 @@ void UkfInternals::update(const DistributionDescriptor& predictedStateDesc,
     I = Eigen::Matrix<double, DYNAMIC, DYNAMIC>::Identity(kalmanGain.rows(), H.cols());
     joseph = I - kalmanGain * H;
     updatedCovariance = joseph * predictedState.covariance() * joseph.transpose()
-            + kalmanGain * measurementModel()->noiseCovariance() * kalmanGain.transpose();
+            + kalmanGain * Observer()->noiseCovariance() * kalmanGain.transpose();
     */
 }

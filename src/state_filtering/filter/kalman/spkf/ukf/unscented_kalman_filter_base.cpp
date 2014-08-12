@@ -219,22 +219,22 @@ void UkfInternalsBase::process(const SigmaPointMatrix& sigmaPoints,
     }
 }
 
-void UkfInternalsBase::predictMeasurement(const SigmaPointMatrix& predictedStateSigmaPoints,
-                                      SigmaPointMatrix& measurementSigmaPoints)
+void UkfInternalsBase::predictObservation(const SigmaPointMatrix& predictedStateSigmaPoints,
+                                      SigmaPointMatrix& observationSigmaPoints)
 {
     int nSigmaPoints = predictedStateSigmaPoints.cols();
 
-    // adjust measurement sigma point list size if required
-    if (measurementSigmaPoints.cols() != nSigmaPoints)
+    // adjust observation sigma point list size if required
+    if (observationSigmaPoints.cols() != nSigmaPoints)
     {
-        measurementSigmaPoints.resize(nSigmaPoints);
+        observationSigmaPoints.resize(nSigmaPoints);
     }
 
     for (int i = 0; i < nSigmaPoints; i++)
     {
-        measurementModel_->conditionals(predictedStateSigmaPoints.col(i));
+        Observer_->conditionals(predictedStateSigmaPoints.col(i));
 
-        measurementSigmaPoints.point(i, measurementModel_->predict(),
+        observationSigmaPoints.point(i, Observer_->predict(),
                                         predictedStateSigmaPoints.meanWeight(i),
                                         predictedStateSigmaPoints.covWeight(i));
     }

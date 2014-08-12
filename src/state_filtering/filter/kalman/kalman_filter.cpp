@@ -51,7 +51,7 @@
 #include <state_filtering/filters/deterministic/kalman_filter.hpp>
 
 #include <state_filtering/distributions/distribution.hpp>
-#include <state_filtering/models/process/implementations/brownian_object_motion.hpp>
+#include <state_filtering/models/processes/implementations/brownian_object_motion.hpp>
 
 namespace distributions
 {
@@ -79,7 +79,7 @@ void KalmanFilter::predict(const Estimate &prior_desc,
 //    std::cout << "dynamic_integrated_damped_brownian_motion.sample() = " << dynamic_integrated_damped_brownian_motion.sample().transpose() << std::endl;
 }
 
-void KalmanFilter::update(const Measurement &measurement,
+void KalmanFilter::update(const Observation &measurement,
                           const Estimate &prediction_desc,
                           Estimate &posterior_desc)
 {

@@ -64,8 +64,8 @@ namespace distributions
         /**
          *
          */
-        virtual void predictMeasurement(const SigmaPointMatrix& predictedStateSigmaPoints,
-                                        SigmaPointMatrix& measurementSigmaPoints);
+        virtual void predictObservation(const SigmaPointMatrix& predictedStateSigmaPoints,
+                                        SigmaPointMatrix& observationSigmaPoints);
     };
 }
 

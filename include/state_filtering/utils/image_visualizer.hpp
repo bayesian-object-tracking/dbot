@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 #include "Eigen/Core"
+// cv.h cannot be included in image_visualizer.hpp and therefore cv::Mat has to be
+// avoided as input to any function in image_visualizer
 //#include <cv.h>
 
-
-//struct IplImage;
-
+#include <sensor_msgs/Image.h>
 
 namespace vis
 {
@@ -81,6 +81,9 @@ public:
 			const std::string &window_name = "dini mer",
 			const int &window_width = 500, const int &window_height = 500,
 			const int &delay = 0) const;
+
+  //void get_image(Eigen::MatrixXd &image) const;
+  void get_image(sensor_msgs::Image &image ) const;
 
 private:
     void* image_;

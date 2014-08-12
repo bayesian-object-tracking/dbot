@@ -19,7 +19,7 @@ namespace distributions
         EllipsoidalValidationGate(double acceptance_prob, double invalidating_variance_ = 1.e-12);
 
         /**
-         * @brief validate Passthrough all measurement using a euclidean distance threshold
+         * @brief validate Passthrough all observation using a euclidean distance threshold
          *
          * @see ValidationGate::validate()
          */

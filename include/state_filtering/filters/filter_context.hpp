@@ -72,7 +72,7 @@ namespace distributions
  */
 
 // TODO: THESE TEMPLATE PARAMETERS HAVE TO CHANGE!! FOR NOW FOR SIMPLICITY THE BELOW IS A HACK
-template <typename ScalarType_, int SIZE, typename MeasurementType, typename ControlType>
+template <typename ScalarType_, int SIZE, typename ObservationType, typename ControlType>
 class FilterContext
 {
 public:
@@ -84,12 +84,12 @@ public:
     virtual ~FilterContext() { }
 
     /**
-     * @brief Propagates the current state and updates it using the measurement
+     * @brief Propagates the current state and updates it using the observation
      *
-     * @param measurement   Most recent measurement used to update the state
+     * @param observation   Most recent observation used to update the state
      * @param time          Current timestamp
      */
-    virtual void predictAndUpdate(const MeasurementType& measurement,
+    virtual void predictAndUpdate(const ObservationType& observation,
                                   double time,
                                   const ControlType& control) = 0;
 

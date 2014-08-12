@@ -14,16 +14,16 @@ using namespace distributions;
 /* ============================================================================================== */
 
 void FactorizedUkfInternals::onBeginUpdate(DistributionDescriptor& updatedState,
-                                  DistributionDescriptor& measurementDesc)
+                                  DistributionDescriptor& observationDesc)
 {
-    //ROS_ASSERT_MSG(measurementModel_->noiseCovariance().cols() == 1, "Currently this version works only with diagonal covariance matrix represented as a vector.");
+    //ROS_ASSERT_MSG(Observer_->noiseCovariance().cols() == 1, "Currently this version works only with diagonal covariance matrix represented as a vector.");
 
-    measurementDesc.sigmaPoints().mean(measurementDesc.mean(), measurementDesc.dimension(), 0);
+    observationDesc.sigmaPoints().mean(observationDesc.mean(), observationDesc.dimension(), 0);
 }
 
 void FactorizedUkfInternals::update(DistributionDescriptor& predictedStateDesc,
-                           DistributionDescriptor& measurementDesc,
-                           const MeasurementModel::MeasurementVector& measurement,
+                           DistributionDescriptor& observationDesc,
+                           const Observer::ObservationVector& observation,
                            DistributionDescriptor& updatedStateDesc)
 {    
     /*
@@ -33,20 +33,20 @@ void FactorizedUkfInternals::update(DistributionDescriptor& predictedStateDesc,
     DynamicMatrix zmY;
     DynamicVector invW;
     DynamicVector predictedState = predictedStateDesc.mean();
-    DynamicVector predictedMeasurement = measurementDesc.mean();
+    DynamicVector predictedObservation = observationDesc.mean();
     */    
 
     predictedState = predictedStateDesc.mean();
-    predictedMeasurement = measurementDesc.mean();
-    innovation = measurement - predictedMeasurement;
+    predictedObservation = observationDesc.mean();
+    innovation = observation - predictedObservation;
 
-    ROS_ASSERT(measurement.rows() == predictedMeasurement.rows());
+    ROS_ASSERT(observation.rows() == predictedObservation.rows());
 
 
     predictedStateDesc.sigmaPoints().zeroMeanSigmaPointMatrix(predictedState, zmX);
-    measurementDesc.sigmaPoints().zeroMeanSigmaPointMatrix(predictedMeasurement, zmY);
+    observationDesc.sigmaPoints().zeroMeanSigmaPointMatrix(predictedObservation, zmY);
 
-    inverteDiagonalMatrix(measurementModel_->noiseCovariance(predictedMeasurement), invR);
+    inverteDiagonalMatrix(Observer_->noiseCovariance(predictedObservation), invR);
     inverteDiagonalMatrix(predictedStateDesc.sigmaPoints().covarianceWeights(), invW);
 
     validationGate()->validate(innovation, invR, invR);
@@ -59,7 +59,7 @@ void FactorizedUkfInternals::update(DistributionDescriptor& predictedStateDesc,
     updatedStateDesc.covariance() = zmX * C * zmX.transpose();
 }
 
-void FactorizedUkfInternals::onFinalizeUpdate(DistributionDescriptor& measurementDesc,
+void FactorizedUkfInternals::onFinalizeUpdate(DistributionDescriptor& observationDesc,
                                      DistributionDescriptor& updatedState)
 {
     /* nothing required here */

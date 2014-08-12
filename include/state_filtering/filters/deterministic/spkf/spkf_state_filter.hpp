@@ -54,13 +54,13 @@ namespace distributions
                              DistributionDescriptor& predictedStateDesc);
 
         /**
-         * @brief update UKF update step using a measurement
+         * @brief update UKF update step using a observation
          *
-         * @param [in]  measurement             Measurement
+         * @param [in]  observation             Observation
          * @param [in]  predictedState          Predicted state distribution
-         * @param [out] updatedState            Updated state after incorporating the measurement
+         * @param [out] updatedState            Updated state after incorporating the observation
          */
-        virtual void update(const MeasurementVector& measurement,
+        virtual void update(const ObservationVector& observation,
                             DistributionDescriptor& predictedState,
                             DistributionDescriptor& updatedState);
 
@@ -68,7 +68,7 @@ namespace distributions
         /**
          * Returns the used observation model
          */
-        virtual MeasurementModel::Ptr measurementModel();
+        virtual Observer::Ptr Observer();
 
         /**
          * Returns the process model
@@ -85,9 +85,9 @@ namespace distributions
         /**
          * Sets the used observation model
          *
-         * @param measurementModel  Used measurement model model
+         * @param Observer  Used observation model model
          */
-        virtual void measurementModel(const MeasurementModel::Ptr& measurementModel_);
+        virtual void Observer(const Observer::Ptr& Observer_);
 
         /**
          * Sets the process model
@@ -127,14 +127,14 @@ namespace distributions
         virtual const DistributionDescriptor& augmentedStateDescriptor() const;
 
         /**
-         * @brief measurementDescriptor Returns the measurement descriptor
+         * @brief observationDescriptor Returns the observation descriptor
          *
-         * Returns a reference to the measurement descriptor used internally. This provides
+         * Returns a reference to the observation descriptor used internally. This provides
          * access to intermediate results.
          *
          * @return
          */
-        virtual const DistributionDescriptor& measurementDescriptor() const;
+        virtual const DistributionDescriptor& observationDescriptor() const;
 
         /**
          * @brief validationGate Returns the validation gate
@@ -146,7 +146,7 @@ namespace distributions
     protected:
         SpkfInternals::Ptr internals_;
         DistributionDescriptor::Ptr augmentedStateDesc;
-        DistributionDescriptor::Ptr measurementDesc;        
+        DistributionDescriptor::Ptr observationDesc;        
     };
 }
 

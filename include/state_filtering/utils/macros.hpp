@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.

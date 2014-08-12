@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
@@ -33,6 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <highgui.h>
 #include <limits>
 
+#include <sensor_msgs/image_encodings.h>
+#include <cv_bridge/cv_bridge.h>
 
 namespace vis
 {
@@ -245,6 +247,14 @@ void ImageVisualizer::add_points(
     return out;
   }
 
+  void ImageVisualizer::get_image( sensor_msgs::Image &image ) const
+  {
+    cv_bridge::CvImage cv_image;
+    cv_image.encoding = sensor_msgs::image_encodings::RGB8;
+    cv::cvarrToMat((IplImage*)(image_)).convertTo(cv_image.image, CV_8U);
+    cv_image.toImageMsg(image);
+  }
+  
 void ImageVisualizer::Cart2Index(
 		const Eigen::Vector3f &cart,
 		const Eigen::Matrix3f &camera_matrix,

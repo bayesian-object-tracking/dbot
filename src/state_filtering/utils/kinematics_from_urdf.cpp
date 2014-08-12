@@ -53,9 +53,7 @@ KinematicsFromURDF::KinematicsFromURDF()
     return;
   }  
 
-  //TODO: Add XTION_RGB frame to KDL tree somehow so that the chain for the camera transform can be built!!!!
-
-  // setup path fro robot description and root of the tree
+  // setup path for robot description and root of the tree
   nh_priv_.param<std::string>("robot_description_package_path", description_path_, "..");
   //nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
 
@@ -89,7 +87,7 @@ KinematicsFromURDF::KinematicsFromURDF()
     }
   
   std::string cam_frame, base_frame;
-  nh_priv_.param<std::string>("camera_frame", cam_frame, "XTION" );
+  nh_priv_.param<std::string>("camera_frame", cam_frame, "XTION");
   nh_priv_.param<std::string>("kinematic_frame", base_frame, "BASE" );
   // create chain from base to camera
   if(kin_tree_.getChain(cam_frame, base_frame, base_2_cam_))

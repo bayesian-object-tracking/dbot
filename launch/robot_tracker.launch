@@ -9,13 +9,14 @@
     
     <!--param name="tf_correction_root" type="string" value="BASE" /-->
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
-    <!--param name="camera_frame"  type="string"  value="$(arg camera)_RGB" /--> 
+    <param name="camera_frame"  type="string"  value="$(arg camera)" /> 
     <rosparam command="load" file="$(arg config_file)" />
     <param name="config_file"  type="string"  value="$(arg config_file)" />   
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
   </node>
 
-  <!-- DEBUG -->
-  <node pkg="tf" type="static_transform_publisher" name="$(arg camera)_IR_base_link1" args="0 -0.045 0 0 0 0  /$(arg camera) /$(arg camera)_RGB 100" />
+  <!-- This frame has to be published as the camera info in the bag files are relative to XTION_RGB (which should be XTION_IR) -->
+  <!-- If this frame is not published, then the CameraDisplay in Rviz won't work-->
+  <node pkg="tf" type="static_transform_publisher" name="$(arg camera)_IR_base_link1" args="0 0 0 0 0 0  $(arg camera) /$(arg camera)_RGB 100" />
 
 </launch>

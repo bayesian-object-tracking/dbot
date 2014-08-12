@@ -1,5 +1,5 @@
 /*************************************************************************
-This software allows for filtering in high-dimensional measurement and
+This software allows for filtering in high-dimensional observation and
 state spaces, as described in
 
 M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
@@ -92,7 +92,7 @@ public:
     TrackingDataset(const std::string& path):path_(path),
                                 image_topic_("XTION/depth/image"),
                                 info_topic_("XTION/depth/camera_info"),
-                                measurements_filename_("measurements.bag"),
+                                observations_filename_("measurements.bag"),
                                 ground_truth_filename_("ground_truth.txt"),
                                 admissible_delta_time_(0.02) {}
     ~TrackingDataset() {}
@@ -157,7 +157,7 @@ public:
     {
         // load bagfile ----------------------------------------------------------------------------
         rosbag::Bag bag;
-        bag.open((path_ / measurements_filename_).string(), rosbag::bagmode::Read);
+        bag.open((path_ / observations_filename_).string(), rosbag::bagmode::Read);
 
         // Image topics to load
         std::vector<std::string> topics;
@@ -229,7 +229,7 @@ public:
 
     void stOre()
     {
-        if(boost::filesystem::exists(path_ / measurements_filename_) ||
+        if(boost::filesystem::exists(path_ / observations_filename_) ||
            boost::filesystem::exists(path_ / ground_truth_filename_) )
         {
             std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
@@ -240,7 +240,7 @@ public:
 
         // write images to bagfile -----------------------------------------------------------------
         rosbag::Bag bag;
-        bag.open((path_ / measurements_filename_).string(), rosbag::bagmode::Write);
+        bag.open((path_ / observations_filename_).string(), rosbag::bagmode::Write);
 
         std::vector<std::string> topics;
         topics.push_back(image_topic_);
@@ -280,7 +280,7 @@ private:
     const boost::filesystem::path path_;
     const std::string image_topic_;
     const std::string info_topic_;
-    const std::string measurements_filename_;
+    const std::string observations_filename_;
     const std::string ground_truth_filename_;
     const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
 };
