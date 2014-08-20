@@ -35,9 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/mpl/assert.hpp>
 #include <boost/type_traits/is_base_of.hpp>
 
-namespace macros
-{
-
 #define GET_TIME(time) {struct timeval profiling_time; gettimeofday(&profiling_time, NULL);\
     time = (profiling_time.tv_sec * 1000000u + profiling_time.tv_usec) /1000000.;}
 #ifdef PROFILING_ON
@@ -75,14 +72,20 @@ namespace macros
 
 
 #define SF_DISABLE_IF_DYNAMIC_SIZE(VariableType) \
-    if (macros::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
+    if (sf::internal::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
         ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
 
 #define SF_DISABLE_IF_FIXED_SIZE(VariableType) \
-    if (macros::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
+    if (sf::internal::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
         ::YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION) { }
 
-template <bool Condition> struct Invalidate { };
+namespace sf
+{
+namespace internal
+{
+
+template <bool Condition>
+struct Invalidate { };
 
 template <>
 struct Invalidate<true>
@@ -93,6 +96,9 @@ struct Invalidate<true>
         YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION
     };
 };
+
+}
+}
 
 
 /**
@@ -110,5 +116,5 @@ struct Invalidate<true>
     BOOST_STATIC_ASSERT_MSG(( \
             boost::is_base_of<__VA_ARGS__, derived_type>::value), \
             #derived_type " must implement " #__VA_ARGS__ " interface.");
-}
+
 #endif
