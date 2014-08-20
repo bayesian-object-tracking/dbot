@@ -30,8 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sys/time.h>
 #include <iostream>
-#include <boost/current_function.hpp>
 #include <time.h>
+#include <boost/current_function.hpp>
+#include <boost/mpl/assert.hpp>
+#include <boost/type_traits/is_base_of.hpp>
 
 namespace macros
 {
@@ -72,11 +74,11 @@ namespace macros
 
 
 
-#define DISABLE_IF_DYNAMIC_SIZE(VariableType) \
-            if (macros::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
-                ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
+#define SF_DISABLE_IF_DYNAMIC_SIZE(VariableType) \
+    if (macros::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
+        ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
 
-#define DISABLE_IF_FIXED_SIZE(VariableType) \
+#define SF_DISABLE_IF_FIXED_SIZE(VariableType) \
     if (macros::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
         ::YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION) { }
 
@@ -93,5 +95,20 @@ struct Invalidate<true>
 };
 
 
+/**
+ * This variadic macro performs a compile time derivation assertion. The first
+ * argument is the derived type which is being tested whether it implements a
+ * base type. The base time is given as the second argument list.
+ *
+ * __VA_ARGS__ was used as a second parameter to enable passing template
+ * specialization to the macro.
+ *
+ * Note: The macro requires <em>derived_type</em> to be a single worded type. In
+ *       case of a template specialization, please use a typedef.
+ */
+#define SF_REQUIRE_INTERFACE(derived_type, ...)\
+    BOOST_STATIC_ASSERT_MSG(( \
+            boost::is_base_of<__VA_ARGS__, derived_type>::value), \
+            #derived_type " must implement " #__VA_ARGS__ " interface.");
 }
 #endif
