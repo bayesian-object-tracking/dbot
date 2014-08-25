@@ -1,16 +1,17 @@
 depth_image_topic: /XTION/depth/image
 camera_info_topic: /XTION/depth/camera_info
 source: /media/My Passport/dataset
+#source /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
 
 max_kl_divergence: 2.0
 
 use_gpu: true
-evaluation_count: 200 #the number of evaluations
+evaluation_count: 2000 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
 initial_sample_count: 1000 #10000 this is the number of samples for the initialization
-max_sample_count: 1000 #10000 this is for the gpu to allocate memory
+max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 
 # process model parameters ------------------------------------------------------------------
 linear_acceleration_sigma:   2.0 #0.1  0.2  1.0 2.0
@@ -28,7 +29,7 @@ sigma_factor: 0.0014247 #0.0014247
 
 # occlusion process model stuff
 # initial prob of the source being the object for each pixels
-p_visible_init: 0.9 #0.9
+p_visible_init: 0.9 #0.9>.
 # prob of source being object given that one second ago the source was the object
 p_visible_visible: 0.9 #0.9
 # prob of source being object given that one second ago source was not object
