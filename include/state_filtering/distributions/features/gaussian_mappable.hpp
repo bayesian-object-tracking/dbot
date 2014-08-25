@@ -54,48 +54,49 @@
 #include <boost/random/variate_generator.hpp>
 
 #include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/features/sampleable.hpp>
 
-namespace distributions
+namespace sf
 {
 
-template <typename ScalarType_, typename VectorType_, int NOISE_DIMENSION_EIGEN>
-class GaussianMappable: public Sampleable<ScalarType_, VectorType_>
+template <typename Vector, int NOISE_DIMENSION>
+class GaussianMappable:
+        public Sampleable<Vector>
 {
 public:
-    typedef typename Sampleable<ScalarType_, VectorType_>::ScalarType       ScalarType;
-    typedef typename Sampleable<ScalarType_, VectorType_>::VectorType       VectorType;
-    typedef typename Eigen::Matrix<ScalarType, NOISE_DIMENSION_EIGEN, 1>    NoiseType;
+    typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
+    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  NoiseVector;
 
 public:
     // constructor and destructor
-    GaussianMappable(): noise_dimension_(NOISE_DIMENSION_EIGEN),
+    GaussianMappable(): noise_dimension_(NOISE_DIMENSION),
                         generator_(RANDOM_SEED),
                         gaussian_distribution_(0.0, 1.0),
                         gaussian_generator_(generator_, gaussian_distribution_)
     {
-        DISABLE_IF_DYNAMIC_SIZE(NoiseType);
+        SF_DISABLE_IF_DYNAMIC_SIZE(NoiseVector);
     }
     GaussianMappable(const unsigned& noise_dimension): noise_dimension_(noise_dimension),
                                                        generator_(RANDOM_SEED),
                                                        gaussian_distribution_(0.0, 1.0),
                                                        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        DISABLE_IF_FIXED_SIZE(NoiseType);
+        SF_DISABLE_IF_FIXED_SIZE(NoiseVector);
     }
     virtual ~GaussianMappable() { }
 
     // purely virtual functions
-    virtual VectorType MapGaussian(const NoiseType& sample) const = 0;
+    virtual Vector MapGaussian(const NoiseVector& sample) const = 0;
 
     // implementations
     virtual int NoiseDimension() const
     {
         return noise_dimension_;
     }
-    virtual VectorType Sample()
+    virtual Vector Sample()
     {
-        NoiseType gaussian_sample(NoiseDimension());
+        NoiseVector gaussian_sample(NoiseDimension());
         for (int i = 0; i < NoiseDimension(); i++)
         {
             gaussian_sample(i) = gaussian_generator_();
