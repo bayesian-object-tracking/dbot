@@ -30,41 +30,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MODELS_OBSERVERS_FEATURES_RAO_BLACKWELL_observer_HPP
 
 #include <vector>
-#include <state_filtering/distributions/distribution.hpp>
+#include <state_filtering/utils/traits.hpp>
 
-namespace distributions
+
+namespace sf
 {
-template<typename ScalarType_, typename StateType_, typename ObservationType_, typename IndexType_ = size_t>
-class RaoBlackwellObserver: public Distribution<ScalarType_, StateType_>
+template<typename State, typename Observation_, typename Index_ = size_t>
+class RaoBlackwellObserver
 {
 public:
-    typedef typename Distribution<ScalarType_, StateType_>::ScalarType     ScalarType;
-    typedef typename Distribution<ScalarType_, StateType_>::VectorType     StateType;
-    typedef ObservationType_                                                ObservationType;
-    typedef IndexType_                                                      IndexType;
- public:
+    typedef typename internal::VectorTraits<State>::Scalar Scalar;
+    typedef Index_        Index;
+    typedef Observation_  Observation;
+
+public:
     virtual ~RaoBlackwellObserver() {}
 
     // since we can not implicitly cast a vector globally we do it here locally
-    template<typename Type>
-    std::vector<ScalarType> Loglikes(const std::vector<Type>&  states,
-                                     std::vector<IndexType>&   indices,
+    virtual std::vector<Scalar> Loglikes(const std::vector<State>&  states,
+                                     std::vector<Index>&   indices,
                                      const bool&               update = false)
     {
-        std::vector<const StateType*>  state_pointers(states.size());
-        for(IndexType i = 0; i < states.size(); i++)
+        std::vector<const State*>  state_pointers(states.size());
+        for(Index i = 0; i < states.size(); i++)
         {
             state_pointers[i] = &(states[i]);
         }
 
-        return Loglikes(state_pointers, indices, update);
+        return Loglikes_(state_pointers, indices, update);
     }
-    virtual std::vector<ScalarType> Loglikes(const std::vector<const StateType*>&  states,
-                                             std::vector<IndexType>&   indices,
+
+    /* TODO fix this overloading hack */
+    virtual std::vector<Scalar> Loglikes_(const std::vector<const State*>&  states,
+                                             std::vector<Index>&   indices,
                                              const bool&               update = false) = 0;
 
 
-    virtual void Observation(const ObservationType& image, const ScalarType& delta_time) = 0;
+    virtual void SetObservation(const Observation& image, const Scalar& delta_time) = 0;
 
     // reset the latent variables
     virtual void Reset() = 0;
