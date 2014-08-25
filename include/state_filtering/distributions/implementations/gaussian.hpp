@@ -55,55 +55,63 @@
 #include <state_filtering/distributions/features/evaluable.hpp>
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
 
-namespace distributions
+namespace sf
 {
 
+// Forward declarations
+template <typename Scalar, int DIMENSION> class Gaussian;
 
-
-
-template <typename ScalarType_, int DIMENSION_EIGEN>
-struct GaussianTypes
+namespace internal
 {
-    typedef ScalarType_                                                     ScalarType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, 1>                   VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION_EIGEN, DIMENSION_EIGEN>     OperatorType;
+/**
+ * Gaussian distribution traits specialization
+ * \internal
+ */
+template <typename Scalar, int DIMENSION>
+struct Traits<Gaussian<Scalar, DIMENSION> >
+{
+    enum { Dimension = DIMENSION };
 
-    typedef MomentsSolvable<ScalarType, VectorType, OperatorType>           MomentsSolvableType;
-    typedef Evaluable<ScalarType, VectorType>                               EvaluableType;
-    typedef GaussianMappable<ScalarType, VectorType, DIMENSION_EIGEN>       GaussianMappableType;
+    typedef Eigen::Matrix<Scalar, DIMENSION, 1>         Vector;
+    typedef Eigen::Matrix<Scalar, DIMENSION, DIMENSION> Operator;
 
-    typedef typename GaussianMappableType::NoiseType                        InputType;
+    typedef MomentsSolvable<Vector, Operator>   MomentsSolvableBase;
+    typedef Evaluable<Vector>                   EvaluableBase;
+    typedef GaussianMappable<Vector, DIMENSION> GaussianMappableBase;
+
+    typedef typename GaussianMappableBase::NoiseVector NoiseVector;
 };
+}
 
-
-
-
-
-
-template <typename ScalarType_, int DIMENSION_EIGEN>
-class Gaussian: public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::MomentsSolvableType,
-                public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::EvaluableType,
-                public GaussianTypes<ScalarType_, DIMENSION_EIGEN>::GaussianMappableType
+/**
+ * \class Gaussian
+ * \ingroup distributions
+ */
+template <typename Scalar, int DIMENSION>
+class Gaussian:
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::MomentsSolvableBase,
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::EvaluableBase,
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::GaussianMappableBase
 {
 public:
-    typedef GaussianTypes<ScalarType_, DIMENSION_EIGEN> Types;
+    typedef internal::Traits<Gaussian<Scalar, DIMENSION> > Traits;
 
-    typedef typename Types::ScalarType    ScalarType;
-    typedef typename Types::VectorType    VectorType;
-    typedef typename Types::OperatorType  OperatorType;
-    typedef typename Types::InputType     NoiseType;
+    typedef typename Traits::Vector         Vector;
+    typedef typename Traits::Operator       Operator;
+    typedef typename Traits::NoiseVector    NoiseVector;
 
 public:
     Gaussian()
     {
-        DISABLE_IF_DYNAMIC_SIZE(VectorType);
+        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
 
         SetUnit();
     }
 
-    explicit Gaussian(const unsigned& dimension): Types::GaussianMappableType(dimension)
+    explicit Gaussian(const unsigned& dimension):
+        Traits::GaussianMappableBase(dimension)
     {
-        DISABLE_IF_FIXED_SIZE(VectorType);
+        SF_DISABLE_IF_FIXED_SIZE(Vector);
 
         mean_.resize(dimension, 1);
         covariance_.resize(dimension, dimension);
@@ -115,7 +123,7 @@ public:
 
     virtual ~Gaussian() { }
 
-    virtual VectorType MapGaussian(const NoiseType& sample) const
+    virtual Vector MapGaussian(const NoiseVector& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }
@@ -123,24 +131,24 @@ public:
     virtual void SetUnit()
     {
         full_rank_ = true;
-        Mean(VectorType::Zero(Dimension()));
-        Covariance(OperatorType::Identity(Dimension(), Dimension()));
+        Mean(Vector::Zero(Dimension()));
+        Covariance(Operator::Identity(Dimension(), Dimension()));
     }
 
-    virtual void Mean(const VectorType& mean)
+    virtual void Mean(const Vector& mean)
     {
         mean_ = mean;
     }
 
-    virtual void Covariance(const OperatorType& covariance)
+    virtual void Covariance(const Operator& covariance)
     {
         covariance_ = covariance;
 
         // we assume that the input matrix is positive semidefinite
-        Eigen::LDLT<OperatorType> ldlt;
+        Eigen::LDLT<Operator> ldlt;
         ldlt.compute(covariance_);
-        OperatorType L = ldlt.matrixL();
-        VectorType D_sqrt = ldlt.vectorD();
+        Operator L = ldlt.matrixL();
+        Vector D_sqrt = ldlt.vectorD();
         for(size_t i = 0; i < D_sqrt.rows(); i++)
             D_sqrt(i) = std::sqrt(std::fabs(D_sqrt(i)));
         cholesky_factor_ = ldlt.transpositionsP().transpose()*L*D_sqrt.asDiagonal();
@@ -155,22 +163,22 @@ public:
             full_rank_ = false;
     }
 
-    virtual VectorType Mean() const
+    virtual Vector Mean() const
     {
         return mean_;
     }
 
-    virtual OperatorType Covariance() const
+    virtual Operator Covariance() const
     {
         return covariance_;
     }
 
-    virtual ScalarType LogProbability(const VectorType& vector) const
+    virtual Scalar LogProbability(const Vector& vector) const
     {
         if(full_rank_)
             return log_normalizer_ - 0.5 * (vector - mean_).transpose() * precision_ * (vector - mean_);
         else
-            return -std::numeric_limits<ScalarType>::infinity();
+            return -std::numeric_limits<Scalar>::infinity();
     }
 
     virtual int Dimension() const
@@ -180,12 +188,12 @@ public:
 
 
 private:
-    VectorType mean_;
-    OperatorType covariance_;
+    Vector mean_;
+    Operator covariance_;
     bool full_rank_;
-    OperatorType precision_;
-    OperatorType cholesky_factor_;
-    ScalarType log_normalizer_;
+    Operator precision_;
+    Operator cholesky_factor_;
+    Scalar log_normalizer_;
 };
 
 }

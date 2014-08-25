@@ -54,64 +54,83 @@
 #include <state_filtering/models/processes/implementations/damped_wiener_process.hpp>
 #include <state_filtering/models/processes/implementations/integrated_damped_wiener_process.hpp>
 
-namespace distributions
+namespace sf
 {
-template <typename ScalarType_, int OBJECTS_SIZE_EIGEN>
-struct BrownianObjectMotionTypes
+
+// Forward declarations
+template <typename Scalar_, int OBJECTS_SIZE> class BrownianObjectMotion;
+
+namespace internal
+{
+/**
+ * BrownianObjectMotion distribution traits specialization
+ * \internal
+ */
+template <typename Scalar_, int OBJECTS_SIZE>
+struct Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >
 {
     enum
     {
         DIMENSION_PER_OBJECT = 6,
-        DIMENSION = OBJECTS_SIZE_EIGEN == -1 ? -1 : OBJECTS_SIZE_EIGEN * DIMENSION_PER_OBJECT
+        DIMENSION = (OBJECTS_SIZE == -1) ?
+                    -1 : OBJECTS_SIZE * DIMENSION_PER_OBJECT
     };
 
-    typedef ScalarType_                                             ScalarType;
-    typedef FloatingBodySystem<OBJECTS_SIZE_EIGEN>                  StateType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1>                 InputType;
-    typedef StationaryProcess<ScalarType, StateType, InputType>     StationaryProcessType;
-    typedef GaussianMappable<ScalarType, StateType, DIMENSION>      GaussianMappableType;
+    typedef Scalar_                                     Scalar;
+    typedef FloatingBodySystem<OBJECTS_SIZE>            State;
+    typedef Eigen::Matrix<Scalar, DIMENSION, 1>         InputVector;
 
-    typedef typename GaussianMappableType::NoiseType                NoiseType;
+    typedef typename Eigen::Quaternion<Scalar>          Quaternion;
+    typedef IntegratedDampedWienerProcess<Scalar, 3>    Process;
+
+    typedef StationaryProcess<State, InputVector>       StationaryProcessBase;
+    typedef GaussianMappable<State, DIMENSION>          GaussianMappableBase;
+
+    typedef typename GaussianMappableBase::NoiseVector  NoiseVector;
 };
+}
 
-
-template <typename ScalarType_ = double, int OBJECTS_SIZE_EIGEN = -1>
-class BrownianObjectMotion: public BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>::StationaryProcessType,
-                            public BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>::GaussianMappableType
-
+/**
+ * \class BrownianObjectMotion
+ *
+ * \ingroup distributions
+ * \ingroup process_models
+ */
+template <typename Scalar_ = double, int OBJECTS_SIZE = -1>
+class BrownianObjectMotion:
+        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >::StationaryProcessBase,
+        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >::GaussianMappableBase
 {
 public:
-    // types from parents
-    typedef BrownianObjectMotionTypes<ScalarType_, OBJECTS_SIZE_EIGEN>   Types;
-    typedef typename Types::ScalarType                             ScalarType;
-    typedef typename Types::StateType                              StateType;
-    typedef typename Types::InputType                              InputType;
-    typedef typename Types::NoiseType                              NoiseType;
+    typedef internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> > Traits;
 
-    // new types
-    typedef typename Eigen::Quaternion<ScalarType>                 Quaternion;
-    typedef IntegratedDampedWienerProcess<ScalarType, 3>           Process;
+    typedef typename Traits::Scalar         Scalar;
+    typedef typename Traits::State          State;
+    typedef typename Traits::InputVector    InputVector;
+    typedef typename Traits::NoiseVector    NoiseVector;
+    typedef typename Traits::Quaternion     Quaternion;
+    typedef typename Traits::Process        Process;
 
     enum
     {
-        DIMENSION_PER_OBJECT = Types::DIMENSION_PER_OBJECT
+        DIMENSION_PER_OBJECT = Traits::DIMENSION_PER_OBJECT
     };
 
 public:
     BrownianObjectMotion()
     {
-        DISABLE_IF_DYNAMIC_SIZE(StateType);
+        SF_DISABLE_IF_DYNAMIC_SIZE(State);
 
-        quaternion_map_.resize(OBJECTS_SIZE_EIGEN);
-        rotation_center_.resize(OBJECTS_SIZE_EIGEN);
-        linear_process_.resize(OBJECTS_SIZE_EIGEN);
-        angular_process_.resize(OBJECTS_SIZE_EIGEN);
+        quaternion_map_.resize(OBJECTS_SIZE);
+        rotation_center_.resize(OBJECTS_SIZE);
+        linear_process_.resize(OBJECTS_SIZE);
+        angular_process_.resize(OBJECTS_SIZE);
     }
 
-    BrownianObjectMotion(const unsigned& count_objects): Types::GaussianMappableType(count_objects*6),
+    BrownianObjectMotion(const unsigned& count_objects): Traits::GaussianMappableBase(count_objects*6),
                                                          state_(count_objects)
     {
-        DISABLE_IF_FIXED_SIZE(StateType);
+        SF_DISABLE_IF_FIXED_SIZE(State);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
@@ -121,15 +140,15 @@ public:
 
     virtual ~BrownianObjectMotion() { }
 
-    virtual StateType MapGaussian(const NoiseType& sample) const
+    virtual State MapGaussian(const NoiseVector& sample) const
     {
-        StateType new_state(state_.bodies_size());
+        State new_state(state_.bodies_size());
         for(size_t i = 0; i < new_state.bodies_size(); i++)
         {
-            Eigen::Matrix<ScalarType, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
-            Eigen::Matrix<ScalarType, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
-            Eigen::Matrix<ScalarType, 6, 1> linear_delta      = linear_process_[i].MapGaussian(position_noise);
-            Eigen::Matrix<ScalarType, 6, 1> angular_delta     = angular_process_[i].MapGaussian(orientation_noise);
+            Eigen::Matrix<Scalar, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
+            Eigen::Matrix<Scalar, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
+            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapGaussian(position_noise);
+            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapGaussian(orientation_noise);
 
             new_state.position(i) = state_.position(i) + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.quaternion(i).coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
@@ -145,9 +164,9 @@ public:
         return new_state;
     }
 
-    virtual void Condition(const ScalarType& delta_time,
-                           const StateType&  state,
-                           const InputType&  control)
+    virtual void Condition(const Scalar& delta_time,
+                           const State&  state,
+                           const InputVector&  control)
     {
         state_ = state;
         for(size_t i = 0; i < state_.bodies_size(); i++)
@@ -160,14 +179,14 @@ public:
             state_.position(i)        += state_.rotation_matrix(i)*rotation_center_[i];
             state_.linear_velocity(i) += state_.angular_velocity(i).cross(state_.position(i));
 
-            Eigen::Matrix<ScalarType, 6, 1> linear_state;
+            Eigen::Matrix<Scalar, 6, 1> linear_state;
             linear_state.topRows(3) = Eigen::Vector3d::Zero();
             linear_state.bottomRows(3) = state_.linear_velocity(i);
             linear_process_[i].Condition(delta_time,
                                          linear_state,
                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
 
-            Eigen::Matrix<ScalarType, 6, 1> angular_state;
+            Eigen::Matrix<Scalar, 6, 1> angular_state;
             angular_state.topRows(3) = Eigen::Vector3d::Zero();
             angular_state.bottomRows(3) = state_.angular_velocity(i);
             angular_process_[i].Condition(delta_time,
@@ -175,18 +194,18 @@ public:
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
     }
-    virtual void Condition(const ScalarType&  delta_time,
-                           const StateType&  state)
+    virtual void Condition(const Scalar&  delta_time,
+                           const State&  state)
     {
-        Condition(delta_time, state, InputType::Zero(InputDimension()));
+        Condition(delta_time, state, InputVector::Zero(InputDimension()));
     }
 
 
     virtual void Parameters(const size_t&                           object_index,
-                            const Eigen::Matrix<ScalarType, 3, 1>&  rotation_center,
-                            const ScalarType&                       damping,
-                            const typename Process::OperatorType&   linear_acceleration_covariance,
-                            const typename Process::OperatorType&   angular_acceleration_covariance)
+                            const Eigen::Matrix<Scalar, 3, 1>&  rotation_center,
+                            const Scalar&                       damping,
+                            const typename Process::Operator&   linear_acceleration_covariance,
+                            const typename Process::Operator&   angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
         linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
@@ -201,11 +220,11 @@ public:
 
 private:
     // conditionals
-    StateType state_;
-    std::vector<Eigen::Matrix<ScalarType, 4, 3> > quaternion_map_;
+    State state_;
+    std::vector<Eigen::Matrix<Scalar, 4, 3> > quaternion_map_;
 
     // parameters
-    std::vector<Eigen::Matrix<ScalarType, 3, 1> > rotation_center_;
+    std::vector<Eigen::Matrix<Scalar, 3, 1> > rotation_center_;
 
     // processes
     std::vector<Process>   linear_process_;

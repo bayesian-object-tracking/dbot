@@ -35,39 +35,57 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // TODO: THIS NEEDS TO BE CLEANED!!
-namespace proc_mod
+namespace sf
 {
 
-struct OcclusionProcessTypes
+// Forward declarations
+class OcclusionProcess;
+
+namespace internal
+{
+/**
+ * OcclusionProcess distribution traits specialization
+ * \internal
+ */
+template < >
+struct Traits<OcclusionProcess>
 {
     enum
     {
         VECTOR_SIZE = 1, //TODO: DO WE NEED THIS?
-        DIMENSION = 0, //TODO: THIS IS A HACK
+        DIMENSION = 0 //TODO: THIS IS A HACK
 //        CONTROL_SIZE = 0,
 //        SAMPLE_SIZE = 0
     };
 
-    typedef double ScalarType;
-    typedef Eigen::Matrix<ScalarType, VECTOR_SIZE, 1> VectorType;
-    typedef Eigen::Matrix<ScalarType, DIMENSION, 1> InputType;
+    typedef double Scalar;
+    typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
+    typedef Eigen::Matrix<Scalar, DIMENSION, 1>     InputType;
 
-    typedef distributions::StationaryProcess<ScalarType, VectorType, InputType> StationaryProcessType;
-
+    typedef sf::StationaryProcess<Vector, InputType> StationaryProcessBase;
 };
+}
 
-class OcclusionProcess: public OcclusionProcessTypes::StationaryProcessType
+/**
+ * \class OcclusionProcess
+ *
+ * \ingroup distributions
+ * \ingroup process_models
+ */
+class OcclusionProcess:
+        public internal::Traits<OcclusionProcess>::StationaryProcessBase
 {
 public:
-    typedef OcclusionProcessTypes::ScalarType ScalarType;
-    typedef OcclusionProcessTypes::VectorType StateType;
-    typedef OcclusionProcessTypes::InputType InputType;
+    typedef internal::Traits<OcclusionProcess> Traits;
 
+    typedef typename Traits::Scalar     Scalar;
+    typedef typename Traits::Vector     StateType;
+    typedef typename Traits::InputType  InputType;
 
     enum
     {
-        VECTOR_SIZE = OcclusionProcessTypes::VECTOR_SIZE,
-        DIMENSION = OcclusionProcessTypes::DIMENSION
+        VECTOR_SIZE = Traits::VECTOR_SIZE,
+        DIMENSION = Traits::DIMENSION
 //        CONTROL_SIZE = Types::CONTROL_SIZE,
 //        SAMPLE_SIZE = Types::SAMPLE_SIZE
     };
@@ -76,8 +94,8 @@ public:
 public:
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
-    OcclusionProcess(ScalarType p_occluded_visible,
-                          ScalarType p_occluded_occluded)
+    OcclusionProcess(Scalar p_occluded_visible,
+                          Scalar p_occluded_occluded)
         : p_occluded_visible_(p_occluded_visible),
           p_occluded_occluded_(p_occluded_occluded),
           c_(p_occluded_occluded_ - p_occluded_visible_),
@@ -86,7 +104,7 @@ public:
     virtual ~OcclusionProcess() {}
 
 
-    virtual ScalarType Propagate(ScalarType occlusion_probability, ScalarType delta_time /*in s*/)
+    virtual Scalar Propagate(Scalar occlusion_probability, Scalar delta_time /*in s*/)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = occlusion_probability;
@@ -94,7 +112,7 @@ public:
     }
 
 
-    virtual void Condition(const ScalarType& delta_time,
+    virtual void Condition(const Scalar& delta_time,
                               const StateType& state,
                               const InputType& control)
     {
@@ -102,7 +120,7 @@ public:
         occlusion_probability_ = state(0);
     }
 
-    virtual void Condition(const ScalarType& delta_time,
+    virtual void Condition(const Scalar& delta_time,
                               const StateType& state)
     {
         delta_time_ = delta_time;
@@ -144,9 +162,9 @@ public:
 
 private:
     // conditionals
-    ScalarType occlusion_probability_, delta_time_;
+    Scalar occlusion_probability_, delta_time_;
     // parameters
-    ScalarType p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
+    Scalar p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
 
 };
 
