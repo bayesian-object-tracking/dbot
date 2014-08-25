@@ -40,30 +40,24 @@
  * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California (USC)
+ * Max-Planck-Institute for Intelligent Systems,
+ *  University of Southern California (USC)
  */
 
 #ifndef STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
 #define STATE_FILTERING_DISTRIBUTION_FEATURES_SAMPLEBALE_HPP
 
 
-#include <state_filtering/distributions/distribution.hpp>
 
-namespace distributions
+
+namespace sf
 {
 
-template <typename ScalarType_, typename VectorType_>
-class Sampleable: public Distribution<ScalarType_, VectorType_>
+template <typename Vector>
+class Sampleable
 {
 public:
-    typedef Distribution<ScalarType_, VectorType_>  BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VectorType           VectorType;
-
-public:
-    virtual ~Sampleable() { }
-
-    virtual VectorType Sample() = 0;
+    virtual Vector Sample() = 0;
 };
 
 }
