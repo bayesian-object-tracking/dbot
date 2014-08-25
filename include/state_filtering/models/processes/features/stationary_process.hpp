@@ -49,29 +49,26 @@
 
 
 // state_filtering
-#include <state_filtering/distributions/distribution.hpp>
+
 #include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/traits.hpp>
 
-namespace distributions
+namespace sf
 {
 
-template <typename ScalarType_, typename StateType_, typename InputType_>
-class StationaryProcess: public Distribution<ScalarType_, StateType_>
+template <typename State, typename InputVector>
+class StationaryProcess
 {
 public:
-    typedef typename Distribution<ScalarType_, StateType_>::ScalarType   ScalarType;
-    typedef typename Distribution<ScalarType_, StateType_>::VectorType   StateType;
-    typedef InputType_                                                    InputType;
+    typedef typename internal::VectorTraits<State>::Scalar Scalar;
 
 public:
-    virtual ~StationaryProcess() { }
+    virtual void Condition(const Scalar& delta_time,
+                           const State& state,
+                           const InputVector&  input) = 0;
 
-    virtual void Condition(const ScalarType& delta_time,
-                           const StateType& state,
-                           const InputType&  input) = 0;
-
-    virtual void Condition(const ScalarType& delta_time,
-                           const StateType& state) = 0;
+    virtual void Condition(const Scalar& delta_time,
+                           const State& state) = 0;
 };
 
 
