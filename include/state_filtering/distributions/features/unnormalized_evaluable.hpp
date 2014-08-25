@@ -41,7 +41,8 @@
  * @date 05/25/2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems, University of Southern California
+ * Max-Planck-Institute for Intelligent Systems,
+ *  University of Southern California
  */
 
 
@@ -49,25 +50,25 @@
 #define DISTRIBUTIONS_FEATURES_UNNORMALIZED_EVALUABLE_HPP
 
 #include <cmath>
-#include <state_filtering/distributions/distribution.hpp>
+#include <state_filtering/utils/traits.hpp>
 
-namespace distributions
+
+namespace sf
 {
 
-template <typename ScalarType_, typename VectorType_>
-class  UnnormalizedEvaluable: public Distribution<ScalarType_, VectorType_>
+template <typename Vector>
+class UnnormalizedEvaluable
 {
 public:
-    typedef Distribution<ScalarType_, VectorType_>  BaseType;
-    typedef typename BaseType::ScalarType           ScalarType;
-    typedef typename BaseType::VectorType           VectorType;
+    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
-    virtual ScalarType UnnormalizedProbability(const VectorType& vector) const
+    virtual Scalar UnnormalizedProbability(const Vector& vector) const
     {
         std::exp(LogUnnormalizedProbability(vector));
     }
-    virtual ScalarType LogUnnormalizedProbability(const VectorType& vector) const = 0;
+
+    virtual Scalar LogUnnormalizedProbability(const Vector& vector) const = 0;
 };
 
 }
