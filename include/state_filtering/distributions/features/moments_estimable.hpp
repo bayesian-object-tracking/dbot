@@ -47,24 +47,17 @@
 #ifndef STATE_FILTERING_FILTER_FEATURES_MOMENTS_ESTIMABLE_HPP
 #define STATE_FILTERING_FILTER_FEATURES_MOMENTS_ESTIMABLE_HPP
 
-#include <state_filtering/distributions/distribution.hpp>
 
-namespace distributions
+
+namespace sf
 {
 
-template <typename ScalarType_, typename VectorType_, typename OperatorType_>
-class MomentsEstimable: public Distribution<ScalarType_, VectorType_>
+template <typename Vector, typename Operator>
+class ApproximateMoments
 {
 public:
-    typedef typename Distribution<ScalarType_, VectorType_>::ScalarType  ScalarType;
-    typedef typename Distribution<ScalarType_, VectorType_>::VectorType  VectorType;
-    typedef OperatorType_                                                OperatorType;
-
-public:
-    virtual ~MomentsEstimable() { }
-
-    virtual VectorType   EmpiricalMean() = 0;
-    virtual OperatorType EmpiricalCovariance() = 0;
+    virtual Vector   ApproximateMean() = 0;
+    virtual Operator ApproximateCovariance() = 0;
 };
 
 }
