@@ -37,8 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 using namespace Eigen;
-using namespace distributions;
+using namespace sf;
 
+/*
 
 ImageObserverCPU::ImageObserverCPU(
         const Eigen::Matrix3d& camera_matrix,
@@ -64,14 +65,14 @@ ImageObserverCPU::ImageObserverCPU(
 
 ImageObserverCPU::~ImageObserverCPU() { }
 
-std::vector<ImageObserverCPU::ScalarType>
-ImageObserverCPU::Loglikes(const std::vector<const StateType *> &states,
-                                   std::vector<IndexType>& indices,
+std::vector<ImageObserverCPU::Scalar>
+ImageObserverCPU::Loglikes(const std::vector<const State *> &states,
+                                   std::vector<Index>& indices,
                                    const bool& update)
 {
     std::vector<std::vector<float> > new_visibility_probs(states.size());
     std::vector<std::vector<double> > new_visibility_update_times(states.size());
-    vector<ScalarType> loglikes(states.size(),0);
+    vector<Scalar> loglikes(states.size(),0);
     for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
     {
         if(update)
@@ -145,7 +146,7 @@ void ImageObserverCPU::Reset()
     observation_time_ = 0;
 }
 
-void ImageObserverCPU::Observation(const ObservationType& image, const ScalarType &delta_time)
+void ImageObserverCPU::SetObservation(const Observation& image, const Scalar &delta_time)
 {
     std::vector<float> std_measurement(image.size());
 
@@ -153,7 +154,7 @@ void ImageObserverCPU::Observation(const ObservationType& image, const ScalarTyp
         for(size_t col = 0; col < image.cols(); col++)
             std_measurement[row*image.cols() + col] = image(row, col);
 
-    Observation(std_measurement, delta_time);
+    SetObservation(std_measurement, delta_time);
 }
 
 void ImageObserverCPU::Occlusions(const float& visibility_prob)
@@ -163,9 +164,11 @@ void ImageObserverCPU::Occlusions(const float& visibility_prob)
     visibility_update_times_ = vector<vector<double> >(1, vector<double>(n_rows_*n_cols_, 0));
 }
 
-void ImageObserverCPU::Observation(const std::vector<float>& observations, const ScalarType &delta_time)
+void ImageObserverCPU::SetObservation(const std::vector<float>& observations, const Scalar &delta_time)
 {
     observations_ = observations;
     observation_time_ += delta_time;
 
 }
+
+*/

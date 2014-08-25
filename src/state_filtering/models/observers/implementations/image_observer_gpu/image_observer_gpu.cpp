@@ -13,11 +13,11 @@
 #include <iostream>
 #include <cuda_gl_interop.h>
 
+/*
 
 using namespace std;
 using namespace Eigen;
-using namespace distributions;
-
+using namespace sf;
 
 ImageObserverGPU::ImageObserverGPU(const CameraMatrixType& camera_matrix,
                                                        const IndexType& n_rows,
@@ -427,3 +427,4 @@ void ImageObserverGPU::checkCUDAError(const char *msg)
     }
 }
 
+*/
