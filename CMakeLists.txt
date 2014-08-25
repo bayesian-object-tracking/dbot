@@ -142,15 +142,7 @@ set(state_filtering_sources
 #    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
 
     ## SPKF specific implementations
-    src/${PROJECT_NAME}/filter/kalman/kalman_filter.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/sigma_point_matrix.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/euclidean_validation_gate.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ellipsoidal_validation_gate.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_transform.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/kappa_unscented_transform.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter_base.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/unscented_kalman_filter.cpp
-    src/${PROJECT_NAME}/filter/kalman/spkf/ukf/factorized_unscented_kalman_filter.cpp
+    # .. on the way
 
     src/${PROJECT_NAME}/utils/image_visualizer.cpp
     src/${PROJECT_NAME}/utils/cloud_visualizer.cpp
@@ -241,3 +233,4 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${PCL_LIBRARIES}
         yaml-cpp)
 endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+
