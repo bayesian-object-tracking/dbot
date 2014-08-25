@@ -70,14 +70,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RANDOM_SEED (unsigned)time(0)//1
 
 
-
+/**
+ * Cases
+ */
 #define SF_DISABLE_IF_DYNAMIC_SIZE(VariableType) \
-    if (sf::internal::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic> \
-        ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
+if (sf::internal::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic>\
+    ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
 
 #define SF_DISABLE_IF_FIXED_SIZE(VariableType) \
-    if (sf::internal::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic> \
-        ::YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION) { }
+if (sf::internal::Invalidate<VariableType::SizeAtCompileTime == Eigen::Dynamic>\
+    ::YOU_CALLED_A_DYNAMIC_SIZE_METHOD_ON_A_FIXED_SIZE_DISTRIBUTION) { }
 
 namespace sf
 {
@@ -100,17 +102,19 @@ struct Invalidate<true>
 }
 }
 
-
 /**
+ * \ingroup macros
+ * \internal
+ *
  * This variadic macro performs a compile time derivation assertion. The first
  * argument is the derived type which is being tested whether it implements a
- * base type. The base time is given as the second argument list.
+ * base type. The base type is given as the second argument list.
  *
  * __VA_ARGS__ was used as a second parameter to enable passing template
  * specialization to the macro.
  *
  * Note: The macro requires <em>derived_type</em> to be a single worded type. In
- *       case of a template specialization, please use a typedef.
+ *       case of a template specialization, use a typedef.
  */
 #define SF_REQUIRE_INTERFACE(derived_type, ...)\
     BOOST_STATIC_ASSERT_MSG(( \
