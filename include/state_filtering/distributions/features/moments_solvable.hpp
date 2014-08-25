@@ -49,33 +49,15 @@
 
 #include <state_filtering/distributions/features/moments_estimable.hpp>
 
-namespace distributions
+namespace sf
 {
 
-template <typename ScalarType_, typename VectorType_, typename OperatorType_>
-class MomentsSolvable: public MomentsEstimable<ScalarType_, VectorType_, OperatorType_>
+template <typename Vector, typename Operator>
+class MomentsSolvable
 {
 public:
-    typedef MomentsEstimable<ScalarType_, VectorType_, OperatorType_>   BaseType;
-    typedef typename BaseType::ScalarType                               ScalarType;
-    typedef typename BaseType::VectorType                               VectorType;
-    typedef typename BaseType::OperatorType                             OperatorType;
-
-public:
-    virtual ~MomentsSolvable() { }
-
-    virtual VectorType EmpiricalMean()
-    {
-        return Mean();
-    }
-
-    virtual OperatorType EmpiricalCovariance()
-    {
-        return Covariance();
-    }
-
-    virtual VectorType Mean() const = 0;
-    virtual OperatorType Covariance() const = 0;
+    virtual Vector Mean() const = 0;
+    virtual Operator Covariance() const = 0;
 };
 
 }
