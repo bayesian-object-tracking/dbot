@@ -56,10 +56,9 @@ namespace internal
 template <typename Scalar, typename State>
 struct Traits<ImageObserverCPU<Scalar, State> >
 {
-    typedef size_t Index;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObserver<State, Observation, Index> RaoBlackwellObserverBase;
+    typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
 
     typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRendererPtr;
     typedef boost::shared_ptr<sf::KinectObserver> PixelObservationModelPtr;
@@ -80,7 +79,6 @@ class ImageObserverCPU:
 public:
     typedef internal::Traits<ImageObserverCPU<Scalar, State> > Traits;
 
-    typedef typename Traits::Index                    Index;
     typedef typename Traits::Observation              Observation;
     typedef typename Traits::ObjectRendererPtr        ObjectRendererPtr;
     typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
@@ -112,7 +110,7 @@ public:
     ~ImageObserverCPU() { }
 
     std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
-                                 std::vector<Index>& indices,
+                                 std::vector<size_t>& indices,
                                  const bool& update = false)
     {
         std::vector<std::vector<float> > new_visibility_probs(states.size());

@@ -68,8 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace sf
 {
 
-template<typename ProcessModel,
-         typename ObservationModel>
+template<typename ProcessModel, typename ObservationModel>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
@@ -78,10 +77,6 @@ public:
     typedef typename internal::Traits<ProcessModel>::InputVector    InputVector;
     typedef typename internal::Traits<ProcessModel>::NoiseVector    NoiseVector;
 
-//    typedef typename internal::Traits<ObservationModel>::Index       Index;
-//    typedef typename internal::Traits<ObservationModel>::Observation Observation;
-
-    typedef typename ObservationModel::Index                        Index;
     typedef typename ObservationModel::Observation                  Observation;
 
     // state distribution
@@ -91,7 +86,7 @@ public:
     RaoBlackwellCoordinateParticleFilter(
             const boost::shared_ptr<ProcessModel> process_model,
             const boost::shared_ptr<ObservationModel>  observation_model,
-            const std::vector<std::vector<Index> >& sampling_blocks,
+            const std::vector<std::vector<size_t> >& sampling_blocks,
             const Scalar& max_kl_divergence = 0):
         observation_model_(observation_model),
         process_model_(process_model),
@@ -152,19 +147,19 @@ public:
         state_distribution_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
-    void Resample(const Index& sample_count)
+    void Resample(const size_t& sample_count)
     {
         std::vector<State> samples(sample_count);
-        std::vector<Index> indices(sample_count);
+        std::vector<size_t> indices(sample_count);
         std::vector<NoiseVector> noises(sample_count);
         std::vector<State> next_samples(sample_count);
         std::vector<Scalar> loglikes(sample_count);
 
         hf::DiscreteSampler sampler(log_weights_);
 
-        for(Index i = 0; i < sample_count; i++)
+        for(size_t i = 0; i < sample_count; i++)
         {
-            Index index = sampler.Sample();
+            size_t index = sampler.Sample();
 
             samples[i]      = samples_[index];
             indices[i]      = indices_[index];
@@ -221,12 +216,12 @@ public:
         indices_ = std::vector<size_t>(samples_.size(), 0); observation_model_->Reset();
         log_weights_ = std::vector<Scalar>(samples_.size(), 0);
     }
-    void SamplingBlocks(const std::vector<std::vector<Index> >& sampling_blocks)
+    void SamplingBlocks(const std::vector<std::vector<size_t> >& sampling_blocks)
     {
         sampling_blocks_ = sampling_blocks;
 
         // make sure sizes are consistent
-        Index dimension = 0;
+        size_t dimension = 0;
         for(size_t i = 0; i < sampling_blocks_.size(); i++)
             for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
                 dimension++;
@@ -256,7 +251,7 @@ private:
     StateDistributionType state_distribution_;
 
     std::vector<State > samples_;
-    std::vector<Index> indices_;
+    std::vector<size_t> indices_;
     std::vector<Scalar>  log_weights_;
     std::vector<NoiseVector> noises_;
     std::vector<State> next_samples_;
@@ -270,7 +265,7 @@ private:
     boost::shared_ptr<ProcessModel> process_model_;
 
     // parameters
-    std::vector<std::vector<Index> > sampling_blocks_;
+    std::vector<std::vector<size_t> > sampling_blocks_;
     Scalar max_kl_divergence_;
 
     // distribution for sampling

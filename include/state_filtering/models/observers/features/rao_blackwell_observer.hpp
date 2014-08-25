@@ -35,12 +35,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace sf
 {
-template<typename State, typename Observation_, typename Index_ = size_t>
+template<typename State, typename Observation_>
 class RaoBlackwellObserver
 {
 public:
     typedef typename internal::VectorTraits<State>::Scalar Scalar;
-    typedef Index_        Index;
     typedef Observation_  Observation;
 
 public:
@@ -48,11 +47,11 @@ public:
 
     // since we can not implicitly cast a vector globally we do it here locally
     virtual std::vector<Scalar> Loglikes(const std::vector<State>&  states,
-                                     std::vector<Index>&   indices,
-                                     const bool&               update = false)
+                                         std::vector<size_t>& indices,
+                                         const bool& update = false)
     {
         std::vector<const State*>  state_pointers(states.size());
-        for(Index i = 0; i < states.size(); i++)
+        for(size_t i = 0; i < states.size(); i++)
         {
             state_pointers[i] = &(states[i]);
         }
@@ -61,9 +60,9 @@ public:
     }
 
     /* TODO fix this overloading hack */
-    virtual std::vector<Scalar> Loglikes_(const std::vector<const State*>&  states,
-                                             std::vector<Index>&   indices,
-                                             const bool&               update = false) = 0;
+    virtual std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
+                                          std::vector<size_t>& indices,
+                                          const bool& update = false) = 0;
 
 
     virtual void SetObservation(const Observation& image, const Scalar& delta_time) = 0;

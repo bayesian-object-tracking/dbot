@@ -56,7 +56,6 @@ struct Traits<KinectObserver>
 }
 
 
-
 /**
  * \class KinectObserver
  *

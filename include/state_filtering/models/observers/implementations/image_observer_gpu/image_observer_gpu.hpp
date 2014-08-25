@@ -35,13 +35,10 @@ namespace internal
 template <typename State>
 struct Traits<ImageObserverGPU<State> >
 {
-    typedef size_t IndexType;
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObserver<State,
-                                 Observation,
-                                 IndexType> RaoBlackwellObserverBase;
+    typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
@@ -63,17 +60,16 @@ class ImageObserverGPU:
 public:
     typedef internal::Traits<ImageObserverGPU<State> > Traits;
 
-    typedef typename Traits::IndexType      IndexType;
     typedef typename Traits::Scalar         Scalar;
     typedef typename Traits::Observation    Observation;
     typedef typename Traits::CameraMatrix   CameraMatrix;
 
 
     ImageObserverGPU(const CameraMatrix& camera_matrix,
-                             const IndexType& n_rows,
-                             const IndexType& n_cols,
-                             const IndexType& max_sample_count,
-                             const Scalar& initial_visibility_prob):
+                     const size_t& n_rows,
+                     const size_t& n_cols,
+                     const size_t& max_sample_count,
+                     const Scalar& initial_visibility_prob):
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),
@@ -86,16 +82,17 @@ public:
             resource_registered_(false),
             nr_calls_set_observation_(0),
             observation_time_(0)
-        {
-            visibility_probs_.resize(n_rows_ * n_cols_);
-        }
+    {
+        visibility_probs_.resize(n_rows_ * n_cols_);
+    }
 
     ~ImageObserverGPU() { }
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
     void Initialize()
     {
-        if (constants_set_) {
+        if (constants_set_)
+        {
             opengl_ = boost::shared_ptr<ObjectRasterizer> (new ObjectRasterizer(vertices_, indices_));
             cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
 
@@ -139,14 +136,14 @@ public:
     }
 
     void Constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
-                       const std::vector<std::vector<std::vector<int> > > indices,
-                       const float p_visible_visible,
-                       const float p_visible_occluded,
-                       const float tail_weight,
-                       const float model_sigma,
-                       const float sigma_factor,
-                       const float max_depth,
-                       const float exponential_rate)
+                   const std::vector<std::vector<std::vector<int> > > indices,
+                   const float p_visible_visible,
+                   const float p_visible_occluded,
+                   const float tail_weight,
+                   const float model_sigma,
+                   const float sigma_factor,
+                   const float max_depth,
+                   const float exponential_rate)
     {
 
 
@@ -174,8 +171,8 @@ public:
     }
 
     std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
-                                     std::vector<IndexType>& occlusion_indices,
-                                     const bool& update_occlusions = false)
+                                  std::vector<size_t>& occlusion_indices,
+                                  const bool& update_occlusions = false)
     {
         n_poses_ = states.size();
         std::vector<float> flog_likelihoods (n_poses_, 0);
@@ -324,7 +321,7 @@ public:
 
         // convert
         std::vector<Scalar> log_likelihoods(flog_likelihoods.size());
-        for(IndexType i = 0; i < flog_likelihoods.size(); i++)
+        for(size_t i = 0; i < flog_likelihoods.size(); i++)
             log_likelihoods[i] = flog_likelihoods[i];
 
         return log_likelihoods;

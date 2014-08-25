@@ -94,16 +94,15 @@ class RobotTracker
 {
 public:
     typedef double          Scalar;
-    typedef RobotState<>    StateType;
+    typedef RobotState<>    State;
 
-    typedef sf::DampedWienerProcess<StateType>      ProcessModel;
-    typedef sf::ImageObserverCPU<Scalar, StateType> ObservationModel;
+    typedef sf::DampedWienerProcess<State>      ProcessModel;
+    typedef sf::ImageObserverCPU<Scalar, State> ObservationModel;
 
     typedef typename ProcessModel::InputVector      InputVector;
     typedef typename ObservationModel::Observation  Observation;
 
-    typedef sf::RaoBlackwellCoordinateParticleFilter
-                <ProcessModel, ObservationModel> FilterType;
+    typedef sf::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 
     RobotTracker():
         node_handle_("~"),
@@ -131,7 +130,7 @@ public:
         boost::mutex::scoped_lock lock(mutex_);
 
         // convert initial samples to our state format
-        vector<StateType> initial_samples(initial_samples_eigen.size());
+        vector<State> initial_samples(initial_samples_eigen.size());
         for(size_t i = 0; i < initial_samples.size(); i++)
             initial_samples[i] = initial_samples_eigen[i];
 

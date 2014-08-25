@@ -95,12 +95,6 @@ public:
 #endif
 
     typedef RaoBlackwellObserver<State, Observation> ObservationModel;
-
-    // TODO needs to be adapted
-//    typedef ObserverCPUType::State ObservationState;
-//    typedef RaoBlackwellObserver<Scalar, ObservationState, Observation, Index>
-//                        ObserverType;
-
     typedef RaoBlackwellCoordinateParticleFilter<ProcessModel,
                                                  ObservationModel> FilterType;
 
