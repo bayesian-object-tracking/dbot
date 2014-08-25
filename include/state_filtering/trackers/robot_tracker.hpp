@@ -74,7 +74,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include "cloud_visualizer.hpp"
 
 // distributions
-#include <state_filtering/distributions/distribution.hpp>
+
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 #include <state_filtering/models/processes/features/stationary_process.hpp>
 //#include <state_filtering/models/processes/implementations/composed_stationary_process_model.hpp>
@@ -88,32 +88,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace boost;
 using namespace std;
 using namespace Eigen;
-using namespace distributions;
-
-
-
-
+using namespace sf;
 
 class RobotTracker
 {
 public:
-    typedef double                                                        ScalarType;
-    typedef RobotState<>                                                  StateType;
+    typedef double          Scalar;
+    typedef RobotState<>    StateType;
 
-    typedef typename distributions::DampedWienerProcess<ScalarType, Eigen::Dynamic> ProcessType;
-    typedef typename distributions::ImageObserverCPU                        ObserverType;
+    typedef sf::DampedWienerProcess<StateType>      ProcessModel;
+    typedef sf::ImageObserverCPU<Scalar, StateType> ObservationModel;
 
-    typedef typename ProcessType::InputType                                 InputType;
-    typedef ObserverType::ObservationType                                   ObservationType;
-    typedef ObserverType::IndexType                                         IndexType;
+    typedef typename ProcessModel::InputVector      InputVector;
+    typedef typename ObservationModel::Observation  Observation;
 
-    typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, ProcessType, ObserverType> FilterType;
+    typedef sf::RaoBlackwellCoordinateParticleFilter
+                <ProcessModel, ObservationModel> FilterType;
 
     RobotTracker():
         node_handle_("~"),
         tf_prefix_("MEAN"),
-        last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
+        last_measurement_time_(std::numeric_limits<Scalar>::quiet_NaN())
     {
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
         ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
@@ -144,7 +139,7 @@ public:
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
         camera_matrix_ = camera_matrix;
         // TODO: Fix with non-fake arm_rgbd node
-        ObservationType image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
+        Observation image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
 
         // read some parameters ---------------------------------------------------------------------------------------------------------
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -236,15 +231,15 @@ public:
         cloud_vis.show();
 	*/
 
-        boost::shared_ptr<ObserverType> observation_model;
+        boost::shared_ptr<ObservationModel> observation_model;
 
         // cpu obseration model -----------------------------------------------------------------------------------------------------
-        boost::shared_ptr<distributions::KinectObserver> kinect_observer(
-                    new distributions::KinectObserver(tail_weight, model_sigma, sigma_factor));
-        boost::shared_ptr<proc_mod::OcclusionProcess> occlusion_process_model(
-                    new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-        observation_model = boost::shared_ptr<ObserverType>(
-                    new ObserverType(camera_matrix,
+        boost::shared_ptr<sf::KinectObserver> kinect_observer(
+                    new sf::KinectObserver(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<sf::OcclusionProcess> occlusion_process_model(
+                    new sf::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
+        observation_model = boost::shared_ptr<ObservationModel>(
+                    new ObservationModel(camera_matrix,
                                              image.rows(),
                                              image.cols(),
                                              initial_samples.size(),
@@ -261,7 +256,7 @@ public:
                  << " while the state dimension is " << dimension_ << endl;
             exit(-1);
         }
-        boost::shared_ptr<ProcessType> process(new ProcessType(dimension_));
+        boost::shared_ptr<ProcessModel> process(new ProcessModel(dimension_));
         MatrixXd joint_covariance = MatrixXd::Zero(dimension_, dimension_);
         for(size_t i = 0; i < dimension_; i++)
             joint_covariance(i, i) = pow(joint_sigmas[i], 2);
@@ -274,7 +269,7 @@ public:
         // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->Samples(initial_samples);
-        filter_->Filter(image, 0.0, InputType::Zero(dimension_));
+        filter_->Filter(image, 0.0, InputVector::Zero(dimension_));
         filter_->Resample(evaluation_count_/sampling_blocks.size());
     }
 
@@ -285,14 +280,14 @@ public:
 
         if(std::isnan(last_measurement_time_))
             last_measurement_time_ = ros_image.header.stamp.toSec();
-        ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+        Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // TODO: THIS IS JUST FOR DEBUGGING, SINCE OTHERWISE LARGE DELAYS
         // MAKE IT GO WILD
         delta_time = 0.03;
 
         // convert image
-        ObservationType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_) / 1000.; // convert to m
+        Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_) / 1000.; // convert to m
 
         // filter
         INIT_PROFILING;
@@ -303,7 +298,7 @@ public:
 	// get the mean estimation for the robot joints
 	// Casting is a disgusting hack to make sure that the correct equal-operator is used
 	// TODO: Make this right 
-	*mean_ = (Eigen::VectorXd)(filter_->StateDistribution().EmpiricalMean());
+    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().Mean());
 
 	// DEBUG to see depth images
 	robot_renderer_->state(*mean_);
@@ -362,7 +357,7 @@ private:
     br.sendTransform(tf::StampedTransform(transform, time, from, to));
   }
 
-  void publishPointCloud(const ObservationType&       image,
+  void publishPointCloud(const Observation&       image,
 			 const ros::Time&             stamp)
   {
     
@@ -424,7 +419,7 @@ private:
       pub_point_cloud_->publish (points);
   }
 
-  ScalarType last_measurement_time_;
+  Scalar last_measurement_time_;
   
 
   boost::mutex mutex_;

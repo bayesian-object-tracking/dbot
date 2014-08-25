@@ -61,10 +61,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/pcl_interface.hpp>
 #include <state_filtering/utils/ros_interface.hpp>
 #include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/traits.hpp>
 //#include "cloud_visualizer.hpp"
 
 // distributions
-#include <state_filtering/distributions/distribution.hpp>
+
 #include <state_filtering/distributions/implementations/gaussian.hpp>
 #include <state_filtering/models/processes/features/stationary_process.hpp>
 //#include <state_filtering/models/processes/implementations/composed_stationary_process.hpp>
@@ -76,38 +77,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace boost;
 using namespace std;
 using namespace Eigen;
-using namespace distributions;
-
-
-
-
+using namespace sf;
 
 class MultiObjectTracker
 {
 public:
-    typedef double                                                                      ScalarType;
-    typedef FloatingBodySystem<Eigen::Dynamic>                                          StateType;
+    typedef double Scalar;
 
-    typedef typename distributions::BrownianObjectMotion<ScalarType, Eigen::Dynamic>    ProcessType;    
-    typedef typename distributions::ImageObserverCPU                            ObserverCPUType;
+    typedef BrownianObjectMotion<Scalar, Eigen::Dynamic> ProcessModel;
+    typedef ProcessModel::State State;
+
+    typedef ImageObserverCPU<Scalar, State> ObserverCPUType;
+    typedef ObserverCPUType::Observation    Observation;
+
 #ifdef BUILD_GPU
-    typedef typename distributions::ImageObserverGPU                            ObserverGPUType;
+    typedef ImageObserverGPU<State>  ObserverGPUType;
 #endif
 
-    typedef ObserverCPUType::ObservationType                                    ObservationType;
-    typedef ObserverCPUType::StateType                                          ObservationStateType;
-    typedef ObserverCPUType::IndexType                                          IndexType;
+    typedef RaoBlackwellObserver<State, Observation> ObservationModel;
 
+    // TODO needs to be adapted
+//    typedef ObserverCPUType::State ObservationState;
+//    typedef RaoBlackwellObserver<Scalar, ObservationState, Observation, Index>
+//                        ObserverType;
 
-    typedef RaoBlackwellObserver<ScalarType, ObservationStateType, ObservationType, IndexType>
-                        ObserverType;
-
-    typedef distributions::RaoBlackwellCoordinateParticleFilter
-    <ScalarType, StateType, ProcessType, ObserverCPUType> FilterType;
+    typedef RaoBlackwellCoordinateParticleFilter<ProcessModel,
+                                                 ObservationModel> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
-        last_measurement_time_(std::numeric_limits<ScalarType>::quiet_NaN())
+        last_measurement_time_(std::numeric_limits<Scalar>::quiet_NaN())
     {
         ri::ReadParameter("object_names", object_names_, node_handle_);
         ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
@@ -124,7 +123,7 @@ public:
 
         // convert camera matrix and image to desired format
         camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
-        ObservationType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_); // convert to meters
+        Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_); // convert to meters
 
         // read some parameters
         bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -166,55 +165,55 @@ public:
             object_triangle_indices[i] = *file_reader.get_indices();
         } 
 
-        boost::shared_ptr<StateType> rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
+        boost::shared_ptr<State> rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
         boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
                                                                           object_vertices,
                                                                           object_triangle_indices,
                                                                           rigid_body_system));
 
-        boost::shared_ptr<ObserverType> observation_model;
+        boost::shared_ptr<ObservationModel> observation_model;
 #ifndef BUILD_GPU
-use_gpu = false;
+        use_gpu = false;
 #endif
 
         if(!use_gpu)
         {
 
             // cpu obseration model
-            boost::shared_ptr<distributions::KinectObserver>
-                    kinect_observer(new distributions::KinectObserver(tail_weight, model_sigma, sigma_factor));
-            boost::shared_ptr<proc_mod::OcclusionProcess>
-                    occlusion_process(new proc_mod::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-            observation_model = boost::shared_ptr<distributions::ImageObserverCPU>(
-                        new distributions::ImageObserverCPU(camera_matrix,
-                                                                    image.rows(),
-                                                                    image.cols(),
-                                                                    initial_states.size(),
-                                                                    object_renderer,
-                                                                    kinect_observer,
-                                                                    occlusion_process,
-                                                                    p_visible_init));
+            boost::shared_ptr<sf::KinectObserver>
+                    kinect_observer(new sf::KinectObserver(tail_weight, model_sigma, sigma_factor));
+            boost::shared_ptr<sf::OcclusionProcess>
+                    occlusion_process(new sf::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
+            observation_model = boost::shared_ptr<ObserverCPUType>(
+                        new ObserverCPUType(camera_matrix,
+                                            image.rows(),
+                                            image.cols(),
+                                            initial_states.size(),
+                                            object_renderer,
+                                            kinect_observer,
+                                            occlusion_process,
+                                            p_visible_init));
         }
         else
         {
 #ifdef BUILD_GPU
             // gpu obseration model
-            boost::shared_ptr<distributions::ImageObserverGPU>
-                    gpu_observer(new distributions::ImageObserverGPU(camera_matrix,
-                                                                                      image.rows(),
-                                                                                      image.cols(),
-                                                                                      max_sample_count,
-                                                                                      p_visible_init));
+            boost::shared_ptr<ObserverGPUType>
+                    gpu_observer(new ObserverGPUType(camera_matrix,
+                                                     image.rows(),
+                                                     image.cols(),
+                                                     max_sample_count,
+                                                     p_visible_init));
 
             gpu_observer->Constants(object_vertices,
-                                                 object_triangle_indices,
-                                                 p_visible_visible,
-                                                 p_visible_occluded,
-                                                 tail_weight,
-                                                 model_sigma,
-                                                 sigma_factor,
-                                                 6.0f,         // max_depth
-                                                 -log(0.5));   // exponential_rate
+                                    object_triangle_indices,
+                                    p_visible_visible,
+                                    p_visible_occluded,
+                                    tail_weight,
+                                    model_sigma,
+                                    sigma_factor,
+                                    6.0f,         // max_depth
+                                    -log(0.5));   // exponential_rate
 
             gpu_observer->Initialize();
             observation_model = gpu_observer;
@@ -227,7 +226,7 @@ use_gpu = false;
         MatrixXd linear_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
         MatrixXd angular_acceleration_covariance = MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-        boost::shared_ptr<ProcessType> process(new ProcessType(object_names_.size()));
+        boost::shared_ptr<ProcessModel> process(new ProcessModel(object_names_.size()));
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             process->Parameters(i, object_renderer->object_center(i).cast<double>(),
@@ -269,7 +268,7 @@ use_gpu = false;
                     multi_body_samples[state_index] = full_initial_state;
                 }
                 filter_->Samples(multi_body_samples);
-                filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
+                filter_->Filter(image, 0.0, ProcessModel::InputVector::Zero(object_names_.size()*6));
                 filter_->Resample(multi_body_samples.size());
 
                 multi_body_samples = filter_->Samples();
@@ -282,7 +281,7 @@ use_gpu = false;
                 multi_body_samples[i] = initial_states[i];
 
             filter_->Samples(multi_body_samples);
-            filter_->Filter(image, 0.0, VectorXd::Zero(object_names_.size()*6));
+            filter_->Filter(image, 0.0, ProcessModel::InputVector::Zero(object_names_.size()*6));
        }
         filter_->Resample(evaluation_count/sampling_blocks.size());
         filter_->SamplingBlocks(sampling_blocks);
@@ -294,19 +293,19 @@ use_gpu = false;
 
         if(std::isnan(last_measurement_time_))
             last_measurement_time_ = ros_image.header.stamp.toSec();
-        ScalarType delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+        Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
 
         // convert image
-        ObservationType image = ri::Ros2Eigen<ScalarType>(ros_image, downsampling_factor_); // convert to m
+        Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_); // convert to m
 
         // filter
         INIT_PROFILING;
-        filter_->Filter(image, delta_time, VectorXd::Zero(object_names_.size()*6));
+        filter_->Filter(image, delta_time, ProcessModel::InputVector::Zero(object_names_.size()*6));
         MEASURE("-----------------> total time for filtering");
 
 
         // visualize the mean state
-        FloatingBodySystem<> mean = filter_->StateDistribution().EmpiricalMean();
+        FloatingBodySystem<> mean = filter_->StateDistribution().Mean();
         for(size_t i = 0; i < object_names_.size(); i++)
         {
             string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -316,11 +315,11 @@ use_gpu = false;
         }
 
         last_measurement_time_ = ros_image.header.stamp.toSec();
-        return filter_->StateDistribution().EmpiricalMean();
+        return filter_->StateDistribution().Mean();
     }
 
 private:  
-    ScalarType last_measurement_time_;
+    Scalar last_measurement_time_;
 
     boost::mutex mutex_;
     ros::NodeHandle node_handle_;
