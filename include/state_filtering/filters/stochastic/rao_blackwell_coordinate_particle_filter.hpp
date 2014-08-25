@@ -52,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
 #include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
 
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
@@ -64,63 +65,60 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 /// this namespace contains all the filters
-namespace distributions
+namespace sf
 {
 
-
-template<typename ScalarType_, typename StateType_, typename ProcessType_, typename ObserverType_>
+template<typename ProcessModel,
+         typename ObservationModel>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
+    typedef typename internal::Traits<ProcessModel>::Scalar         Scalar;
+    typedef typename internal::Traits<ProcessModel>::State          State;
+    typedef typename internal::Traits<ProcessModel>::InputVector    InputVector;
+    typedef typename internal::Traits<ProcessModel>::NoiseVector    NoiseVector;
 
+//    typedef typename internal::Traits<ObservationModel>::Index       Index;
+//    typedef typename internal::Traits<ObservationModel>::Observation Observation;
 
-    // process model features
-    typedef StationaryProcess<typename ProcessType_::ScalarType,
-                              typename ProcessType_::StateType, typename ProcessType_::InputType>               StationaryType;
-    typedef GaussianMappable< typename ProcessType_::ScalarType,
-                              typename ProcessType_::StateType, ProcessType_::NoiseType::SizeAtCompileTime>     MappableType;
-
-    // observation model features
-    typedef distributions::RaoBlackwellObserver
-                                 <typename ObserverType_::ScalarType,      typename ObserverType_::StateType,
-                                  typename ObserverType_::ObservationType, typename ObserverType_::IndexType>   ObserverType;
-
-    // basic types
-    typedef ScalarType_                              ScalarType;
-    typedef StateType_                               StateType;
-    typedef typename StationaryType::InputType       InputType;
-    typedef typename MappableType::NoiseType         NoiseType;
-    typedef typename ObserverType::ObservationType   ObservationType;
-    typedef typename ObserverType::IndexType         IndexType;
+    typedef typename ObservationModel::Index                        Index;
+    typedef typename ObservationModel::Observation                  Observation;
 
     // state distribution
-    typedef SumOfDeltas<ScalarType, StateType>       StateDistributionType;
+    typedef SumOfDeltas<State> StateDistributionType;
 
 public:
-    template<typename ProcessPointer, typename ObserverPointer>
-    RaoBlackwellCoordinateParticleFilter(const ProcessPointer           process_model,
-                                         const ObserverPointer  observation_model,
-                                         const std::vector<std::vector<IndexType> >& sampling_blocks,
-                                         const ScalarType& max_kl_divergence = 0):
+    RaoBlackwellCoordinateParticleFilter(
+            const boost::shared_ptr<ProcessModel> process_model,
+            const boost::shared_ptr<ObservationModel>  observation_model,
+            const std::vector<std::vector<Index> >& sampling_blocks,
+            const Scalar& max_kl_divergence = 0):
         observation_model_(observation_model),
-        stationary_process_(process_model),
-        mappable_process_(process_model),
+        process_model_(process_model),
         max_kl_divergence_(max_kl_divergence)
     {
+        SF_REQUIRE_INTERFACE(
+            ProcessModel,
+            StationaryProcess<State, InputVector>);
+
+        SF_REQUIRE_INTERFACE(
+            ProcessModel,
+            GaussianMappable<State, internal::VectorTraits<State>::Dimension>);
+
         SamplingBlocks(sampling_blocks);
     }
     virtual ~RaoBlackwellCoordinateParticleFilter() {}
 
 public:
-    void Filter(const ObservationType& observation,
-                const ScalarType&  delta_time,
-                const InputType&   input)
+    void Filter(const Observation& observation,
+                const Scalar&  delta_time,
+                const InputVector&   input)
     {
         INIT_PROFILING;
-        observation_model_->Observation(observation, delta_time);
+        observation_model_->SetObservation(observation, delta_time);
 
-        loglikes_ = std::vector<ScalarType>(samples_.size(), 0);
-        noises_ = std::vector<NoiseType>(samples_.size(), NoiseType::Zero(mappable_process_->NoiseDimension()));
+        loglikes_ = std::vector<Scalar>(samples_.size(), 0);
+        noises_ = std::vector<NoiseVector>(samples_.size(), NoiseVector::Zero(process_model_->NoiseDimension()));
         next_samples_ = samples_;
 
         for(size_t block_index = 0; block_index < sampling_blocks_.size(); block_index++)
@@ -130,20 +128,20 @@ public:
                 for(size_t i = 0; i < sampling_blocks_[block_index].size(); i++)
                     noises_[particle_index](sampling_blocks_[block_index][i]) = unit_gaussian_.Sample()(0);
 
-                stationary_process_->Condition(delta_time,
+                process_model_->Condition(delta_time,
                                           samples_[particle_index],
                                           input);
-                next_samples_[particle_index] = mappable_process_->MapGaussian(noises_[particle_index]);
+                next_samples_[particle_index] = process_model_->MapGaussian(noises_[particle_index]);
             }
 
             bool update_occlusions = (block_index == sampling_blocks_.size()-1);
             std::cout << "evaluating with " << next_samples_.size() << " samples " << std::endl;
             RESET;
-            std::vector<ScalarType> new_loglikes = observation_model_->Loglikes(next_samples_,
+            std::vector<Scalar> new_loglikes = observation_model_->Loglikes(next_samples_,
                                                                            indices_,
                                                                            update_occlusions);
             MEASURE("evaluation");
-            std::vector<ScalarType> delta_loglikes(new_loglikes.size());
+            std::vector<Scalar> delta_loglikes(new_loglikes.size());
             for(size_t i = 0; i < delta_loglikes.size(); i++)
                 delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
             loglikes_ = new_loglikes;
@@ -154,19 +152,19 @@ public:
         state_distribution_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
-    void Resample(const IndexType& sample_count)
+    void Resample(const Index& sample_count)
     {
-        std::vector<StateType> samples(sample_count);
-        std::vector<IndexType> indices(sample_count);
-        std::vector<NoiseType> noises(sample_count);
-        std::vector<StateType> next_samples(sample_count);
-        std::vector<ScalarType> loglikes(sample_count);
+        std::vector<State> samples(sample_count);
+        std::vector<Index> indices(sample_count);
+        std::vector<NoiseVector> noises(sample_count);
+        std::vector<State> next_samples(sample_count);
+        std::vector<Scalar> loglikes(sample_count);
 
         hf::DiscreteSampler sampler(log_weights_);
 
-        for(IndexType i = 0; i < sample_count; i++)
+        for(Index i = 0; i < sample_count; i++)
         {
-            IndexType index = sampler.Sample();
+            Index index = sampler.Sample();
 
             samples[i]      = samples_[index];
             indices[i]      = indices_[index];
@@ -180,31 +178,31 @@ public:
         next_samples_   = next_samples;
         loglikes_       = loglikes;
 
-        log_weights_        = std::vector<ScalarType>(samples_.size(), 0.);
+        log_weights_        = std::vector<Scalar>(samples_.size(), 0.);
 
         state_distribution_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
 private:
-    void UpdateWeights(std::vector<ScalarType> log_weight_diffs)
+    void UpdateWeights(std::vector<Scalar> log_weight_diffs)
     {
         for(size_t i = 0; i < log_weight_diffs.size(); i++)
             log_weights_[i] += log_weight_diffs[i];
 
-        std::vector<ScalarType> weights = log_weights_;
+        std::vector<Scalar> weights = log_weights_;
         hf::Sort(weights, 1);
 
         for(int i = weights.size() - 1; i >= 0; i--)
             weights[i] -= weights[0];
 
-        weights = hf::Apply<ScalarType, ScalarType>(weights, std::exp);
-        weights = hf::SetSum(weights, ScalarType(1));
+        weights = hf::Apply<Scalar, Scalar>(weights, std::exp);
+        weights = hf::SetSum(weights, Scalar(1));
 
         // compute KL divergence to uniform distribution KL(p|u)
-        ScalarType kl_divergence = std::log(ScalarType(weights.size()));
+        Scalar kl_divergence = std::log(Scalar(weights.size()));
         for(size_t i = 0; i < weights.size(); i++)
         {
-            ScalarType information = - std::log(weights[i]) * weights[i];
+            Scalar information = - std::log(weights[i]) * weights[i];
             if(!std::isfinite(information))
                 information = 0; // the limit for weight -> 0 is equal to 0
             kl_divergence -= information;
@@ -217,36 +215,37 @@ private:
 
 public:
     // set
-    void Samples(const std::vector<StateType >& samples)
+    void Samples(const std::vector<State >& samples)
     {
         samples_ = samples;
         indices_ = std::vector<size_t>(samples_.size(), 0); observation_model_->Reset();
-        log_weights_ = std::vector<ScalarType>(samples_.size(), 0);
+        log_weights_ = std::vector<Scalar>(samples_.size(), 0);
     }
-    void SamplingBlocks(const std::vector<std::vector<IndexType> >& sampling_blocks)
+    void SamplingBlocks(const std::vector<std::vector<Index> >& sampling_blocks)
     {
         sampling_blocks_ = sampling_blocks;
 
         // make sure sizes are consistent
-        IndexType dimension = 0;
+        Index dimension = 0;
         for(size_t i = 0; i < sampling_blocks_.size(); i++)
             for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
                 dimension++;
 
-        if(dimension != mappable_process_->NoiseDimension())
+        if(dimension != process_model_->NoiseDimension())
         {
             std::cout << "the dimension of the sampling blocks is " << dimension
                       << " while the dimension of the noise is "
-                      << mappable_process_->NoiseDimension() << std::endl;
+                      << process_model_->NoiseDimension() << std::endl;
             exit(-1);
         }
     }
 
     // get
-    const std::vector<StateType>& Samples() const
+    const std::vector<State>& Samples() const
     {
         return samples_;
     }
+
     StateDistributionType& StateDistribution()
     {
         return state_distribution_;
@@ -256,27 +255,26 @@ private:
     // internal state TODO: THIS COULD BE MADE MORE COMPACT!!
     StateDistributionType state_distribution_;
 
-    std::vector<StateType > samples_;
-    std::vector<IndexType> indices_;
-    std::vector<ScalarType>  log_weights_;
-    std::vector<NoiseType> noises_;
-    std::vector<StateType> next_samples_;
-    std::vector<ScalarType> loglikes_;
+    std::vector<State > samples_;
+    std::vector<Index> indices_;
+    std::vector<Scalar>  log_weights_;
+    std::vector<NoiseVector> noises_;
+    std::vector<State> next_samples_;
+    std::vector<Scalar> loglikes_;
 
 
     // observation model
-    boost::shared_ptr<ObserverType> observation_model_;
+    boost::shared_ptr<ObservationModel> observation_model_;
 
     // process model
-    boost::shared_ptr<StationaryType>   stationary_process_;
-    boost::shared_ptr<MappableType>     mappable_process_;
+    boost::shared_ptr<ProcessModel> process_model_;
 
     // parameters
-    std::vector<std::vector<IndexType> > sampling_blocks_;
-    ScalarType max_kl_divergence_;
+    std::vector<std::vector<Index> > sampling_blocks_;
+    Scalar max_kl_divergence_;
 
     // distribution for sampling
-    Gaussian<ScalarType, 1> unit_gaussian_;
+    Gaussian<Scalar, 1> unit_gaussian_;
 };
 
 }
