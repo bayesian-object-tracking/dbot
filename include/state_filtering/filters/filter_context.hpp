@@ -52,7 +52,7 @@
 /**
  * @brief State filtering namespace
  */
-namespace distributions
+namespace sf
 {
 
 /**
@@ -72,14 +72,14 @@ namespace distributions
  */
 
 // TODO: THESE TEMPLATE PARAMETERS HAVE TO CHANGE!! FOR NOW FOR SIMPLICITY THE BELOW IS A HACK
-template <typename ScalarType_, int SIZE, typename ObservationType, typename ControlType>
+template <typename Scalar_, int SIZE, typename Observation, typename ControlType>
 class FilterContext
 {
 public:
-    typedef ScalarType_ ScalarType;
-    typedef Eigen::Matrix<ScalarType, SIZE, 1> VectorType;
-    typedef Eigen::Matrix<ScalarType, SIZE, SIZE> OperatorType;
-    typedef MomentsEstimable<ScalarType, VectorType, OperatorType> StateDistribution;
+    typedef Scalar_ Scalar;
+    typedef Eigen::Matrix<Scalar, SIZE, 1> Vector;
+    typedef Eigen::Matrix<Scalar, SIZE, SIZE> Operator;
+    typedef MomentsEstimable<Scalar, Vector, Operator> StateDistribution;
 
     virtual ~FilterContext() { }
 
@@ -89,7 +89,7 @@ public:
      * @param observation   Most recent observation used to update the state
      * @param time          Current timestamp
      */
-    virtual void predictAndUpdate(const ObservationType& observation,
+    virtual void predictAndUpdate(const Observation& observation,
                                   double time,
                                   const ControlType& control) = 0;
 
