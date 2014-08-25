@@ -54,193 +54,119 @@
 #include <vector>
 
 // state_filtering
+#include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/features/moments_solvable.hpp>
 
 namespace sf
 {
 
+// Forward declarations
+template <typename Vector> class SumOfDeltas;
+
 namespace internal
 {
-template <typename Scalar_, typename Vector_>
-struct SumOfDeltasTypes
+/**
+ * SumOfDeltas distribution traits specialization
+ * \internal
+ */
+template <typename Vector>
+struct Traits<SumOfDeltas<Vector> >
 {
-    typedef Scalar_ Scalar;
-    typedef Vector_ Vector;
-    typedef Eigen::Matrix<Scalar,
-                          Vector::SizeAtCompileTime,
-                          Vector::SizeAtCompileTime> Operator;
-    typedef MomentsSolvable<Scalar,
-                            Vector,
-                            Operator> MomentsSolvableType;
+    enum { Dimension = VectorTraits<Vector>::Dimension };
+
+    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
+    typedef Eigen::Matrix<Scalar,Dimension, Dimension>      Operator;
+
+    typedef std::vector<Vector>                             Deltas;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1>        Weights;
+
+    typedef MomentsSolvable<Vector, Operator>               MomentsSolvableBase;
 };
 }
 
-template <typename Scalar_, typename Vector_>
+/**
+ * \class SumOfDeltas
+ * \ingroup distributions
+ */
+template <typename Vector>
 class SumOfDeltas:
-        public internal
-                ::SumOfDeltasTypes<Scalar_, Vector_>
-                ::MomentsSolvableType
+        public internal::Traits<SumOfDeltas<Vector> >::MomentsSolvableBase
 {
 public:
-    typedef internal::SumOfDeltasTypes<Scalar_, Vector_> Base;
-    typedef typename Base::Scalar   Scalar;
-    typedef typename Base::Vector   Vector;
-    typedef typename Base::Operator Operator;
+    typedef internal::Traits<SumOfDeltas<Vector> > Traits;
 
-    typedef std::vector<Vector>                         Deltas;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1>    Weights;
+    typedef typename Traits::Scalar     Scalar;
+    typedef typename Traits::Operator   Operator;
+    typedef typename Traits::Deltas     Deltas;
+    typedef typename Traits::Weights    Weights;
 
 public:
-    /**
-     * Constructs a fixed or dynamic sized sum of deltas distribution resembling
-     * a Gaussian distribution with the deltas as its statistics.
-     */
     SumOfDeltas()
     {
+//        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
+
         // initialize with one delta at zero
-        int dimension = Vector::SizeAtCompileTime == Eigen::Dynamic?
-                    1 : Vector::SizeAtCompileTime;
-        SetDeltas(Deltas(1, Vector::Zero(dimension)), Weights::Ones(1));
+        deltas_ = Deltas(1, Vector::Zero(Vector::SizeAtCompileTime == Eigen::Dynamic ?
+                                                 0 : Vector::SizeAtCompileTime));
+        weights_ = Weights::Ones(1);
     }
 
-    /**
-     * Constructs dynamic sized sum of deltas distribution resembling a
-     * Gaussian distribution with the deltas as its statistics.
-     */
     explicit SumOfDeltas(const unsigned& dimension)
     {
-        DISABLE_IF_FIXED_SIZE(Vector);
+        SF_DISABLE_IF_FIXED_SIZE(Vector);
 
         // initialize with one delta at zero
-        SetDeltas(Deltas(1, Vector::Zero(dimension)), Weights::Ones(1));
+        deltas_ = Deltas(1, Vector::Zero(dimension));
+        weights_ = Weights::Ones(1);
     }
 
-    /**
-     * Default customizable destructor
-     */
     virtual ~SumOfDeltas() { }
 
-    /**
-     * Sets the distribution deltas and the associated weights and recomputes
-     * the deltas' mean and covariance.
-     *
-     * @param [in] deltas               Distribution delta set
-     * @param [in] weights              Deltas' weights
-     * @param [in] covariance_weights   Deltas' second momement weights. If not
-     *                                  set, it's equal to first moment weights
-     *                                  specified above.
-     * @param [in] normalize            Set true normalize the weights
-     */
-    virtual void SetDeltas(const Deltas& deltas,
-                           const Weights& weights,
-                           const Weights& covariance_weights = Weights(),
-                           bool normalize = true)
+    virtual void SetDeltas(const Deltas& deltas, const Weights& weights)
     {
         deltas_ = deltas;
-        mean_weights_ = normalize ? weights.normalized() : weights;
-        if (covariance_weights.rows() > 0)
-        {
-            covariance_weights_ = normalize ?
-                        covariance_weights.normalized() : covariance_weights;
-        }
-        else
-        {
-            covariance_weights_ = mean_weights_;
-        }
-
-        // recompute the mean and covariance
-        mean_.setZero(Dimension());
-        for(size_t i = 0; i < deltas_.size(); i++)
-        {
-            mean_ += mean_weights_[i] * deltas_[i];
-        }
-
-//        covariance_.setZero(Dimension(), Dimension());
-//        for(size_t i = 0; i < deltas_.size(); i++)
-//        {
-//            covariance_ += covariance_weights_[i]
-//                    * (deltas_[i]-mean) * (deltas_[i]-mean).transpose();
-//        }
-
-        // approx. 5x faster covariance by avoiding sum of dyadic products
-        Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
-                scatter_matrix(Dimension(), deltas_.size());
-
-        for (int i = 0; i < deltas_.size(); i++)
-        {
-            scatter_matrix.col(i) = deltas_[i] - mean_;
-        }
-
-        covariance_ = scatter_matrix * scatter_matrix.transpose();
+        weights_ = weights.normalized();
     }
 
-    /**
-     * Sets the distribution deltas and the associated weights and recomputes
-     * the deltas' mean and covariance. This assumes equally weighted deltas.
-     *
-     * @param [in] deltas   Distribution delta set
-     */
     virtual void SetDeltas(const Deltas& deltas)
     {
-        SetDeltas(deltas,
-                  Weights::Ones(deltas_.size())/Scalar_(deltas_.size()));
+        deltas_ = deltas;
+        weights_ = Weights::Ones(deltas_.size())/Scalar(deltas_.size());
     }
 
-    /**
-     * Returns the set of deltas and their weights
-     * @param [out]  deltas
-     * @param [out]  weights
-     */
     virtual void GetDeltas(Deltas& deltas, Weights& weights) const
     {
         deltas = deltas_;
-        weights = mean_weights_;
+        weights = weights_;
     }
 
-    /**
-     * Returns the set of deltas and their first and second moment weights
-     * @param [out]  deltas
-     * @param [out]  weights
-     */
-    virtual void GetDeltas(Deltas& deltas,
-                           Weights& mean_weights,
-                           Weights& covariance_weights) const
-    {
-        deltas = deltas_;
-        mean_weights = mean_weights_;
-        covariance_weights = covariance_weights_;
-    }
-
-    /**
-     * Returns the weighted mean of the deltas
-     */
     virtual Vector Mean() const
     {
-        return mean_;
+        Vector mean(Vector::Zero(Dimension()));
+        for(size_t i = 0; i < deltas_.size(); i++)
+            mean += weights_[i] * deltas_[i];
+
+        return mean;
     }
 
-    /**
-     * Returns sencond centered moment of the deltas
-     */
     virtual Operator Covariance() const
     {
-        return covariance_;
+        Vector mean = Mean();
+        Operator covariance(Operator::Zero(Dimension(), Dimension()));
+        for(size_t i = 0; i < deltas_.size(); i++)
+            covariance += weights_[i] * (deltas_[i]-mean) * (deltas_[i]-mean).transpose();
+
+        return covariance;
     }
 
-    /**
-     * Returns the dimension of distribution
-     */
     virtual int Dimension() const
     {
         return deltas_[0].rows();
     }
 
 protected:
-    Deltas deltas_;
-    Weights mean_weights_;
-    Weights covariance_weights_;
-    Vector mean_;
-    Operator covariance_;
+    Deltas  deltas_;
+    Weights weights_;
 };
 
 }
