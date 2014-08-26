@@ -66,7 +66,7 @@ class GaussianMappable:
 {
 public:
     typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
-    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  NoiseVector;
+    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
 
 public:
     // constructor and destructor
@@ -75,19 +75,19 @@ public:
                         gaussian_distribution_(0.0, 1.0),
                         gaussian_generator_(generator_, gaussian_distribution_)
     {
-        SF_DISABLE_IF_DYNAMIC_SIZE(NoiseVector);
+        SF_DISABLE_IF_DYNAMIC_SIZE(Noise);
     }
     GaussianMappable(const unsigned& noise_dimension): noise_dimension_(noise_dimension),
                                                        generator_(RANDOM_SEED),
                                                        gaussian_distribution_(0.0, 1.0),
                                                        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        SF_DISABLE_IF_FIXED_SIZE(NoiseVector);
+        SF_DISABLE_IF_FIXED_SIZE(Noise);
     }
     virtual ~GaussianMappable() { }
 
     // purely virtual functions
-    virtual Vector MapGaussian(const NoiseVector& sample) const = 0;
+    virtual Vector MapGaussian(const Noise& sample) const = 0;
 
     // implementations
     virtual int NoiseDimension() const
@@ -96,7 +96,7 @@ public:
     }
     virtual Vector Sample()
     {
-        NoiseVector gaussian_sample(NoiseDimension());
+        Noise gaussian_sample(NoiseDimension());
         for (int i = 0; i < NoiseDimension(); i++)
         {
             gaussian_sample(i) = gaussian_generator_();

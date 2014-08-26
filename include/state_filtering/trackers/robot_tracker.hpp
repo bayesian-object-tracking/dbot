@@ -99,7 +99,7 @@ public:
     typedef sf::DampedWienerProcess<State>      ProcessModel;
     typedef sf::ImageObserverCPU<Scalar, State> ObservationModel;
 
-    typedef typename ProcessModel::InputVector      InputVector;
+    typedef typename ProcessModel::Input      Input;
     typedef typename ObservationModel::Observation  Observation;
 
     typedef sf::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
@@ -268,7 +268,7 @@ public:
         // we evaluate the initial particles and resample -------------------------------------------------------------------------------
         cout << "evaluating initial particles cpu ..." << endl;
         filter_->Samples(initial_samples);
-        filter_->Filter(image, 0.0, InputVector::Zero(dimension_));
+        filter_->Filter(image, 0.0, Input::Zero(dimension_));
         filter_->Resample(evaluation_count_/sampling_blocks.size());
     }
 

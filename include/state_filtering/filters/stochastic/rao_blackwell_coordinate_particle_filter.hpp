@@ -74,8 +74,8 @@ class RaoBlackwellCoordinateParticleFilter
 public:
     typedef typename internal::Traits<ProcessModel>::Scalar         Scalar;
     typedef typename internal::Traits<ProcessModel>::State          State;
-    typedef typename internal::Traits<ProcessModel>::InputVector    InputVector;
-    typedef typename internal::Traits<ProcessModel>::NoiseVector    NoiseVector;
+    typedef typename internal::Traits<ProcessModel>::Input    Input;
+    typedef typename internal::Traits<ProcessModel>::Noise    Noise;
 
     typedef typename ObservationModel::Observation                  Observation;
 
@@ -94,7 +94,7 @@ public:
     {
         SF_REQUIRE_INTERFACE(
             ProcessModel,
-            StationaryProcess<State, InputVector>);
+            StationaryProcess<State, Input>);
 
         SF_REQUIRE_INTERFACE(
             ProcessModel,
@@ -107,13 +107,13 @@ public:
 public:
     void Filter(const Observation& observation,
                 const Scalar&  delta_time,
-                const InputVector&   input)
+                const Input&   input)
     {
         INIT_PROFILING;
         observation_model_->SetObservation(observation, delta_time);
 
         loglikes_ = std::vector<Scalar>(samples_.size(), 0);
-        noises_ = std::vector<NoiseVector>(samples_.size(), NoiseVector::Zero(process_model_->NoiseDimension()));
+        noises_ = std::vector<Noise>(samples_.size(), Noise::Zero(process_model_->NoiseDimension()));
         next_samples_ = samples_;
 
         for(size_t block_index = 0; block_index < sampling_blocks_.size(); block_index++)
@@ -151,7 +151,7 @@ public:
     {
         std::vector<State> samples(sample_count);
         std::vector<size_t> indices(sample_count);
-        std::vector<NoiseVector> noises(sample_count);
+        std::vector<Noise> noises(sample_count);
         std::vector<State> next_samples(sample_count);
         std::vector<Scalar> loglikes(sample_count);
 
@@ -253,7 +253,7 @@ private:
     std::vector<State > samples_;
     std::vector<size_t> indices_;
     std::vector<Scalar>  log_weights_;
-    std::vector<NoiseVector> noises_;
+    std::vector<Noise> noises_;
     std::vector<State> next_samples_;
     std::vector<Scalar> loglikes_;
 

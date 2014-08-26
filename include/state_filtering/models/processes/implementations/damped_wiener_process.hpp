@@ -71,15 +71,15 @@ struct Traits<DampedWienerProcess<State_> >
 
     typedef State_                                      State;
     typedef typename VectorTraits<State>::Scalar        Scalar;
-    typedef Eigen::Matrix<Scalar, Dimension, 1>         InputVector;
+    typedef Eigen::Matrix<Scalar, Dimension, 1>         Input;
 
     typedef Gaussian<Scalar, Dimension>                 GaussianType;
     typedef typename GaussianType::Operator             Operator;
 
-    typedef StationaryProcess<State,InputVector>        StationaryProcessBase;
+    typedef StationaryProcess<State,Input>        StationaryProcessBase;
     typedef GaussianMappable<State, Dimension>          GaussianMappableBase;
 
-    typedef typename GaussianMappableBase::NoiseVector  NoiseVector;
+    typedef typename GaussianMappableBase::Noise  Noise;
 };
 }
 
@@ -100,8 +100,8 @@ public:
     typedef typename Traits::Scalar         Scalar;
     typedef typename Traits::State          State;
     typedef typename Traits::Operator       Operator;
-    typedef typename Traits::InputVector    InputVector;
-    typedef typename Traits::NoiseVector    NoiseVector;
+    typedef typename Traits::Input    Input;
+    typedef typename Traits::Noise    Noise;
     typedef typename Traits::GaussianType   GaussianType;
 
 public:
@@ -119,14 +119,14 @@ public:
 
     virtual ~DampedWienerProcess() { }
 
-    virtual State MapGaussian(const NoiseVector& sample) const
+    virtual State MapGaussian(const Noise& sample) const
     {
         return gaussian_.MapGaussian(sample);
     }
 
     virtual void Condition(const Scalar&  delta_time,
                            const State&  state,
-                           const InputVector&   input)
+                           const Input&   input)
     {
         gaussian_.Mean(Mean(delta_time, state, input));
         gaussian_.Covariance(Covariance(delta_time));
@@ -134,7 +134,7 @@ public:
     virtual void Condition(const Scalar&  delta_time,
                            const State&  state)
     {
-        Condition(delta_time, state, InputVector::Zero(Dimension()));
+        Condition(delta_time, state, Input::Zero(Dimension()));
     }
 
     virtual void Parameters(const Scalar& damping,
@@ -152,7 +152,7 @@ public:
 private:
     State Mean(const Scalar& delta_time,
                     const State& state,
-                    const InputVector& input)
+                    const Input& input)
     {
         State state_expectation = (1.0 - exp(-damping_*delta_time)) / damping_ * input +
                                               exp(-damping_*delta_time)  * state;

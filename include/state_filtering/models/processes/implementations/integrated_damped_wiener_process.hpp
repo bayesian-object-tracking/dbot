@@ -78,16 +78,16 @@ struct Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >
 
     typedef Scalar_                                    Scalar;
     typedef Eigen::Matrix<Scalar, StateDimension, 1>   State;
-    typedef Eigen::Matrix<Scalar, InputDimension, 1>   InputVector;
+    typedef Eigen::Matrix<Scalar, InputDimension, 1>   Input;
 
-    typedef StationaryProcess<State, InputVector>      StationaryProcessBase;
+    typedef StationaryProcess<State, Input>      StationaryProcessBase;
     typedef GaussianMappable<State, NoiseDimension>    GaussianMappableBase;
 
     typedef Eigen::Matrix<Scalar, InputDimension, 1>   WienerProcessState;
     typedef DampedWienerProcess<WienerProcessState>    DampedWienerProcessType;
     typedef Gaussian<Scalar, InputDimension>           GaussianType;
 
-    typedef typename GaussianMappableBase::NoiseVector NoiseVector;
+    typedef typename GaussianMappableBase::Noise Noise;
     typedef typename GaussianType::Operator            Operator;
 };
 }
@@ -108,9 +108,9 @@ public:
 
     typedef typename Traits::Scalar                     Scalar;
     typedef typename Traits::State                      State;
-    typedef typename Traits::InputVector                InputVector;
+    typedef typename Traits::Input                Input;
     typedef typename Traits::Operator                   Operator;
-    typedef typename Traits::NoiseVector                NoiseVector;
+    typedef typename Traits::Noise                Noise;
     typedef typename Traits::GaussianType               GaussianType;
     typedef typename Traits::DampedWienerProcessType    DampedWienerProcessType;
 
@@ -130,7 +130,7 @@ public:
 
     virtual ~IntegratedDampedWienerProcess() { }
 
-    virtual State MapGaussian(const NoiseVector& sample) const
+    virtual State MapGaussian(const Noise& sample) const
     {
         State state(StateDimension());
         state.topRows(InputDimension())     = position_distribution_.MapGaussian(sample);
@@ -141,7 +141,7 @@ public:
 
     virtual void Condition(const Scalar&  delta_time,
                            const State&  state,
-                           const InputVector&   input)
+                           const Input&   input)
     {
         position_distribution_.Mean(Mean(state.topRows(InputDimension()), // position
                                                 state.bottomRows(InputDimension()), // velocity
@@ -154,7 +154,7 @@ public:
     virtual void Condition(const Scalar&  delta_time,
                            const State&  state)
     {
-        Condition(delta_time, state, InputVector::Zero(InputDimension()));
+        Condition(delta_time, state, Input::Zero(InputDimension()));
     }
 
     virtual void Parameters(
@@ -179,12 +179,12 @@ public:
     }
 
 private:
-    InputVector Mean(const InputVector& state,
-                   const InputVector& velocity,
-                   const InputVector& acceleration,
+    Input Mean(const Input& state,
+                   const Input& velocity,
+                   const Input& acceleration,
                    const double& delta_time)
     {
-        InputVector mean;
+        Input mean;
         mean = state +
                 (exp(-damping_ * delta_time) + damping_*delta_time  - 1.0)/pow(damping_, 2)
                 * acceleration + (1.0 - exp(-damping_*delta_time))/damping_  * velocity;

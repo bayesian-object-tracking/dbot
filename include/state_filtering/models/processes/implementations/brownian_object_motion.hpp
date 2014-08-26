@@ -58,7 +58,7 @@ namespace sf
 {
 
 // Forward declarations
-template <typename Scalar_, int OBJECTS_SIZE> class BrownianObjectMotion;
+template <typename Scalar_, int OBJECTS> class BrownianObjectMotion;
 
 namespace internal
 {
@@ -66,27 +66,28 @@ namespace internal
  * BrownianObjectMotion distribution traits specialization
  * \internal
  */
-template <typename Scalar_, int OBJECTS_SIZE>
-struct Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >
+template <typename Scalar_, int OBJECTS>
+struct Traits<BrownianObjectMotion<Scalar_, OBJECTS> >
 {
     enum
     {
         DIMENSION_PER_OBJECT = 6,
-        DIMENSION = (OBJECTS_SIZE == -1) ?
-                    -1 : OBJECTS_SIZE * DIMENSION_PER_OBJECT
+        DIMENSION = (OBJECTS == -1) ?
+                    -1 : OBJECTS * DIMENSION_PER_OBJECT,
+        INPUT_DIMENSION = DIMENSION
     };
 
     typedef Scalar_                                     Scalar;
-    typedef FloatingBodySystem<OBJECTS_SIZE>            State;
-    typedef Eigen::Matrix<Scalar, DIMENSION, 1>         InputVector;
+    typedef FloatingBodySystem<OBJECTS>                 State;
+    typedef Eigen::Matrix<Scalar, INPUT_DIMENSION, 1>   Input;
 
-    typedef typename Eigen::Quaternion<Scalar>          Quaternion;
+    typedef Eigen::Quaternion<Scalar>                   Quaternion;
     typedef IntegratedDampedWienerProcess<Scalar, 3>    Process;
 
-    typedef StationaryProcess<State, InputVector>       StationaryProcessBase;
+    typedef StationaryProcess<State, Input>             StationaryProcessBase;
     typedef GaussianMappable<State, DIMENSION>          GaussianMappableBase;
 
-    typedef typename GaussianMappableBase::NoiseVector  NoiseVector;
+    typedef typename GaussianMappableBase::Noise        Noise;
 };
 }
 
@@ -96,23 +97,25 @@ struct Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >
  * \ingroup distributions
  * \ingroup process_models
  */
-template <typename Scalar_ = double, int OBJECTS_SIZE = -1>
+template <typename Scalar_ = double, int OBJECTS = -1>
 class BrownianObjectMotion:
-        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >::StationaryProcessBase,
-        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> >::GaussianMappableBase
+        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::StationaryProcessBase,
+        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::GaussianMappableBase
 {
 public:
-    typedef internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS_SIZE> > Traits;
+    typedef internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> > Traits;
 
-    typedef typename Traits::Scalar         Scalar;
-    typedef typename Traits::State          State;
-    typedef typename Traits::InputVector    InputVector;
-    typedef typename Traits::NoiseVector    NoiseVector;
-    typedef typename Traits::Quaternion     Quaternion;
-    typedef typename Traits::Process        Process;
+    typedef typename Traits::Scalar     Scalar;
+    typedef typename Traits::State      State;
+    typedef typename Traits::Input      Input;
+    typedef typename Traits::Noise      Noise;
+    typedef typename Traits::Quaternion Quaternion;
+    typedef typename Traits::Process    Process;
 
     enum
     {
+        DIMENSION            = Traits::DIMENSION,
+        INPUT_DIMENSION      = Traits::INPUT_DIMENSION,
         DIMENSION_PER_OBJECT = Traits::DIMENSION_PER_OBJECT
     };
 
@@ -121,10 +124,10 @@ public:
     {
         SF_DISABLE_IF_DYNAMIC_SIZE(State);
 
-        quaternion_map_.resize(OBJECTS_SIZE);
-        rotation_center_.resize(OBJECTS_SIZE);
-        linear_process_.resize(OBJECTS_SIZE);
-        angular_process_.resize(OBJECTS_SIZE);
+        quaternion_map_.resize(OBJECTS);
+        rotation_center_.resize(OBJECTS);
+        linear_process_.resize(OBJECTS);
+        angular_process_.resize(OBJECTS);
     }
 
     BrownianObjectMotion(const unsigned& count_objects): Traits::GaussianMappableBase(count_objects*6),
@@ -140,7 +143,7 @@ public:
 
     virtual ~BrownianObjectMotion() { }
 
-    virtual State MapGaussian(const NoiseVector& sample) const
+    virtual State MapGaussian(const Noise& sample) const
     {
         State new_state(state_.bodies_size());
         for(size_t i = 0; i < new_state.bodies_size(); i++)
@@ -166,7 +169,7 @@ public:
 
     virtual void Condition(const Scalar& delta_time,
                            const State&  state,
-                           const InputVector&  control)
+                           const Input&  control)
     {
         state_ = state;
         for(size_t i = 0; i < state_.bodies_size(); i++)
@@ -197,7 +200,7 @@ public:
     virtual void Condition(const Scalar&  delta_time,
                            const State&  state)
     {
-        Condition(delta_time, state, InputVector::Zero(InputDimension()));
+        Condition(delta_time, state, Input::Zero(InputDimension()));
     }
 
 

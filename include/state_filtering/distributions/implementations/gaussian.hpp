@@ -79,7 +79,7 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
     typedef Evaluable<Vector>                   EvaluableBase;
     typedef GaussianMappable<Vector, DIMENSION> GaussianMappableBase;
 
-    typedef typename GaussianMappableBase::NoiseVector NoiseVector;
+    typedef typename GaussianMappableBase::Noise Noise;
 };
 }
 
@@ -98,7 +98,7 @@ public:
 
     typedef typename Traits::Vector         Vector;
     typedef typename Traits::Operator       Operator;
-    typedef typename Traits::NoiseVector    NoiseVector;
+    typedef typename Traits::Noise    Noise;
 
 public:
     Gaussian()
@@ -123,7 +123,7 @@ public:
 
     virtual ~Gaussian() { }
 
-    virtual Vector MapGaussian(const NoiseVector& sample) const
+    virtual Vector MapGaussian(const Noise& sample) const
     {
         return mean_ + cholesky_factor_ * sample;
     }

@@ -56,7 +56,7 @@
 namespace sf
 {
 
-template <typename State, typename InputVector>
+template <typename State, typename Input>
 class StationaryProcess
 {
 public:
@@ -65,7 +65,7 @@ public:
 public:
     virtual void Condition(const Scalar& delta_time,
                            const State& state,
-                           const InputVector&  input) = 0;
+                           const Input&  input) = 0;
 
     virtual void Condition(const Scalar& delta_time,
                            const State& state) = 0;
