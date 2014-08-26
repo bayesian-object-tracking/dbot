@@ -55,7 +55,7 @@
 
 // state_filtering
 #include <state_filtering/utils/traits.hpp>
-#include <state_filtering/distributions/features/moments_solvable.hpp>
+#include <state_filtering/distributions/features/moments_interface.hpp>
 
 namespace sf
 {
@@ -77,10 +77,10 @@ struct Traits<SumOfDeltas<Vector> >
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
     typedef Eigen::Matrix<Scalar,Dimension, Dimension>      Operator;
 
-    typedef std::vector<Vector>                             Deltas;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1>        Weights;
+    typedef std::vector<Vector>                      Deltas;
+    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Weights;
 
-    typedef MomentsSolvable<Vector, Operator>               MomentsSolvableBase;
+    typedef MomentsInterface<Vector, Operator> MomentsInterfaceBase;
 };
 }
 
@@ -90,7 +90,7 @@ struct Traits<SumOfDeltas<Vector> >
  */
 template <typename Vector>
 class SumOfDeltas:
-        public internal::Traits<SumOfDeltas<Vector> >::MomentsSolvableBase
+        public internal::Traits<SumOfDeltas<Vector> >::MomentsInterfaceBase
 {
 public:
     typedef internal::Traits<SumOfDeltas<Vector> > Traits;

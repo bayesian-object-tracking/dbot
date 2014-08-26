@@ -44,33 +44,19 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef MODELS_PROCESSES_FEATURES_STATIONARY_PROCESS_HPP
-#define MODELS_PROCESSES_FEATURES_STATIONARY_PROCESS_HPP
-
-
-// state_filtering
-
-#include <state_filtering/utils/macros.hpp>
-#include <state_filtering/utils/traits.hpp>
+#ifndef STATE_FILTERING_FILTER_FEATURES_MOMENTS_INTERFACE_HPP
+#define STATE_FILTERING_FILTER_FEATURES_MOMENTS_INTERFACE_HPP
 
 namespace sf
 {
 
-template <typename State, typename Input>
-class StationaryProcess
+template <typename Vector, typename Operator>
+class MomentsInterface
 {
 public:
-    typedef typename internal::VectorTraits<State>::Scalar Scalar;
-
-public:
-    virtual void Condition(const Scalar& delta_time,
-                           const State& state,
-                           const Input&  input) = 0;
-
-    virtual void Condition(const Scalar& delta_time,
-                           const State& state) = 0;
+    virtual Vector Mean() const = 0;
+    virtual Operator Covariance() const = 0;
 };
-
 
 }
 

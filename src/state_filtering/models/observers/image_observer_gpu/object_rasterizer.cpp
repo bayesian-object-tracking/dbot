@@ -2,7 +2,7 @@
 
 //#define PROFILING_ACTIVE
 
-#include <state_filtering/models/observers/implementations/image_observer_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/object_rasterizer.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 #include <ros/package.h>
 
 
-#include <state_filtering/models/observers/implementations/image_observer_gpu/shader.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/shader.hpp>
 
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/helper_functions.hpp>

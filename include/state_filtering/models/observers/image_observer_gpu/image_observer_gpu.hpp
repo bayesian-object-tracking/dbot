@@ -7,8 +7,8 @@
 
 
 #include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
-#include <state_filtering/models/observers/implementations/image_observer_gpu/object_rasterizer.hpp>
-#include <state_filtering/models/observers/implementations/image_observer_gpu/cuda_filter.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/cuda_filter.hpp>
 
 #include <state_filtering/states/floating_body_system.hpp>
 
@@ -54,7 +54,6 @@ struct Traits<ImageObserverGPU<State> >
  */
 template <typename State>
 class ImageObserverGPU:
-        //public ImageObserverGPUTypes::RaoBlackwellObserverType
         public internal::Traits<ImageObserverGPU<State> >::RaoBlackwellObserverBase
 {
 public:

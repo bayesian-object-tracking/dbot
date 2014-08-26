@@ -49,8 +49,8 @@
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/models/processes/features/stationary_process.hpp>
-#include <state_filtering/distributions/implementations/gaussian.hpp>
+#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
 
 namespace sf
 {
@@ -76,10 +76,10 @@ struct Traits<DampedWienerProcess<State_> >
     typedef Gaussian<Scalar, Dimension>                 GaussianType;
     typedef typename GaussianType::Operator             Operator;
 
-    typedef StationaryProcess<State,Input>        StationaryProcessBase;
+    typedef StationaryProcessInterface<State,Input>     StationaryProcessInterfaceBase;
     typedef GaussianMappable<State, Dimension>          GaussianMappableBase;
 
-    typedef typename GaussianMappableBase::Noise  Noise;
+    typedef typename GaussianMappableBase::Noise        Noise;
 };
 }
 
@@ -91,7 +91,7 @@ struct Traits<DampedWienerProcess<State_> >
  */
 template <typename State_>
 class DampedWienerProcess:
-        public internal::Traits<DampedWienerProcess<State_> >::StationaryProcessBase,
+        public internal::Traits<DampedWienerProcess<State_> >::StationaryProcessInterfaceBase,
         public internal::Traits<DampedWienerProcess<State_> >::GaussianMappableBase
 {
 public:
@@ -100,8 +100,8 @@ public:
     typedef typename Traits::Scalar         Scalar;
     typedef typename Traits::State          State;
     typedef typename Traits::Operator       Operator;
-    typedef typename Traits::Input    Input;
-    typedef typename Traits::Noise    Noise;
+    typedef typename Traits::Input          Input;
+    typedef typename Traits::Noise          Noise;
     typedef typename Traits::GaussianType   GaussianType;
 
 public:

@@ -58,10 +58,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <state_filtering/filters/stochastic/particle_filter_context.hpp>
 
 // observation model
-#include <state_filtering/models/observers/implementations/kinect_observer.hpp>
+#include <state_filtering/models/observers/kinect_observer.hpp>
 #include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
-#include <state_filtering/models/observers/implementations/image_observer_cpu.hpp>
-//#include <state_filtering/models/observers/implementations/image_observer_gpu/image_observer_gpu.hpp>
+#include <state_filtering/models/observers/image_observer_cpu.hpp>
+//#include <state_filtering/models/observers/image_observer_gpu/image_observer_gpu.hpp>
 
 // tools
 #include <state_filtering/utils/object_file_reader.hpp>
@@ -75,10 +75,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // distributions
 
-#include <state_filtering/distributions/implementations/gaussian.hpp>
-#include <state_filtering/models/processes/features/stationary_process.hpp>
-//#include <state_filtering/models/processes/implementations/composed_stationary_process_model.hpp>
-#include <state_filtering/models/processes/implementations/brownian_object_motion.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
+#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+//#include <state_filtering/models/processes/composed_stationary_process_model.hpp>
+#include <state_filtering/models/processes/brownian_object_motion.hpp>
 
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/states/floating_body_system.hpp>

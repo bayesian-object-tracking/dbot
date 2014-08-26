@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include <state_filtering/models/processes/features/stationary_process.hpp>
+#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
 
 
 // TODO: THIS NEEDS TO BE CLEANED!!
@@ -60,9 +60,9 @@ struct Traits<OcclusionProcess>
 
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
-    typedef Eigen::Matrix<Scalar, DIMENSION, 1>     InputType;
+    typedef Eigen::Matrix<Scalar, DIMENSION, 1>     Input;
 
-    typedef sf::StationaryProcess<Vector, InputType> StationaryProcessBase;
+    typedef sf::StationaryProcessInterface<Vector, Input> StationaryProcessInterfaceBase;
 };
 }
 
@@ -73,14 +73,14 @@ struct Traits<OcclusionProcess>
  * \ingroup process_models
  */
 class OcclusionProcess:
-        public internal::Traits<OcclusionProcess>::StationaryProcessBase
+        public internal::Traits<OcclusionProcess>::StationaryProcessInterfaceBase
 {
 public:
     typedef internal::Traits<OcclusionProcess> Traits;
 
-    typedef typename Traits::Scalar     Scalar;
-    typedef typename Traits::Vector     StateType;
-    typedef typename Traits::InputType  InputType;
+    typedef typename Traits::Scalar Scalar;
+    typedef typename Traits::Vector State;
+    typedef typename Traits::Input  Input;
 
     enum
     {
@@ -113,23 +113,23 @@ public:
 
 
     virtual void Condition(const Scalar& delta_time,
-                              const StateType& state,
-                              const InputType& control)
+                              const State& state,
+                              const Input& control)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
     }
 
     virtual void Condition(const Scalar& delta_time,
-                              const StateType& state)
+                              const State& state)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
     }
 
-    virtual StateType MapGaussian() const
+    virtual State MapGaussian() const
     {
-        StateType state_vector;
+        State state_vector;
 
         if(isnan(delta_time_))
             state_vector(0) =  occlusion_probability_;
@@ -142,7 +142,7 @@ public:
     }
 
 
-    virtual StateType MapGaussian(const InputType& sample) const
+    virtual State MapGaussian(const Input& sample) const
     {
         return MapGaussian();
     }

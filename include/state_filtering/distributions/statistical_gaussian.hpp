@@ -49,7 +49,7 @@
 
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/macros.hpp>
-#include <state_filtering/distributions/features/moments_solvable.hpp>
+#include <state_filtering/distributions/features/moments_interface.hpp>
 
 namespace sf
 {
@@ -74,7 +74,7 @@ struct Traits<StatisticalGaussian<Vector> >
     typedef Eigen::Vector<double, Eigen::Dynamic>            WeightVector;
     typedef Eigen::Matrix<Scalar, Dimension, Eigen::Dynamic> PointMatrix;
 
-    typedef MomentsSolvable<Vector, Operator> MomentsSolvableBase;
+    typedef MomentsInterface<Vector, Operator> MomentsInterfaceBase;
 };
 }
 
@@ -84,7 +84,7 @@ struct Traits<StatisticalGaussian<Vector> >
  */
 template <typename Vector>
 class StatisticalGaussian:
-        public internal::Traits<StatisticalGaussian<Vector> >::MomentsSolvableBase
+        public internal::Traits<StatisticalGaussian<Vector> >::MomentsInterfaceBase
 {
 public:
     typedef internal::Traits<StatisticalGaussian<Vector> > Traits;

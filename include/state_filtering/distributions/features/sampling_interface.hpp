@@ -54,7 +54,7 @@ namespace sf
 {
 
 template <typename Vector>
-class Sampleable
+class SamplingInterface
 {
 public:
     virtual Vector Sample() = 0;

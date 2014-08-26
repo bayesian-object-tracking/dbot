@@ -1,7 +1,7 @@
 
-#include <state_filtering/models/observers/implementations/image_observer_gpu/image_observer_gpu.hpp>
-#include <state_filtering/models/observers/implementations/image_observer_gpu/object_rasterizer.hpp>
-#include <state_filtering/models/observers/implementations/image_observer_gpu/cuda_filter.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/image_observer_gpu.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/object_rasterizer.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/cuda_filter.hpp>
 
 
 #include <state_filtering/utils/helper_functions.hpp>

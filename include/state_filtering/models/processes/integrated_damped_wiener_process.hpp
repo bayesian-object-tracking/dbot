@@ -51,8 +51,8 @@
 // state_filtering
 
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
-#include <state_filtering/distributions/implementations/gaussian.hpp>
-#include <state_filtering/models/processes/implementations/damped_wiener_process.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
+#include <state_filtering/models/processes/damped_wiener_process.hpp>
 
 namespace sf
 {
@@ -80,14 +80,14 @@ struct Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >
     typedef Eigen::Matrix<Scalar, StateDimension, 1>   State;
     typedef Eigen::Matrix<Scalar, InputDimension, 1>   Input;
 
-    typedef StationaryProcess<State, Input>      StationaryProcessBase;
+    typedef StationaryProcessInterface<State, Input>   StationaryProcessInterfaceBase;
     typedef GaussianMappable<State, NoiseDimension>    GaussianMappableBase;
 
     typedef Eigen::Matrix<Scalar, InputDimension, 1>   WienerProcessState;
     typedef DampedWienerProcess<WienerProcessState>    DampedWienerProcessType;
     typedef Gaussian<Scalar, InputDimension>           GaussianType;
 
-    typedef typename GaussianMappableBase::Noise Noise;
+    typedef typename GaussianMappableBase::Noise       Noise;
     typedef typename GaussianType::Operator            Operator;
 };
 }
@@ -100,17 +100,18 @@ struct Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >
  */
 template <typename Scalar_ = double, int INPUT_DIMENSION = -1>
 class IntegratedDampedWienerProcess:
-        public internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >::StationaryProcessBase,
+        public internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >::StationaryProcessInterfaceBase,
         public internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >::GaussianMappableBase
 {
 public:
     typedef internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> > Traits;
 
-    typedef typename Traits::Scalar                     Scalar;
-    typedef typename Traits::State                      State;
-    typedef typename Traits::Input                Input;
-    typedef typename Traits::Operator                   Operator;
-    typedef typename Traits::Noise                Noise;
+    typedef typename Traits::Scalar     Scalar;
+    typedef typename Traits::State      State;
+    typedef typename Traits::Input      Input;
+    typedef typename Traits::Operator   Operator;
+    typedef typename Traits::Noise      Noise;
+
     typedef typename Traits::GaussianType               GaussianType;
     typedef typename Traits::DampedWienerProcessType    DampedWienerProcessType;
 

@@ -41,40 +41,21 @@
  * @date 05/25/2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems,
- *  University of Southern California
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-
-#ifndef DISTRIBUTIONS_FEATURES_EVALUABLE_HPP
-#define DISTRIBUTIONS_FEATURES_EVALUABLE_HPP
-
-#include <cmath>
-#include <state_filtering/utils/traits.hpp>
-#include <state_filtering/distributions/features/unnormalized_evaluable.hpp>
+#ifndef STATE_FILTERING_FILTER_FEATURES_APPROXIMATE_MOMENTS_INTERFACE_HPP
+#define STATE_FILTERING_FILTER_FEATURES_APPROXIMATE_MOMENTS_INTERFACE_HPP
 
 namespace sf
 {
 
-template <typename Vector>
-class Evaluable:
-        public UnnormalizedEvaluable<Vector>
+template <typename Vector, typename Operator>
+class ApproximateMomentsInterface
 {
 public:
-    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
-
-public:
-    virtual Scalar Probability(const Vector& vector) const
-    {
-        return std::exp(LogProbability(vector));
-    }
-
-    virtual Scalar LogUnnormalizedProbability(const Vector& vector) const
-    {
-        return LogProbability(vector);
-    }
-
-    virtual Scalar LogProbability(const Vector& vector) const = 0;
+    virtual Vector   ApproximateMean() = 0;
+    virtual Operator ApproximateCovariance() = 0;
 };
 
 }

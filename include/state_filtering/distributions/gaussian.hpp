@@ -51,8 +51,8 @@
 #include <Eigen/Dense>
 
 // state_filtering
-#include <state_filtering/distributions/features/moments_solvable.hpp>
-#include <state_filtering/distributions/features/evaluable.hpp>
+#include <state_filtering/distributions/features/moments_interface.hpp>
+#include <state_filtering/distributions/features/probability_function_interface.hpp>
 #include <state_filtering/distributions/features/gaussian_mappable.hpp>
 
 namespace sf
@@ -75,9 +75,9 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
     typedef Eigen::Matrix<Scalar, DIMENSION, 1>         Vector;
     typedef Eigen::Matrix<Scalar, DIMENSION, DIMENSION> Operator;
 
-    typedef MomentsSolvable<Vector, Operator>   MomentsSolvableBase;
-    typedef Evaluable<Vector>                   EvaluableBase;
-    typedef GaussianMappable<Vector, DIMENSION> GaussianMappableBase;
+    typedef MomentsInterface<Vector, Operator>   MomentsInterfaceBase;
+    typedef ProbabilityFunction<Vector>          ProbabilityFunctionBase;
+    typedef GaussianMappable<Vector, DIMENSION>  GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise Noise;
 };
@@ -89,16 +89,16 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
  */
 template <typename Scalar, int DIMENSION>
 class Gaussian:
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::MomentsSolvableBase,
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::EvaluableBase,
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::MomentsInterfaceBase,
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::ProbabilityFunctionBase,
         public internal::Traits<Gaussian<Scalar, DIMENSION> >::GaussianMappableBase
 {
 public:
     typedef internal::Traits<Gaussian<Scalar, DIMENSION> > Traits;
 
-    typedef typename Traits::Vector         Vector;
-    typedef typename Traits::Operator       Operator;
-    typedef typename Traits::Noise    Noise;
+    typedef typename Traits::Vector     Vector;
+    typedef typename Traits::Operator   Operator;
+    typedef typename Traits::Noise      Noise;
 
 public:
     Gaussian()

@@ -1,6 +1,6 @@
 #define PROFILING_ACTIVE
 
-#include <state_filtering/models/observers/implementations/image_observer_gpu/cuda_opengl_multiple_filter.hpp>
+#include <state_filtering/models/observers/image_observer_gpu/cuda_opengl_multiple_filter.hpp>
 #include "iostream"
 
 #include <state_filtering/utils/helper_functions.hpp>

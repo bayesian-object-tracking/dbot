@@ -50,9 +50,9 @@
 
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/models/processes/features/stationary_process.hpp>
-#include <state_filtering/models/processes/implementations/damped_wiener_process.hpp>
-#include <state_filtering/models/processes/implementations/integrated_damped_wiener_process.hpp>
+#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/damped_wiener_process.hpp>
+#include <state_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
 namespace sf
 {
@@ -84,7 +84,7 @@ struct Traits<BrownianObjectMotion<Scalar_, OBJECTS> >
     typedef Eigen::Quaternion<Scalar>                   Quaternion;
     typedef IntegratedDampedWienerProcess<Scalar, 3>    Process;
 
-    typedef StationaryProcess<State, Input>             StationaryProcessBase;
+    typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
     typedef GaussianMappable<State, DIMENSION>          GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise        Noise;
@@ -99,7 +99,7 @@ struct Traits<BrownianObjectMotion<Scalar_, OBJECTS> >
  */
 template <typename Scalar_ = double, int OBJECTS = -1>
 class BrownianObjectMotion:
-        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::StationaryProcessBase,
+        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::StationaryProcessInterfaceBase,
         public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::GaussianMappableBase
 {
 public:

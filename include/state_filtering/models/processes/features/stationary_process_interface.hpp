@@ -41,35 +41,36 @@
  * @date 05/25/2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems,
- *  University of Southern California
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
+#ifndef MODELS_PROCESSES_FEATURES_STATIONARY_PROCESS_INTERFACE_HPP
+#define MODELS_PROCESSES_FEATURES_STATIONARY_PROCESS_INTERFACE_HPP
 
-#ifndef DISTRIBUTIONS_FEATURES_UNNORMALIZED_EVALUABLE_HPP
-#define DISTRIBUTIONS_FEATURES_UNNORMALIZED_EVALUABLE_HPP
 
-#include <cmath>
+// state_filtering
+
+#include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
-
 
 namespace sf
 {
 
-template <typename Vector>
-class UnnormalizedEvaluable
+template <typename State, typename Input>
+class StationaryProcessInterface
 {
 public:
-    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
+    typedef typename internal::VectorTraits<State>::Scalar Scalar;
 
 public:
-    virtual Scalar UnnormalizedProbability(const Vector& vector) const
-    {
-        std::exp(LogUnnormalizedProbability(vector));
-    }
+    virtual void Condition(const Scalar& delta_time,
+                           const State& state,
+                           const Input& input) = 0;
 
-    virtual Scalar LogUnnormalizedProbability(const Vector& vector) const = 0;
+    virtual void Condition(const Scalar& delta_time,
+                           const State& state) = 0;
 };
+
 
 }
 

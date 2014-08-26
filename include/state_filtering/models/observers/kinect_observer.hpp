@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MODELS_OBSERVERS_IMPLEMENTATIONS_KINECT_observer_HPP_
 
 #include <Eigen/Dense>
-#include <state_filtering/distributions/features/evaluable.hpp>
+#include <state_filtering/distributions/features/probability_function_interface.hpp>
 #include <cmath>
 
 #include <iostream>
@@ -51,7 +51,7 @@ struct Traits<KinectObserver>
 {
     typedef double              Scalar;
     typedef double              Vector;
-    typedef Evaluable<Vector>   EvaluableBase;
+    typedef ProbabilityFunction<Vector>   ProbabilityFunctionBase;
 };
 }
 
@@ -63,7 +63,7 @@ struct Traits<KinectObserver>
  * \ingroup observation_models
  */
 class KinectObserver:
-        public internal::Traits<KinectObserver>::EvaluableBase
+        public internal::Traits<KinectObserver>::ProbabilityFunctionBase
 {
 public:
     typedef typename internal::Traits<KinectObserver>::Scalar Scalar;

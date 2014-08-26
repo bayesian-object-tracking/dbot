@@ -63,7 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/cloud_visualizer.hpp>
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/distributions/implementations/gaussian.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
 
 namespace pi
 {

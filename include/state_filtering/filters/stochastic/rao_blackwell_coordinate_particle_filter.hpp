@@ -38,16 +38,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
 //#include <state_filtering/models/observers/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
-//#include <state_filtering/models/processes/implementations/occlusion_process.hpp>
+//#include <state_filtering/models/processes/occlusion_process.hpp>
 
 #include <state_filtering/utils/rigid_body_renderer.hpp>
-#include <state_filtering/models/processes/features/stationary_process.hpp>
-#include <state_filtering/distributions/implementations/gaussian.hpp>
-#include <state_filtering/distributions/implementations/sum_of_deltas.hpp>
+#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
+#include <state_filtering/distributions/sum_of_deltas.hpp>
 
 #include <state_filtering/states/floating_body_system.hpp>
 
-#include <state_filtering/models/processes/implementations/brownian_object_motion.hpp>
+#include <state_filtering/models/processes/brownian_object_motion.hpp>
 
 #include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
@@ -94,7 +94,7 @@ public:
     {
         SF_REQUIRE_INTERFACE(
             ProcessModel,
-            StationaryProcess<State, Input>);
+            StationaryProcessInterface<State, Input>);
 
         SF_REQUIRE_INTERFACE(
             ProcessModel,

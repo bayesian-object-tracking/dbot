@@ -136,7 +136,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
 set(state_filtering_sources
-    src/${PROJECT_NAME}/models/observers/implementations/image_observer_cpu.cpp
+    src/${PROJECT_NAME}/models/observers/image_observer_cpu.cpp
 
     ## Particle specific implementations
 #    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
@@ -166,11 +166,11 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
     set(state_filtering_gpu_SOURCES
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/image_observer_gpu.cpp
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_opengl_multiple_filter.cpp
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/object_rasterizer.cpp
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/shader.cpp)
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/image_observer_gpu.cpp
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_opengl_filter.cpp
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_opengl_multiple_filter.cpp
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/object_rasterizer.cpp
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/shader.cpp)
 
     add_library(${PROJECT_NAME}_gpu
         ${state_filtering_headers}
@@ -183,7 +183,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${GLEW_LIBRARIES})
 
     cuda_add_library(${PROJECT_NAME}_cuda
-        src/${PROJECT_NAME}/models/observers/implementations/image_observer_gpu/cuda_filter.cu)
+        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_filter.cu)
     target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_cuda)
 
     ## object_tracker

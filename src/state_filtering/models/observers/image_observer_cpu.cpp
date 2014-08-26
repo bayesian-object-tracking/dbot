@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/models/observers/implementations/image_observer_cpu.hpp>
+#include <state_filtering/models/observers/image_observer_cpu.hpp>
 
 #include <limits>
 

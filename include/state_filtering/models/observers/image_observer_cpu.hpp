@@ -35,8 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/rigid_body_renderer.hpp>
 
-#include <state_filtering/models/observers/implementations/kinect_observer.hpp>
-#include <state_filtering/models/processes/implementations/occlusion_process.hpp>
+#include <state_filtering/models/observers/kinect_observer.hpp>
+#include <state_filtering/models/processes/occlusion_process.hpp>
 #include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
 

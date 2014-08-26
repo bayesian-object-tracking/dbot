@@ -55,14 +55,14 @@
 
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
-#include <state_filtering/distributions/features/sampleable.hpp>
+#include <state_filtering/distributions/features/sampling_interface.hpp>
 
 namespace sf
 {
 
 template <typename Vector, int NOISE_DIMENSION>
 class GaussianMappable:
-        public Sampleable<Vector>
+        public SamplingInterface<Vector>
 {
 public:
     typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
@@ -70,17 +70,19 @@ public:
 
 public:
     // constructor and destructor
-    GaussianMappable(): noise_dimension_(NOISE_DIMENSION),
-                        generator_(RANDOM_SEED),
-                        gaussian_distribution_(0.0, 1.0),
-                        gaussian_generator_(generator_, gaussian_distribution_)
+    GaussianMappable():
+        noise_dimension_(NOISE_DIMENSION),
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
         SF_DISABLE_IF_DYNAMIC_SIZE(Noise);
     }
-    GaussianMappable(const unsigned& noise_dimension): noise_dimension_(noise_dimension),
-                                                       generator_(RANDOM_SEED),
-                                                       gaussian_distribution_(0.0, 1.0),
-                                                       gaussian_generator_(generator_, gaussian_distribution_)
+    GaussianMappable(const unsigned& noise_dimension):
+        noise_dimension_(noise_dimension),
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
         SF_DISABLE_IF_FIXED_SIZE(Noise);
     }
