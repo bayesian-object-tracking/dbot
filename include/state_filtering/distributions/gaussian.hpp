@@ -51,9 +51,9 @@
 #include <Eigen/Dense>
 
 // state_filtering
-#include <state_filtering/distributions/features/moments_interface.hpp>
-#include <state_filtering/distributions/features/probability_function_interface.hpp>
-#include <state_filtering/distributions/features/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/moments_interface.hpp>
+#include <state_filtering/distributions/interfaces/evaluation_interface.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
 
 namespace sf
 {
@@ -76,7 +76,7 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
     typedef Eigen::Matrix<Scalar, DIMENSION, DIMENSION> Operator;
 
     typedef MomentsInterface<Vector, Operator>   MomentsInterfaceBase;
-    typedef ProbabilityFunction<Vector>          ProbabilityFunctionBase;
+    typedef EvaluationInterface<Vector>          EvaluationInterfaceBase;
     typedef GaussianMappable<Vector, DIMENSION>  GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise Noise;
@@ -90,7 +90,7 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
 template <typename Scalar, int DIMENSION>
 class Gaussian:
         public internal::Traits<Gaussian<Scalar, DIMENSION> >::MomentsInterfaceBase,
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::ProbabilityFunctionBase,
+        public internal::Traits<Gaussian<Scalar, DIMENSION> >::EvaluationInterfaceBase,
         public internal::Traits<Gaussian<Scalar, DIMENSION> >::GaussianMappableBase
 {
 public:

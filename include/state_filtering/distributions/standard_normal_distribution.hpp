@@ -38,14 +38,14 @@
  */
 
 /**
- * @date 05/25/2014
+ * @date 2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_HPP
-#define STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_STANDARD_NORMAL_DISTRIBUTION_HPP
+#define STATE_FILTERING_DISTRIBUTION_STANDARD_NORMAL_DISTRIBUTION_HPP
 
 #include <Eigen/Dense>
 
@@ -56,48 +56,60 @@
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/interfaces/sampling_interface.hpp>
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
 
 namespace sf
 {
 
-template <typename Vector, int NOISE_DIMENSION>
-class GaussianMappable:
+template <typename Vector>
+class StandardNormalDistribution:
         public SamplingInterface<Vector>
 {
 public:
-    typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
-    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
+    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
     // constructor and destructor
-    GaussianMappable()
+    StandardNormalDistribution():
+        dimension_(internal::VectorTraits<Vector>::Dimension),
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        SF_DISABLE_IF_DYNAMIC_SIZE(Noise);
+        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
     }
 
-    explicit GaussianMappable(const unsigned& noise_dimension):
-        standard_normal_distribution_(noise_dimension)
+    StandardNormalDistribution(const int& dimension):
+        dimension_(dimension),
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
     {
-        SF_DISABLE_IF_FIXED_SIZE(Noise);
+        SF_DISABLE_IF_FIXED_SIZE(Vector);
     }
+    virtual ~StandardNormalDistribution() { }
 
-    virtual ~GaussianMappable() { }
-
-    virtual int NoiseDimension() const
-    {
-        return standard_normal_distribution_.Dimension();
-    }
 
     virtual Vector Sample()
     {
-        return MapGaussian(standard_normal_distribution_.Sample());
+        Vector gaussian_sample(Dimension());
+        for (int i = 0; i < Dimension(); i++)
+        {
+            gaussian_sample(i) = gaussian_generator_();
+        }
+
+        return gaussian_sample;
     }
 
-    virtual Vector MapGaussian(const Noise& sample) const = 0;
+    virtual int Dimension() const
+    {
+        return dimension_;
+    }
 
 private:
-    StandardNormalDistribution<Noise> standard_normal_distribution_;
+    int dimension_;
+    boost::mt19937 generator_;
+    boost::normal_distribution<> gaussian_distribution_;
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > gaussian_generator_;
 };
 
 }
