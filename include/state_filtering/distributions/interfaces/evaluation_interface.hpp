@@ -46,19 +46,19 @@
  */
 
 
-#ifndef DISTRIBUTIONS_FEATURES_PROBABILITY_FUNCTION_HPP
-#define DISTRIBUTIONS_FEATURES_PROBABILITY_FUNCTION_HPP
+#ifndef DISTRIBUTIONS_INTERFACE_EVAUATION_INTERFACE_HPP
+#define DISTRIBUTIONS_INTERFACE_EVAUATION_INTERFACE_HPP
 
 #include <cmath>
 #include <state_filtering/utils/traits.hpp>
-#include <state_filtering/distributions/features/unnormalized_probability_function_interface.hpp>
+#include <state_filtering/distributions/interfaces/unnormalized_evaluation_interface.hpp>
 
 namespace sf
 {
 
 template <typename Vector>
-class ProbabilityFunction:
-        public UnnormalizedProbabilityFunction<Vector>
+class EvaluationInterface:
+        public UnnormalizedEvaulationInterface<Vector>
 {
 public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;

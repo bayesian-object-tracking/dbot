@@ -44,14 +44,14 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_FILTER_FEATURES_MOMENTS_INTERFACE_HPP
-#define STATE_FILTERING_FILTER_FEATURES_MOMENTS_INTERFACE_HPP
+#ifndef STATE_FILTERING_FILTER_INTERFACE_MOMENTS_INTERFACE_HPP
+#define STATE_FILTERING_FILTER_INTERFACE_MOMENTS_INTERFACE_HPP
 
 namespace sf
 {
 
 template <typename Vector, typename Operator>
-class MomentsInterface
+class MomentsInterface // TODO: inherit from ApproximateMomentsInterface
 {
 public:
     virtual Vector Mean() const = 0;

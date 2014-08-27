@@ -55,7 +55,7 @@
 
 // state_filtering
 #include <state_filtering/utils/traits.hpp>
-#include <state_filtering/distributions/features/moments_interface.hpp>
+#include <state_filtering/distributions/interfaces/moments_interface.hpp>
 
 namespace sf
 {

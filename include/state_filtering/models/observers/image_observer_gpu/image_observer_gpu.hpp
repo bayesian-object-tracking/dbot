@@ -6,7 +6,7 @@
 #include "Eigen/Core"
 
 
-#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <state_filtering/models/observers/image_observer_gpu/object_rasterizer.hpp>
 #include <state_filtering/models/observers/image_observer_gpu/cuda_filter.hpp>
 

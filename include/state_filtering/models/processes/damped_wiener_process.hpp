@@ -49,7 +49,7 @@
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <state_filtering/distributions/gaussian.hpp>
 
 namespace sf

@@ -46,8 +46,8 @@
  */
 
 
-#ifndef DISTRIBUTIONS_FEATURES_UNNORMALIZED_PROBABILITY_FUNCTION_HPP
-#define DISTRIBUTIONS_FEATURES_UNNORMALIZED_PROBABILITY_FUNCTION_HPP
+#ifndef DISTRIBUTIONS_INTERFACE_UNNORMALIZED_EVAUATION_INTERFACE_HPP
+#define DISTRIBUTIONS_INTERFACE_UNNORMALIZED_EVAUATION_INTERFACE_HPP
 
 #include <cmath>
 #include <state_filtering/utils/traits.hpp>
@@ -57,7 +57,7 @@ namespace sf
 {
 
 template <typename Vector>
-class UnnormalizedProbabilityFunction
+class UnnormalizedEvaulationInterface
 {
 public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;

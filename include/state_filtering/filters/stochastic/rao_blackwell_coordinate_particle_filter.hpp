@@ -36,12 +36,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 //#include <state_filtering/models/observers/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
 //#include <state_filtering/models/processes/occlusion_process.hpp>
 
 #include <state_filtering/utils/rigid_body_renderer.hpp>
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <state_filtering/distributions/gaussian.hpp>
 #include <state_filtering/distributions/sum_of_deltas.hpp>
 
@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
 
-#include <state_filtering/distributions/features/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
 
 //#include "image_visualizer.hpp"
 #include <omp.h>
@@ -72,12 +72,12 @@ template<typename ProcessModel, typename ObservationModel>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
-    typedef typename internal::Traits<ProcessModel>::Scalar         Scalar;
-    typedef typename internal::Traits<ProcessModel>::State          State;
+    typedef typename internal::Traits<ProcessModel>::Scalar   Scalar;
+    typedef typename internal::Traits<ProcessModel>::State    State;
     typedef typename internal::Traits<ProcessModel>::Input    Input;
     typedef typename internal::Traits<ProcessModel>::Noise    Noise;
 
-    typedef typename ObservationModel::Observation                  Observation;
+    typedef typename ObservationModel::Observation            Observation;
 
     // state distribution
     typedef SumOfDeltas<State> StateDistributionType;

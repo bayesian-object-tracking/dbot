@@ -70,9 +70,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RANDOM_SEED (unsigned)time(0)//1
 
 
-/**
- * Cases
- */
 #define SF_DISABLE_IF_DYNAMIC_SIZE(VariableType) \
 if (sf::internal::Invalidate<VariableType::SizeAtCompileTime != Eigen::Dynamic>\
     ::YOU_CALLED_A_FIXED_SIZE_METHOD_ON_A_DYNAMIC_SIZE_DISTRIBUTION) { }
@@ -101,6 +98,8 @@ struct Invalidate<true>
 
 }
 }
+
+
 
 /**
  * \ingroup macros

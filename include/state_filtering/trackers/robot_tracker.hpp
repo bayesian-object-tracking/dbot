@@ -59,7 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // observation model
 #include <state_filtering/models/observers/kinect_observer.hpp>
-#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <state_filtering/models/observers/image_observer_cpu.hpp>
 //#include <state_filtering/models/observers/image_observer_gpu/image_observer_gpu.hpp>
 
@@ -76,7 +76,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // distributions
 
 #include <state_filtering/distributions/gaussian.hpp>
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 //#include <state_filtering/models/processes/composed_stationary_process_model.hpp>
 #include <state_filtering/models/processes/brownian_object_motion.hpp>
 
@@ -93,13 +93,13 @@ using namespace sf;
 class RobotTracker
 {
 public:
-    typedef double          Scalar;
     typedef RobotState<>    State;
+    typedef State::Scalar   Scalar;
 
     typedef sf::DampedWienerProcess<State>      ProcessModel;
     typedef sf::ImageObserverCPU<Scalar, State> ObservationModel;
 
-    typedef typename ProcessModel::Input      Input;
+    typedef typename ProcessModel::Input            Input;
     typedef typename ObservationModel::Observation  Observation;
 
     typedef sf::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;

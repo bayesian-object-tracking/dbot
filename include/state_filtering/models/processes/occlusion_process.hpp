@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 
 
 // TODO: THIS NEEDS TO BE CLEANED!!
