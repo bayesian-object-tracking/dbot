@@ -50,7 +50,7 @@
 
 #include <state_filtering/utils/helper_functions.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <state_filtering/models/processes/damped_wiener_process.hpp>
 #include <state_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
@@ -58,7 +58,7 @@ namespace sf
 {
 
 // Forward declarations
-template <typename Scalar_, int OBJECTS> class BrownianObjectMotion;
+template <typename State, int OBJECTS> class BrownianObjectMotion;
 
 namespace internal
 {
@@ -66,23 +66,23 @@ namespace internal
  * BrownianObjectMotion distribution traits specialization
  * \internal
  */
-template <typename Scalar_, int OBJECTS>
-struct Traits<BrownianObjectMotion<Scalar_, OBJECTS> >
+template <typename State_, int OBJECTS>
+struct Traits<BrownianObjectMotion<State_, OBJECTS> >
 {
     enum
     {
         DIMENSION_PER_OBJECT = 6,
-        DIMENSION = (OBJECTS == -1) ?
-                    -1 : OBJECTS * DIMENSION_PER_OBJECT,
+        DIMENSION = (OBJECTS == -1) ? -1 : OBJECTS * DIMENSION_PER_OBJECT,
         INPUT_DIMENSION = DIMENSION
     };
 
-    typedef Scalar_                                     Scalar;
-    typedef FloatingBodySystem<OBJECTS>                 State;
+    typedef State_                                      State;
+    typedef typename VectorTraits<State>::Scalar        Scalar;
     typedef Eigen::Matrix<Scalar, INPUT_DIMENSION, 1>   Input;
 
-    typedef Eigen::Quaternion<Scalar>                   Quaternion;
-    typedef IntegratedDampedWienerProcess<Scalar, 3>    Process;
+    typedef Eigen::Quaternion<Scalar>                      Quaternion;
+    typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
+    typedef IntegratedDampedWienerProcess<ObjectState>     Process;
 
     typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
     typedef GaussianMappable<State, DIMENSION>          GaussianMappableBase;
@@ -97,13 +97,13 @@ struct Traits<BrownianObjectMotion<Scalar_, OBJECTS> >
  * \ingroup distributions
  * \ingroup process_models
  */
-template <typename Scalar_ = double, int OBJECTS = -1>
+template <typename State_, int OBJECTS = -1>
 class BrownianObjectMotion:
-        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::StationaryProcessInterfaceBase,
-        public internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> >::GaussianMappableBase
+        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::StationaryProcessInterfaceBase,
+        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::GaussianMappableBase
 {
 public:
-    typedef internal::Traits<BrownianObjectMotion<Scalar_, OBJECTS> > Traits;
+    typedef internal::Traits<BrownianObjectMotion<State_, OBJECTS> > Traits;
 
     typedef typename Traits::Scalar     Scalar;
     typedef typename Traits::State      State;
@@ -123,6 +123,7 @@ public:
     BrownianObjectMotion()
     {
         SF_DISABLE_IF_DYNAMIC_SIZE(State);
+        SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
 
         quaternion_map_.resize(OBJECTS);
         rotation_center_.resize(OBJECTS);
@@ -134,6 +135,7 @@ public:
                                                          state_(count_objects)
     {
         SF_DISABLE_IF_FIXED_SIZE(State);
+        SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);

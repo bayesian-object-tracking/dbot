@@ -32,12 +32,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
+#include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/rigid_body_renderer.hpp>
 
 #include <state_filtering/models/observers/kinect_observer.hpp>
 #include <state_filtering/models/processes/occlusion_process.hpp>
-#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
 
 
@@ -45,7 +46,7 @@ namespace sf
 {
 
 // Forward declarations
-template <typename Scalar, typename State> class ImageObserverCPU;
+template <typename Scalar, typename State, int OBJECTS> class ImageObserverCPU;
 
 namespace internal
 {
@@ -53,8 +54,8 @@ namespace internal
  * ImageObserverCPU distribution traits specialization
  * \internal
  */
-template <typename Scalar, typename State>
-struct Traits<ImageObserverCPU<Scalar, State> >
+template <typename Scalar, typename State, int OBJECTS>
+struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
 {
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
@@ -72,13 +73,14 @@ struct Traits<ImageObserverCPU<Scalar, State> >
  * \ingroup distributions
  * \ingroup observation_models
  */
-template <typename Scalar, typename State>
+template <typename Scalar, typename State, int OBJECTS = -1>
 class ImageObserverCPU:
         public internal::Traits<ImageObserverCPU<Scalar, State> >::RaoBlackwellObserverBase
 {
 public:
     typedef internal::Traits<ImageObserverCPU<Scalar, State> > Traits;
 
+    typedef typename Traits::RaoBlackwellObserverBase Base;
     typedef typename Traits::Observation              Observation;
     typedef typename Traits::ObjectRendererPtr        ObjectRendererPtr;
     typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
@@ -104,6 +106,8 @@ public:
         occlusion_process_model_(occlusion_process_model),
         observation_time_(0)
     {
+        SF_REQUIRE_INTERFACE(State, RigidBodySystem<OBJECTS>);
+
         Reset();
     }
 

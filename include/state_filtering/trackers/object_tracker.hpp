@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // observation model
 #include <state_filtering/models/observers/kinect_observer.hpp>
-#include <state_filtering/models/observers/features/rao_blackwell_observer.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <state_filtering/models/observers/image_observer_cpu.hpp>
 
 #ifdef BUILD_GPU
@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // distributions
 
 #include <state_filtering/distributions/gaussian.hpp>
-#include <state_filtering/models/processes/features/stationary_process_interface.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 //#include <state_filtering/models/processes/composed_stationary_process.hpp>
 #include <state_filtering/models/processes/brownian_object_motion.hpp>
 
@@ -81,22 +81,21 @@ using namespace sf;
 
 class MultiObjectTracker
 {
-public:
-    typedef double Scalar;
+public:   
+    typedef FloatingBodySystem<> State;
+    typedef State::Scalar        Scalar;
 
-    typedef BrownianObjectMotion<Scalar, Eigen::Dynamic> ProcessModel;
-    typedef ProcessModel::State State;
-
+    typedef BrownianObjectMotion<State>     ProcessModel;
     typedef ImageObserverCPU<Scalar, State> ObserverCPUType;
-    typedef ObserverCPUType::Observation    Observation;
 
 #ifdef BUILD_GPU
     typedef ImageObserverGPU<State>  ObserverGPUType;
 #endif
 
-    typedef RaoBlackwellObserver<State, Observation> ObservationModel;
-    typedef RaoBlackwellCoordinateParticleFilter<ProcessModel,
-                                                 ObservationModel> FilterType;
+    typedef ObserverCPUType::Base ObservationModel;
+    typedef ObserverCPUType::Observation Observation;
+
+    typedef RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 
     MultiObjectTracker():
         node_handle_("~"),
@@ -322,7 +321,7 @@ private:
     boost::shared_ptr<FilterType> filter_;
 
     // parameters
-    vector<string> object_names_;
+    std::vector<string> object_names_;
     int downsampling_factor_;
 };
 

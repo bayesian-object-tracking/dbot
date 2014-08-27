@@ -46,11 +46,12 @@
 #define DISTRIBUTIONS_IMPLEMENTATIONS_INTEGRATED_DAMPED_WIENER_PROCESS_HPP
 
 // boost
+#include <boost/static_assert.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
 // state_filtering
 
-#include <state_filtering/distributions/features/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
 #include <state_filtering/distributions/gaussian.hpp>
 #include <state_filtering/models/processes/damped_wiener_process.hpp>
 
@@ -58,7 +59,7 @@ namespace sf
 {
 
 // Forward declarations
-template <typename Scalar_, int INPUT_DIMENSION> class IntegratedDampedWienerProcess;
+template <typename State> class IntegratedDampedWienerProcess;
 
 namespace internal
 {
@@ -66,29 +67,29 @@ namespace internal
  * IntegratedDampedWienerProcess distribution traits specialization
  * \internal
  */
-template <typename Scalar_, int INPUT_DIMENSION>
-struct Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >
+//template <typename Scalar_, int INPUT_DIMENSION>
+template <typename State_>
+struct Traits<IntegratedDampedWienerProcess<State_> >
 {
     enum
     {
-        StateDimension = INPUT_DIMENSION == -1 ? -1 : 2 * INPUT_DIMENSION,
-        InputDimension = INPUT_DIMENSION,
-        NoiseDimension = INPUT_DIMENSION
+        STATE_DIMENSION = State_::SizeAtCompileTime,
+        DEGREE_OF_FREEDOM = STATE_DIMENSION != -1 ? STATE_DIMENSION/2 : -1
     };
 
-    typedef Scalar_                                    Scalar;
-    typedef Eigen::Matrix<Scalar, StateDimension, 1>   State;
-    typedef Eigen::Matrix<Scalar, InputDimension, 1>   Input;
+    typedef State_                                      State;
+    typedef typename VectorTraits<State>::Scalar        Scalar;
+    typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> Input;
 
-    typedef StationaryProcessInterface<State, Input>   StationaryProcessInterfaceBase;
-    typedef GaussianMappable<State, NoiseDimension>    GaussianMappableBase;
+    typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
+    typedef GaussianMappable<State, DEGREE_OF_FREEDOM>  GaussianMappableBase;
 
-    typedef Eigen::Matrix<Scalar, InputDimension, 1>   WienerProcessState;
-    typedef DampedWienerProcess<WienerProcessState>    DampedWienerProcessType;
-    typedef Gaussian<Scalar, InputDimension>           GaussianType;
+    typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> WienerProcessState;
+    typedef DampedWienerProcess<WienerProcessState>     DampedWienerProcessType;
+    typedef Gaussian<Scalar, DEGREE_OF_FREEDOM>         GaussianType;
 
-    typedef typename GaussianMappableBase::Noise       Noise;
-    typedef typename GaussianType::Operator            Operator;
+    typedef typename GaussianMappableBase::Noise Noise;
+    typedef typename GaussianType::Operator      Operator;
 };
 }
 
@@ -98,16 +99,17 @@ struct Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >
  * \ingroup distributions
  * \ingroup process_models
  */
-template <typename Scalar_ = double, int INPUT_DIMENSION = -1>
+//template <typename Scalar_ = double, int INPUT_DIMENSION = -1>
+template <typename State_>
 class IntegratedDampedWienerProcess:
-        public internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >::StationaryProcessInterfaceBase,
-        public internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> >::GaussianMappableBase
+        public internal::Traits<IntegratedDampedWienerProcess<State_> >::StationaryProcessInterfaceBase,
+        public internal::Traits<IntegratedDampedWienerProcess<State_> >::GaussianMappableBase
 {
 public:
-    typedef internal::Traits<IntegratedDampedWienerProcess<Scalar_, INPUT_DIMENSION> > Traits;
+    typedef internal::Traits<IntegratedDampedWienerProcess<State_> > Traits;
 
     typedef typename Traits::Scalar     Scalar;
-    typedef typename Traits::State      State;
+    typedef typename Traits::State     State;
     typedef typename Traits::Input      Input;
     typedef typename Traits::Operator   Operator;
     typedef typename Traits::Noise      Noise;
@@ -115,16 +117,24 @@ public:
     typedef typename Traits::GaussianType               GaussianType;
     typedef typename Traits::DampedWienerProcessType    DampedWienerProcessType;
 
+    enum
+    {
+        STATE_DIMENSION = Traits::STATE_DIMENSION,
+        DEGREE_OF_FREEDOM = Traits::DEGREE_OF_FREEDOM
+    };
+
 public:
     IntegratedDampedWienerProcess()
     {
         SF_DISABLE_IF_DYNAMIC_SIZE(State);
+        BOOST_STATIC_ASSERT_MSG(STATE_DIMENSION % 2 == 0,
+                                "Dimension must be a multitude of 2");
     }
 
-    IntegratedDampedWienerProcess(const unsigned& size):
-        Traits::GaussianMappableBase(size),
-        Traits::DampedWienerProcessType(size),
-        position_distribution_(size)
+    IntegratedDampedWienerProcess(const unsigned& degree_of_freedom):
+        Traits::GaussianMappableBase(degree_of_freedom),
+        Traits::DampedWienerProcessType(degree_of_freedom),
+        position_distribution_(degree_of_freedom)
     {
         SF_DISABLE_IF_FIXED_SIZE(State);
     }
