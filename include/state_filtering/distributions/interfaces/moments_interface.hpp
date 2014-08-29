@@ -47,15 +47,27 @@
 #ifndef STATE_FILTERING_FILTER_INTERFACE_MOMENTS_INTERFACE_HPP
 #define STATE_FILTERING_FILTER_INTERFACE_MOMENTS_INTERFACE_HPP
 
+#include <state_filtering/distributions/interfaces/approximate_moments_interface.hpp>
+
 namespace sf
 {
 
 template <typename Vector, typename Operator>
-class MomentsInterface // TODO: inherit from ApproximateMomentsInterface
+class MomentsInterface:
+        public ApproximateMomentsInterface<Vector, Operator>
 {
 public:
     virtual Vector Mean() const = 0;
     virtual Operator Covariance() const = 0;
+
+    virtual Vector   ApproximateMean()
+    {
+        return Mean();
+    }
+    virtual Operator ApproximateCovariance()
+    {
+        return Covariance();
+    }
 };
 
 }
