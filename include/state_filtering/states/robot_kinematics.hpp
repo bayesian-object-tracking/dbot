@@ -49,7 +49,7 @@ struct RobotKinematicsTypes
         POSITION_INDEX = 0,
         ORIENTATION_INDEX = 3,
         LINEAR_VELOCITY_INDEX = 6,
-        ANGULAR_VELOCITY_INDEX = 9,
+        ANGULAR_VELOCITY_INDEX = 9
     };
 
     typedef RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
@@ -81,7 +81,7 @@ public:
         POSITION_INDEX = Types::POSITION_INDEX,
         ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
         LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
+        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX
     };
 
     typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;

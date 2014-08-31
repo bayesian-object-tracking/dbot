@@ -55,7 +55,7 @@ struct RobotStateTypes
       POSITION_INDEX = 0,
       ORIENTATION_INDEX = 3,
       LINEAR_VELOCITY_INDEX = 6,
-      ANGULAR_VELOCITY_INDEX = 9,
+      ANGULAR_VELOCITY_INDEX = 9
     };
 
   typedef RigidBodySystem<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
@@ -93,7 +93,7 @@ public:
       POSITION_INDEX = Types::POSITION_INDEX,
       ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
       LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-      ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX,
+      ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX
     };
 
   // give access to base member functions (otherwise it is shadowed)
