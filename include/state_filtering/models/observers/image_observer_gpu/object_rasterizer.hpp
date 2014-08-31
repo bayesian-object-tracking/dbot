@@ -96,8 +96,8 @@ public:
                           std::vector<std::vector<float> > &depth);
 
 private:
-    static const float NEAR_PLANE = 0.4f; // Kinect does not see anything closer than 0.3 meters
-    static const float FAR_PLANE = 4.0f; // Kinect does not see anything further away than 7 meters
+    static constexpr float NEAR_PLANE = 0.4f; // Kinect does not see anything closer than 0.3 meters
+    static constexpr float FAR_PLANE = 4.0f; // Kinect does not see anything further away than 7 meters
     static const int WINDOW_WIDTH = 80;  // default values if not specified
     static const int WINDOW_HEIGHT = 60; // default values if not specified
     static const int TIME_MEASUREMENTS_COUNT = 16;

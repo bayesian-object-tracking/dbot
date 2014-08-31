@@ -3,7 +3,7 @@ project(state_filtering)
 
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
-add_definitions( -DPROFILING_ON=1 ) #print profiling output
+add_definitions( -DPROFILING_ON=1 -std=c++0x ) #print profiling output
 
 find_package(catkin REQUIRED
     roscpp

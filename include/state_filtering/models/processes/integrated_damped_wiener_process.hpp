@@ -233,7 +233,7 @@ private:
     Operator acceleration_covariance_;
 
     // euler-mascheroni constant
-    static const Scalar gamma_ = 0.57721566490153286060651209008240243104215933593992;
+    static constexpr Scalar gamma_ = 0.57721566490153286060651209008240243104215933593992;
 };
 
 }
