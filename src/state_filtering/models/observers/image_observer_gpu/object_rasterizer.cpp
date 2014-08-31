@@ -1047,9 +1047,9 @@ void ObjectRasterizer::checkGLErrors(const char *label) {
     if ((errCode = glGetError()) != GL_NO_ERROR) {
         errStr = gluErrorString(errCode);
         printf("OpenGL ERROR: ");
-        printf((char*)errStr);
+        printf("%s", (char*)errStr);
         printf("(Label: ");
-        printf(label);
+        printf("%s", label);
         printf(")\n.");
     }
 }
