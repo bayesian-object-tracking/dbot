@@ -64,7 +64,6 @@ public:
                                           std::vector<size_t>& indices,
                                           const bool& update = false) = 0;
 
-
     virtual void SetObservation(const Observation& image, const Scalar& delta_time) = 0;
 
     // reset the latent variables

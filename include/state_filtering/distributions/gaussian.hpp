@@ -101,22 +101,13 @@ public:
     typedef typename Traits::Noise      Noise;
 
 public:
-    Gaussian()
-    {
-        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
-
-        SetUnit();
-    }
-
-    explicit Gaussian(const unsigned& dimension):
+    explicit Gaussian(const unsigned& dimension = DIMENSION):
         Traits::GaussianMappableBase(dimension)
     {
-        SF_DISABLE_IF_FIXED_SIZE(Vector);
-
-        mean_.resize(dimension, 1);
-        covariance_.resize(dimension, dimension);
-        precision_.resize(dimension, dimension);
-        cholesky_factor_.resize(dimension, dimension);
+        mean_.resize(Dimension(), 1);
+        covariance_.resize(Dimension(), Dimension());
+        precision_.resize(Dimension(), Dimension());
+        cholesky_factor_.resize(Dimension(), Dimension());
 
         SetUnit();
     }

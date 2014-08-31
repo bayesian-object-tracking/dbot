@@ -105,16 +105,10 @@ public:
     typedef typename Traits::GaussianType   GaussianType;
 
 public:
-    DampedWienerProcess()
-    {
-        SF_DISABLE_IF_DYNAMIC_SIZE(State);
-    }
-
-    explicit DampedWienerProcess(const unsigned& dimension):
+    explicit DampedWienerProcess(const unsigned& dimension = Traits::Dimension):
         Traits::GaussianMappableBase(dimension),
         gaussian_(dimension)
     {
-        SF_DISABLE_IF_FIXED_SIZE(State);
     }
 
     virtual ~DampedWienerProcess() { }

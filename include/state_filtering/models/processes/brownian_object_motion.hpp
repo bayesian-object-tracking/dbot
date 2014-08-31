@@ -120,21 +120,10 @@ public:
     };
 
 public:
-    BrownianObjectMotion()
+    BrownianObjectMotion(const unsigned& count_objects = OBJECTS):
+        Traits::GaussianMappableBase(count_objects == Eigen::Dynamic? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
+        state_(count_objects)
     {
-        SF_DISABLE_IF_DYNAMIC_SIZE(State);
-        SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
-
-        quaternion_map_.resize(OBJECTS);
-        rotation_center_.resize(OBJECTS);
-        linear_process_.resize(OBJECTS);
-        angular_process_.resize(OBJECTS);
-    }
-
-    BrownianObjectMotion(const unsigned& count_objects): Traits::GaussianMappableBase(count_objects*6),
-                                                         state_(count_objects)
-    {
-        SF_DISABLE_IF_FIXED_SIZE(State);
         SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
 
         quaternion_map_.resize(count_objects);

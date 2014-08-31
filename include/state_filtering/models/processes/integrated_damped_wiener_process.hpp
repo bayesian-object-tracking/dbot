@@ -99,7 +99,6 @@ struct Traits<IntegratedDampedWienerProcess<State_> >
  * \ingroup distributions
  * \ingroup process_models
  */
-//template <typename Scalar_ = double, int INPUT_DIMENSION = -1>
 template <typename State_>
 class IntegratedDampedWienerProcess:
         public internal::Traits<IntegratedDampedWienerProcess<State_> >::StationaryProcessInterfaceBase,
@@ -124,19 +123,17 @@ public:
     };
 
 public:
-    IntegratedDampedWienerProcess()
-    {
-        SF_DISABLE_IF_DYNAMIC_SIZE(State);
-        BOOST_STATIC_ASSERT_MSG(STATE_DIMENSION % 2 == 0,
-                                "Dimension must be a multitude of 2");
-    }
-
-    IntegratedDampedWienerProcess(const unsigned& degree_of_freedom):
+    IntegratedDampedWienerProcess(
+            const unsigned& degree_of_freedom = DEGREE_OF_FREEDOM):
         Traits::GaussianMappableBase(degree_of_freedom),
-        Traits::DampedWienerProcessType(degree_of_freedom),
+        velocity_distribution_(degree_of_freedom),
         position_distribution_(degree_of_freedom)
     {
-        SF_DISABLE_IF_FIXED_SIZE(State);
+        SF_REQUIRE_INTERFACE(State, Eigen::Matrix<Scalar, STATE_DIMENSION, 1>);
+
+        BOOST_STATIC_ASSERT_MSG(
+                STATE_DIMENSION % 2 == 0 || STATE_DIMENSION == Eigen::Dynamic,
+                "Dimension must be a multitude of 2");
     }
 
     virtual ~IntegratedDampedWienerProcess() { }

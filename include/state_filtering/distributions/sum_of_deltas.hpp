@@ -101,22 +101,9 @@ public:
     typedef typename Traits::Weights    Weights;
 
 public:
-    SumOfDeltas()
+    explicit SumOfDeltas(const unsigned& dimension = Traits::Dimension)
     {
-//        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
-
-        // initialize with one delta at zero
-        deltas_ = Deltas(1, Vector::Zero(Vector::SizeAtCompileTime == Eigen::Dynamic ?
-                                                 0 : Vector::SizeAtCompileTime));
-        weights_ = Weights::Ones(1);
-    }
-
-    explicit SumOfDeltas(const unsigned& dimension)
-    {
-        SF_DISABLE_IF_FIXED_SIZE(Vector);
-
-        // initialize with one delta at zero
-        deltas_ = Deltas(1, Vector::Zero(dimension));
+        deltas_ = Deltas(1, Vector::Zero(dimension == Eigen::Dynamic? 0 : dimension));
         weights_ = Weights::Ones(1);
     }
 

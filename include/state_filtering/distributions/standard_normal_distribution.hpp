@@ -68,26 +68,16 @@ public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
-    // constructor and destructor
-    StandardNormalDistribution():
-        dimension_(internal::VectorTraits<Vector>::Dimension),
+    StandardNormalDistribution(
+            const int& dimension = internal::VectorTraits<Vector>::Dimension):
+        dimension_ (dimension == Eigen::Dynamic ? 0 : dimension),
         generator_(RANDOM_SEED),
         gaussian_distribution_(0.0, 1.0),
         gaussian_generator_(generator_, gaussian_distribution_)
     {
-        SF_DISABLE_IF_DYNAMIC_SIZE(Vector);
     }
 
-    StandardNormalDistribution(const int& dimension):
-        dimension_(dimension),
-        generator_(RANDOM_SEED),
-        gaussian_distribution_(0.0, 1.0),
-        gaussian_generator_(generator_, gaussian_distribution_)
-    {
-        SF_DISABLE_IF_FIXED_SIZE(Vector);
-    }
     virtual ~StandardNormalDistribution() { }
-
 
     virtual Vector Sample()
     {
