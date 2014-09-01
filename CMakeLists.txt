@@ -136,26 +136,42 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
 
 set(state_filtering_sources
-    src/${PROJECT_NAME}/models/observers/image_observer_cpu.cpp
-
-    ## Particle specific implementations
-#    src/${PROJECT_NAME}/filter/particle/coordinate_filter.cpp
-
-    ## SPKF specific implementations
-    # .. on the way
+    src/${PROJECT_NAME}/state_filtering.cpp
 
     src/${PROJECT_NAME}/utils/image_visualizer.cpp
     src/${PROJECT_NAME}/utils/cloud_visualizer.cpp
     src/${PROJECT_NAME}/utils/object_file_reader.cpp
     src/${PROJECT_NAME}/utils/kinematics_from_urdf.cpp
     src/${PROJECT_NAME}/utils/rigid_body_renderer.cpp
+    src/${PROJECT_NAME}/utils/tracking_dataset.cpp
+    src/${PROJECT_NAME}/utils/pcl_interface.cpp
+    src/${PROJECT_NAME}/utils/ros_interface.cpp
+
+    src/${PROJECT_NAME}/distributions/gaussian.cpp
+    src/${PROJECT_NAME}/distributions/sum_of_deltas.cpp
+    src/${PROJECT_NAME}/distributions/standard_normal_distribution.cpp
+
+    src/${PROJECT_NAME}/models/processes/damped_wiener_process.cpp
+    src/${PROJECT_NAME}/models/processes/integrated_damped_wiener_process.cpp
+    src/${PROJECT_NAME}/models/processes/brownian_object_motion.cpp
+
+    src/${PROJECT_NAME}/models/observers/image_observer_cpu.cpp
+
+    src/${PROJECT_NAME}/states/rigid_body_system.cpp
+    src/${PROJECT_NAME}/states/floating_body_system.cpp
+    src/${PROJECT_NAME}/states/robot_state.cpp
+
+    src/${PROJECT_NAME}/filters/stochastic/rao_blackwell_coordinate_particle_filter.cpp
+
+    src/${PROJECT_NAME}/trackers/object_tracker.cpp
+#    src/${PROJECT_NAME}/trackers/tracker_tracker.cpp
 )
 
 
 ## state_filtering
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
+add_library(${PROJECT_NAME} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
 
 
@@ -173,7 +189,6 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME}/models/observers/image_observer_gpu/shader.cpp)
 
     add_library(${PROJECT_NAME}_gpu
-        ${state_filtering_headers}
         ${state_filtering_gpu_SOURCES})
 
     target_link_libraries(${PROJECT_NAME}_gpu

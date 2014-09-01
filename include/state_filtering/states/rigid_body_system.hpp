@@ -30,10 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Dense>
 #include <vector>
-#include <boost/static_assert.hpp>
-#include <iostream>
-
-
 
 template<int SIZE_STATE_ = -1>
 class RigidBodySystem: public Eigen::Matrix<double, SIZE_STATE_, 1>

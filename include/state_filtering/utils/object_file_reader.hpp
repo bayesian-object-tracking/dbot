@@ -29,13 +29,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OBJECT_FILE_READER_HPP_
 #define OBJECT_FILE_READER_HPP_
 
+// #include <state_filtering/state_filtering.hpp>
+
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 #include <list>
 #include <vector>
 #include <list>
-
 
 class ObjectFileReader
 {
@@ -62,14 +63,5 @@ private:
 	boost::shared_ptr<std::vector<Eigen::Vector3d> > centers_;
 	boost::shared_ptr<std::vector<float> > areas_;
 };
-
-
-
-
-
-
-
-
-
 
 #endif
