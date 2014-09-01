@@ -1,3 +1,4 @@
+
 /*
  * Software License Agreement (BSD License)
  *
@@ -45,14 +46,17 @@
  * University of Southern California
  */
 
+#include <Eigen/Dense>
+
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/distributions/standard_normal_distribution.hpp>
 
 namespace sf
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class StandardNormalDistribution<Eigen::Matrix<double, X, 1> >;
+template class StandardNormalDistribution<Eigen::Matrix<double, 1, 1> >;
+template class StandardNormalDistribution<Eigen::Matrix<double, 3, 1> >;
 
 }

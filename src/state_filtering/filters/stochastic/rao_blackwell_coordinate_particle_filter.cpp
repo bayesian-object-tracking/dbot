@@ -47,12 +47,23 @@
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
 namespace sf
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class RaoBlackwellCoordinateParticleFilter<
+        BrownianObjectMotion<FloatingBodySystem<X> >,
+        ImageObserverCPU<double, FloatingBodySystem<X>, X> >;
+
+template class RaoBlackwellCoordinateParticleFilter<
+        DampedWienerProcess<RobotState<X, X> >,
+        ImageObserverCPU<double, RobotState<X, X>, X> >;
+
+#ifdef BUILD_GPU
+template class RaoBlackwellCoordinateParticleFilter<
+         BrownianObjectMotion<FloatingBodySystem<X> >,
+         ImageObserverGPU<FloatingBodySystem<X> > >;
+#endif
 
 }

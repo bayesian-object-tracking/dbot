@@ -121,7 +121,8 @@ public:
 
 public:
     BrownianObjectMotion(const unsigned& count_objects = OBJECTS):
-        Traits::GaussianMappableBase(count_objects == Eigen::Dynamic? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
+        Traits::GaussianMappableBase(
+            count_objects == Eigen::Dynamic? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
         SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);

@@ -1,3 +1,4 @@
+
 /*
  * Software License Agreement (BSD License)
  *
@@ -39,20 +40,21 @@
 
 /**
  * @date 2014
- * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * Max-Planck-Institute for Intelligent Systems,
  * University of Southern California
  */
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/distributions/sum_of_deltas.hpp>
 
 namespace sf
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class SumOfDeltas<RobotState<X, X> >;
+template class SumOfDeltas<FloatingBodySystem<X> >;
+template class SumOfDeltas<Eigen::Matrix<double, X, 1> >;
 
 }

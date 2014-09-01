@@ -1,3 +1,4 @@
+
 /*
  * Software License Agreement (BSD License)
  *
@@ -39,20 +40,32 @@
 
 /**
  * @date 2014
- * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
+ * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * Max-Planck-Institute for Intelligent Systems,
  * University of Southern California
  */
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+template class std::vector<size_t>;
+template class std::vector<int>;
+template class std::vector<float>;
+template class std::vector<double>;
+template class std::vector<std::string>;
 
-namespace sf
-{
+template class std::vector<RobotState<sf::X, sf::X> >;
+template class std::vector<FloatingBodySystem<sf::X> >;
+template class std::vector<Eigen::Matrix<double, sf::X, 1> >;
+template class std::vector<Eigen::Matrix4f>;
+template class std::vector<Eigen::Vector3i>;
+template class std::vector<Eigen::Vector3f>;
+template class std::vector<Eigen::Vector3d>;
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class std::vector<std::vector<Eigen::Vector3d> >;
+template class std::vector<std::vector<std::vector<int> > >;
+template class std::vector<std::vector<size_t> >;
+template class std::vector<pcl::PointCloud<pcl::PointXYZ> >;
 
-}
+// pcl::PointCloud<...> // cannot be explicitly instantiated
+// Eigen::Matrix<...>   // cannot be explicitly instantiated

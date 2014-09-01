@@ -47,12 +47,13 @@
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/distributions/gaussian.hpp>
 
 namespace sf
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class Gaussian<double,  X>;
+template class Gaussian<double,  1>;
+template class Gaussian<double,  3>;
 
 }

@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace vis
 {
 
+
 class CloudVisualizer
 {
 public:
@@ -63,11 +64,6 @@ public:
     void add_cloud(const std::vector<Eigen::Vector3i> &points_,
                    const Eigen::Matrix3f R = Eigen::Matrix3f::Identity(),
                    const Eigen::Vector3f t = Eigen::Vector3f::Zero());
-
-
-
-
-
 
 
     template<typename Scalar>

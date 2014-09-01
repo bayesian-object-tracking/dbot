@@ -257,7 +257,6 @@ private:
     std::vector<State> next_samples_;
     std::vector<Scalar> loglikes_;
 
-
     // observation model
     boost::shared_ptr<ObservationModel> observation_model_;
 

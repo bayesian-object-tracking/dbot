@@ -47,12 +47,6 @@
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/states/robot_state.hpp>
 
-namespace sf
-{
-
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
-
-}
+template class RobotState<sf::X, sf::X>;

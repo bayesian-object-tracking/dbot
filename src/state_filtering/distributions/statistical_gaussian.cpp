@@ -1,3 +1,4 @@
+
 /*
  * Software License Agreement (BSD License)
  *
@@ -45,14 +46,8 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <Eigen/Dense>
+#include <state_filtering/impl/distributions/statistical_gaussian.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+extern template class sf::StatisticalGaussian<Eigen::Matrix<double, Eigen::Dynamic, 1> >;
 
-namespace sf
-{
-
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
-
-}

@@ -47,12 +47,11 @@
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#include <state_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
 namespace sf
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class IntegratedDampedWienerProcess<Eigen::Matrix<double, 6, 1> >;
 
 }
