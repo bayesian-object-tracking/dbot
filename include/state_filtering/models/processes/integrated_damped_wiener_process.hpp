@@ -51,7 +51,7 @@
 
 // state_filtering
 
-#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable_interface.hpp>
 #include <state_filtering/distributions/gaussian.hpp>
 #include <state_filtering/models/processes/damped_wiener_process.hpp>
 
@@ -82,7 +82,7 @@ struct Traits<IntegratedDampedWienerProcess<State_> >
     typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> Input;
 
     typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
-    typedef GaussianMappable<State, DEGREE_OF_FREEDOM>  GaussianMappableBase;
+    typedef GaussianMappableInterface<State, DEGREE_OF_FREEDOM>  GaussianMappableBase;
 
     typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> WienerProcessState;
     typedef DampedWienerProcess<WienerProcessState>     DampedWienerProcessType;

@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
 
-#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable_interface.hpp>
 
 //#include "image_visualizer.hpp"
 #include <omp.h>
@@ -98,7 +98,7 @@ public:
 
         SF_REQUIRE_INTERFACE(
             ProcessModel,
-            GaussianMappable<State, internal::VectorTraits<State>::Dimension>);
+            GaussianMappableInterface<State, internal::VectorTraits<State>::Dimension>);
 
         SamplingBlocks(sampling_blocks);
     }

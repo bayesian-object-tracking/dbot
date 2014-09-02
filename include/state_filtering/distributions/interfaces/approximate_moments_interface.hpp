@@ -54,6 +54,8 @@ template <typename Vector, typename Operator>
 class ApproximateMomentsInterface
 {
 public:
+    virtual ~ApproximateMomentsInterface() {}
+
     virtual Vector   ApproximateMean() = 0;
     virtual Operator ApproximateCovariance() = 0;
 };

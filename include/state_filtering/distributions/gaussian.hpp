@@ -53,7 +53,7 @@
 // state_filtering
 #include <state_filtering/distributions/interfaces/moments_interface.hpp>
 #include <state_filtering/distributions/interfaces/evaluation_interface.hpp>
-#include <state_filtering/distributions/interfaces/gaussian_mappable.hpp>
+#include <state_filtering/distributions/interfaces/gaussian_mappable_interface.hpp>
 
 namespace sf
 {
@@ -77,7 +77,7 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
 
     typedef MomentsInterface<Vector, Operator>   MomentsInterfaceBase;
     typedef EvaluationInterface<Vector>          EvaluationInterfaceBase;
-    typedef GaussianMappable<Vector, DIMENSION>  GaussianMappableBase;
+    typedef GaussianMappableInterface<Vector, DIMENSION>  GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise Noise;
 };
