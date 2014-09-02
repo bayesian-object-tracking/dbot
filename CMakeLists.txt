@@ -5,6 +5,10 @@ set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 -std=c++0x ) #print profiling output
 
+# comment the folloing two lines if ccache is not available
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+
 find_package(catkin REQUIRED
     roscpp
     roslib
@@ -18,6 +22,7 @@ find_package(catkin REQUIRED
     robot_state_pub
     image_transport
 )
+
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
