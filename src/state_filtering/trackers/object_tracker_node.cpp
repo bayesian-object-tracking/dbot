@@ -25,34 +25,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#include <state_filtering/state_filtering.hpp>
-
 //#define PROFILING_ON
 
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <rosbag/view.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-
-#include <pcl_ros/point_cloud.h>
-
-#include <boost/filesystem.hpp>
+#include <state_filtering/state_filtering.hpp>
 
 #include <fstream>
 #include <ctime>
 
+#include <ros/ros.h>
+#include <pcl_ros/point_cloud.h>
+
+#include <boost/filesystem.hpp>
+
 #include <state_filtering/trackers/object_tracker.hpp>
-
-#include <cv.h>
-#include <cv_bridge/cv_bridge.h>
-
 #include <state_filtering/utils/tracking_dataset.hpp>
-
-
+#include <state_filtering/utils/pcl_interface.hpp>
+#include <state_filtering/utils/ros_interface.hpp>
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;
