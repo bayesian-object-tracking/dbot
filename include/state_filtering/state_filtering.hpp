@@ -83,6 +83,18 @@ extern template class std::vector<float>;
 extern template class std::vector<double>;
 extern template class std::vector<std::string>;
 
+// look for where this is actually being instantiated
+extern template class pcl::PointCloud<pcl::PointXYZ>;
+
+//// look for where these are actually being instantiated
+extern template class Eigen::Matrix<double, sf::X, 1>;
+extern template class Eigen::Matrix<double, 1, 1>;
+extern template class Eigen::Matrix<double, 3, 1>;
+extern template class Eigen::Matrix<double, 6, 1>;
+extern template class Eigen::Matrix<float, 3, 1>;
+extern template class Eigen::Matrix<float, 4, 1>;
+//extern template class Eigen::Matrix<double, sf::X, sf::X>; // why is the operator= not being instantiated?
+
 extern template class std::vector<RobotState<sf::X, sf::X> >;
 extern template class std::vector<FloatingBodySystem<sf::X> >;
 
@@ -230,5 +242,7 @@ extern template void ri::ReadParameter(const std::string& path,
 extern template void ri::ReadParameter(const std::string& path,
                                        std::string& parameter,
                                        ros::NodeHandle node_handle);
+
+
 
 #endif
