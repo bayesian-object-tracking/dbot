@@ -77,7 +77,7 @@ struct Traits<DampedWienerProcess<State_> >
     typedef typename GaussianType::Operator             Operator;
 
     typedef StationaryProcessInterface<State,Input>     StationaryProcessInterfaceBase;
-    typedef GaussianMappable<State, Dimension>          GaussianMappableBase;
+    typedef GaussianMappableInterface<State, Dimension>          GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise        Noise;
 };

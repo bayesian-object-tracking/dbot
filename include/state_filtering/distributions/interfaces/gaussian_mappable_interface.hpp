@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_HPP
-#define STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_INTERFACE_HPP
+#define STATE_FILTERING_DISTRIBUTION_INTERFACE_GAUSSIAN_MAPPABLE_INTERFACE_HPP
 
 #include <Eigen/Dense>
 
@@ -62,7 +62,7 @@ namespace sf
 {
 
 template <typename Vector, int NOISE_DIMENSION>
-class GaussianMappable:
+class GaussianMappableInterface:
         public SamplingInterface<Vector>
 {
 public:
@@ -70,12 +70,12 @@ public:
     typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
 
 public:
-    explicit GaussianMappable(const unsigned& noise_dimension = NOISE_DIMENSION):
+    explicit GaussianMappableInterface(const unsigned& noise_dimension = NOISE_DIMENSION):
         standard_normal_distribution_(noise_dimension)
     {
     }
 
-    virtual ~GaussianMappable() { }
+    virtual ~GaussianMappableInterface() { }
 
     virtual int NoiseDimension() const
     {

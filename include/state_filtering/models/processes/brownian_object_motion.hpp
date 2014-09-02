@@ -85,7 +85,7 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
     typedef IntegratedDampedWienerProcess<ObjectState>     Process;
 
     typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
-    typedef GaussianMappable<State, DIMENSION>          GaussianMappableBase;
+    typedef GaussianMappableInterface<State, DIMENSION>          GaussianMappableBase;
 
     typedef typename GaussianMappableBase::Noise        Noise;
 };
