@@ -57,6 +57,8 @@ class MomentsInterface:
         public ApproximateMomentsInterface<Vector, Operator>
 {
 public:
+    virtual ~MomentsInterface() {}
+
     virtual Vector Mean() const = 0;
     virtual Operator Covariance() const = 0;
 

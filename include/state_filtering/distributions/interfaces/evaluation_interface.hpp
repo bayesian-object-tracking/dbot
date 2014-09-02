@@ -64,6 +64,8 @@ public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
+    virtual ~EvaluationInterface() {}
+
     virtual Scalar Probability(const Vector& vector) const
     {
         return std::exp(LogProbability(vector));

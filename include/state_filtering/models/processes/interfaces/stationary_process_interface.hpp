@@ -60,6 +60,8 @@ public:
     typedef typename internal::VectorTraits<State>::Scalar Scalar;
 
 public:
+    virtual ~StationaryProcessInterface() {}
+
     virtual void Condition(const Scalar& delta_time,
                            const State& state,
                            const Input& input) = 0;

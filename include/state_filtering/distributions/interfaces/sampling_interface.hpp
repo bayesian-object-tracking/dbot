@@ -55,6 +55,8 @@ template <typename Vector>
 class SamplingInterface
 {
 public:
+    virtual ~SamplingInterface() {}
+
     virtual Vector Sample() = 0;
 };
 

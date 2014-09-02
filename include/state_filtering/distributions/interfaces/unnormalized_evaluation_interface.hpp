@@ -63,6 +63,8 @@ public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
+    virtual ~UnnormalizedEvaulationInterface() {}
+
     virtual Scalar UnnormalizedProbability(const Vector& vector) const
     {
         std::exp(LogUnnormalizedProbability(vector));
