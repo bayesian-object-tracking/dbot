@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef RIGID_BODY_SYSTEM_HPP_
-#define RIGID_BODY_SYSTEM_HPP_
+#ifndef STATE_FILTERING_STATES_RIGID_BODY_SYSTEM_HPP_
+#define STATE_FILTERING_STATES_RIGID_BODY_SYSTEM_HPP_
 
 #include <Eigen/Dense>
 #include <vector>

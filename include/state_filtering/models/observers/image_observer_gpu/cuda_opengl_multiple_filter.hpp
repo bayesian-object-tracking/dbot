@@ -1,5 +1,5 @@
-#ifndef CUDA_OPENGL_MULTIPLE_FILTER_HPP
-#define CUDA_OPENGL_MULTIPLE_FILTER_HPP
+#ifndef STATE_FILTERING_MODELS_OBSERVERS_CUDA_OPENGL_MULTIPLE_FILTER_HPP
+#define STATE_FILTERING_MODELS_OBSERVERS_CUDA_OPENGL_MULTIPLE_FILTER_HPP
 
 #include <state_filtering/models/observers/image_observer_gpu/cuda_opengl_filter.hpp>
 namespace fil {

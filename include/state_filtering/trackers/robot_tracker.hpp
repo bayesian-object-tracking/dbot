@@ -25,11 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef ROBOT_TRACKER_
-#define ROBOT_TRACKER_
-
-
-//#define PROFILING_ON
+#ifndef STATE_FILTERING_ROBOT_TRACKER_
+#define STATE_FILTERING_ROBOT_TRACKER_
 
 #include <boost/thread/mutex.hpp>
 

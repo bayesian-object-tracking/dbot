@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef ROBOT_KINEMATICS_HPP_
-#define ROBOT_KINEMATICS_HPP_
+#ifndef STATE_FILTERING_STATES_ROBOT_KINEMATICS_HPP_
+#define STATE_FILTERING_STATES_ROBOT_KINEMATICS_HPP_
 
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/utils/macros.hpp>

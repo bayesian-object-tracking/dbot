@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef DISTRIBUTIONS_IMPLEMENTATIONS_GAUSSIAN_HPP
-#define DISTRIBUTIONS_IMPLEMENTATIONS_GAUSSIAN_HPP
+#ifndef STATE_FILTERING_DISTRIBUTIONS_GAUSSIAN_HPP
+#define STATE_FILTERING_DISTRIBUTIONS_GAUSSIAN_HPP
 
 // eigen
 #include <Eigen/Dense>

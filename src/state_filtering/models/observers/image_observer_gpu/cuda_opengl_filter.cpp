@@ -13,7 +13,7 @@
 #include <state_filtering/models/observers/image_observer_gpu/cuda_filter.hpp>
 
 
-#include "cuda_gl_interop.h"
+#include <cuda_gl_interop.h>
 #include <state_filtering/utils/helper_functions.hpp>
 
 using namespace std;

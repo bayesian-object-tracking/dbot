@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_FILTERING_TRIANGLE_OBJEC_tMODEL_HPP_
-#define POSE_FILTERING_TRIANGLE_OBJEC_tMODEL_HPP_
+#ifndef STATE_FILTERING_UTILS_TRIANGLE_OBJEC_tMODEL_HPP_
+#define STATE_FILTERING_UTILS_TRIANGLE_OBJEC_tMODEL_HPP_
 
 #include <vector>
 #include <Eigen/Dense>

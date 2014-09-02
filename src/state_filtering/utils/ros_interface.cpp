@@ -46,7 +46,6 @@
  */
 
 #include <state_filtering/state_filtering.hpp>
-
 #include <state_filtering/utils/ros_interface.hpp>
 
 template void ri::ReadParameter(const std::string& path,

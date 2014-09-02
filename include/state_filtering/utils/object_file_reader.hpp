@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef OBJECT_FILE_READER_HPP_
-#define OBJECT_FILE_READER_HPP_
+#ifndef STATE_FILTERING_UTILS_OBJECT_FILE_READER_HPP_
+#define STATE_FILTERING_UTILS_OBJECT_FILE_READER_HPP_
 
 // #include <state_filtering/state_filtering.hpp>
 

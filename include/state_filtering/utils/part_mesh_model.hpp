@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef _PART_MESH_MODEL_
-#define _PART_MESH_MODEL_
+#ifndef STATE_FILTERING_UTILS_PART_MESH_MODEL_
+#define STATE_FILTERING_UTILS_PART_MESH_MODEL_
 
 #include <boost/shared_ptr.hpp>
 #include <urdf/model.h>

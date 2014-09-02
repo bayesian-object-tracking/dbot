@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef TRACKERS_OBJECT_TRACKER_HPP
-#define TRACKERS_OBJECT_TRACKER_HPP
+#ifndef STATE_FILTERING_TRACKERS_OBJECT_TRACKER_HPP
+#define STATE_FILTERING_TRACKERS_OBJECT_TRACKER_HPP
 
 //#define PROFILING_ON
 

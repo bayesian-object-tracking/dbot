@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef MODELS_OBSERVERS_IMPLEMENTATIONS_KINECT_observer_HPP_
-#define MODELS_OBSERVERS_IMPLEMENTATIONS_KINECT_observer_HPP_
+#ifndef STATE_FILTERING_MODELS_OBSERVERS_KINECT_OBSERVER_HPP_
+#define STATE_FILTERING_MODELS_OBSERVERS_KINECT_OBSERVER_HPP_
 
 #include <Eigen/Dense>
 #include <state_filtering/distributions/interfaces/evaluation_interface.hpp>
