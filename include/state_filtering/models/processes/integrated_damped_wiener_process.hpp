@@ -159,11 +159,6 @@ public:
 
         velocity_distribution_.Condition(delta_time, state.bottomRows(InputDimension()), input);
     }
-    virtual void Condition(const Scalar&  delta_time,
-                           const State&  state)
-    {
-        Condition(delta_time, state, Input::Zero(InputDimension()));
-    }
 
     virtual void Parameters(
             const double& damping,

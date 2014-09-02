@@ -125,11 +125,6 @@ public:
         gaussian_.Mean(Mean(delta_time, state, input));
         gaussian_.Covariance(Covariance(delta_time));
     }
-    virtual void Condition(const Scalar&  delta_time,
-                           const State&  state)
-    {
-        Condition(delta_time, state, Input::Zero(Dimension()));
-    }
 
     virtual void Parameters(const Scalar& damping,
                             const Operator& noise_covariance)

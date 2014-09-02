@@ -189,12 +189,6 @@ public:
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
     }
-    virtual void Condition(const Scalar&  delta_time,
-                           const State&  state)
-    {
-        Condition(delta_time, state, Input::Zero(InputDimension()));
-    }
-
 
     virtual void Parameters(const size_t&                           object_index,
                             const Eigen::Matrix<Scalar, 3, 1>&  rotation_center,
