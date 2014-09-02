@@ -126,18 +126,15 @@ extern template class sf::ImageObserverCPU<double, FloatingBodySystem<sf::X> >;
 extern template class sf::ImageObserverCPU<double, RobotState<sf::X, sf::X> >;
 
 extern template class sf::RaoBlackwellCoordinateParticleFilter<
-        sf::BrownianObjectMotion<FloatingBodySystem<sf::X> >,
-        sf::ImageObserverCPU<double, FloatingBodySystem<sf::X>, sf::X > >;
+        sf::BrownianObjectMotion<FloatingBodySystem<sf::X>,sf::X>,
+        sf::RaoBlackwellObserver<
+            FloatingBodySystem<sf::X>,
+            sf::ImageObserverCPU<double, FloatingBodySystem<sf::X>, sf::X>::Observation
+            > >;
 
 extern template class sf::RaoBlackwellCoordinateParticleFilter<
         sf::DampedWienerProcess<RobotState<sf::X, sf::X> >,
-        sf::ImageObserverCPU<double, RobotState<sf::X, sf::X>, sf::X > >;
-
-#ifdef BUILD_GPU
-extern template class sf::RaoBlackwellCoordinateParticleFilter<
-         sf::BrownianObjectMotion<FloatingBodySystem<sf::X> >,
-         sf::ImageObserverGPU<FloatingBodySystem<sf::X> > >;
-#endif
+        sf::ImageObserverCPU<double, RobotState<sf::X, sf::X>, sf::X> >;
 
 
 extern template std::vector<FloatingBodySystem<-1>::State>

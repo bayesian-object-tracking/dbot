@@ -53,17 +53,14 @@ namespace sf
 {
 
 template class RaoBlackwellCoordinateParticleFilter<
-        BrownianObjectMotion<FloatingBodySystem<X> >,
-        ImageObserverCPU<double, FloatingBodySystem<X>, X> >;
+        BrownianObjectMotion<FloatingBodySystem<X>,X>,
+        RaoBlackwellObserver<
+            FloatingBodySystem<X>,
+            ImageObserverCPU<double, FloatingBodySystem<X>, X>::Observation
+            > >;
 
 template class RaoBlackwellCoordinateParticleFilter<
         DampedWienerProcess<RobotState<X, X> >,
         ImageObserverCPU<double, RobotState<X, X>, X> >;
-
-#ifdef BUILD_GPU
-template class RaoBlackwellCoordinateParticleFilter<
-         BrownianObjectMotion<FloatingBodySystem<X> >,
-         ImageObserverGPU<FloatingBodySystem<X> > >;
-#endif
 
 }
