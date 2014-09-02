@@ -49,7 +49,6 @@
 
 #include <state_filtering/utils/pcl_interface.hpp>
 
-// TODO REMOVE REDUNDANT
 #include <pcl/point_types.h>
 #include <pcl/PointIndices.h>
 #include <pcl/ModelCoefficients.h>
