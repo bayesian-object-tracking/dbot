@@ -164,14 +164,14 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/filters/stochastic/rao_blackwell_coordinate_particle_filter.cpp
 
     src/${PROJECT_NAME}/trackers/object_tracker.cpp
-#    src/${PROJECT_NAME}/trackers/tracker_tracker.cpp
+    src/${PROJECT_NAME}/trackers/robot_tracker.cpp
 )
 
 
 ## state_filtering
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME} ${state_filtering_sources})
+add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
 
 
