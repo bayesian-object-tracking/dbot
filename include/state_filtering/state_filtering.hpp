@@ -109,9 +109,9 @@ extern template class std::vector<std::vector<std::vector<int> > >;
 extern template class std::vector<std::vector<size_t> >;
 extern template class std::vector<pcl::PointCloud<pcl::PointXYZ> >;
 
-extern template class sf::Gaussian<double, sf::X>;
-extern template class sf::Gaussian<double, 1>;
-extern template class sf::Gaussian<double, 3>;
+extern template class sf::Gaussian<sf::X, double>;
+extern template class sf::Gaussian<1, double>;
+extern template class sf::Gaussian<3, double>;
 
 extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
 extern template class sf::SumOfDeltas<FloatingBodySystem<sf::X> >;

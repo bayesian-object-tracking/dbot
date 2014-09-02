@@ -268,7 +268,7 @@ private:
     Scalar max_kl_divergence_;
 
     // distribution for sampling
-    Gaussian<Scalar, 1> unit_gaussian_;
+    Gaussian<1, Scalar> unit_gaussian_;
 };
 
 }

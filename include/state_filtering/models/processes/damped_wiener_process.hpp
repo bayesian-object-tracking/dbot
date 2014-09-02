@@ -73,7 +73,7 @@ struct Traits<DampedWienerProcess<State_> >
     typedef typename VectorTraits<State>::Scalar        Scalar;
     typedef Eigen::Matrix<Scalar, Dimension, 1>         Input;
 
-    typedef Gaussian<Scalar, Dimension>                 GaussianType;
+    typedef Gaussian<Dimension, Scalar>                 GaussianType;
     typedef typename GaussianType::Operator             Operator;
 
     typedef StationaryProcessInterface<State,Input>     StationaryProcessInterfaceBase;

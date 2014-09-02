@@ -59,7 +59,7 @@ namespace sf
 {
 
 // Forward declarations
-template <typename Scalar, int DIMENSION> class Gaussian;
+template <int DIMENSION, typename Scalar> class Gaussian;
 
 namespace internal
 {
@@ -67,8 +67,8 @@ namespace internal
  * Gaussian distribution traits specialization
  * \internal
  */
-template <typename Scalar, int DIMENSION>
-struct Traits<Gaussian<Scalar, DIMENSION> >
+template <int DIMENSION, typename Scalar>
+struct Traits<Gaussian<DIMENSION, Scalar> >
 {
     enum { Dimension = DIMENSION };
 
@@ -88,14 +88,14 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
  * \class Gaussian
  * \ingroup distributions
  */
-template <typename Scalar, int DIMENSION>
+template <int DIMENSION, typename Scalar>
 class Gaussian:
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::MomentsInterfaceBase,
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::EvaluationInterfaceBase,
-        public internal::Traits<Gaussian<Scalar, DIMENSION> >::GaussianMappableBase
+        public internal::Traits<Gaussian<DIMENSION, Scalar> >::MomentsInterfaceBase,
+        public internal::Traits<Gaussian<DIMENSION, Scalar> >::EvaluationInterfaceBase,
+        public internal::Traits<Gaussian<DIMENSION, Scalar> >::GaussianMappableBase
 {
 public:
-    typedef internal::Traits<Gaussian<Scalar, DIMENSION> > Traits;
+    typedef internal::Traits<Gaussian<DIMENSION, Scalar> > Traits;
 
     typedef typename Traits::Vector     Vector;
     typedef typename Traits::Operator   Operator;

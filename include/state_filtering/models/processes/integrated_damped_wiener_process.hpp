@@ -86,7 +86,7 @@ struct Traits<IntegratedDampedWienerProcess<State_> >
 
     typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> WienerProcessState;
     typedef DampedWienerProcess<WienerProcessState>     DampedWienerProcessType;
-    typedef Gaussian<Scalar, DEGREE_OF_FREEDOM>         GaussianType;
+    typedef Gaussian<DEGREE_OF_FREEDOM, Scalar>         GaussianType;
 
     typedef typename GaussianMappableBase::Noise Noise;
     typedef typename GaussianType::Operator      Operator;
