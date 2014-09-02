@@ -38,6 +38,8 @@
 #include <boost/shared_ptr.hpp>
 #include <urdf/model.h>
 
+#include <Eigen/Dense>
+
 #ifdef HAVE_V2
 #include "assimp/assimp.h"
 #include "assimp/aiPostProcess.h"
@@ -48,8 +50,6 @@
 #include "assimp/scene.h"
 #endif
 
-using namespace Eigen;
-
 class PartMeshModel
 {
 public:
@@ -59,7 +59,7 @@ public:
     : proper_(false) 
     , link_(p_link)
     , name_(p_link->name)
-    , vertices_(new std::vector<Vector3d>)
+    , vertices_(new std::vector<Eigen::Vector3d>)
     , indices_(new std::vector<std::vector<int> >)
   {
     
@@ -103,7 +103,7 @@ public:
     vertices_->resize(num_vertices); 
     for(unsigned v=0;v<num_vertices;++v)
       {
-	Vector3d point;
+    Eigen::Vector3d point;
 	point(0) = mesh->mVertices[v].x;
 	point(1) = mesh->mVertices[v].y;
 	point(2) = mesh->mVertices[v].z;
