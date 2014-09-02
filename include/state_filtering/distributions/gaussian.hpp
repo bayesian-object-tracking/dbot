@@ -83,6 +83,7 @@ struct Traits<Gaussian<Scalar, DIMENSION> >
 };
 }
 
+
 /**
  * \class Gaussian
  * \ingroup distributions

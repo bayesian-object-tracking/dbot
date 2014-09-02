@@ -40,9 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cv.h>
 #include <cv_bridge/cv_bridge.h>
 
-
-
-
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 
 class RobotTrackerNode
@@ -52,8 +49,8 @@ class RobotTrackerNode
 
   RobotTracker robot_tracker_;
   
-  string depth_image_topic_;
-  string camera_info_topic_;
+  std::string depth_image_topic_;
+  std::string camera_info_topic_;
   int initial_sample_count_;
 
   sensor_msgs::Image ros_image_;
@@ -92,7 +89,7 @@ public:
 									     1,
 									     &RobotTrackerNode::depthImageCallback, 
 									     this);
-    Matrix3d camera_matrix = Matrix3d::Zero();
+    Eigen::Matrix3d camera_matrix = Eigen::Matrix3d::Zero();
     // get the camera parameters
     while(camera_matrix.sum() == 0.0)
       camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic_, nh_, 2.0);
@@ -104,7 +101,7 @@ public:
 	usleep(10000);
       }
 
-    vector<VectorXd> initial_states;
+    std::vector<Eigen::VectorXd> initial_states;
     if(initial_sample_count_>1)
       initial_states = urdf_kinematics->GetInitialSamples(joint_state_copy_, initial_sample_count_);
     else
@@ -112,7 +109,7 @@ public:
 
     // intialize the filter
     robot_tracker_.Initialize(initial_states, ros_image_, camera_matrix, urdf_kinematics);
-    cout << "done initializing" << endl;
+    std::cout << "done initializing" << std::endl;
    
     
     subscriber_ = nh_.subscribe(depth_image_topic_, 

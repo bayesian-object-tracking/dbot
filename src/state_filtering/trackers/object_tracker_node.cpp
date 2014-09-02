@@ -135,7 +135,7 @@ int main (int argc, char **argv)
     if(source == "camera")
     {
         std::cout << "reading data from camera " << std::endl;
-        Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
+        Eigen::Matrix3d camera_matrix = ri::GetCameraMatrix<double>(camera_info_topic, node_handle, 2.0);
 
         // get observations from camera
         sensor_msgs::Image::ConstPtr ros_image =
