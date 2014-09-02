@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_FILTERING_ROS_INTERFACE_HPP_
-#define POSE_FILTERING_ROS_INTERFACE_HPP_
+#ifndef STATE_FILTERING_UTILS_ROS_INTERFACE_HPP_
+#define STATE_FILTERING_UTILS_ROS_INTERFACE_HPP_
 
 #include <string>
 #include <limits>

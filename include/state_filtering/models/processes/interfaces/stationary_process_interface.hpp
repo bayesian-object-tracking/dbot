@@ -44,11 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef MODELS_PROCESSES_INTERFACE_STATIONARY_PROCESS_INTERFACE_HPP
-#define MODELS_PROCESSES_INTERFACE_STATIONARY_PROCESS_INTERFACE_HPP
-
-
-// state_filtering
+#ifndef STATE_FILTERING_MODELS_PROCESSES_INTERFACE_STATIONARY_PROCESS_INTERFACE_HPP
+#define STATE_FILTERING_MODELS_PROCESSES_INTERFACE_STATIONARY_PROCESS_INTERFACE_HPP
 
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>

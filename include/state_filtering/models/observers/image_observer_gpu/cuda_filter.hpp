@@ -1,5 +1,5 @@
-#ifndef CUDA_FILTER_HPP
-#define CUDA_FILTER_HPP
+#ifndef STATE_FILTERING_MODELS_OBSERVERS_CUDA_FILTER_HPP
+#define STATE_FILTERING_MODELS_OBSERVERS_CUDA_FILTER_HPP
 
 // #include "state_filter.hpp"
 #include "boost/shared_ptr.hpp"

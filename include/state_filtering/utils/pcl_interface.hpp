@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_FILTERING_PCL_INTERFACE_HPP_
-#define POSE_FILTERING_PCL_INTERFACE_HPP_
+#ifndef STATE_FILTERING_UTILS_PCL_INTERFACE_HPP_
+#define STATE_FILTERING_UTILS_PCL_INTERFACE_HPP_
 
 #include <Eigen/Core>
 

@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef IMAGE_VISUALIZER_HPP_
-#define IMAGE_VISUALIZER_HPP_
+#ifndef STATE_FILTERING_UTILS_IMAGE_VISUALIZER_HPP_
+#define STATE_FILTERING_UTILS_IMAGE_VISUALIZER_HPP_
 
 #include <vector>
 #include <string>

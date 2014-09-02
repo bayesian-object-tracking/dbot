@@ -8,7 +8,7 @@
 #define MATRIX_DIM 9
 
 #include <state_filtering/models/observers/image_observer_gpu/cuda_filter.hpp>
-#include "GL/glut.h"
+#include <GL/glut.h>
 
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
-#ifndef SHADER_HPP
-#define SHADER_HPP
+#ifndef STATE_FILTERING_MODELS_OBSERVERS_SHADER_HPP
+#define STATE_FILTERING_MODELS_OBSERVERS_SHADER_HPP
 
 #include <vector>
 #include <string>

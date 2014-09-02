@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef TRACKING_DATASET_HPP_
-#define TRACKING_DATASET_HPP_
+#ifndef STATE_FILTERING_UTILS_TRACKING_DATASET_HPP_
+#define STATE_FILTERING_UTILS_TRACKING_DATASET_HPP_
 
 #include <Eigen/Dense>
 

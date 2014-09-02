@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef LOG_ERF_HPP_
-#define LOG_ERF_HPP_
+#ifndef STATE_FILTERING_UTILS_LOG_ERF_HPP_
+#define STATE_FILTERING_UTILS_LOG_ERF_HPP_
 
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/math/special_functions/gamma.hpp>
