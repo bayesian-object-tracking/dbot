@@ -55,8 +55,8 @@
 namespace sf
 {
 
-template class StandardNormalDistribution<Eigen::Matrix<double, X, 1> >;
-template class StandardNormalDistribution<Eigen::Matrix<double, 1, 1> >;
-template class StandardNormalDistribution<Eigen::Matrix<double, 3, 1> >;
+template class StandardNormalDistribution<X, double>;
+template class StandardNormalDistribution<1, double>;
+template class StandardNormalDistribution<3, double>;
 
 }

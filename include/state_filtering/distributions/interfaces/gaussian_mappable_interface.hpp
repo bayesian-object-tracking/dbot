@@ -61,13 +61,13 @@
 namespace sf
 {
 
-template <typename Vector, int NOISE_DIMENSION>
+template <typename Vector, int NOISE_DIMENSION, typename Scalar = double>
 class GaussianMappableInterface:
         public SamplingInterface<Vector>
 {
 public:
-    typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
     typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
+    typedef StandardNormalDistribution<NOISE_DIMENSION, Scalar> StandardNormal;
 
 public:
     explicit GaussianMappableInterface(const unsigned& noise_dimension = NOISE_DIMENSION):
@@ -90,7 +90,7 @@ public:
     virtual Vector MapGaussian(const Noise& sample) const = 0;
 
 private:
-    StandardNormalDistribution<Noise> standard_normal_distribution_;
+    StandardNormal standard_normal_distribution_;
 };
 
 }

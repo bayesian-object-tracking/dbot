@@ -117,9 +117,9 @@ extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
 extern template class sf::SumOfDeltas<FloatingBodySystem<sf::X> >;
 extern template class sf::SumOfDeltas<Eigen::Matrix<double, sf::X, 1> >;
 
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, sf::X, 1> >;
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, 1, 1> >;
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, 3, 1> >;
+extern template class sf::StandardNormalDistribution<sf::X, double>;
+extern template class sf::StandardNormalDistribution<1, double>;
+extern template class sf::StandardNormalDistribution<3, double>;
 
 extern template class RigidBodySystem<sf::X>;
 extern template class FloatingBodySystem<sf::X>;

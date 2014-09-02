@@ -56,12 +56,9 @@
 namespace sf
 {
 
-template <typename Vector>
+template <typename Vector, typename Scalar = double>
 class UnnormalizedEvaulationInterface
 {
-public:
-    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
-
 public:
     virtual ~UnnormalizedEvaulationInterface() {}
 
