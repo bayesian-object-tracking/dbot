@@ -30,27 +30,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define PROFILING_ON
 
-#include <state_filtering/state_filtering.hpp>
-
 #include <boost/thread/mutex.hpp>
+
+#include <Eigen/Dense>
+
+#include <vector>
+#include <string>
 
 // ros stuff
 #include <ros/ros.h>
-#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Image.h>
 
-#include <state_filtering/utils/image_visualizer.hpp>
-
-// observation model
-#include <state_filtering/models/observers/kinect_observer.hpp>
-
-// tools
-#include <state_filtering/utils/object_file_reader.hpp>
-#include <state_filtering/utils/helper_functions.hpp>
-#include <state_filtering/utils/pcl_interface.hpp>
-#include <state_filtering/utils/ros_interface.hpp>
-#include <state_filtering/utils/macros.hpp>
-#include <state_filtering/utils/traits.hpp>
-
+#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
+#include <state_filtering/models/observers/image_observer_cpu.hpp>
+#ifdef BUILD_GPU
+#include <state_filtering/models/observers/image_observer_gpu/image_observer_gpu.hpp>
+#endif
 
 class MultiObjectTracker
 {

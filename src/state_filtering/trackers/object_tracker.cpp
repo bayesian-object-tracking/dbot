@@ -30,12 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/trackers/object_tracker.hpp>
 
 #include <ros/package.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <visualization_msgs/Marker.h>
 
-#include <pcl-1.6/pcl/ros/conversions.h>
-#include <pcl-1.6/pcl/point_cloud.h>
-#include <pcl-1.6/pcl/point_types.h>
+#include <state_filtering/utils/ros_interface.hpp>
+#include <state_filtering/utils/object_file_reader.hpp>
 
 MultiObjectTracker::MultiObjectTracker():
         node_handle_("~"),
@@ -47,7 +44,7 @@ MultiObjectTracker::MultiObjectTracker():
 }
 
 void MultiObjectTracker::Initialize(
-        std::vector<VectorXd> initial_states,
+        std::vector<Eigen::VectorXd> initial_states,
         const sensor_msgs::Image& ros_image,
         Eigen::Matrix3d camera_matrix,
         bool state_is_partial)
@@ -220,7 +217,7 @@ void MultiObjectTracker::Initialize(
     filter_->SamplingBlocks(sampling_blocks);
 }
 
-VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
+Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
 {
     boost::mutex::scoped_lock lock(mutex_);
 
