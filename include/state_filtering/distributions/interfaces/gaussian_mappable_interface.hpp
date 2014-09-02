@@ -56,41 +56,39 @@
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/interfaces/sampling_interface.hpp>
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
+#include <state_filtering/distributions/standard_gaussian.hpp>
 
 namespace sf
 {
 
-template <typename Vector, int NOISE_DIMENSION, typename Scalar = double>
+template <typename Vector, typename Noise>
 class GaussianMappableInterface:
         public SamplingInterface<Vector>
 {
 public:
-    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
-    typedef StandardNormalDistribution<NOISE_DIMENSION, Scalar> StandardNormal;
-
-public:
-    explicit GaussianMappableInterface(const unsigned& noise_dimension = NOISE_DIMENSION):
-        standard_normal_distribution_(noise_dimension)
+    explicit GaussianMappableInterface(const unsigned& noise_dimension = Noise::SizeAtCompileTime):
+        standard_gaussian_(noise_dimension)
     {
+        // make sure that noise is derived from eigen
+        SF_REQUIRE_INTERFACE(Noise, Eigen::Matrix<typename Noise::Scalar, Noise::SizeAtCompileTime, 1>);
     }
 
     virtual ~GaussianMappableInterface() { }
 
     virtual int NoiseDimension() const
     {
-        return standard_normal_distribution_.Dimension();
+        return standard_gaussian_.Dimension();
     }
 
     virtual Vector Sample()
     {
-        return MapGaussian(standard_normal_distribution_.Sample());
+        return MapGaussian(standard_gaussian_.Sample());
     }
 
     virtual Vector MapGaussian(const Noise& sample) const = 0;
 
 private:
-    StandardNormal standard_normal_distribution_;
+    StandardGaussian<Noise> standard_gaussian_;
 };
 
 }

@@ -25,7 +25,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
 #ifndef STATE_FILTERING_OCCLUSION_PROCESS_MODEL_HPP_
 #define STATE_FILTERING_OCCLUSION_PROCESS_MODEL_HPP_
 
@@ -108,17 +107,9 @@ public:
         return MapGaussian()(0);
     }
 
-
     virtual void Condition(const Scalar& delta_time,
                               const State& state,
                               const Input& control)
-    {
-        delta_time_ = delta_time;
-        occlusion_probability_ = state(0);
-    }
-
-    virtual void Condition(const Scalar& delta_time,
-                              const State& state)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = state(0);
@@ -166,7 +157,5 @@ private:
 };
 
 }
-
-
 
 #endif

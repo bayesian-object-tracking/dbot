@@ -65,12 +65,11 @@ public:
     virtual void Condition(const Scalar& delta_time,
                            const State& state,
                            const Input& input) = 0;
-
-    virtual void Condition(const Scalar& delta_time,
-                           const State& state) = 0;
 };
 
 
 }
 
 #endif
+
+

@@ -1,4 +1,3 @@
-
 /*
  * Software License Agreement (BSD License)
  *
@@ -7,7 +6,7 @@
  *    Manuel Wuthrich (manuel.wuthrich@gmail.com)
  *    Jan Issac (jan.issac@gmail.com)
  *
- *
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -42,21 +41,65 @@
  * @date 2014
  * @author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  * @author Jan Issac (jan.issac@gmail.com)
- * Max-Planck-Institute for Intelligent Systems,
- * University of Southern California
+ * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
+
+#ifndef STATE_FILTERING_DISTRIBUTION_STANDARD_GAUSSIAN_HPP
+#define STATE_FILTERING_DISTRIBUTION_STANDARD_GAUSSIAN_HPP
 
 #include <Eigen/Dense>
 
-#include <state_filtering/state_filtering.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
 
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
+#include <state_filtering/utils/macros.hpp>
+#include <state_filtering/utils/traits.hpp>
+#include <state_filtering/distributions/interfaces/sampling_interface.hpp>
 
 namespace sf
 {
 
-template class StandardNormalDistribution<X, double>;
-template class StandardNormalDistribution<1, double>;
-template class StandardNormalDistribution<3, double>;
+template <typename Vector>
+class StandardGaussian: public SamplingInterface<Vector>
+{
+public:
+    StandardGaussian(const int& dimension = Vector::SizeAtCompileTime):
+        dimension_ (dimension == Eigen::Dynamic ? 0 : dimension),
+        generator_(RANDOM_SEED),
+        gaussian_distribution_(0.0, 1.0),
+        gaussian_generator_(generator_, gaussian_distribution_)
+    {
+        // make sure that vector is derived from eigen
+        SF_REQUIRE_INTERFACE(Vector, Eigen::Matrix<typename Vector::Scalar,
+                                                   Vector::SizeAtCompileTime, 1>);
+    }
+
+    virtual ~StandardGaussian() { }
+
+    virtual Vector Sample()
+    {
+        Vector gaussian_sample(Dimension());
+        for (int i = 0; i < Dimension(); i++)
+        {
+            gaussian_sample(i) = gaussian_generator_();
+        }
+
+        return gaussian_sample;
+    }
+
+    virtual int Dimension() const
+    {
+        return dimension_;
+    }
+
+private:
+    int dimension_;
+    boost::mt19937 generator_;
+    boost::normal_distribution<> gaussian_distribution_;
+    boost::variate_generator<boost::mt19937, boost::normal_distribution<> > gaussian_generator_;
+};
 
 }
+
+#endif

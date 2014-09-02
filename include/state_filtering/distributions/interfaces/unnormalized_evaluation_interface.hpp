@@ -56,7 +56,7 @@
 namespace sf
 {
 
-template <typename Vector, typename Scalar = double>
+template <typename Vector, typename Scalar>
 class UnnormalizedEvaulationInterface
 {
 public:

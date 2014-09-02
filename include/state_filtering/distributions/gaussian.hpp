@@ -59,7 +59,7 @@ namespace sf
 {
 
 // Forward declarations
-template <int DIMENSION, typename Scalar> class Gaussian;
+template <typename Vector> class Gaussian;
 
 namespace internal
 {
@@ -67,19 +67,19 @@ namespace internal
  * Gaussian distribution traits specialization
  * \internal
  */
-template <int DIMENSION, typename Scalar>
-struct Traits<Gaussian<DIMENSION, Scalar> >
+template <typename Vector>
+struct Traits<Gaussian<Vector> >
 {
-    enum { Dimension = DIMENSION };
+    typedef typename Vector::Scalar Scalar;
+    typedef Eigen::Matrix<Scalar, Vector::SizeAtCompileTime, 1>  Noise;
 
-    typedef Eigen::Matrix<Scalar, DIMENSION, 1>         Vector;
-    typedef Eigen::Matrix<Scalar, DIMENSION, DIMENSION> Operator;
+    typedef Eigen::Matrix<Scalar, Vector::SizeAtCompileTime,
+                                  Vector::SizeAtCompileTime> Operator;
 
-    typedef MomentsInterface<Vector, Operator>   MomentsInterfaceBase;
-    typedef EvaluationInterface<Vector>          EvaluationInterfaceBase;
-    typedef GaussianMappableInterface<Vector, DIMENSION>  GaussianMappableBase;
+    typedef MomentsInterface<Vector, Operator>          MomentsInterfaceBase;
+    typedef EvaluationInterface<Vector, Scalar>         EvaluationInterfaceBase;
+    typedef GaussianMappableInterface<Vector, Noise>    GaussianMappableBase;
 
-    typedef typename GaussianMappableBase::Noise Noise;
 };
 }
 
@@ -88,23 +88,27 @@ struct Traits<Gaussian<DIMENSION, Scalar> >
  * \class Gaussian
  * \ingroup distributions
  */
-template <int DIMENSION, typename Scalar>
+template <typename Vector>
 class Gaussian:
-        public internal::Traits<Gaussian<DIMENSION, Scalar> >::MomentsInterfaceBase,
-        public internal::Traits<Gaussian<DIMENSION, Scalar> >::EvaluationInterfaceBase,
-        public internal::Traits<Gaussian<DIMENSION, Scalar> >::GaussianMappableBase
+        public internal::Traits<Gaussian<Vector> >::MomentsInterfaceBase,
+        public internal::Traits<Gaussian<Vector> >::EvaluationInterfaceBase,
+        public internal::Traits<Gaussian<Vector> >::GaussianMappableBase
 {
 public:
-    typedef internal::Traits<Gaussian<DIMENSION, Scalar> > Traits;
+    typedef internal::Traits<Gaussian<Vector> > Traits;
 
-    typedef typename Traits::Vector     Vector;
+    typedef typename Traits::Scalar     Scalar;
     typedef typename Traits::Operator   Operator;
     typedef typename Traits::Noise      Noise;
 
 public:
-    explicit Gaussian(const unsigned& dimension = DIMENSION):
+    explicit Gaussian(const unsigned& dimension = Vector::SizeAtCompileTime):
         Traits::GaussianMappableBase(dimension)
     {
+        // make sure that vector is derived from eigen
+        SF_REQUIRE_INTERFACE(Vector, Eigen::Matrix<typename Vector::Scalar,
+                                                   Vector::SizeAtCompileTime, 1>);
+
         mean_.resize(Dimension(), 1);
         covariance_.resize(Dimension(), Dimension());
         precision_.resize(Dimension(), Dimension());

@@ -80,15 +80,15 @@ struct Traits<IntegratedDampedWienerProcess<State_> >
     typedef State_                                      State;
     typedef typename VectorTraits<State>::Scalar        Scalar;
     typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> Input;
+    typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> Noise;
 
     typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
-    typedef GaussianMappableInterface<State, DEGREE_OF_FREEDOM>  GaussianMappableBase;
+    typedef GaussianMappableInterface<State, Noise>     GaussianMappableBase;
 
     typedef Eigen::Matrix<Scalar, DEGREE_OF_FREEDOM, 1> WienerProcessState;
     typedef DampedWienerProcess<WienerProcessState>     DampedWienerProcessType;
-    typedef Gaussian<DEGREE_OF_FREEDOM, Scalar>         GaussianType;
+    typedef Gaussian<Noise>                             GaussianType;
 
-    typedef typename GaussianMappableBase::Noise Noise;
     typedef typename GaussianType::Operator      Operator;
 };
 }
@@ -158,11 +158,6 @@ public:
         position_distribution_.Covariance(Covariance(delta_time));
 
         velocity_distribution_.Condition(delta_time, state.bottomRows(InputDimension()), input);
-    }
-    virtual void Condition(const Scalar&  delta_time,
-                           const State&  state)
-    {
-        Condition(delta_time, state, Input::Zero(InputDimension()));
     }
 
     virtual void Parameters(
