@@ -160,9 +160,9 @@ set(state_filtering_sources
     src/${PROJECT_NAME}/utils/pcl_interface.cpp
     src/${PROJECT_NAME}/utils/ros_interface.cpp
 
-    src/${PROJECT_NAME}/distributions/gaussian.cpp
+    src/${PROJECT_NAME}/distributions/gaussian.cpp    
+    src/${PROJECT_NAME}/distributions/standard_gaussian.cpp
     src/${PROJECT_NAME}/distributions/sum_of_deltas.cpp
-    src/${PROJECT_NAME}/distributions/standard_normal_distribution.cpp
 
     src/${PROJECT_NAME}/models/processes/damped_wiener_process.cpp
     src/${PROJECT_NAME}/models/processes/integrated_damped_wiener_process.cpp

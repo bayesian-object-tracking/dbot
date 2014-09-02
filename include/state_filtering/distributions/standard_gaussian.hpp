@@ -44,8 +44,8 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef STATE_FILTERING_DISTRIBUTION_STANDARD_NORMAL_DISTRIBUTION_HPP
-#define STATE_FILTERING_DISTRIBUTION_STANDARD_NORMAL_DISTRIBUTION_HPP
+#ifndef STATE_FILTERING_DISTRIBUTION_STANDARD_GAUSSIAN_HPP
+#define STATE_FILTERING_DISTRIBUTION_STANDARD_GAUSSIAN_HPP
 
 #include <Eigen/Dense>
 
@@ -61,14 +61,14 @@ namespace sf
 {
 
 template <typename Vector>
-class StandardNormalDistribution:
+class StandardGaussian:
         public SamplingInterface<Vector>
 {
 public:
     typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
 
 public:
-    StandardNormalDistribution(
+    StandardGaussian(
             const int& dimension = internal::VectorTraits<Vector>::Dimension):
         dimension_ (dimension == Eigen::Dynamic ? 0 : dimension),
         generator_(RANDOM_SEED),
@@ -77,7 +77,7 @@ public:
     {
     }
 
-    virtual ~StandardNormalDistribution() { }
+    virtual ~StandardGaussian() { }
 
     virtual Vector Sample()
     {

@@ -107,7 +107,6 @@ public:
         return MapGaussian()(0);
     }
 
-
     virtual void Condition(const Scalar& delta_time,
                               const State& state,
                               const Input& control)

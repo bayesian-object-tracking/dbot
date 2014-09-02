@@ -50,13 +50,13 @@
 
 #include <state_filtering/state_filtering.hpp>
 
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
+#include <state_filtering/distributions/standard_gaussian.hpp>
 
 namespace sf
 {
 
-template class StandardNormalDistribution<Eigen::Matrix<double, X, 1> >;
-template class StandardNormalDistribution<Eigen::Matrix<double, 1, 1> >;
-template class StandardNormalDistribution<Eigen::Matrix<double, 3, 1> >;
+template class StandardGaussian<Eigen::Matrix<double, X, 1> >;
+template class StandardGaussian<Eigen::Matrix<double, 1, 1> >;
+template class StandardGaussian<Eigen::Matrix<double, 3, 1> >;
 
 }

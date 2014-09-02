@@ -55,7 +55,7 @@
 
 #include <state_filtering/distributions/gaussian.hpp>
 #include <state_filtering/distributions/sum_of_deltas.hpp>
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
+#include <state_filtering/distributions/standard_gaussian.hpp>
 
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
@@ -117,9 +117,9 @@ extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
 extern template class sf::SumOfDeltas<FloatingBodySystem<sf::X> >;
 extern template class sf::SumOfDeltas<Eigen::Matrix<double, sf::X, 1> >;
 
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, sf::X, 1> >;
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, 1, 1> >;
-extern template class sf::StandardNormalDistribution<Eigen::Matrix<double, 3, 1> >;
+extern template class sf::StandardGaussian<Eigen::Matrix<double, sf::X, 1> >;
+extern template class sf::StandardGaussian<Eigen::Matrix<double, 1, 1> >;
+extern template class sf::StandardGaussian<Eigen::Matrix<double, 3, 1> >;
 
 extern template class RigidBodySystem<sf::X>;
 extern template class FloatingBodySystem<sf::X>;

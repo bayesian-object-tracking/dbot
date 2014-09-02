@@ -56,7 +56,7 @@
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/interfaces/sampling_interface.hpp>
-#include <state_filtering/distributions/standard_normal_distribution.hpp>
+#include <state_filtering/distributions/standard_gaussian.hpp>
 
 namespace sf
 {
@@ -71,7 +71,7 @@ public:
 
 public:
     explicit GaussianMappableInterface(const unsigned& noise_dimension = NOISE_DIMENSION):
-        standard_normal_distribution_(noise_dimension)
+        standard_gaussian_(noise_dimension)
     {
     }
 
@@ -79,18 +79,18 @@ public:
 
     virtual int NoiseDimension() const
     {
-        return standard_normal_distribution_.Dimension();
+        return standard_gaussian_.Dimension();
     }
 
     virtual Vector Sample()
     {
-        return MapGaussian(standard_normal_distribution_.Sample());
+        return MapGaussian(standard_gaussian_.Sample());
     }
 
     virtual Vector MapGaussian(const Noise& sample) const = 0;
 
 private:
-    StandardNormalDistribution<Noise> standard_normal_distribution_;
+    StandardGaussian<Noise> standard_gaussian_;
 };
 
 }
