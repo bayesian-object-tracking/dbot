@@ -88,5 +88,6 @@ private:
     int downsampling_factor_;
 };
 
+
 #endif
 

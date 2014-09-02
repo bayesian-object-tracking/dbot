@@ -49,23 +49,14 @@
 
 #include <state_filtering/utils/pcl_interface.hpp>
 
-// TODO REMOVE REDUNDANT
 #include <pcl/point_types.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/project_inliers.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_polygonal_prism_data.h>
-#include <pcl/surface/convex_hull.h>
 #include <pcl/PointIndices.h>
-
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/surface/convex_hull.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/project_inliers.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/features/normal_3d.h>
@@ -73,6 +64,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/segment_differences.h>
+#include <pcl/segmentation/extract_polygonal_prism_data.h>
 
 #include <boost/assert.hpp>
 

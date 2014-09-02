@@ -5,10 +5,6 @@ set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 -std=c++0x ) #print profiling output
 
-# comment the folloing two lines if ccache is not available
-set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-
 find_package(catkin REQUIRED
     roscpp
     roslib
@@ -23,11 +19,24 @@ find_package(catkin REQUIRED
     image_transport
 )
 
+set(PROJECT_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${PROJECT_MODULE_PATH})
 
 find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.3 REQUIRED)
+
+set(ccache_DIR ${PROJECT_MODULE_PATH})
+find_package(ccache REQUIRED)
+
+if(CCACHE_FOUND)
+    message(" ccache found. GCC will be launched via ccache.")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+else(CCACHE_FOUND)
+    message(" ccache not found. ")
+endif(CCACHE_FOUND)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
@@ -37,8 +46,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 #########
 ## GPU ##
 #########
-set(GLEW_DIR ${PROJECT_SOURCE_DIR})
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+set(GLEW_DIR ${PROJECT_MODULE_PATH})
 
 find_package(CUDA)
 find_package(GLEW)
