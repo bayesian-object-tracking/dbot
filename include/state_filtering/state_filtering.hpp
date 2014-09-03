@@ -59,21 +59,21 @@
 
 #include <state_filtering/states/rigid_body_system.hpp>
 #include <state_filtering/states/floating_body_system.hpp>
-#include <state_filtering/states/robot_state.hpp>
 
 #include <state_filtering/models/processes/damped_wiener_process.hpp>
 #include <state_filtering/models/processes/integrated_damped_wiener_process.hpp>
 #include <state_filtering/models/processes/brownian_object_motion.hpp>
 
-#include <state_filtering/models/observers/image_observer_cpu.hpp>
-#ifdef BUILD_GPU
-#include <state_filtering/models/observers/image_observer_gpu/image_observer_gpu.hpp>
-#endif
-
 #include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
-#include <state_filtering/utils/pcl_interface.hpp>
-#include <state_filtering/utils/ros_interface.hpp>
+#include <tracking/states/robot_state.hpp>
+#include <tracking/models/observers/image_observer_cpu.hpp>
+#ifdef BUILD_GPU
+#include <tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
+#endif
+
+#include <tracking/utils/pcl_interface.hpp>
+#include <tracking/utils/ros_interface.hpp>
 
 namespace sf { enum { X = Eigen::Dynamic }; }
 

@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <state_filtering/models/observers/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
 //#include <state_filtering/models/processes/occlusion_process.hpp>
 
-#include <state_filtering/utils/rigid_body_renderer.hpp>
+//#include <state_filtering/utils/rigid_body_renderer.hpp>
 #include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <state_filtering/distributions/gaussian.hpp>
 #include <state_filtering/distributions/sum_of_deltas.hpp>
