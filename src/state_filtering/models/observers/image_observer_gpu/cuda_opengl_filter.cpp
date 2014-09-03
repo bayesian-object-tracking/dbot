@@ -128,107 +128,107 @@ void CudaOpenglFilter::Evaluate(
         vector<float> cuda_times;
         vector<double> cpu_times;
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cuda_->set_observations(observations.data());
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
 
         opengl_->Render(states);
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
 //         map the resources in CUDA
         cudaGraphicsMapResources(1, &combined_texture_resource_, 0);
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cudaGraphicsSubResourceGetMappedArray(&texture_array_, combined_texture_resource_, 0, 0);
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cuda_->set_texture_array(texture_array_);
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cuda_->MapTexture();
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cuda_->Compare(observation_time, false, log_likelihoods);
         log_likelihoods_ = log_likelihoods;
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
@@ -282,7 +282,7 @@ void CudaOpenglFilter::Evaluate(
 vector<int> CudaOpenglFilter::Resample()
 {
     vector<int> resampling_indices;
-    hf::DiscreteSampler sampler(log_likelihoods_);
+    sf::hf::DiscreteSampler sampler(log_likelihoods_);
 
     for (int i = 0; i < n_poses_; i++) {
         resampling_indices.push_back(sampler.Sample());

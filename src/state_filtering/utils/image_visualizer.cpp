@@ -177,7 +177,7 @@ void ImageVisualizer::add_points(
         for(size_t col = 0; col < points.cols(); col++)
         {
             Vector3d point = R * points(row, col) + t;
-            Vector2i index = hf::CartCoord2ImageIndex(point, camera_matrix);
+            Vector2i index = sf::hf::CartCoord2ImageIndex(point, camera_matrix);
 
             if(!(index(0) > 479 || index(1) > 639 || index(0) < 0 || index(1) < 0))
             {

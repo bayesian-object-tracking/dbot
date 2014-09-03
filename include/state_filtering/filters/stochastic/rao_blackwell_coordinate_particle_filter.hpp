@@ -159,7 +159,7 @@ public:
         std::vector<State> next_samples(sample_count);
         std::vector<Scalar> loglikes(sample_count);
 
-        hf::DiscreteSampler sampler(log_weights_);
+        sf::hf::DiscreteSampler sampler(log_weights_);
 
         for(size_t i = 0; i < sample_count; i++)
         {
@@ -189,13 +189,13 @@ private:
             log_weights_[i] += log_weight_diffs[i];
 
         std::vector<Scalar> weights = log_weights_;
-        hf::Sort(weights, 1);
+        sf::hf::Sort(weights, 1);
 
         for(int i = weights.size() - 1; i >= 0; i--)
             weights[i] -= weights[0];
 
-        weights = hf::Apply<Scalar, Scalar>(weights, std::exp);
-        weights = hf::SetSum(weights, Scalar(1));
+        weights = sf::hf::Apply<Scalar, Scalar>(weights, std::exp);
+        weights = sf::hf::SetSum(weights, Scalar(1));
 
         // compute KL divergence to uniform distribution KL(p|u)
         Scalar kl_divergence = std::log(Scalar(weights.size()));

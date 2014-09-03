@@ -73,19 +73,19 @@ public:
         SF_REQUIRE_INTERFACE(Noise, Eigen::Matrix<typename Noise::Scalar, Noise::SizeAtCompileTime, 1>);
     }
 
-    virtual ~GaussianMappableInterface() { }
+    virtual ~GaussianMappableInterface() { }   
 
-    virtual int NoiseDimension() const
-    {
-        return standard_gaussian_.Dimension();
-    }
+    virtual Vector MapGaussian(const Noise& sample) const = 0;
 
     virtual Vector Sample()
     {
         return MapGaussian(standard_gaussian_.Sample());
     }
 
-    virtual Vector MapGaussian(const Noise& sample) const = 0;
+    virtual int NoiseDimension() const
+    {
+        return standard_gaussian_.Dimension();
+    }
 
 private:
     StandardGaussian<Noise> standard_gaussian_;

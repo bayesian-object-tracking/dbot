@@ -77,7 +77,7 @@ void MultiObjectTracker::Initialize(
 
 
     std::cout << "sampling blocks: " << std::endl;
-    hf::PrintVector(sampling_blocks);
+    sf::hf::PrintVector(sampling_blocks);
 
     // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
     // load object mesh
@@ -96,7 +96,7 @@ void MultiObjectTracker::Initialize(
     }
 
     boost::shared_ptr<State> rigid_body_system(new sf::FloatingBodySystem<>(object_names_.size()));
-    boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
+    boost::shared_ptr<sf::RigidBodyRenderer> object_renderer(new sf::RigidBodyRenderer(
                                                                       object_vertices,
                                                                       object_triangle_indices,
                                                                       rigid_body_system));

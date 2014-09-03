@@ -43,6 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/utils/macros.hpp>
 
 
+namespace sf
+{
+
 namespace hf
 {
 
@@ -954,7 +957,7 @@ public:
 		fibo_.seed(RANDOM_SEED);
 
 		// compute the likelihoods and normalize them ------------------------------------------------------------------------------
-		sorted_indices_ = hf::SortDescend(log_likelihoods);
+        sorted_indices_ = sf::hf::SortDescend(log_likelihoods);
 		double max = log_likelihoods[sorted_indices_[0]];
 		for(int i = 0; i < int(log_likelihoods.size()); i++)
 			log_likelihoods[i] -= max;
@@ -1165,8 +1168,7 @@ Affine2Vector(const Eigen::Transform<T,3,Eigen::Affine> &A, std::vector<T> &v)
 	Hom2Vector(H, v);
 }
 
-
-
+}
 
 }
 
