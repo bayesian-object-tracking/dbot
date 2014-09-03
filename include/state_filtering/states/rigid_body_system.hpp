@@ -31,6 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <vector>
 
+namespace sf
+{
+
 template<int SIZE_STATE_ = -1>
 class RigidBodySystem: public Eigen::Matrix<double, SIZE_STATE_, 1>
 {
@@ -55,29 +58,33 @@ public:
     {
         *this = state_vector;
     }
+
     virtual ~RigidBodySystem() {}
 
-  template <typename T> 
-  void operator = (const Eigen::MatrixBase<T>& state_vector)
-  {
-    count_state_ = state_vector.rows();
-    *((State*)(this)) = state_vector;
-  }
+    template <typename T>
+    void operator = (const Eigen::MatrixBase<T>& state_vector)
+    {
+        count_state_ = state_vector.rows();
+        *((State*)(this)) = state_vector;
+    }
   
-  // read
-  virtual Vector       position            (const size_t& object_index = 0) const = 0;
-  virtual Vector       euler_vector        (const size_t& object_index = 0) const = 0;
-  virtual void  update        () const = 0;
+    // read
+    virtual Vector position(const size_t& object_index = 0) const = 0;
+    virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
+    virtual void update() const = 0;
 
     // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const
     {
         Scalar angle = euler_vector(object_index).norm();
         Vector axis = euler_vector(object_index).normalized();
+
         if(std::isfinite(axis.norm())) 
-	  return Quaternion(AngleAxis(angle, axis));
-	else
-            return Quaternion::Identity();
+        {
+            return Quaternion(AngleAxis(angle, axis));
+        }
+
+        return Quaternion::Identity();
     }
     virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
     {
@@ -97,6 +104,7 @@ public:
     {
         return count_state_;
     }
+
     virtual unsigned bodies_size() const = 0;
 
 private:
@@ -104,5 +112,6 @@ private:
     unsigned count_state_;
 };
 
+}
 
 #endif
