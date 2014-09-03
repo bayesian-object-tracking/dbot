@@ -28,43 +28,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef STATE_FILTERING_FILTERS_STOCHASTIC_RAO_BLACKWELL_COORDINATE_PARTICLE_FILTER_HPP
 #define STATE_FILTERING_FILTERS_STOCHASTIC_RAO_BLACKWELL_COORDINATE_PARTICLE_FILTER_HPP
 
-
-// TODO: NOT ALL THESE INCLUDES ARE NECESSARY
-
 #include <vector>
 #include <limits>
+#include <string>
+
 #include <boost/shared_ptr.hpp>
+
 #include <Eigen/Core>
-
-#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
-//#include <state_filtering/models/observers/cpu_image_observation_modegaussian_pixel_observation_modelel.hpp>
-//#include <state_filtering/models/processes/occlusion_process.hpp>
-
-//#include <state_filtering/utils/rigid_body_renderer.hpp>
-#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
-#include <state_filtering/distributions/gaussian.hpp>
-#include <state_filtering/distributions/sum_of_deltas.hpp>
-
-#include <state_filtering/states/floating_body_system.hpp>
-
-#include <state_filtering/models/processes/brownian_object_motion.hpp>
-
-#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
 #include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/utils/helper_functions.hpp>
-
+#include <state_filtering/distributions/gaussian.hpp>
+#include <state_filtering/distributions/sum_of_deltas.hpp>
 #include <state_filtering/distributions/interfaces/gaussian_mappable_interface.hpp>
+#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
+#include <state_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 
-//#include "image_visualizer.hpp"
-#include <omp.h>
-#include <string>
-
-#include <boost/lexical_cast.hpp>
-
-
-/// this namespace contains all the filters
 namespace sf
 {
 
@@ -106,6 +86,7 @@ public:
 
         SamplingBlocks(sampling_blocks);
     }
+
     virtual ~RaoBlackwellCoordinateParticleFilter() {}
 
 public:
