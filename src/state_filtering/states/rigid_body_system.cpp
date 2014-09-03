@@ -49,4 +49,4 @@
 
 #include <state_filtering/states/rigid_body_system.hpp>
 
-template class RigidBodySystem<sf::X>;
+template class sf::RigidBodySystem<sf::X>;

@@ -122,7 +122,7 @@ extern template class sf::StandardGaussian<Eigen::Matrix<double, sf::X, 1> >;
 extern template class sf::StandardGaussian<Eigen::Matrix<double, 1, 1> >;
 extern template class sf::StandardGaussian<Eigen::Matrix<double, 3, 1> >;
 
-extern template class RigidBodySystem<sf::X>;
+extern template class sf::RigidBodySystem<sf::X>;
 extern template class sf::FloatingBodySystem<sf::X>;
 extern template class RobotState<sf::X, sf::X>;
 
