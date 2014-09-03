@@ -354,7 +354,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
     glGenQueries(n_poses_, &combined_fast_send_model_matrix_queries_[0]);
     glGenQueries(n_poses_, &combined_fast_render_queries_[0]);
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
-    start_time_ = hf::get_wall_time();    
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][ATTACH_TEXTURE]++;
 #endif
 
@@ -367,11 +367,11 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[ATTACH_TEXTURE] = stop_time_ - start_time_;
 
     glBeginQuery(GL_TIME_ELAPSED, time_query_[CLEAR_SCREEN]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][CLEAR_SCREEN]++;
 #endif
 
@@ -380,11 +380,11 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[CLEAR_SCREEN] = stop_time_ - start_time_;
 
     glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MATRICES]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][SEND_MATRICES]++;
 #endif
 
@@ -395,7 +395,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[SEND_MATRICES] = stop_time_ - start_time_;
 #endif
 
@@ -406,7 +406,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
     #ifdef PROFILING_ACTIVE
         glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[i * n_poses_x_ + j]);
 //        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-        start_time_ = hf::get_wall_time();
+        start_time_ = sf::hf::get_wall_time();
         calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
     #endif
 
@@ -415,7 +415,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
     #ifdef PROFILING_ACTIVE
 
         glEndQuery(GL_TIME_ELAPSED);
-        stop_time_ = hf::get_wall_time();
+        stop_time_ = sf::hf::get_wall_time();
         cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
     #endif
 
@@ -425,7 +425,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
         #ifdef PROFILING_ACTIVE
             glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[i * n_poses_x_ + j]);
 //            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-            start_time_ = hf::get_wall_time();
+            start_time_ = sf::hf::get_wall_time();
             calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
         #endif
 
@@ -434,11 +434,11 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 
         #ifdef PROFILING_ACTIVE
             glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = hf::get_wall_time();
+            stop_time_ = sf::hf::get_wall_time();
             cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
             glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[i * n_poses_x_ + j]);
 //            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-            start_time_ = hf::get_wall_time();
+            start_time_ = sf::hf::get_wall_time();
             calls_aggregate_[COMBINED_FAST][RENDER]++;
         #endif
 
@@ -447,7 +447,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
         #ifdef PROFILING_ACTIVE
 
             glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = hf::get_wall_time();
+            stop_time_ = sf::hf::get_wall_time();
             cpu_times_[RENDER] = stop_time_ - start_time_;
         #endif
             }
@@ -459,7 +459,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
 //        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
 #endif
 
@@ -468,7 +468,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
 #endif
 
@@ -477,7 +477,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
 //            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
 #endif
             model_view_matrix = view_matrix_ * GetModelMatrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
@@ -486,11 +486,11 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
     glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
 //            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][RENDER]++;
 #endif
 
@@ -499,7 +499,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 #ifdef PROFILING_ACTIVE
 
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[RENDER] = stop_time_ - start_time_;
 #endif
 
@@ -510,7 +510,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[DETACH_TEXTURE]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][DETACH_TEXTURE]++;
 #endif
 
@@ -522,10 +522,10 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 
 #ifdef PROFILING_ACTIVE
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[DETACH_TEXTURE] = stop_time_ - start_time_;
     glBeginQuery(GL_TIME_ELAPSED, time_query_[GL_FINISH]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][GL_FINISH]++;
 #endif
 
@@ -535,7 +535,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 
 #ifdef PROFILING_ACTIVE
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[GL_FINISH] = stop_time_ - start_time_;
     poses_rendered_[COMBINED_FAST] += n_poses_ * object_numbers_.size();
     map<int, int> factors;
@@ -560,7 +560,7 @@ void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
 
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[FILL_PBO]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[calling_function][FILL_PBO]++;
 #endif
 
@@ -574,10 +574,10 @@ void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
 
 #ifdef PROFILING_ACTIVE
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[FILL_PBO] = stop_time_ - start_time_;
     glBeginQuery(GL_TIME_ELAPSED, time_query_[GET_DEPTH_VALUES]);
-    start_time_ = hf::get_wall_time();
+    start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[calling_function][GET_DEPTH_VALUES]++;
 #endif
 
@@ -641,7 +641,7 @@ void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
 
 #ifdef PROFILING_ACTIVE
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = hf::get_wall_time();
+    stop_time_ = sf::hf::get_wall_time();
     cpu_times_[GET_DEPTH_VALUES] = stop_time_ - start_time_;
 #endif
 }

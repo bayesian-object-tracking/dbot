@@ -36,34 +36,34 @@ void CudaOpenglMultipleFilter::EvaluateMultiple(const vector<vector<vector<float
         vector<float> cuda_times;
         vector<double> cpu_times;
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
         cuda_->set_prev_sample_indices(prev_sample_indices.data());
 
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
         opengl_->Render(states);
 
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
 
 //        std::vector<std::vector<int> > intersect_indices;
@@ -86,14 +86,14 @@ void CudaOpenglMultipleFilter::EvaluateMultiple(const vector<vector<vector<float
 
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
         cudaEventElapsedTime(&milliseconds, start_event, stop_event);
         cuda_times.push_back(milliseconds);
         cudaEventRecord(start_event);
-        start = hf::get_wall_time();
+        start = sf::hf::get_wall_time();
 #endif
         cuda_->Compare(observation_time, false, log_likelihoods);
 //        cuda_->CompareMultiple(observation_time, false, update, log_likelihoods);
@@ -102,7 +102,7 @@ void CudaOpenglMultipleFilter::EvaluateMultiple(const vector<vector<vector<float
 
 
 #ifdef PROFILING_ACTIVE
-        stop = hf::get_wall_time();
+        stop = sf::hf::get_wall_time();
         cpu_times.push_back(stop - start);
         cudaEventRecord(stop_event);
         cudaEventSynchronize(stop_event);
