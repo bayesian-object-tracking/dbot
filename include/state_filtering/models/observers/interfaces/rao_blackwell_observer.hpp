@@ -46,23 +46,9 @@ public:
     virtual ~RaoBlackwellObserver() {}
 
     // since we can not implicitly cast a vector globally we do it here locally
-    virtual std::vector<Scalar> Loglikes(const std::vector<State>&  states,
+    virtual std::vector<Scalar> Loglikes(const std::vector<State>& states,
                                          std::vector<size_t>& indices,
-                                         const bool& update = false)
-    {
-        std::vector<const State*>  state_pointers(states.size());
-        for(size_t i = 0; i < states.size(); i++)
-        {
-            state_pointers[i] = &(states[i]);
-        }
-
-        return Loglikes_(state_pointers, indices, update);
-    }
-
-    /* TODO fix this overloading hack */
-    virtual std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
-                                          std::vector<size_t>& indices,
-                                          const bool& update = false) = 0;
+                                         const bool& update = false) = 0;
 
     virtual void SetObservation(const Observation& image, const Scalar& delta_time) = 0;
 
