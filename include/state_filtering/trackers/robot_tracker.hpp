@@ -107,7 +107,7 @@ private:
   int dimension_;
 
   // For debugging
-  boost::shared_ptr<obj_mod::RigidBodyRenderer> robot_renderer_;
+  boost::shared_ptr<sf::RigidBodyRenderer> robot_renderer_;
 };
 
 #endif

@@ -96,7 +96,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
     std::vector<std::string> joints = urdf_kinematics->GetJointMap();
-    hf::PrintVector(joints);
+    sf::hf::PrintVector(joints);
 
 
     // get the name of the root frame
@@ -117,7 +117,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 
     // the rigid_body_system is essentially the state vector with some convenience functions for retrieving
     // the poses of the rigid objects
-    boost::shared_ptr<RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(),
+    boost::shared_ptr<sf::RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(),
                                                                        urdf_kinematics->num_joints(),
                                                                        urdf_kinematics));
     dimension_ = robot_state->state_size();
@@ -127,8 +127,8 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                               urdf_kinematics->num_joints(),
                                               urdf_kinematics));
 
-    robot_renderer_ = boost::shared_ptr<obj_mod::RigidBodyRenderer>(
-                new obj_mod::RigidBodyRenderer(part_vertices,
+    robot_renderer_ = boost::shared_ptr<sf::RigidBodyRenderer>(
+                new sf::RigidBodyRenderer(part_vertices,
                                                part_triangle_indices,
                                                robot_state));
 

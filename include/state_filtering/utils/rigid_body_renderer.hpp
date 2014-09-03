@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef STATE_FILTERING_UTILS_TRIANGLE_OBJEC_tMODEL_HPP_
-#define STATE_FILTERING_UTILS_TRIANGLE_OBJEC_tMODEL_HPP_
+#ifndef STATE_FILTERING_UTILS_RIGID_BODY_RENDERER_HPP_
+#define STATE_FILTERING_UTILS_RIGID_BODY_RENDERER_HPP_
 
 #include <vector>
 #include <Eigen/Dense>
@@ -36,20 +36,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <state_filtering/states/rigid_body_system.hpp>
 
 
-namespace obj_mod
+namespace sf
 {
 
 class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef RigidBodySystem<-1>     State;
-    typedef Eigen::Vector3d         Vector;
-    typedef Eigen::Matrix3d         Matrix;
+    typedef sf::RigidBodySystem<Eigen::Dynamic> State;
+    typedef Eigen::Vector3d Vector;
+    typedef Eigen::Matrix3d Matrix;
 
-    RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&     vertices,
-                      const std::vector<std::vector<std::vector<int> > >&   indices,
-                      const boost::shared_ptr<State >&                      state_ptr);
+    RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
+                      const std::vector<std::vector<std::vector<int> > >& indices,
+                      const boost::shared_ptr<State>& state_ptr);
 
     virtual ~RigidBodyRenderer();
 
@@ -78,8 +78,8 @@ protected:
     std::vector<Vector>             t_;
 
     // cached center of mass
-    std::vector<Vector>     coms_;
-    std::vector<float>      com_weights_;
+    std::vector<Vector> coms_;
+    std::vector<float>  com_weights_;
 };
 
 }

@@ -36,11 +36,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace Eigen;
 
-using namespace obj_mod;
+using namespace sf;
 
-RigidBodyRenderer::RigidBodyRenderer(   const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
-                                        const std::vector<std::vector<std::vector<int> > >& indices,
-                                        const boost::shared_ptr<State>&                     state_ptr)
+RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
+                                     const std::vector<std::vector<std::vector<int> > >& indices,
+                                     const boost::shared_ptr<State>&                     state_ptr)
 :vertices_(vertices), indices_(indices), state_(state_ptr)
 {
     state(*state_ptr);
@@ -88,9 +88,6 @@ RigidBodyRenderer::RigidBodyRenderer(   const std::vector<std::vector<Eigen::Vec
 }
 
 RigidBodyRenderer::~RigidBodyRenderer() {}
-
-
-
 
 // todo: does not handle the case properly when the depth is around zero or negative
 void RigidBodyRenderer::Render( Matrix camera_matrix,
