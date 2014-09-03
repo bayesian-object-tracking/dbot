@@ -36,7 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 
-
+namespace sf
+{
 
 template<int size_bodies>
 struct FloatingBodySystemTypes
@@ -201,6 +202,6 @@ private:
     template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_bodies == -1);}
 };
 
-
+}
 
 #endif
