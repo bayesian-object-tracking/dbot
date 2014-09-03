@@ -42,7 +42,7 @@ struct Traits<ImageObserverGPU<State> >
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
-//  typedef RigidBodySystem<-1>           State;
+//  typedef sf::RigidBodySystem<-1>           State;
 };
 }
 
@@ -169,7 +169,7 @@ public:
         constants_set_ = true;
     }
 
-    std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
+    std::vector<Scalar> Loglikes(const std::vector<State>& states,
                                   std::vector<size_t>& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
@@ -189,7 +189,7 @@ public:
             std::vector<float> cuda_times;
             std::vector<double> cpu_times;
             cudaEventRecord(start_event);
-            start = hf::get_wall_time();
+            start = sf::hf::get_wall_time();
     #endif
 
     //        std:: cout << "setting number of poses to " << n_poses_ << std::endl;
@@ -207,42 +207,42 @@ public:
 
             // convert to internal state format
             std::vector<std::vector<std::vector<float> > > states_internal_format( n_poses_,
-                                                                    std::vector<std::vector<float> >(states[0]->bodies_size(),
+                                                                    std::vector<std::vector<float> >(states[0].bodies_size(),
                                                                     std::vector<float>(7, 0)));
             for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-                for(size_t body_index = 0; body_index < states[state_index]->bodies_size(); body_index++)
+                for(size_t body_index = 0; body_index < states[state_index].bodies_size(); body_index++)
                 {
-                    states_internal_format[state_index][body_index][0] = states[state_index]->quaternion(body_index).w();
-                    states_internal_format[state_index][body_index][1] = states[state_index]->quaternion(body_index).x();
-                    states_internal_format[state_index][body_index][2] = states[state_index]->quaternion(body_index).y();
-                    states_internal_format[state_index][body_index][3] = states[state_index]->quaternion(body_index).z();
-                    states_internal_format[state_index][body_index][4] = states[state_index]->position(body_index)[0];
-                    states_internal_format[state_index][body_index][5] = states[state_index]->position(body_index)[1];
-                    states_internal_format[state_index][body_index][6] = states[state_index]->position(body_index)[2];
+                    states_internal_format[state_index][body_index][0] = states[state_index].quaternion(body_index).w();
+                    states_internal_format[state_index][body_index][1] = states[state_index].quaternion(body_index).x();
+                    states_internal_format[state_index][body_index][2] = states[state_index].quaternion(body_index).y();
+                    states_internal_format[state_index][body_index][3] = states[state_index].quaternion(body_index).z();
+                    states_internal_format[state_index][body_index][4] = states[state_index].position(body_index)[0];
+                    states_internal_format[state_index][body_index][5] = states[state_index].position(body_index)[1];
+                    states_internal_format[state_index][body_index][6] = states[state_index].position(body_index)[2];
                 }
 
     #ifdef PROFILING_ACTIVE
-            stop = hf::get_wall_time();
+            stop = sf::hf::get_wall_time();
             cpu_times.push_back(stop - start);
             cudaEventRecord(stop_event);
             cudaEventSynchronize(stop_event);
             cudaEventElapsedTime(&milliseconds, start_event, stop_event);
             cuda_times.push_back(milliseconds);
             cudaEventRecord(start_event);
-            start = hf::get_wall_time();
+            start = sf::hf::get_wall_time();
     #endif
 
             opengl_->Render(states_internal_format);
 
     #ifdef PROFILING_ACTIVE
-            stop = hf::get_wall_time();
+            stop = sf::hf::get_wall_time();
             cpu_times.push_back(stop - start);
             cudaEventRecord(stop_event);
             cudaEventSynchronize(stop_event);
             cudaEventElapsedTime(&milliseconds, start_event, stop_event);
             cuda_times.push_back(milliseconds);
             cudaEventRecord(start_event);
-            start = hf::get_wall_time();
+            start = sf::hf::get_wall_time();
     #endif
 
 
@@ -253,14 +253,14 @@ public:
 
 
     #ifdef PROFILING_ACTIVE
-            stop = hf::get_wall_time();
+            stop = sf::hf::get_wall_time();
             cpu_times.push_back(stop - start);
             cudaEventRecord(stop_event);
             cudaEventSynchronize(stop_event);
             cudaEventElapsedTime(&milliseconds, start_event, stop_event);
             cuda_times.push_back(milliseconds);
             cudaEventRecord(start_event);
-            start = hf::get_wall_time();
+            start = sf::hf::get_wall_time();
     #endif
 
 
@@ -274,7 +274,7 @@ public:
 
 
     #ifdef PROFILING_ACTIVE
-            stop = hf::get_wall_time();
+            stop = sf::hf::get_wall_time();
             cpu_times.push_back(stop - start);
             cudaEventRecord(stop_event);
             cudaEventSynchronize(stop_event);

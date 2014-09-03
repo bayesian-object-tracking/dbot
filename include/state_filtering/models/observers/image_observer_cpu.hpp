@@ -61,7 +61,7 @@ struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
 
     typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
 
-    typedef boost::shared_ptr<obj_mod::RigidBodyRenderer> ObjectRendererPtr;
+    typedef boost::shared_ptr<sf::RigidBodyRenderer> ObjectRendererPtr;
     typedef boost::shared_ptr<sf::KinectObserver> PixelObservationModelPtr;
     typedef boost::shared_ptr<sf::OcclusionProcess> OcclusionProcessModelPtr;
 };
@@ -113,7 +113,7 @@ public:
 
     ~ImageObserverCPU() { }
 
-    std::vector<Scalar> Loglikes_(const std::vector<const State*>& states,
+    std::vector<Scalar> Loglikes(const std::vector<State>& states,
                                  std::vector<size_t>& indices,
                                  const bool& update = false)
     {
@@ -131,7 +131,7 @@ public:
             std::vector<int> intersect_indices;
             std::vector<float> predictions;
             //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
-            object_model_->state(*states[state_index]);
+            object_model_->state(states[state_index]);
             object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
 
             // we loop through all the pixels which intersect the object model ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
