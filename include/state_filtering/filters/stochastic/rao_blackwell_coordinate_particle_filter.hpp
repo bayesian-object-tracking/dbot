@@ -98,7 +98,11 @@ public:
 
         SF_REQUIRE_INTERFACE(
             ProcessModel,
-            GaussianMappableInterface<State, internal::VectorTraits<State>::Dimension>);
+            GaussianMappableInterface<State, Noise>);
+
+        SF_REQUIRE_INTERFACE(
+            ObservationModel,
+            RaoBlackwellObserver<State, Observation>);
 
         SamplingBlocks(sampling_blocks);
     }
@@ -268,7 +272,7 @@ private:
     Scalar max_kl_divergence_;
 
     // distribution for sampling
-    Gaussian<Scalar, 1> unit_gaussian_;
+    Gaussian<Eigen::Matrix<Scalar,1,1> > unit_gaussian_;
 };
 
 }

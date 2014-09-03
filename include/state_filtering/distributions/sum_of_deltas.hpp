@@ -54,6 +54,7 @@
 #include <vector>
 
 // state_filtering
+#include <state_filtering/utils/macros.hpp>
 #include <state_filtering/utils/traits.hpp>
 #include <state_filtering/distributions/interfaces/moments_interface.hpp>
 
@@ -72,10 +73,9 @@ namespace internal
 template <typename Vector>
 struct Traits<SumOfDeltas<Vector> >
 {
-    enum { Dimension = VectorTraits<Vector>::Dimension };
-
-    typedef typename internal::VectorTraits<Vector>::Scalar Scalar;
-    typedef Eigen::Matrix<Scalar,Dimension, Dimension>      Operator;
+    typedef typename Vector::Scalar                             Scalar;
+    typedef Eigen::Matrix<Scalar,Vector::SizeAtCompileTime,
+                                 Vector::SizeAtCompileTime>     Operator;
 
     typedef std::vector<Vector>                      Deltas;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> Weights;
@@ -101,9 +101,11 @@ public:
     typedef typename Traits::Weights    Weights;
 
 public:
-    explicit SumOfDeltas(const unsigned& dimension = Traits::Dimension)
+    explicit SumOfDeltas(const unsigned& dimension = Vector::SizeAtCompileTime)
     {
-        deltas_ = Deltas(1, Vector::Zero(dimension == Eigen::Dynamic? 0 : dimension));
+        SF_REQUIRE_INTERFACE(Vector, Eigen::Matrix<Scalar, Vector::SizeAtCompileTime, 1>);
+
+        deltas_ = Deltas(1, Vector::Zero(dimension == Eigen::Dynamic ? 0 : dimension));
         weights_ = Weights::Ones(1);
     }
 

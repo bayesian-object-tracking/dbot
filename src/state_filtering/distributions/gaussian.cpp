@@ -52,8 +52,8 @@
 namespace sf
 {
 
-template class Gaussian<double,  X>;
-template class Gaussian<double,  1>;
-template class Gaussian<double,  3>;
+template class Gaussian<Eigen::Matrix<double, X, 1> >;
+template class Gaussian<Eigen::Matrix<double, 1, 1> >;
+template class Gaussian<Eigen::Matrix<double, 3, 1> >;
 
 }

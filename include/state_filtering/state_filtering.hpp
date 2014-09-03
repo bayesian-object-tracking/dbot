@@ -109,13 +109,14 @@ extern template class std::vector<std::vector<std::vector<int> > >;
 extern template class std::vector<std::vector<size_t> >;
 extern template class std::vector<pcl::PointCloud<pcl::PointXYZ> >;
 
-extern template class sf::Gaussian<double, sf::X>;
-extern template class sf::Gaussian<double, 1>;
-extern template class sf::Gaussian<double, 3>;
+extern template class sf::Gaussian<Eigen::Matrix<double, sf::X, 1> >;
+extern template class sf::Gaussian<Eigen::Matrix<double, 1, 1> >;
+extern template class sf::Gaussian<Eigen::Matrix<double, 3, 1> >;
 
 extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
 extern template class sf::SumOfDeltas<sf::FloatingBodySystem<sf::X> >;
 extern template class sf::SumOfDeltas<Eigen::Matrix<double, sf::X, 1> >;
+
 
 extern template class sf::StandardGaussian<Eigen::Matrix<double, sf::X, 1> >;
 extern template class sf::StandardGaussian<Eigen::Matrix<double, 1, 1> >;

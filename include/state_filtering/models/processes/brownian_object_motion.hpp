@@ -58,6 +58,7 @@ namespace sf
 {
 
 // Forward declarations
+//TODO: THIS IS REDUNDANT!!
 template <typename State, int OBJECTS> class BrownianObjectMotion;
 
 namespace internal
@@ -79,15 +80,14 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
     typedef State_                                      State;
     typedef typename VectorTraits<State>::Scalar        Scalar;
     typedef Eigen::Matrix<Scalar, INPUT_DIMENSION, 1>   Input;
+    typedef Input Noise;
 
     typedef Eigen::Quaternion<Scalar>                      Quaternion;
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
     typedef IntegratedDampedWienerProcess<ObjectState>     Process;
 
     typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
-    typedef GaussianMappableInterface<State, DIMENSION>          GaussianMappableBase;
-
-    typedef typename GaussianMappableBase::Noise        Noise;
+    typedef GaussianMappableInterface<State, Noise>          GaussianMappableBase;
 };
 }
 

@@ -61,18 +61,16 @@
 namespace sf
 {
 
-template <typename Vector, int NOISE_DIMENSION>
+template <typename Vector, typename Noise>
 class GaussianMappableInterface:
         public SamplingInterface<Vector>
 {
 public:
-    typedef typename internal::VectorTraits<Vector>::Scalar     Scalar;
-    typedef typename Eigen::Matrix<Scalar, NOISE_DIMENSION, 1>  Noise;
-
-public:
-    explicit GaussianMappableInterface(const unsigned& noise_dimension = NOISE_DIMENSION):
+    explicit GaussianMappableInterface(const unsigned& noise_dimension = Noise::SizeAtCompileTime):
         standard_gaussian_(noise_dimension)
     {
+        // make sure that noise is derived from eigen
+        SF_REQUIRE_INTERFACE(Noise, Eigen::Matrix<typename Noise::Scalar, Noise::SizeAtCompileTime, 1>);
     }
 
     virtual ~GaussianMappableInterface() { }

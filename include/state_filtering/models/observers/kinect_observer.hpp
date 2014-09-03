@@ -51,7 +51,7 @@ struct Traits<KinectObserver>
 {
     typedef double              Scalar;
     typedef double              Vector;
-    typedef EvaluationInterface<Vector>   EvaluationInterfaceBase;
+    typedef EvaluationInterface<Vector, Scalar>   EvaluationInterfaceBase;
 };
 }
 
