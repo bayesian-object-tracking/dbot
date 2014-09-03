@@ -128,13 +128,13 @@ template <typename PointT> void FindCylinder(
 // this function creates some samples around clusters on a plane. it assumes
 // that when the object is standing on the table, the origin coincides with the
 // table plane and z points upwards
-template<typename Scalar> std::vector<FloatingBodySystem<-1>::State>
+template<typename Scalar> std::vector<sf::FloatingBodySystem<-1>::State>
 SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
                     const size_t& n_rows, const size_t& n_cols,
                     const size_t& sample_count);
 
 
-template<typename Scalar> std::vector<FloatingBodySystem<-1>::State>
+template<typename Scalar> std::vector<sf::FloatingBodySystem<-1>::State>
 SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& points,
                     const size_t& sample_count);
 

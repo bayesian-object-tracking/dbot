@@ -95,7 +95,7 @@ void MultiObjectTracker::Initialize(
         object_triangle_indices[i] = *file_reader.get_indices();
     }
 
-    boost::shared_ptr<State> rigid_body_system(new FloatingBodySystem<>(object_names_.size()));
+    boost::shared_ptr<State> rigid_body_system(new sf::FloatingBodySystem<>(object_names_.size()));
     boost::shared_ptr<obj_mod::RigidBodyRenderer> object_renderer(new obj_mod::RigidBodyRenderer(
                                                                       object_vertices,
                                                                       object_triangle_indices,
@@ -179,11 +179,11 @@ void MultiObjectTracker::Initialize(
     if(state_is_partial)
     {
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        FloatingBodySystem<> default_state(object_names_.size());
+        sf::FloatingBodySystem<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Eigen::Vector3d(0, 0, 1.5); // outside of image
 
-        std::vector<FloatingBodySystem<> > multi_body_samples(initial_states.size());
+        std::vector<sf::FloatingBodySystem<> > multi_body_samples(initial_states.size());
         for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             multi_body_samples[state_index] = default_state;
 
@@ -193,7 +193,7 @@ void MultiObjectTracker::Initialize(
             std::cout << "evalution of object " << object_names_[body_index] << std::endl;
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             {
-                FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
+                sf::FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
                 full_initial_state[body_index] = initial_states[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
@@ -206,7 +206,7 @@ void MultiObjectTracker::Initialize(
     }
     else
     {
-        std::vector<FloatingBodySystem<> > multi_body_samples(initial_states.size());
+        std::vector<sf::FloatingBodySystem<> > multi_body_samples(initial_states.size());
         for(size_t i = 0; i < multi_body_samples.size(); i++)
             multi_body_samples[i] = initial_states[i];
 
@@ -235,7 +235,7 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
 
 
     // visualize the mean state
-    FloatingBodySystem<> mean = filter_->StateDistribution().Mean();
+    sf::FloatingBodySystem<> mean = filter_->StateDistribution().Mean();
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";

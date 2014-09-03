@@ -74,14 +74,14 @@ public:
     void Filter(const sensor_msgs::Image& ros_image)
     {
         INIT_PROFILING
-        FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
+        sf::FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
         MEASURE("total time for filtering")
     }
 
     void FilterAndStore(const sensor_msgs::Image& ros_image)
     {
         INIT_PROFILING
-        FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
+        sf::FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
         MEASURE("total time for filtering")
 
         std::ofstream file;
@@ -153,7 +153,7 @@ int main (int argc, char **argv)
         std::cout << "setting initial state " << std::endl;
         std::cout << TrackingDataset.getGroundTruth(0).transpose() << std::endl;
         std::cout << "done printing vector " << std::endl;
-        FloatingBodySystem<-1> initial_state(object_names.size());
+        sf::FloatingBodySystem<-1> initial_state(object_names.size());
         initial_state.poses(TrackingDataset.getGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
         std::vector<Eigen::VectorXd> initial_states(1, initial_state);
 

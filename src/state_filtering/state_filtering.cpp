@@ -55,7 +55,7 @@ template class std::vector<double>;
 template class std::vector<std::string>;
 
 template class std::vector<RobotState<sf::X, sf::X> >;
-template class std::vector<FloatingBodySystem<sf::X> >;
+template class std::vector<sf::FloatingBodySystem<sf::X> >;
 template class std::vector<Eigen::Matrix<double, sf::X, 1> >;
 template class std::vector<Eigen::Matrix4f>;
 template class std::vector<Eigen::Vector3i>;

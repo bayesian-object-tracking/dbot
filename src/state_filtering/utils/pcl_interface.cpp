@@ -607,7 +607,7 @@ template <typename PointT> void FindCylinder(
 // this function creates some samples around clusters on a plane. it assumes
 // that when the object is standing on the table, the origin coincides with the
 // table plane and z points upwards
-template<typename Scalar> std::vector<FloatingBodySystem<-1>::State>
+template<typename Scalar> std::vector<sf::FloatingBodySystem<-1>::State>
 SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
                     const size_t& n_rows, const size_t& n_cols,
                     const size_t& sample_count)
@@ -616,9 +616,9 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
     typedef Eigen::Matrix<Scalar,3,3> Matrix;
     typedef Eigen::Matrix<Scalar,4,1> Plane;
 
-    typedef FloatingBodySystem<-1> BodySystem;
+    typedef sf::FloatingBodySystem<-1> BodySystem;
 
-    vector<BodySystem::State> states;
+    std::vector<BodySystem::State> states;
 
     // find points on table and cluster them
     std::vector<Vector> table_points;
@@ -672,7 +672,7 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
 }
 
 
-template<typename Scalar> std::vector<FloatingBodySystem<-1>::State>
+template<typename Scalar> std::vector<sf::FloatingBodySystem<-1>::State>
 SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& points,
                     const size_t& sample_count)
 {
@@ -687,7 +687,7 @@ SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& poin
 
 }
 
-template std::vector<FloatingBodySystem<-1>::State>
+template std::vector<sf::FloatingBodySystem<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<double,3,1>, -1, -1>&,
                         const size_t&);
 template void pi::Cluster(const pcl::PointCloud<pcl::PointXYZ>&,

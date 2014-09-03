@@ -50,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MultiObjectTracker
 {
 public:   
-    typedef FloatingBodySystem<> State;
+    typedef sf::FloatingBodySystem<> State;
     typedef State::Scalar        Scalar;
 
     typedef sf::BrownianObjectMotion<State>     ProcessModel;

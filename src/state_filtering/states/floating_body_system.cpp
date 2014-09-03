@@ -49,4 +49,4 @@
 
 #include <state_filtering/states/floating_body_system.hpp>
 
-template class FloatingBodySystem<sf::X>;
+template class sf::FloatingBodySystem<sf::X>;

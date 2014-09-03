@@ -96,7 +96,7 @@ extern template class Eigen::Matrix<float, 4, 1>;
 //extern template class Eigen::Matrix<double, sf::X, sf::X>; // why is the operator= not being instantiated?
 
 extern template class std::vector<RobotState<sf::X, sf::X> >;
-extern template class std::vector<FloatingBodySystem<sf::X> >;
+extern template class std::vector<sf::FloatingBodySystem<sf::X> >;
 
 extern template class std::vector<Eigen::Matrix<double, sf::X, 1> >;
 extern template class std::vector<Eigen::Vector3i>;
@@ -114,7 +114,7 @@ extern template class sf::Gaussian<double, 1>;
 extern template class sf::Gaussian<double, 3>;
 
 extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
-extern template class sf::SumOfDeltas<FloatingBodySystem<sf::X> >;
+extern template class sf::SumOfDeltas<sf::FloatingBodySystem<sf::X> >;
 extern template class sf::SumOfDeltas<Eigen::Matrix<double, sf::X, 1> >;
 
 extern template class sf::StandardGaussian<Eigen::Matrix<double, sf::X, 1> >;
@@ -122,7 +122,7 @@ extern template class sf::StandardGaussian<Eigen::Matrix<double, 1, 1> >;
 extern template class sf::StandardGaussian<Eigen::Matrix<double, 3, 1> >;
 
 extern template class RigidBodySystem<sf::X>;
-extern template class FloatingBodySystem<sf::X>;
+extern template class sf::FloatingBodySystem<sf::X>;
 extern template class RobotState<sf::X, sf::X>;
 
 extern template class sf::DampedWienerProcess<RobotState<sf::X, sf::X> >;
@@ -130,18 +130,18 @@ extern template class sf::DampedWienerProcess<Eigen::Matrix<double, 3, 1> >;
 
 extern template class sf::IntegratedDampedWienerProcess<Eigen::Matrix<double, 6, 1> >;
 
-extern template class sf::BrownianObjectMotion<FloatingBodySystem<sf::X>, sf::X>;
+extern template class sf::BrownianObjectMotion<sf::FloatingBodySystem<sf::X>, sf::X>;
 
-extern template class sf::ImageObserverGPU<FloatingBodySystem<sf::X> >;
+extern template class sf::ImageObserverGPU<sf::FloatingBodySystem<sf::X> >;
 
-extern template class sf::ImageObserverCPU<double, FloatingBodySystem<sf::X> >;
+extern template class sf::ImageObserverCPU<double, sf::FloatingBodySystem<sf::X> >;
 extern template class sf::ImageObserverCPU<double, RobotState<sf::X, sf::X> >;
 
 extern template class sf::RaoBlackwellCoordinateParticleFilter<
-        sf::BrownianObjectMotion<FloatingBodySystem<sf::X>,sf::X>,
+        sf::BrownianObjectMotion<sf::FloatingBodySystem<sf::X>,sf::X>,
         sf::RaoBlackwellObserver<
-            FloatingBodySystem<sf::X>,
-            sf::ImageObserverCPU<double, FloatingBodySystem<sf::X>, sf::X>::Observation
+            sf::FloatingBodySystem<sf::X>,
+            sf::ImageObserverCPU<double, sf::FloatingBodySystem<sf::X>, sf::X>::Observation
             > >;
 
 extern template class sf::RaoBlackwellCoordinateParticleFilter<
@@ -149,11 +149,11 @@ extern template class sf::RaoBlackwellCoordinateParticleFilter<
         sf::ImageObserverCPU<double, RobotState<sf::X, sf::X>, sf::X> >;
 
 
-extern template std::vector<FloatingBodySystem<-1>::State>
+extern template std::vector<sf::FloatingBodySystem<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<double,3,1>, -1, -1>&,
                         const size_t&);
 
-extern template std::vector<FloatingBodySystem<-1>::State>
+extern template std::vector<sf::FloatingBodySystem<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<float,3,1>, -1, -1>&,
                         const size_t&);
 
