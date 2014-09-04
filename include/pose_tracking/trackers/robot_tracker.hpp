@@ -50,13 +50,13 @@ public:
     typedef RobotState<>    State;
     typedef State::Scalar   Scalar;
 
-    typedef sf::DampedWienerProcess<State>      ProcessModel;
-    typedef sf::ImageObserverCPU<Scalar, State> ObservationModel;
+    typedef ff::DampedWienerProcess<State>      ProcessModel;
+    typedef ff::ImageObserverCPU<Scalar, State> ObservationModel;
 
     typedef typename ProcessModel::Input            Input;
     typedef typename ObservationModel::Observation  Observation;
 
-    typedef sf::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
+    typedef ff::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 
     RobotTracker();
 
@@ -108,7 +108,7 @@ private:
   int dimension_;
 
   // For debugging
-  boost::shared_ptr<sf::RigidBodyRenderer> robot_renderer_;
+  boost::shared_ptr<ff::RigidBodyRenderer> robot_renderer_;
 };
 
 #endif

@@ -59,7 +59,7 @@ struct RobotStateTypes
       ANGULAR_VELOCITY_INDEX = 9
     };
 
-  typedef sf::RigidBodySystem<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
+  typedef ff::RigidBodySystem<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
 };
 
 

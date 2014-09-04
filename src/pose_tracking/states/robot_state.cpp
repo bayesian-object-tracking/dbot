@@ -49,4 +49,4 @@
 
 #include <pose_tracking/states/robot_state.hpp>
 
-template class RobotState<sf::X, sf::X>;
+template class RobotState<ff::X, ff::X>;

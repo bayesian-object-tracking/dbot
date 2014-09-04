@@ -49,10 +49,10 @@
 
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class DampedWienerProcess<Eigen::Matrix<double, 3, 1> >;
-template class DampedWienerProcess<RobotState<sf::X, sf::X> >;
+template class DampedWienerProcess<RobotState<ff::X, ff::X> >;
 
 }

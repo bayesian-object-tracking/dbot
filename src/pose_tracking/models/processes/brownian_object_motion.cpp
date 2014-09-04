@@ -49,7 +49,7 @@
 
 #include <pose_tracking/models/processes/brownian_object_motion.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class BrownianObjectMotion<FloatingBodySystem<X>, X>;

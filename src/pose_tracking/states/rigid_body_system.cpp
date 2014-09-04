@@ -49,4 +49,4 @@
 
 #include <fast_filtering/states/rigid_body_system.hpp>
 
-template class sf::RigidBodySystem<sf::X>;
+template class ff::RigidBodySystem<ff::X>;

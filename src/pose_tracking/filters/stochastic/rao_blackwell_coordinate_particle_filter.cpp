@@ -49,7 +49,7 @@
 
 #include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class RaoBlackwellCoordinateParticleFilter<

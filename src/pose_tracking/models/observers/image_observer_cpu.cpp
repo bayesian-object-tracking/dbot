@@ -49,7 +49,7 @@
 
 #include <pose_tracking/models/observers/image_observer_cpu.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class ImageObserverCPU<double, FloatingBodySystem<X> >;

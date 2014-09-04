@@ -36,14 +36,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/states/rigid_body_system.hpp>
 
 
-namespace sf
+namespace ff
 {
 
 class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef sf::RigidBodySystem<Eigen::Dynamic> State;
+    typedef ff::RigidBodySystem<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
 

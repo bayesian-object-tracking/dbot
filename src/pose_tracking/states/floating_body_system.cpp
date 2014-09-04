@@ -49,4 +49,4 @@
 
 #include <fast_filtering/states/floating_body_system.hpp>
 
-template class sf::FloatingBodySystem<sf::X>;
+template class ff::FloatingBodySystem<ff::X>;

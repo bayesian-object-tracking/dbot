@@ -49,7 +49,7 @@
 
 #include <fast_filtering/distributions/gaussian.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class Gaussian<Eigen::Matrix<double, X, 1> >;

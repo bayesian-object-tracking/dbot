@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 
 // TODO: THIS NEEDS TO BE CLEANED!!
-namespace sf
+namespace ff
 {
 
 // Forward declarations
@@ -58,7 +58,7 @@ struct Traits<OcclusionProcess>
     typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
     typedef Eigen::Matrix<Scalar, DIMENSION, 1>     Input;
 
-    typedef sf::StationaryProcessInterface<Vector, Input> StationaryProcessInterfaceBase;
+    typedef ff::StationaryProcessInterface<Vector, Input> StationaryProcessInterfaceBase;
 };
 }
 

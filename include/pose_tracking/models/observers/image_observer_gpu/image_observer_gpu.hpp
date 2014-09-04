@@ -19,7 +19,7 @@
 #include <cuda_gl_interop.h>
 
 
-namespace sf
+namespace ff
 {
 
 // Forward declarations

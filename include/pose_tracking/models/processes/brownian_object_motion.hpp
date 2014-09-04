@@ -54,7 +54,7 @@
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
-namespace sf
+namespace ff
 {
 
 // Forward declarations
@@ -166,7 +166,7 @@ public:
         state_ = state;
         for(size_t i = 0; i < state_.bodies_size(); i++)
         {
-            quaternion_map_[i] = sf::hf::QuaternionMatrix(state_.quaternion(i).coeffs());
+            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.quaternion(i).coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center

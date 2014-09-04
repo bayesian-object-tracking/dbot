@@ -52,7 +52,7 @@
 
 #include <fast_filtering/distributions/standard_gaussian.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class StandardGaussian<Eigen::Matrix<double, X, 1> >;

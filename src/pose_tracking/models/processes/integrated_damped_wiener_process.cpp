@@ -49,7 +49,7 @@
 
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class IntegratedDampedWienerProcess<Eigen::Matrix<double, 6, 1> >;

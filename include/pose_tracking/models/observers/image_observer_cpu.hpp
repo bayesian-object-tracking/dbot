@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/models/observers/kinect_observer.hpp>
 #include <pose_tracking/models/processes/occlusion_process.hpp>
 
-namespace sf
+namespace ff
 {
 
 // Forward declarations
@@ -60,9 +60,9 @@ struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
 
     typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
 
-    typedef boost::shared_ptr<sf::RigidBodyRenderer> ObjectRendererPtr;
-    typedef boost::shared_ptr<sf::KinectObserver> PixelObservationModelPtr;
-    typedef boost::shared_ptr<sf::OcclusionProcess> OcclusionProcessModelPtr;
+    typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
+    typedef boost::shared_ptr<ff::KinectObserver> PixelObservationModelPtr;
+    typedef boost::shared_ptr<ff::OcclusionProcess> OcclusionProcessModelPtr;
 };
 }
 

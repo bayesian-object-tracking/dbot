@@ -50,7 +50,7 @@
 
 #include <fast_filtering/distributions/sum_of_deltas.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class SumOfDeltas<RobotState<X, X> >;

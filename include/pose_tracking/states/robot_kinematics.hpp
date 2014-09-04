@@ -52,7 +52,7 @@ struct RobotKinematicsTypes
         ANGULAR_VELOCITY_INDEX = 9
     };
 
-    typedef sf::RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
+    typedef ff::RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
 };
 
 

@@ -49,7 +49,7 @@
 
 #include <pose_tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
 
-namespace sf
+namespace ff
 {
 
 template class ImageObserverGPU<FloatingBodySystem<X> >;

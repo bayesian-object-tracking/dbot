@@ -75,7 +75,7 @@
 #include <pose_tracking/utils/ros_interface.hpp>
 #include <pose_tracking//models/processes/brownian_object_motion.hpp>
 
-namespace sf { enum { X = Eigen::Dynamic }; }
+namespace ff { enum { X = Eigen::Dynamic }; }
 
 extern template class std::vector<size_t>;
 extern template class std::vector<int>;
@@ -87,7 +87,7 @@ extern template class std::vector<std::string>;
 extern template class pcl::PointCloud<pcl::PointXYZ>;
 
 //// look for where these are actually being instantiated
-extern template class Eigen::Matrix<double, sf::X, 1>;
+extern template class Eigen::Matrix<double, ff::X, 1>;
 extern template class Eigen::Matrix<double, 1, 1>;
 extern template class Eigen::Matrix<double, 3, 1>;
 extern template class Eigen::Matrix<double, 6, 1>;
@@ -95,10 +95,10 @@ extern template class Eigen::Matrix<float, 3, 1>;
 extern template class Eigen::Matrix<float, 4, 1>;
 //extern template class Eigen::Matrix<double, sf::X, sf::X>; // why is the operator= not being instantiated?
 
-extern template class std::vector<RobotState<sf::X, sf::X> >;
-extern template class std::vector<sf::FloatingBodySystem<sf::X> >;
+extern template class std::vector<RobotState<ff::X, ff::X> >;
+extern template class std::vector<ff::FloatingBodySystem<ff::X> >;
 
-extern template class std::vector<Eigen::Matrix<double, sf::X, 1> >;
+extern template class std::vector<Eigen::Matrix<double, ff::X, 1> >;
 extern template class std::vector<Eigen::Vector3i>;
 extern template class std::vector<Eigen::Vector3f>;
 extern template class std::vector<Eigen::Vector3d>;
@@ -109,52 +109,52 @@ extern template class std::vector<std::vector<std::vector<int> > >;
 extern template class std::vector<std::vector<size_t> >;
 extern template class std::vector<pcl::PointCloud<pcl::PointXYZ> >;
 
-extern template class sf::Gaussian<Eigen::Matrix<double, sf::X, 1> >;
-extern template class sf::Gaussian<Eigen::Matrix<double, 1, 1> >;
-extern template class sf::Gaussian<Eigen::Matrix<double, 3, 1> >;
+extern template class ff::Gaussian<Eigen::Matrix<double, ff::X, 1> >;
+extern template class ff::Gaussian<Eigen::Matrix<double, 1, 1> >;
+extern template class ff::Gaussian<Eigen::Matrix<double, 3, 1> >;
 
-extern template class sf::SumOfDeltas<RobotState<sf::X, sf::X> >;
-extern template class sf::SumOfDeltas<sf::FloatingBodySystem<sf::X> >;
-extern template class sf::SumOfDeltas<Eigen::Matrix<double, sf::X, 1> >;
+extern template class ff::SumOfDeltas<RobotState<ff::X, ff::X> >;
+extern template class ff::SumOfDeltas<ff::FloatingBodySystem<ff::X> >;
+extern template class ff::SumOfDeltas<Eigen::Matrix<double, ff::X, 1> >;
 
 
-extern template class sf::StandardGaussian<Eigen::Matrix<double, sf::X, 1> >;
-extern template class sf::StandardGaussian<Eigen::Matrix<double, 1, 1> >;
-extern template class sf::StandardGaussian<Eigen::Matrix<double, 3, 1> >;
+extern template class ff::StandardGaussian<Eigen::Matrix<double, ff::X, 1> >;
+extern template class ff::StandardGaussian<Eigen::Matrix<double, 1, 1> >;
+extern template class ff::StandardGaussian<Eigen::Matrix<double, 3, 1> >;
 
-extern template class sf::RigidBodySystem<sf::X>;
-extern template class sf::FloatingBodySystem<sf::X>;
-extern template class RobotState<sf::X, sf::X>;
+extern template class ff::RigidBodySystem<ff::X>;
+extern template class ff::FloatingBodySystem<ff::X>;
+extern template class RobotState<ff::X, ff::X>;
 
-extern template class sf::DampedWienerProcess<RobotState<sf::X, sf::X> >;
-extern template class sf::DampedWienerProcess<Eigen::Matrix<double, 3, 1> >;
+extern template class ff::DampedWienerProcess<RobotState<ff::X, ff::X> >;
+extern template class ff::DampedWienerProcess<Eigen::Matrix<double, 3, 1> >;
 
-extern template class sf::IntegratedDampedWienerProcess<Eigen::Matrix<double, 6, 1> >;
+extern template class ff::IntegratedDampedWienerProcess<Eigen::Matrix<double, 6, 1> >;
 
-extern template class sf::BrownianObjectMotion<sf::FloatingBodySystem<sf::X>, sf::X>;
+extern template class ff::BrownianObjectMotion<ff::FloatingBodySystem<ff::X>, ff::X>;
 
-extern template class sf::ImageObserverGPU<sf::FloatingBodySystem<sf::X> >;
+extern template class ff::ImageObserverGPU<ff::FloatingBodySystem<ff::X> >;
 
-extern template class sf::ImageObserverCPU<double, sf::FloatingBodySystem<sf::X> >;
-extern template class sf::ImageObserverCPU<double, RobotState<sf::X, sf::X> >;
+extern template class ff::ImageObserverCPU<double, ff::FloatingBodySystem<ff::X> >;
+extern template class ff::ImageObserverCPU<double, RobotState<ff::X, ff::X> >;
 
-extern template class sf::RaoBlackwellCoordinateParticleFilter<
-        sf::BrownianObjectMotion<sf::FloatingBodySystem<sf::X>,sf::X>,
-        sf::RaoBlackwellObserver<
-            sf::FloatingBodySystem<sf::X>,
-            sf::ImageObserverCPU<double, sf::FloatingBodySystem<sf::X>, sf::X>::Observation
+extern template class ff::RaoBlackwellCoordinateParticleFilter<
+        ff::BrownianObjectMotion<ff::FloatingBodySystem<ff::X>,ff::X>,
+        ff::RaoBlackwellObserver<
+            ff::FloatingBodySystem<ff::X>,
+            ff::ImageObserverCPU<double, ff::FloatingBodySystem<ff::X>, ff::X>::Observation
             > >;
 
-extern template class sf::RaoBlackwellCoordinateParticleFilter<
-        sf::DampedWienerProcess<RobotState<sf::X, sf::X> >,
-        sf::ImageObserverCPU<double, RobotState<sf::X, sf::X>, sf::X> >;
+extern template class ff::RaoBlackwellCoordinateParticleFilter<
+        ff::DampedWienerProcess<RobotState<ff::X, ff::X> >,
+        ff::ImageObserverCPU<double, RobotState<ff::X, ff::X>, ff::X> >;
 
 
-extern template std::vector<sf::FloatingBodySystem<-1>::State>
+extern template std::vector<ff::FloatingBodySystem<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<double,3,1>, -1, -1>&,
                         const size_t&);
 
-extern template std::vector<sf::FloatingBodySystem<-1>::State>
+extern template std::vector<ff::FloatingBodySystem<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<float,3,1>, -1, -1>&,
                         const size_t&);
 
