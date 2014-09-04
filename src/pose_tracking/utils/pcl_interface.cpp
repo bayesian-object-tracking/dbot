@@ -45,7 +45,7 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
 
 #include <pcl/point_types.h>
@@ -67,12 +67,12 @@
 
 #include <boost/assert.hpp>
 
-#include <state_filtering/utils/helper_functions.hpp>
-#include <state_filtering/utils/macros.hpp>
-#include <state_filtering/distributions/gaussian.hpp>
+#include <fast_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/macros.hpp>
+#include <fast_filtering/distributions/gaussian.hpp>
 
-#include <tracking/utils/pcl_interface.hpp>
-#include <tracking/utils/cloud_visualizer.hpp>
+#include <pose_tracking/utils/pcl_interface.hpp>
+#include <pose_tracking/utils/cloud_visualizer.hpp>
 
 namespace pi
 {

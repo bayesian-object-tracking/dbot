@@ -48,9 +48,9 @@
 
 #include <Eigen/Dense>
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/distributions/standard_gaussian.hpp>
+#include <fast_filtering/distributions/standard_gaussian.hpp>
 
 namespace sf
 {

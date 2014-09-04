@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/processes/brownian_object_motion.hpp>
+#include <fast_filtering/models/processes/brownian_object_motion.hpp>
 
 namespace sf
 {

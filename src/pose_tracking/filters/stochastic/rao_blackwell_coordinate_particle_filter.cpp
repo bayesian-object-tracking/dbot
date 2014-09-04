@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
+#include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
 namespace sf
 {

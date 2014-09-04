@@ -25,14 +25,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <tracking/trackers/object_tracker.hpp>
+#include <pose_tracking/trackers/object_tracker.hpp>
 
 #include <ros/package.h>
 
-#include <tracking/utils/ros_interface.hpp>
-#include <tracking/utils/object_file_reader.hpp>
+#include <pose_tracking/utils/ros_interface.hpp>
+#include <pose_tracking/utils/object_file_reader.hpp>
 
 MultiObjectTracker::MultiObjectTracker():
         node_handle_("~"),

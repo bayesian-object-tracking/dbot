@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/models/processes/integrated_damped_wiener_process.hpp>
+#include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
 
 namespace sf
 {

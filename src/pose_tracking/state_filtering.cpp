@@ -46,7 +46,7 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
 template class std::vector<size_t>;
 template class std::vector<int>;

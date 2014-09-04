@@ -25,9 +25,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#include <state_filtering/utils/macros.hpp>
+#include <fast_filtering/utils/macros.hpp>
 
-#include <tracking/utils/rigid_body_renderer.hpp>
+#include <pose_tracking/utils/rigid_body_renderer.hpp>
 
 #include <limits>
 

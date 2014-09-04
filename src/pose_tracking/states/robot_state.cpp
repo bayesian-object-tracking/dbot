@@ -45,8 +45,8 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <tracking/states/robot_state.hpp>
+#include <pose_tracking/states/robot_state.hpp>
 
 template class RobotState<sf::X, sf::X>;

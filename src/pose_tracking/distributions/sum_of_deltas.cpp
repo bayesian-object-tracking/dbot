@@ -46,9 +46,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/distributions/sum_of_deltas.hpp>
+#include <fast_filtering/distributions/sum_of_deltas.hpp>
 
 namespace sf
 {

@@ -32,14 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <state_filtering/utils/macros.hpp>
-#include <state_filtering/utils/traits.hpp>
-#include <state_filtering/models/processes/occlusion_process.hpp>
-#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
-#include <state_filtering/states/floating_body_system.hpp>
+#include <fast_filtering/utils/macros.hpp>
+#include <fast_filtering/utils/traits.hpp>
+#include <fast_filtering/models/processes/occlusion_process.hpp>
+#include <fast_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
+#include <fast_filtering/states/floating_body_system.hpp>
 
-#include <tracking/utils/rigid_body_renderer.hpp>
-#include <tracking/models/observers/kinect_observer.hpp>
+#include <pose_tracking/utils/rigid_body_renderer.hpp>
+#include <pose_tracking/models/observers/kinect_observer.hpp>
 
 namespace sf
 {
@@ -179,7 +179,7 @@ public:
         return loglikes;
     }
 
-    void SetObservation(const Observation& image, const Scalar& delta_time)
+    void SetObservation(const Observation& image, const double& delta_time)
     {
         std::vector<float> std_measurement(image.size());
 

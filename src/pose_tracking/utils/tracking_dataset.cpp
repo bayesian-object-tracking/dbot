@@ -25,7 +25,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
 #include <ros/ros.h>
 #include <rosbag/bag.h>
@@ -36,11 +36,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/foreach.hpp>
 
-#include <state_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/helper_functions.hpp>
 
-#include <tracking/utils/ros_interface.hpp>
-#include <tracking/utils/pcl_interface.hpp>
-#include <tracking/utils/tracking_dataset.hpp>
+#include <pose_tracking/utils/ros_interface.hpp>
+#include <pose_tracking/utils/pcl_interface.hpp>
+#include <pose_tracking/utils/tracking_dataset.hpp>
 
 
 DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,

@@ -2,7 +2,7 @@
 
 //#define PROFILING_ACTIVE
 
-#include <tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,10 +13,10 @@
 #include <ros/package.h>
 
 
-#include <tracking/models/observers/image_observer_gpu/shader.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/shader.hpp>
 
-#include <state_filtering/utils/macros.hpp>
-#include <state_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/macros.hpp>
+#include <fast_filtering/utils/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;

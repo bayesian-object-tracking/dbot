@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <tracking/utils/object_file_reader.hpp>
+#include <pose_tracking/utils/object_file_reader.hpp>
 
 #include <iostream>
 #include <fstream>

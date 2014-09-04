@@ -8,13 +8,13 @@
 
 #include <boost/timer.hpp>
 
-#include <tracking/models/observers/image_observer_gpu/cuda_opengl_filter.hpp>
-#include <tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
-#include <tracking/models/observers/image_observer_gpu/cuda_filter.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/cuda_opengl_filter.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/cuda_filter.hpp>
 
 
 #include <cuda_gl_interop.h>
-#include <state_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;

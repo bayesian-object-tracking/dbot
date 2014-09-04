@@ -26,9 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <state_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/helper_functions.hpp>
 
-#include <tracking/utils/image_visualizer.hpp>
+#include <pose_tracking/utils/image_visualizer.hpp>
 
 #include <cv.h>
 #include <highgui.h>

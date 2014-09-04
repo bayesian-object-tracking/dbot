@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <tracking/models/observers/image_observer_cpu.hpp>
+#include <pose_tracking/models/observers/image_observer_cpu.hpp>
 
 namespace sf
 {

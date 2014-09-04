@@ -41,11 +41,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
+#include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
-#include <tracking/models/observers/image_observer_cpu.hpp>
+#include <pose_tracking/models/observers/image_observer_cpu.hpp>
 #ifdef BUILD_GPU
-#include <tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
 #endif
 
 class MultiObjectTracker

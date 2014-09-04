@@ -45,8 +45,8 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/states/floating_body_system.hpp>
+#include <fast_filtering/states/floating_body_system.hpp>
 
 template class sf::FloatingBodySystem<sf::X>;

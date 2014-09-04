@@ -38,11 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <robot_state_pub/robot_state_publisher.h>
 
-#include <state_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
+#include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
-#include <tracking/states/robot_state.hpp>
-#include <tracking/utils/kinematics_from_urdf.hpp>
-#include <tracking/utils/rigid_body_renderer.hpp>
+#include <pose_tracking/states/robot_state.hpp>
+#include <pose_tracking/utils/kinematics_from_urdf.hpp>
+#include <pose_tracking/utils/rigid_body_renderer.hpp>
 
 class RobotTracker
 {

@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <tracking/utils/kinematics_from_urdf.hpp>
+#include <pose_tracking/utils/kinematics_from_urdf.hpp>
 
 #include <boost/random/normal_distribution.hpp>
 

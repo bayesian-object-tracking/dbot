@@ -6,11 +6,11 @@
 #include "Eigen/Core"
 
 
-#include <state_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
-#include <state_filtering/states/floating_body_system.hpp>
+#include <fast_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
+#include <fast_filtering/states/floating_body_system.hpp>
 
-#include <tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
-#include <tracking/models/observers/image_observer_gpu/cuda_filter.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
+#include <pose_tracking/models/observers/image_observer_gpu/cuda_filter.hpp>
 
 #include <limits>
 #include <stdio.h>

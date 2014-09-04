@@ -146,10 +146,11 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
-file(GLOB_RECURSE state_filtering_headers include/${PROJECT_NAME}/*.hpp include/${PROJECT_NAME}/*.h)
-file(GLOB_RECURSE tracking_headers include/tracking/*.hpp include/tracking/*.h)
+set(PROJECT_NAME_FILTERING "fast_filtering")
+set(PROJECT_NAME_TRACKING "pose_tracking")
 
-set(PROJECT_NAME_TRACKING "tracking")
+file(GLOB_RECURSE state_filtering_headers include/${PROJECT_NAME_FILTERING}/*.hpp include/${PROJECT_NAME_FILTERING}/*.h)
+file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 
 set(tracking_sources
     src/${PROJECT_NAME_TRACKING}/state_filtering.cpp

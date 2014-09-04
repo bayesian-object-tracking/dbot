@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <tracking/utils/ros_interface.hpp>
+#include <pose_tracking/utils/ros_interface.hpp>
 
 template void ri::ReadParameter(const std::string& path,
                                 double& parameter,

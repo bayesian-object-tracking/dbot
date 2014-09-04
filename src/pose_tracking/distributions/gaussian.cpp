@@ -45,9 +45,9 @@
  * University of Southern California
  */
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <state_filtering/distributions/gaussian.hpp>
+#include <fast_filtering/distributions/gaussian.hpp>
 
 namespace sf
 {

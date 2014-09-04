@@ -27,10 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define PROFILING_ON
 
-#include <state_filtering/state_filtering.hpp>
+#include <fast_filtering/state_filtering.hpp>
 
-#include <tracking/trackers/robot_tracker.hpp>
-#include <tracking/utils/image_visualizer.hpp>
+#include <pose_tracking/trackers/robot_tracker.hpp>
+#include <pose_tracking/utils/image_visualizer.hpp>
 
 #include <sensor_msgs/PointCloud2.h>
 
