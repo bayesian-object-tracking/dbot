@@ -58,7 +58,7 @@ struct Traits<OcclusionProcess>
     typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
     typedef Eigen::Matrix<Scalar, DIMENSION, 1>     Input;
 
-    typedef ff::StationaryProcessInterface<Vector, Input> StationaryProcessInterfaceBase;
+    typedef ff::StationaryProcessModelInterface<Vector, Input> ProcessModelBase;
 };
 }
 
@@ -69,7 +69,7 @@ struct Traits<OcclusionProcess>
  * \ingroup process_models
  */
 class OcclusionProcess:
-        public internal::Traits<OcclusionProcess>::StationaryProcessInterfaceBase
+        public internal::Traits<OcclusionProcess>::ProcessModelBase
 {
 public:
     typedef internal::Traits<OcclusionProcess> Traits;

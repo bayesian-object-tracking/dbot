@@ -86,7 +86,7 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
     typedef IntegratedDampedWienerProcess<ObjectState>     Process;
 
-    typedef StationaryProcessInterface<State, Input>    StationaryProcessInterfaceBase;
+    typedef StationaryProcessModelInterface<State, Input>    ProcessModelBase;
     typedef GaussianMappableInterface<State, Noise>          GaussianMappableBase;
 };
 }
@@ -99,7 +99,7 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
  */
 template <typename State_, int OBJECTS = -1>
 class BrownianObjectMotion:
-        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::StationaryProcessInterfaceBase,
+        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::ProcessModelBase,
         public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::GaussianMappableBase
 {
 public:
