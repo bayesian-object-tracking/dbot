@@ -45,7 +45,7 @@
  * University of Southern California
  */
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 #include <pose_tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
 

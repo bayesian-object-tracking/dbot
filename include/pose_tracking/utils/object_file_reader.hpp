@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef STATE_FILTERING_UTILS_OBJECT_FILE_READER_HPP_
 #define STATE_FILTERING_UTILS_OBJECT_FILE_READER_HPP_
 
-// #include <fast_filtering/state_filtering.hpp>
+// #include <pose_tracking/pose_tracking.hpp>
 
 #include <string>
 #include <boost/shared_ptr.hpp>

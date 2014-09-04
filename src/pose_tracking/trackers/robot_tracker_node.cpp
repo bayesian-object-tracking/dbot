@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/JointState.h>
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 #include <pose_tracking/trackers/robot_tracker.hpp>
 #include <pose_tracking/utils/cloud_visualizer.hpp>

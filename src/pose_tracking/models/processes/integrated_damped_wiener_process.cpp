@@ -45,7 +45,7 @@
  * University of Southern California
  */
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
 

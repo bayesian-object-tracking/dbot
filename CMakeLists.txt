@@ -153,7 +153,7 @@ file(GLOB_RECURSE state_filtering_headers include/${PROJECT_NAME_FILTERING}/*.hp
 file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 
 set(tracking_sources
-    src/${PROJECT_NAME_TRACKING}/state_filtering.cpp
+    src/${PROJECT_NAME_TRACKING}/pose_tracking.cpp
 
     src/${PROJECT_NAME_TRACKING}/utils/image_visualizer.cpp
     src/${PROJECT_NAME_TRACKING}/utils/cloud_visualizer.cpp

@@ -48,7 +48,7 @@
 
 #include <Eigen/Dense>
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 #include <fast_filtering/distributions/standard_gaussian.hpp>
 

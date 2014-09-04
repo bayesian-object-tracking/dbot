@@ -62,7 +62,6 @@
 
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
-#include <fast_filtering/models/processes/brownian_object_motion.hpp>
 
 #include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
@@ -74,6 +73,7 @@
 
 #include <pose_tracking/utils/pcl_interface.hpp>
 #include <pose_tracking/utils/ros_interface.hpp>
+#include <pose_tracking//models/processes/brownian_object_motion.hpp>
 
 namespace sf { enum { X = Eigen::Dynamic }; }
 

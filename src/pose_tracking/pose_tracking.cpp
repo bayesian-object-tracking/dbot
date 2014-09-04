@@ -46,7 +46,7 @@
  * University of Southern California
  */
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 template class std::vector<size_t>;
 template class std::vector<int>;

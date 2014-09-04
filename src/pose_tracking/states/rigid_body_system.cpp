@@ -45,7 +45,7 @@
  * University of Southern California
  */
 
-#include <fast_filtering/state_filtering.hpp>
+#include <pose_tracking/pose_tracking.hpp>
 
 #include <fast_filtering/states/rigid_body_system.hpp>
 

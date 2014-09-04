@@ -34,12 +34,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/utils/macros.hpp>
 #include <fast_filtering/utils/traits.hpp>
-#include <fast_filtering/models/processes/occlusion_process.hpp>
 #include <fast_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 #include <pose_tracking/models/observers/kinect_observer.hpp>
+#include <pose_tracking/models/processes/occlusion_process.hpp>
 
 namespace sf
 {
