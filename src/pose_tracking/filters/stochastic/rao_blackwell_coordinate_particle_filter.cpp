@@ -54,7 +54,7 @@ namespace ff
 
 template class RaoBlackwellCoordinateParticleFilter<
         BrownianObjectMotion<FloatingBodySystem<X>,X>,
-        RaoBlackwellObserver<
+        RaoBlackwellObservationModelInterface<
             FloatingBodySystem<X>,
             ImageObserverCPU<double, FloatingBodySystem<X>, X>::Observation
             > >;

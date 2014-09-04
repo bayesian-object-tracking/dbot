@@ -6,7 +6,7 @@
 #include "Eigen/Core"
 
 
-#include <fast_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
+#include <fast_filtering/models/observers/interfaces/rao_blackwell_observation_model_interface.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
 
 #include <pose_tracking/models/observers/image_observer_gpu/object_rasterizer.hpp>
@@ -37,7 +37,7 @@ struct Traits<ImageObserverGPU<State> >
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
+    typedef RaoBlackwellObservationModelInterface<State, Observation> RaoBlackwellObserverBase;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 

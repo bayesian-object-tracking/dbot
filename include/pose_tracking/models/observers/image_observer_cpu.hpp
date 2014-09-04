@@ -34,8 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/utils/macros.hpp>
 #include <fast_filtering/utils/traits.hpp>
-#include <fast_filtering/models/observers/interfaces/rao_blackwell_observer.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
+#include <fast_filtering/models/observers/interfaces/rao_blackwell_observation_model_interface.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 #include <pose_tracking/models/observers/kinect_observer.hpp>
@@ -58,7 +58,7 @@ struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
 {
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObserver<State, Observation> RaoBlackwellObserverBase;
+    typedef RaoBlackwellObservationModelInterface<State, Observation> ObservationModelBase;
 
     typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
     typedef boost::shared_ptr<ff::KinectObserver> PixelObservationModelPtr;
@@ -74,7 +74,7 @@ struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
  */
 template <typename Scalar, typename State, int OBJECTS = -1>
 class ImageObserverCPU:
-        public internal::Traits<ImageObserverCPU<Scalar, State> >::RaoBlackwellObserverBase
+        public internal::Traits<ImageObserverCPU<Scalar, State> >::ObservationModelBase
 {
 public:
     typedef internal::Traits<ImageObserverCPU<Scalar, State> > Traits;

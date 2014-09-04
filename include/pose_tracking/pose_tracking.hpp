@@ -140,7 +140,7 @@ extern template class ff::ImageObserverCPU<double, RobotState<ff::X, ff::X> >;
 
 extern template class ff::RaoBlackwellCoordinateParticleFilter<
         ff::BrownianObjectMotion<ff::FloatingBodySystem<ff::X>,ff::X>,
-        ff::RaoBlackwellObserver<
+        ff::RaoBlackwellObservationModelInterface<
             ff::FloatingBodySystem<ff::X>,
             ff::ImageObserverCPU<double, ff::FloatingBodySystem<ff::X>, ff::X>::Observation
             > >;
