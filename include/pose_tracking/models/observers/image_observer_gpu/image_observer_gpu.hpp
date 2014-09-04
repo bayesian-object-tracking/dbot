@@ -37,7 +37,7 @@ struct Traits<ImageObserverGPU<State> >
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModelInterface<State, Observation> RaoBlackwellObserverBase;
+    typedef RaoBlackwellObservationModelInterface<State, Observation> ObservationModelBase;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
@@ -53,7 +53,7 @@ struct Traits<ImageObserverGPU<State> >
  */
 template <typename State>
 class ImageObserverGPU:
-        public internal::Traits<ImageObserverGPU<State> >::RaoBlackwellObserverBase
+        public internal::Traits<ImageObserverGPU<State> >::ObservationModelBase
 {
 public:
     typedef internal::Traits<ImageObserverGPU<State> > Traits;

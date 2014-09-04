@@ -79,7 +79,7 @@ class ImageObserverCPU:
 public:
     typedef internal::Traits<ImageObserverCPU<Scalar, State> > Traits;
 
-    typedef typename Traits::RaoBlackwellObserverBase Base;
+    typedef typename Traits::ObservationModelBase     Base;
     typedef typename Traits::Observation              Observation;
     typedef typename Traits::ObjectRendererPtr        ObjectRendererPtr;
     typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
