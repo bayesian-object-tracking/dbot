@@ -45,8 +45,8 @@
  */
 
 
-#ifndef STATE_FILTERING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
-#define STATE_FILTERING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
+#ifndef POSE_TRACKING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
+#define POSE_TRACKING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
 
 #include <fast_filtering/utils/helper_functions.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>

@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef STATE_FILTERING_UTILS_RIGID_BODY_RENDERER_HPP_
-#define STATE_FILTERING_UTILS_RIGID_BODY_RENDERER_HPP_
+#ifndef POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP_
+#define POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP_
 
 #include <vector>
 #include <Eigen/Dense>

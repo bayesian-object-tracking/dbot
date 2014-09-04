@@ -33,8 +33,8 @@
  *********************************************************************/
 
 
-#ifndef STATE_FILTERING_UTILS_KINEMATICS_FROM_URDF_HPP_
-#define STATE_FILTERING_UTILS_KINEMATICS_FROM_URDF_HPP_
+#ifndef POSE_TRACKING_UTILS_KINEMATICS_FROM_URDF_HPP_
+#define POSE_TRACKING_UTILS_KINEMATICS_FROM_URDF_HPP_
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
