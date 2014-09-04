@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define STATE_FILTERING_MODELS_OBSERVERS_KINECT_OBSERVER_HPP_
 
 #include <Eigen/Dense>
-#include <state_filtering/distributions/interfaces/evaluation_interface.hpp>
+#include <fast_filtering/distributions/interfaces/evaluation_interface.hpp>
 #include <cmath>
 
 #include <iostream>
@@ -50,8 +50,8 @@ template <>
 struct Traits<KinectObserver>
 {
     typedef double              Scalar;
-    typedef double              Vector;
-    typedef EvaluationInterface<Vector, Scalar>   EvaluationInterfaceBase;
+    typedef double              Observation;
+    typedef EvaluationInterface<Observation, Scalar>   EvaluationInterfaceBase;
 };
 }
 
@@ -67,7 +67,7 @@ class KinectObserver:
 {
 public:
     typedef typename internal::Traits<KinectObserver>::Scalar Scalar;
-    typedef typename internal::Traits<KinectObserver>::Vector Vector;
+    typedef typename internal::Traits<KinectObserver>::Observation Observation;
 
     KinectObserver(Scalar tail_weight = 0.01,
                            Scalar model_sigma = 0.003,
@@ -82,7 +82,7 @@ public:
 
     virtual ~KinectObserver() {}
 
-    virtual Scalar Probability(const Vector& observation) const
+    virtual Scalar Probability(const Observation& observation) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
@@ -115,7 +115,7 @@ public:
         return probability;
     }
 
-    virtual Scalar LogProbability(const Vector& observation) const
+    virtual Scalar LogProbability(const Observation& observation) const
     {
         return std::log(Probability(observation));
     }
