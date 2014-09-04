@@ -47,7 +47,7 @@
 
 #include <pose_tracking/pose_tracking.hpp>
 
-#include <pose_tracking/models/observers/image_observer_cpu.hpp>
+#include <pose_tracking/models/observations/image_observer_cpu.hpp>
 
 namespace ff
 {

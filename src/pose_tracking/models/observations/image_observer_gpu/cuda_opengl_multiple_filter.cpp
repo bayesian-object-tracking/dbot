@@ -1,6 +1,6 @@
 #define PROFILING_ACTIVE
 
-#include <pose_tracking/models/observers/image_observer_gpu/cuda_opengl_multiple_filter.hpp>
+#include <pose_tracking/models/observations/image_observer_gpu/cuda_opengl_multiple_filter.hpp>
 #include <iostream>
 
 #include <fast_filtering/utils/helper_functions.hpp>

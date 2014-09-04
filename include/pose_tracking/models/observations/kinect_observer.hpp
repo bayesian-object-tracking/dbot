@@ -49,8 +49,8 @@ namespace internal
 template <>
 struct Traits<KinectObserver>
 {
-    typedef double              Scalar;
-    typedef double              Observation;
+    typedef double Scalar;
+    typedef double Observation;
     typedef EvaluationInterface<Observation, Scalar>   EvaluationInterfaceBase;
 };
 }

@@ -35,10 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/utils/macros.hpp>
 #include <fast_filtering/utils/traits.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
-#include <fast_filtering/models/observers/interfaces/rao_blackwell_observation_model_interface.hpp>
+#include <fast_filtering/models/observations/interfaces/rao_blackwell_observation_model_interface.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
-#include <pose_tracking/models/observers/kinect_observer.hpp>
+#include <pose_tracking/models/observations/kinect_observer.hpp>
 #include <pose_tracking/models/processes/occlusion_process.hpp>
 
 namespace ff

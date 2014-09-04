@@ -43,9 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
-#include <pose_tracking/models/observers/image_observer_cpu.hpp>
+#include <pose_tracking/models/observations/image_observer_cpu.hpp>
 #ifdef BUILD_GPU
-#include <pose_tracking/models/observers/image_observer_gpu/image_observer_gpu.hpp>
+#include <pose_tracking/models/observations/image_observer_gpu/image_observer_gpu.hpp>
 #endif
 
 class MultiObjectTracker

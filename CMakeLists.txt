@@ -172,7 +172,7 @@ set(tracking_sources
     src/${PROJECT_NAME_TRACKING}/models/processes/integrated_damped_wiener_process.cpp
     src/${PROJECT_NAME_TRACKING}/models/processes/brownian_object_motion.cpp
 
-    src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_cpu.cpp
+    src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_cpu.cpp
 
     src/${PROJECT_NAME_TRACKING}/states/rigid_body_system.cpp
     src/${PROJECT_NAME_TRACKING}/states/floating_body_system.cpp
@@ -199,11 +199,11 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
     set(tracking_gpu_SOURCES
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/image_observer_gpu.cpp
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/cuda_opengl_multiple_filter.cpp
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/object_rasterizer.cpp
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/shader.cpp)
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/image_observer_gpu.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_opengl_filter.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_opengl_multiple_filter.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/object_rasterizer.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/shader.cpp)
 
     add_library(${PROJECT_NAME_TRACKING}_gpu
         ${tracking_gpu_SOURCES})
@@ -215,7 +215,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${GLEW_LIBRARIES})
 
     cuda_add_library(${PROJECT_NAME_TRACKING}_cuda
-        src/${PROJECT_NAME_TRACKING}/models/observers/image_observer_gpu/cuda_filter.cu)
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_filter.cu)
     target_link_libraries(${PROJECT_NAME_TRACKING} ${PROJECT_NAME_TRACKING}_cuda)
 
     ## object_tracker
