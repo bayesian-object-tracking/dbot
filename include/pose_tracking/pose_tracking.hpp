@@ -57,8 +57,8 @@
 #include <fast_filtering/distributions/sum_of_deltas.hpp>
 #include <fast_filtering/distributions/standard_gaussian.hpp>
 
-#include <fast_filtering/states/rigid_body_system.hpp>
-#include <fast_filtering/states/floating_body_system.hpp>
+#include <pose_tracking/states/rigid_body_system.hpp>
+#include <pose_tracking/states/floating_body_system.hpp>
 
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>
@@ -66,9 +66,9 @@
 #include <fast_filtering/filters/stochastic/rao_blackwell_coordinate_particle_filter.hpp>
 
 #include <pose_tracking/states/robot_state.hpp>
-#include <pose_tracking/models/observations/image_observer_cpu.hpp>
+#include <pose_tracking/models/observation_models/image_observer_cpu.hpp>
 #ifdef BUILD_GPU
-#include <pose_tracking/models/observations/image_observer_gpu/image_observer_gpu.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/image_observer_gpu.hpp>
 #endif
 
 #include <pose_tracking/utils/pcl_interface.hpp>

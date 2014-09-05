@@ -47,6 +47,6 @@
 
 #include <pose_tracking/pose_tracking.hpp>
 
-#include <fast_filtering/states/rigid_body_system.hpp>
+#include <pose_tracking/states/rigid_body_system.hpp>
 
 template class ff::RigidBodySystem<ff::X>;

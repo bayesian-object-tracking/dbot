@@ -8,9 +8,9 @@
 
 #include <boost/timer.hpp>
 
-#include <pose_tracking/models/observations/image_observer_gpu/cuda_opengl_filter.hpp>
-#include <pose_tracking/models/observations/image_observer_gpu/object_rasterizer.hpp>
-#include <pose_tracking/models/observations/image_observer_gpu/cuda_filter.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/cuda_opengl_filter.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/object_rasterizer.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/cuda_filter.hpp>
 
 
 #include <cuda_gl_interop.h>

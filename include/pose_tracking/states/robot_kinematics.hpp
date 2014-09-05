@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <vector>
 
-#include <fast_filtering/states/rigid_body_system.hpp>
+#include <pose_tracking/states/rigid_body_system.hpp>
 
 
 /// TODO: all of this is just a copy of he floating body stuff. in here the robot kinematics have to be implemented

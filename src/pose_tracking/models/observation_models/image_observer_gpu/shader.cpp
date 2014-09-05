@@ -10,7 +10,7 @@
 #include <string.h>
 #include <GL/glew.h>
 
-#include <pose_tracking/models/observations/image_observer_gpu/shader.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/shader.hpp>
 
 GLuint LoadShaders(std::vector<const char *> shaderFilePaths) {
 

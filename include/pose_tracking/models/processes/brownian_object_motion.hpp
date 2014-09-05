@@ -50,7 +50,7 @@
 
 #include <fast_filtering/utils/helper_functions.hpp>
 #include <fast_filtering/utils/assertions.hpp>
-#include <fast_filtering/states/floating_body_system.hpp>
+#include <pose_tracking/states/floating_body_system.hpp>
 #include <fast_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
 #include <fast_filtering/models/processes/integrated_damped_wiener_process.hpp>

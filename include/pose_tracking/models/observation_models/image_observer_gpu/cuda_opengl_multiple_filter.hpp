@@ -1,7 +1,7 @@
 #ifndef POSE_TRACKING_MODELS_OBSERVERS_CUDA_OPENGL_MULTIPLE_FILTER_HPP
 #define POSE_TRACKING_MODELS_OBSERVERS_CUDA_OPENGL_MULTIPLE_FILTER_HPP
 
-#include <pose_tracking/models/observations/image_observer_gpu/cuda_opengl_filter.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/cuda_opengl_filter.hpp>
 namespace fil {
 
 class CudaOpenglMultipleFilter : public fil::CudaOpenglFilter

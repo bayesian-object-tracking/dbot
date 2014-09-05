@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define POSE_TRACKING_STATES_ROBOT_STATE_HPP_
 
 
-#include <fast_filtering/states/rigid_body_system.hpp>
+#include <pose_tracking/states/rigid_body_system.hpp>
 #include <pose_tracking/utils/kinematics_from_urdf.hpp>
 
 #include <Eigen/Dense>

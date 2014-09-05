@@ -47,12 +47,11 @@
 
 #include <pose_tracking/pose_tracking.hpp>
 
-#include <pose_tracking/models/observations/image_observer_cpu.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/image_observer_gpu.hpp>
 
 namespace ff
 {
 
-template class ImageObserverCPU<double, FloatingBodySystem<X> >;
-template class ImageObserverCPU<double, RobotState<X, X> >;
+template class ImageObserverGPU<FloatingBodySystem<X> >;
 
 }

@@ -7,7 +7,7 @@
 #define VECTOR_DIM 3
 #define MATRIX_DIM 9
 
-#include <pose_tracking/models/observations/image_observer_gpu/cuda_filter.hpp>
+#include <pose_tracking/models/observation_models/image_observer_gpu/cuda_filter.hpp>
 #include <GL/glut.h>
 
 
