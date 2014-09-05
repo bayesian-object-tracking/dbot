@@ -73,8 +73,7 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
     enum
     {
         DIMENSION_PER_OBJECT = 6,
-        DIMENSION = (OBJECTS == -1) ? -1 : OBJECTS * DIMENSION_PER_OBJECT,
-        INPUT_DIMENSION = DIMENSION
+        INPUT_DIMENSION = (OBJECTS == -1) ? -1 : OBJECTS * DIMENSION_PER_OBJECT
     };
 
     typedef State_                                      State;
@@ -114,15 +113,13 @@ public:
 
     enum
     {
-        DIMENSION            = Traits::DIMENSION,
-        INPUT_DIMENSION      = Traits::INPUT_DIMENSION,
         DIMENSION_PER_OBJECT = Traits::DIMENSION_PER_OBJECT
     };
 
 public:
     BrownianObjectMotion(const unsigned& count_objects = OBJECTS):
         Traits::GaussianMappableBase(
-            count_objects == Eigen::Dynamic? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
+            count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
         SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
