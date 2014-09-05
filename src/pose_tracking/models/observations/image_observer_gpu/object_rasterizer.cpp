@@ -15,7 +15,6 @@
 
 #include <pose_tracking/models/observations/image_observer_gpu/shader.hpp>
 
-#include <fast_filtering/utils/macros.hpp>
 #include <fast_filtering/utils/helper_functions.hpp>
 
 using namespace std;

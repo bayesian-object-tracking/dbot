@@ -49,6 +49,7 @@
 #define POSE_TRACKING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
 
 #include <fast_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/assertions.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
 #include <fast_filtering/models/processes/interfaces/stationary_process_interface.hpp>
 #include <fast_filtering/models/processes/damped_wiener_process.hpp>
@@ -122,7 +123,7 @@ public:
             count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
-        SF_REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
+        REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);

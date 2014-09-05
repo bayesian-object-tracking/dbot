@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //#define PROFILING_ON
 
+#include <fast_filtering/utils/profiling.hpp>
+
 #include <pose_tracking/pose_tracking.hpp>
 
 #include <pose_tracking/trackers/robot_tracker.hpp>

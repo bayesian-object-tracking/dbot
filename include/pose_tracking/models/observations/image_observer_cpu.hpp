@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <fast_filtering/utils/macros.hpp>
+#include <fast_filtering/utils/assertions.hpp>
 #include <fast_filtering/utils/traits.hpp>
 #include <fast_filtering/states/floating_body_system.hpp>
 #include <fast_filtering/models/observations/interfaces/rao_blackwell_observation_model_interface.hpp>
@@ -105,7 +105,7 @@ public:
         occlusion_process_model_(occlusion_process_model),
         observation_time_(0)
     {
-        SF_REQUIRE_INTERFACE(State, RigidBodySystem<OBJECTS>);
+        REQUIRE_INTERFACE(State, RigidBodySystem<OBJECTS>);
 
         Reset();
     }

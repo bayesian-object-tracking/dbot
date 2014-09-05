@@ -29,13 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP_
 #define POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP_
 
-#include <fast_filtering/states/rigid_body_system.hpp>
-#include <fast_filtering/utils/macros.hpp>
 
 #include <Eigen/Dense>
-#include <boost/static_assert.hpp>
-
 #include <vector>
+
+#include <fast_filtering/states/rigid_body_system.hpp>
+
 
 /// TODO: all of this is just a copy of he floating body stuff. in here the robot kinematics have to be implemented
 

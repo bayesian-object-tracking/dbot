@@ -37,6 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/filesystem.hpp>
 
+#include <fast_filtering/utils/profiling.hpp>
+
+
 #include <pose_tracking/trackers/object_tracker.hpp>
 #include <pose_tracking/utils/tracking_dataset.hpp>
 #include <pose_tracking/utils/pcl_interface.hpp>
@@ -147,31 +150,31 @@ int main (int argc, char **argv)
     {
         TrackingDataset TrackingDataset(source);
         std::cout << "laoding bagfile " << std::endl;
-        TrackingDataset.loAd();
+        TrackingDataset.Load();
         std::cout << "done" << std::endl;
 
         std::cout << "setting initial state " << std::endl;
-        std::cout << TrackingDataset.getGroundTruth(0).transpose() << std::endl;
+        std::cout << TrackingDataset.GetGroundTruth(0).transpose() << std::endl;
         std::cout << "done printing vector " << std::endl;
         ff::FloatingBodySystem<-1> initial_state(object_names.size());
-        initial_state.poses(TrackingDataset.getGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
+        initial_state.poses(TrackingDataset.GetGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
         std::vector<Eigen::VectorXd> initial_states(1, initial_state);
 
         std::cout << "initializing filter " << std::endl;
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
-        tracker->Initialize(initial_states, *TrackingDataset.getImage(0), TrackingDataset.getCameraMatrix(0), false);
+        tracker->Initialize(initial_states, *TrackingDataset.GetImage(0), TrackingDataset.GetCameraMatrix(0), false);
         TrackerInterface interface(tracker);
 
         ros::Publisher image_publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
         ros::Publisher cloud_publisher = node_handle.advertise<pcl::PointCloud<pcl::PointXYZ> > ("/bagfile/depth/points", 0);
 
-        std::cout << "processing TrackingDataset of size: " << TrackingDataset.sIze() << std::endl;
-        for(size_t i = 0; i < TrackingDataset.sIze() && ros::ok(); i++)
+        std::cout << "processing TrackingDataset of Size: " << TrackingDataset.Size() << std::endl;
+        for(size_t i = 0; i < TrackingDataset.Size() && ros::ok(); i++)
         {
-            interface.FilterAndStore(*TrackingDataset.getImage(i));
-            image_publisher.publish(*TrackingDataset.getImage(i));
-            cloud_publisher.publish((*TrackingDataset.getPointCloud(i)).makeShared());
+            interface.FilterAndStore(*TrackingDataset.GetImage(i));
+            image_publisher.publish(*TrackingDataset.GetImage(i));
+            cloud_publisher.publish((*TrackingDataset.GetPointCloud(i)).makeShared());
         }
         std::cout << std::endl << "done processing TrackingDataset" << std::endl;
     }

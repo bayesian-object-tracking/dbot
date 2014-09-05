@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <fast_filtering/states/rigid_body_system.hpp>
-#include <fast_filtering/utils/macros.hpp>
-
 #include <pose_tracking/utils/kinematics_from_urdf.hpp>
 
 #include <Eigen/Dense>
@@ -210,6 +208,7 @@ private:
   // pointer to the robot kinematic
   boost::shared_ptr<KinematicsFromURDF>  kinematics_;
 
+  //TODO: GET RID OF THIS
   template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_joints > -1);}
   template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_joints == -1);}
 };

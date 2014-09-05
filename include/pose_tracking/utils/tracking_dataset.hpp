@@ -77,28 +77,28 @@ public:
     TrackingDataset(const std::string& path);
     ~TrackingDataset();
 
-    void addFrame(const sensor_msgs::Image::ConstPtr& image,
+    void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info,
                   const Eigen::VectorXd& ground_truth = Eigen::VectorXd());
 
-    void addFrame(const sensor_msgs::Image::ConstPtr& image,
+    void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info);
 
-    sensor_msgs::Image::ConstPtr getImage(const size_t& index);
+    sensor_msgs::Image::ConstPtr GetImage(const size_t& index);
 
-    sensor_msgs::CameraInfo::ConstPtr getInfo(const size_t& index);
+    sensor_msgs::CameraInfo::ConstPtr GetInfo(const size_t& index);
 
-    pcl::PointCloud<pcl::PointXYZ>::ConstPtr getPointCloud(const size_t& index);
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr GetPointCloud(const size_t& index);
 
-    Eigen::Matrix3d getCameraMatrix(const size_t& index);
+    Eigen::Matrix3d GetCameraMatrix(const size_t& index);
 
-    Eigen::VectorXd getGroundTruth(const size_t& index);
+    Eigen::VectorXd GetGroundTruth(const size_t& index);
 
-    size_t sIze();
+    size_t Size();
 
-    void loAd();
+    void Load();
 
-    void stOre();
+    void Store();
 
 private:
     std::vector<DataFrame> data_;

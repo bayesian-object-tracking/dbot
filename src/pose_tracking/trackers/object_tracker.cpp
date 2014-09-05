@@ -24,13 +24,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
-
-#include <pose_tracking/pose_tracking.hpp>
-
-#include <pose_tracking/trackers/object_tracker.hpp>
-
 #include <ros/package.h>
 
+#include <fast_filtering/utils/profiling.hpp>
+
+#include <pose_tracking/pose_tracking.hpp>
+#include <pose_tracking/trackers/object_tracker.hpp>
 #include <pose_tracking/utils/ros_interface.hpp>
 #include <pose_tracking/utils/object_file_reader.hpp>
 

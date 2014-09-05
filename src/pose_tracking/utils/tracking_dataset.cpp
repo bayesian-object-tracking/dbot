@@ -59,7 +59,7 @@ TrackingDataset::TrackingDataset(const std::string& path):path_(path),
 
 TrackingDataset::~TrackingDataset() {}
 
-void TrackingDataset::addFrame(
+void TrackingDataset::AddFrame(
         const sensor_msgs::Image::ConstPtr& image,
         const sensor_msgs::CameraInfo::ConstPtr& info,
         const Eigen::VectorXd& ground_truth)
@@ -68,27 +68,27 @@ void TrackingDataset::addFrame(
     data_.push_back(data);
 }
 
-void TrackingDataset::addFrame(const sensor_msgs::Image::ConstPtr& image,
+void TrackingDataset::AddFrame(const sensor_msgs::Image::ConstPtr& image,
                                const sensor_msgs::CameraInfo::ConstPtr& info)
 {
     DataFrame data(image, info);
     data_.push_back(data);
 }
 
-sensor_msgs::Image::ConstPtr TrackingDataset::getImage(const size_t& index)
+sensor_msgs::Image::ConstPtr TrackingDataset::GetImage(const size_t& index)
 {
     return data_[index].image_;
 }
 
-sensor_msgs::CameraInfo::ConstPtr TrackingDataset::getInfo(const size_t& index)
+sensor_msgs::CameraInfo::ConstPtr TrackingDataset::GetInfo(const size_t& index)
 {
     return data_[index].info_;
 }
-pcl::PointCloud<pcl::PointXYZ>::ConstPtr TrackingDataset::getPointCloud(
+pcl::PointCloud<pcl::PointXYZ>::ConstPtr TrackingDataset::GetPointCloud(
         const size_t& index)
 {
     Eigen::MatrixXd image = ri::Ros2Eigen<double>(*data_[index].image_);
-    Eigen::Matrix<Eigen::Matrix<double, 3, 1> , -1, -1> points = ff::hf::Image2Points(image, getCameraMatrix(index));
+    Eigen::Matrix<Eigen::Matrix<double, 3, 1> , -1, -1> points = ff::hf::Image2Points(image, GetCameraMatrix(index));
     pcl::PointCloud<pcl::PointXYZ>::Ptr
             point_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
 
@@ -98,7 +98,7 @@ pcl::PointCloud<pcl::PointXYZ>::ConstPtr TrackingDataset::getPointCloud(
     return point_cloud;
 }
 
-Eigen::Matrix3d TrackingDataset::getCameraMatrix(const size_t& index)
+Eigen::Matrix3d TrackingDataset::GetCameraMatrix(const size_t& index)
 {
     Eigen::Matrix3d camera_matrix;
     for(size_t col = 0; col < 3; col++)
@@ -107,17 +107,17 @@ Eigen::Matrix3d TrackingDataset::getCameraMatrix(const size_t& index)
     return camera_matrix;
 }
 
-Eigen::VectorXd TrackingDataset::getGroundTruth(const size_t& index)
+Eigen::VectorXd TrackingDataset::GetGroundTruth(const size_t& index)
 {
     return data_[index].ground_truth_;
 }
 
-size_t TrackingDataset::sIze()
+size_t TrackingDataset::Size()
 {
     return data_.size();
 }
 
-void TrackingDataset::loAd()
+void TrackingDataset::Load()
 {
     // load bagfile ----------------------------------------------------------------------------
     rosbag::Bag bag;
@@ -138,7 +138,7 @@ void TrackingDataset::loAd()
     // Use time synchronizer to make sure we get properly synchronized images
     message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo>
             sync(image_subscriber, info_subscriber, 25);
-    sync.registerCallback(boost::bind(&TrackingDataset::addFrame, this,  _1, _2));
+    sync.registerCallback(boost::bind(&TrackingDataset::AddFrame, this,  _1, _2));
 
     // Load all messages into our stereo TrackingDataset
     BOOST_FOREACH(rosbag::MessageInstance const m, view)
@@ -191,7 +191,7 @@ void TrackingDataset::loAd()
     }
 }
 
-void TrackingDataset::stOre()
+void TrackingDataset::Store()
 {
     if(boost::filesystem::exists(path_ / observations_filename_) ||
        boost::filesystem::exists(path_ / ground_truth_filename_) )
