@@ -30,8 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define POSE_TRACKING_STATES_ROBOT_STATE_HPP_
 
 
-#include <pose_tracking/states/rigid_body_system.hpp>
-#include <pose_tracking/utils/kinematics_from_urdf.hpp>
+#include <pose_tracking/states/rigid_bodies_state.hpp>
+
+// TODO: THERE IS A PROBLEM HERE BECAUSE WE SHOULD NOT DEPEND ON THIS FILE,
+// SINCE IT IS IN A PACKAGE WHICH IS BELOW THIS PACKAGE.
+#include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
 
 #include <Eigen/Dense>
 #include <boost/static_assert.hpp>

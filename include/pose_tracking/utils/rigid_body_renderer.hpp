@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 
 #include <boost/shared_ptr.hpp>
-#include <pose_tracking/states/rigid_body_system.hpp>
+#include <pose_tracking/states/rigid_bodies_state.hpp>
 
 
 namespace ff

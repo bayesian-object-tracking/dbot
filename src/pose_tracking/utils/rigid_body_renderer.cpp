@@ -278,12 +278,12 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 
 // test the enchilada
 
-//VectorXd initial_rigid_body_system = VectorXd::Zero(15);
-//initial_rigid_body_system.middleRows(3, 4) = Quaterniond::Identity().coeffs();
+//VectorXd initial_rigid_bodies_state = VectorXd::Zero(15);
+//initial_rigid_bodies_state.middleRows(3, 4) = Quaterniond::Identity().coeffs();
 //
 //
 //obj_mod::LargeTrimmersModel objec_tmodel_enchilada(vertices, indices);
-//objec_tmodel_enchilada.set_state(initial_rigid_body_system);
+//objec_tmodel_enchilada.set_state(initial_rigid_bodies_state);
 //vector<std::vector<Eigen::Vector3d> > visualize_vertices;
 //while(ros::ok())
 //{
