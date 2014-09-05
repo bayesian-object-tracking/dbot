@@ -19,6 +19,16 @@ find_package(catkin REQUIRED
     image_transport
 )
 
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM)
+endif(DOXYGEN_FOUND)
+
 set(PROJECT_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${PROJECT_MODULE_PATH})
 
@@ -146,46 +156,50 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
-file(GLOB_RECURSE state_filtering_headers include/*.hpp include/*.h)
+set(PROJECT_NAME_FILTERING "fast_filtering")
+set(PROJECT_NAME_TRACKING "pose_tracking")
 
-set(state_filtering_sources
-    src/${PROJECT_NAME}/state_filtering.cpp
+file(GLOB_RECURSE state_filtering_headers include/${PROJECT_NAME_FILTERING}/*.hpp include/${PROJECT_NAME_FILTERING}/*.h)
+file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 
-    src/${PROJECT_NAME}/utils/image_visualizer.cpp
-    src/${PROJECT_NAME}/utils/cloud_visualizer.cpp
-    src/${PROJECT_NAME}/utils/object_file_reader.cpp
-    src/${PROJECT_NAME}/utils/kinematics_from_urdf.cpp
-    src/${PROJECT_NAME}/utils/rigid_body_renderer.cpp
-    src/${PROJECT_NAME}/utils/tracking_dataset.cpp
-    src/${PROJECT_NAME}/utils/pcl_interface.cpp
-    src/${PROJECT_NAME}/utils/ros_interface.cpp
+set(tracking_sources
+    src/${PROJECT_NAME_TRACKING}/pose_tracking.cpp
 
-    src/${PROJECT_NAME}/distributions/gaussian.cpp    
-    src/${PROJECT_NAME}/distributions/standard_gaussian.cpp
-    src/${PROJECT_NAME}/distributions/sum_of_deltas.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/image_visualizer.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/cloud_visualizer.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/object_file_reader.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/kinematics_from_urdf.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/rigid_body_renderer.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/tracking_dataset.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/pcl_interface.cpp
+    src/${PROJECT_NAME_TRACKING}/utils/ros_interface.cpp
 
-    src/${PROJECT_NAME}/models/processes/damped_wiener_process.cpp
-    src/${PROJECT_NAME}/models/processes/integrated_damped_wiener_process.cpp
-    src/${PROJECT_NAME}/models/processes/brownian_object_motion.cpp
+    src/${PROJECT_NAME_TRACKING}/distributions/gaussian.cpp
+    src/${PROJECT_NAME_TRACKING}/distributions/standard_gaussian.cpp
+    src/${PROJECT_NAME_TRACKING}/distributions/sum_of_deltas.cpp
 
-    src/${PROJECT_NAME}/models/observers/image_observer_cpu.cpp
+    src/${PROJECT_NAME_TRACKING}/models/processes/damped_wiener_process.cpp
+    src/${PROJECT_NAME_TRACKING}/models/processes/integrated_damped_wiener_process.cpp
+    src/${PROJECT_NAME_TRACKING}/models/processes/brownian_object_motion.cpp
 
-    src/${PROJECT_NAME}/states/rigid_body_system.cpp
-    src/${PROJECT_NAME}/states/floating_body_system.cpp
-    src/${PROJECT_NAME}/states/robot_state.cpp
+    src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_cpu.cpp
 
-    src/${PROJECT_NAME}/filters/stochastic/rao_blackwell_coordinate_particle_filter.cpp
+    src/${PROJECT_NAME_TRACKING}/states/rigid_body_system.cpp
+    src/${PROJECT_NAME_TRACKING}/states/floating_body_system.cpp
+    src/${PROJECT_NAME_TRACKING}/states/robot_state.cpp
 
-    src/${PROJECT_NAME}/trackers/object_tracker.cpp
-    src/${PROJECT_NAME}/trackers/robot_tracker.cpp
+    src/${PROJECT_NAME_TRACKING}/filters/stochastic/rao_blackwell_coordinate_particle_filter.cpp
+
+    src/${PROJECT_NAME_TRACKING}/trackers/object_tracker.cpp
+    src/${PROJECT_NAME_TRACKING}/trackers/robot_tracker.cpp
 )
 
 
 ## state_filtering
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME} ${state_filtering_headers} ${state_filtering_sources})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
+add_library(${PROJECT_NAME_TRACKING} ${state_filtering_headers} ${tracking_headers} ${tracking_sources})
+target_link_libraries(${PROJECT_NAME_TRACKING} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
 
 
 #set(CUDA_FOUND False)
@@ -194,33 +208,33 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_definitions( -DBUILD_GPU=1 )
     message("building cuda implementation")
 
-    set(state_filtering_gpu_SOURCES
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/image_observer_gpu.cpp
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_opengl_multiple_filter.cpp
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/object_rasterizer.cpp
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/shader.cpp)
+    set(tracking_gpu_SOURCES
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/image_observer_gpu.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_opengl_filter.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_opengl_multiple_filter.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/object_rasterizer.cpp
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/shader.cpp)
 
-    add_library(${PROJECT_NAME}_gpu
-        ${state_filtering_gpu_SOURCES})
+    add_library(${PROJECT_NAME_TRACKING}_gpu
+        ${tracking_gpu_SOURCES})
 
-    target_link_libraries(${PROJECT_NAME}_gpu
+    target_link_libraries(${PROJECT_NAME_TRACKING}_gpu
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
 
-    cuda_add_library(${PROJECT_NAME}_cuda
-        src/${PROJECT_NAME}/models/observers/image_observer_gpu/cuda_filter.cu)
-    target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_cuda)
+    cuda_add_library(${PROJECT_NAME_TRACKING}_cuda
+        src/${PROJECT_NAME_TRACKING}/models/observations/image_observer_gpu/cuda_filter.cu)
+    target_link_libraries(${PROJECT_NAME_TRACKING} ${PROJECT_NAME_TRACKING}_cuda)
 
     ## object_tracker
     add_executable(object_tracker
-        src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
+        src/${PROJECT_NAME_TRACKING}/trackers/object_tracker_node.cpp)
     target_link_libraries(object_tracker
-        ${PROJECT_NAME}
-        ${PROJECT_NAME}_gpu
-        ${PROJECT_NAME}_cuda
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
@@ -229,11 +243,11 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
     ## robot_tracker
     add_executable(robot_tracker
-        src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
+        src/${PROJECT_NAME_TRACKING}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
-        ${PROJECT_NAME}_gpu
-        ${PROJECT_NAME}_cuda
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
@@ -245,7 +259,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(robot_tracker
       src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
-        ${PROJECT_NAME}
+        ${PROJECT_NAME_TRACKING}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
@@ -255,7 +269,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(object_tracker
         src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
     target_link_libraries(object_tracker
-        ${PROJECT_NAME}
+        ${PROJECT_NAME_TRACKING}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
