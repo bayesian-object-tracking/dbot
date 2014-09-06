@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef FAST_FILTERING_STATES_RIGID_BODY_SYSTEM_HPP_
-#define FAST_FILTERING_STATES_RIGID_BODY_SYSTEM_HPP_
+#ifndef POSE_TRACKING_STATES_RIGID_BODIES_STATE_HPP
+#define POSE_TRACKING_STATES_RIGID_BODIES_STATE_HPP
 
 #include <Eigen/Dense>
 #include <vector>
@@ -35,7 +35,7 @@ namespace ff
 {
 
 template<int SIZE_STATE_ = -1>
-class RigidBodySystem: public Eigen::Matrix<double, SIZE_STATE_, 1>
+class RigidBodiesState: public Eigen::Matrix<double, SIZE_STATE_, 1>
 {
 public:
     typedef double Scalar;
@@ -54,12 +54,12 @@ public:
     };
 
     // constructor and destructor
-    template <typename T> RigidBodySystem(const Eigen::MatrixBase<T>& state_vector)
+    template <typename T> RigidBodiesState(const Eigen::MatrixBase<T>& state_vector)
     {
         *this = state_vector;
     }
 
-    virtual ~RigidBodySystem() {}
+    virtual ~RigidBodiesState() {}
 
     template <typename T>
     void operator = (const Eigen::MatrixBase<T>& state_vector)

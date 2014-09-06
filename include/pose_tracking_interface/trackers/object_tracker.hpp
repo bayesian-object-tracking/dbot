@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_TRACKERS_OBJECT_TRACKER_HPP
-#define POSE_TRACKING_TRACKERS_OBJECT_TRACKER_HPP
+#ifndef POSE_TRACKING_INTERFACE_TRACKERS_OBJECT_TRACKER_HPP
+#define POSE_TRACKING_INTERFACE_TRACKERS_OBJECT_TRACKER_HPP
 
 //#define PROFILING_ON
 
@@ -51,18 +51,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MultiObjectTracker
 {
 public:   
-    typedef ff::FloatingBodySystem<> State;
+    typedef ff::FreeFloatingRigidBodiesState<> State;
     typedef State::Scalar        Scalar;
 
-    typedef ff::BrownianObjectMotion<State>     ProcessModel;
-    typedef ff::ImageObserverCPU<Scalar, State> ObserverCPUType;
+    typedef ff::BrownianObjectMotionModel<State>     ProcessModel;
+    typedef ff::KinectImageObservationModelCPU<Scalar, State> ObservationModelCPUType;
 
 #ifdef BUILD_GPU
-    typedef ff::ImageObserverGPU<State>  ObserverGPUType;
+    typedef ff::KinectImageObservationModelGPU<State>  ObservationModelGPUType;
 #endif
 
-    typedef ObserverCPUType::Base ObservationModel;
-    typedef ObserverCPUType::Observation Observation;
+    typedef ObservationModelCPUType::Base ObservationModel;
+    typedef ObservationModelCPUType::Observation Observation;
 
     typedef ff::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 

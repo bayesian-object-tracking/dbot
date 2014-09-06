@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP_
-#define POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP_
+#ifndef POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP
+#define POSE_TRACKING_STATES_ROBOT_KINEMATICS_HPP
 
 
 #include <Eigen/Dense>
@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking/states/rigid_bodies_state.hpp>
 
-
+// TODO: WHY IS THIS SEPARATE FROM RIGID BODIES STATE?
 /// TODO: all of this is just a copy of he floating body stuff. in here the robot kinematics have to be implemented
 
 template<int size_bodies>
@@ -51,7 +51,7 @@ struct RobotKinematicsTypes
         ANGULAR_VELOCITY_INDEX = 9
     };
 
-    typedef ff::RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
+    typedef ff::RigidBodiesState<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
 };
 
 

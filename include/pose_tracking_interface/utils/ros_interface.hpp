@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_UTILS_ROS_INTERFACE_HPP_
-#define POSE_TRACKING_UTILS_ROS_INTERFACE_HPP_
+#ifndef POSE_TRACKING_INTERFACE_UTILS_ROS_INTERFACE_HPP
+#define POSE_TRACKING_INTERFACE_UTILS_ROS_INTERFACE_HPP
 
 #include <string>
 #include <limits>

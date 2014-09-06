@@ -118,7 +118,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 
     // the rigid_bodies_state is essentially the state vector with some convenience functions for retrieving
     // the poses of the rigid objects
-    boost::shared_ptr<ff::RigidBodySystem<> > robot_state(new RobotState<>(part_meshes_.size(),
+    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new RobotState<>(part_meshes_.size(),
                                                                        urdf_kinematics->num_joints(),
                                                                        urdf_kinematics));
     dimension_ = robot_state->state_size();
@@ -164,10 +164,10 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     boost::shared_ptr<ObservationModel> observation_model;
 
     // cpu obseration model -----------------------------------------------------------------------------------------------------
-    boost::shared_ptr<ff::KinectObserver> kinect_pixel_observation_model(
-                new ff::KinectObserver(tail_weight, model_sigma, sigma_factor));
-    boost::shared_ptr<ff::OcclusionProcess> occlusion_process_model(
-                new ff::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
+    boost::shared_ptr<ff::KinectPixelObservationModel> kinect_pixel_observation_model(
+                new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
+    boost::shared_ptr<ff::OcclusionProcessModel> occlusion_process_model(
+                new ff::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
     observation_model = boost::shared_ptr<ObservationModel>(
                 new ObservationModel(camera_matrix,
                                          image.rows(),

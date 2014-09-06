@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_TRACKING_STATES_ROBOT_STATE_HPP_
-#define POSE_TRACKING_STATES_ROBOT_STATE_HPP_
+#ifndef POSE_TRACKING_STATES_ROBOT_STATE_HPP
+#define POSE_TRACKING_STATES_ROBOT_STATE_HPP
 
 
 #include <pose_tracking/states/rigid_bodies_state.hpp>
@@ -60,7 +60,7 @@ struct RobotStateTypes
       ANGULAR_VELOCITY_INDEX = 9
     };
 
-  typedef ff::RigidBodySystem<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
+  typedef ff::RigidBodiesState<size_joints == -1 ? -1 : size_joints * COUNT_PER_JOINT> Base;
 };
 
 

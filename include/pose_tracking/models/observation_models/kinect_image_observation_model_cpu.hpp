@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_MODELS_OBSERVERS_IMAGE_OBSERVER_CPU_HPP
-#define POSE_TRACKING_MODELS_OBSERVERS_IMAGE_OBSERVER_CPU_HPP
+#ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_CPU_HPP
+#define POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_CPU_HPP
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -45,39 +45,39 @@ namespace ff
 {
 
 // Forward declarations
-template <typename Scalar, typename State, int OBJECTS> class ImageObserverCPU;
+template <typename Scalar, typename State, int OBJECTS> class KinectImageObservationModelCPU;
 
 namespace internal
 {
 /**
- * ImageObserverCPU distribution traits specialization
+ * ImageObservationModelCPU distribution traits specialization
  * \internal
  */
 template <typename Scalar, typename State, int OBJECTS>
-struct Traits<ImageObserverCPU<Scalar, State, OBJECTS> >
+struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 {
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModelInterface<State, Observation> ObservationModelBase;
+    typedef RaoBlackwellObservationModel<State, Observation> ObservationModelBase;
 
     typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
-    typedef boost::shared_ptr<ff::KinectObserver> PixelObservationModelPtr;
-    typedef boost::shared_ptr<ff::OcclusionProcess> OcclusionProcessModelPtr;
+    typedef boost::shared_ptr<ff::KinectPixelObservationModel> PixelObservationModelPtr;
+    typedef boost::shared_ptr<ff::OcclusionProcessModel> OcclusionProcessModelPtr;
 };
 }
 
 /**
- * \class ImageObserverCPU
+ * \class ImageObservationModelCPU
  *
  * \ingroup distributions
  * \ingroup observation_models
  */
 template <typename Scalar, typename State, int OBJECTS = -1>
-class ImageObserverCPU:
-        public internal::Traits<ImageObserverCPU<Scalar, State> >::ObservationModelBase
+class KinectImageObservationModelCPU:
+        public internal::Traits<KinectImageObservationModelCPU<Scalar, State> >::ObservationModelBase
 {
 public:
-    typedef internal::Traits<ImageObserverCPU<Scalar, State> > Traits;
+    typedef internal::Traits<KinectImageObservationModelCPU<Scalar, State> > Traits;
 
     typedef typename Traits::ObservationModelBase     Base;
     typedef typename Traits::Observation              Observation;
@@ -86,7 +86,7 @@ public:
     typedef typename Traits::OcclusionProcessModelPtr OcclusionProcessModelPtr;
 
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
-    ImageObserverCPU(
+    KinectImageObservationModelCPU(
 			const Eigen::Matrix3d& camera_matrix,
 			const size_t& n_rows,
 			const size_t& n_cols,
@@ -105,12 +105,12 @@ public:
         occlusion_process_model_(occlusion_process_model),
         observation_time_(0)
     {
-        REQUIRE_INTERFACE(State, RigidBodySystem<OBJECTS>);
+        REQUIRE_INTERFACE(State, RigidBodiesState<OBJECTS>);
 
         Reset();
     }
 
-    ~ImageObserverCPU() { }
+    ~KinectImageObservationModelCPU() { }
 
     std::vector<Scalar> Loglikes(const std::vector<State>& states,
                                  std::vector<size_t>& indices,
@@ -227,7 +227,7 @@ private:
     const size_t n_cols_;
     const float initial_visibility_prob_;
     const size_t max_sample_count_;
-    const boost::shared_ptr<RigidBodySystem<-1> > rigid_bodies_state_;
+    const boost::shared_ptr<RigidBodiesState<-1> > rigid_bodies_state_;
 
     // models
     ObjectRendererPtr object_model_;

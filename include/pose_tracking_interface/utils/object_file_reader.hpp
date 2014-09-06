@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_TRACKING_UTILS_OBJECT_FILE_READER_HPP_
-#define POSE_TRACKING_UTILS_OBJECT_FILE_READER_HPP_
+#ifndef POSE_TRACKING_INTERFACE_UTILS_OBJECT_FILE_READER_HPP
+#define POSE_TRACKING_INTERFACE_UTILS_OBJECT_FILE_READER_HPP
 
 // #include <pose_tracking/pose_tracking.hpp>
 

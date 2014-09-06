@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_MODELS_OBSERVERS_KINECT_OBSERVER_HPP_
-#define POSE_TRACKING_MODELS_OBSERVERS_KINECT_OBSERVER_HPP_
+#ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_PIXEL_OBSERVATION_MODEL_HPP
+#define POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_PIXEL_OBSERVATION_MODEL_HPP
 
 #include <Eigen/Dense>
 #include <fast_filtering/distributions/interfaces/evaluation.hpp>
@@ -38,38 +38,38 @@ namespace ff
 {
 
 // Forward declarations
-class KinectObserver;
+class KinectPixelObservationModel;
 
 namespace internal
 {
 /**
- * KinectObserver distribution traits specialization
+ * KinectObservationModel distribution traits specialization
  * \internal
  */
 template <>
-struct Traits<KinectObserver>
+struct Traits<KinectPixelObservationModel>
 {
     typedef double Scalar;
     typedef double Observation;
-    typedef EvaluationInterface<Observation, Scalar>   EvaluationInterfaceBase;
+    typedef Evaluation<Observation, Scalar>   EvaluationBase;
 };
 }
 
 
 /**
- * \class KinectObserver
+ * \class KinectObservationModel
  *
  * \ingroup distributions
  * \ingroup observation_models
  */
-class KinectObserver:
-        public internal::Traits<KinectObserver>::EvaluationInterfaceBase
+class KinectPixelObservationModel:
+        public internal::Traits<KinectPixelObservationModel>::EvaluationBase
 {
 public:
-    typedef typename internal::Traits<KinectObserver>::Scalar Scalar;
-    typedef typename internal::Traits<KinectObserver>::Observation Observation;
+    typedef typename internal::Traits<KinectPixelObservationModel>::Scalar Scalar;
+    typedef typename internal::Traits<KinectPixelObservationModel>::Observation Observation;
 
-    KinectObserver(Scalar tail_weight = 0.01,
+    KinectPixelObservationModel(Scalar tail_weight = 0.01,
                            Scalar model_sigma = 0.003,
                            Scalar sigma_factor = 0.00142478,
                            Scalar half_life_depth = 1.0,
@@ -80,7 +80,7 @@ public:
           sigma_factor_(sigma_factor),
           max_depth_(max_depth) { }
 
-    virtual ~KinectObserver() {}
+    virtual ~KinectPixelObservationModel() {}
 
     virtual Scalar Probability(const Observation& observation) const
     {

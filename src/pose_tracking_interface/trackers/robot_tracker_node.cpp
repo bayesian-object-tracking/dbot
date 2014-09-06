@@ -85,7 +85,7 @@ public:
     ri::ReadParameter("camera_info_topic", camera_info_topic_, priv_nh_);
     ri::ReadParameter("initial_sample_count", initial_sample_count_, priv_nh_);
     
-    ros::Subscriber depth_image_sub = nh_.subscribe<sensor_msgs::Image>(depth_image_topic_, 
+    ros::Subscriber depth_image_sub = nh_.subscribe<sensor_msgs::Image>(depth_image_topic_,
 									     1,
 									     &RobotTrackerNode::depthImageCallback, 
 									     this);
@@ -96,7 +96,7 @@ public:
     
     while(!(has_joints_ & has_image_))
       {
-	ROS_INFO("Waiting for joint angles and depth images: %d %d", has_joints_, has_image_);
+    ROS_INFO("Waiting for joint angles and depth images: %d %d", has_joints_, has_image_);
 	ros::spinOnce();
 	usleep(10000);
       }
@@ -112,7 +112,7 @@ public:
     std::cout << "done initializing" << std::endl;
    
     
-    subscriber_ = nh_.subscribe(depth_image_topic_, 
+    subscriber_ = nh_.subscribe(depth_image_topic_,
 			       1, 
 			       &RobotTracker::Filter, 
 			       &robot_tracker_);

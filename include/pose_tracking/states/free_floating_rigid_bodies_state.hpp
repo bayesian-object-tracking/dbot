@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef FAST_FILTERING_STATES_FLOATING_BODY_SYSTEM_HPP_
-#define FAST_FILTERING_STATES_FLOATING_BODY_SYSTEM_HPP_
+#ifndef POSE_TRACKING_STATES_FREE_FLOATING_RIGID_BODIES_STATE_HPP
+#define POSE_TRACKING_STATES_FREE_FLOATING_RIGID_BODIES_STATE_HPP
 
 #include <pose_tracking/states/rigid_bodies_state.hpp>
 
@@ -40,7 +40,7 @@ namespace ff
 {
 
 template<int size_bodies>
-struct FloatingBodySystemTypes
+struct FreeFloatingRigidBodiesStateTypes
 {
     enum
     {
@@ -54,16 +54,16 @@ struct FloatingBodySystemTypes
         ANGULAR_VELOCITY_INDEX = 9
     };
 
-    typedef RigidBodySystem<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
+    typedef RigidBodiesState<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
     typedef Eigen::Matrix<typename Base::Scalar, size_bodies == -1 ? -1 : size_bodies * POSE_COUNT, 1> Poses;
 };
 
 
 template<int size_bodies = -1>
-class FloatingBodySystem: public FloatingBodySystemTypes<size_bodies>::Base
+class FreeFloatingRigidBodiesState: public FreeFloatingRigidBodiesStateTypes<size_bodies>::Base
 {
 public:
-    typedef FloatingBodySystemTypes<size_bodies> Types;
+    typedef FreeFloatingRigidBodiesStateTypes<size_bodies> Types;
     typedef typename Types::Base Base;
     enum
     {
@@ -100,16 +100,16 @@ public:
     using Base::state_size;
 
     // constructor for fixed size without initial value
-    FloatingBodySystem(): Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE )) { }
+    FreeFloatingRigidBodiesState(): Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE )) { }
 
     // constructor for dynamic size without initial value
-    FloatingBodySystem(unsigned count_bodies): Base(State::Zero(count_bodies * COUNT_PER_BODY)) { }
+    FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * COUNT_PER_BODY)) { }
 
     // constructor with initial value
-    template <typename T> FloatingBodySystem(const Eigen::MatrixBase<T>& state_vector):
+    template <typename T> FreeFloatingRigidBodiesState(const Eigen::MatrixBase<T>& state_vector):
         Base(state_vector) { }
 
-    virtual ~FloatingBodySystem() {}
+    virtual ~FreeFloatingRigidBodiesState() {}
 
     virtual void update() const { }
   

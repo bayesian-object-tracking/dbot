@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_OCCLUSION_PROCESS_MODEL_HPP_
-#define POSE_TRACKING_OCCLUSION_PROCESS_MODEL_HPP_
+#ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
+#define POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 
 #include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
 
@@ -35,7 +35,7 @@ namespace ff
 {
 
 // Forward declarations
-class OcclusionProcess;
+class OcclusionProcessModel;
 
 namespace internal
 {
@@ -44,7 +44,7 @@ namespace internal
  * \internal
  */
 template < >
-struct Traits<OcclusionProcess>
+struct Traits<OcclusionProcessModel>
 {
     enum
     {
@@ -58,7 +58,7 @@ struct Traits<OcclusionProcess>
     typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
     typedef Eigen::Matrix<Scalar, DIMENSION, 1>     Input;
 
-    typedef ff::StationaryProcessModelInterface<Vector, Input> ProcessModelBase;
+    typedef ff::StationaryProcessModel<Vector, Input> ProcessModelBase;
 };
 }
 
@@ -68,11 +68,11 @@ struct Traits<OcclusionProcess>
  * \ingroup distributions
  * \ingroup process_models
  */
-class OcclusionProcess:
-        public internal::Traits<OcclusionProcess>::ProcessModelBase
+class OcclusionProcessModel:
+        public internal::Traits<OcclusionProcessModel>::ProcessModelBase
 {
 public:
-    typedef internal::Traits<OcclusionProcess> Traits;
+    typedef internal::Traits<OcclusionProcessModel> Traits;
 
     typedef typename Traits::Scalar Scalar;
     typedef typename Traits::Vector State;
@@ -90,21 +90,21 @@ public:
 public:
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
-    OcclusionProcess(Scalar p_occluded_visible,
+    OcclusionProcessModel(Scalar p_occluded_visible,
                           Scalar p_occluded_occluded)
         : p_occluded_visible_(p_occluded_visible),
           p_occluded_occluded_(p_occluded_occluded),
           c_(p_occluded_occluded_ - p_occluded_visible_),
           log_c_(std::log(c_)) {}
 
-    virtual ~OcclusionProcess() {}
+    virtual ~OcclusionProcessModel() {}
 
 
     virtual Scalar Propagate(Scalar occlusion_probability, Scalar delta_time /*in s*/)
     {
         delta_time_ = delta_time;
         occlusion_probability_ = occlusion_probability;
-        return MapGaussian()(0);
+        return MapStandardGaussian()(0);
     }
 
     virtual void Condition(const Scalar& delta_time,
@@ -115,7 +115,7 @@ public:
         occlusion_probability_ = state(0);
     }
 
-    virtual State MapGaussian() const
+    virtual State MapStandardGaussian() const
     {
         State state_vector;
 
@@ -130,9 +130,9 @@ public:
     }
 
 
-    virtual State MapGaussian(const Input& sample) const
+    virtual State MapStandardGaussian(const Input& sample) const
     {
-        return MapGaussian();
+        return MapStandardGaussian();
     }
 
 //    virtual int vector_size() const

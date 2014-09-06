@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_ROBOT_TRACKER_
-#define POSE_TRACKING_ROBOT_TRACKER_
+#ifndef POSE_TRACKING_INTERFACE_TRACKERS_ROBOT_TRACKER_HPP
+#define POSE_TRACKING_INTERFACE_TRACKERS_ROBOT_TRACKER_HPP
 
 #include <boost/thread/mutex.hpp>
 
@@ -51,8 +51,8 @@ public:
     typedef RobotState<>    State;
     typedef State::Scalar   Scalar;
 
-    typedef ff::DampedWienerProcess<State>      ProcessModel;
-    typedef ff::ImageObserverCPU<Scalar, State> ObservationModel;
+    typedef ff::DampedWienerProcessModel<State>      ProcessModel;
+    typedef ff::KinectImageObservationModelCPU<Scalar, State> ObservationModel;
 
     typedef typename ProcessModel::Input            Input;
     typedef typename ObservationModel::Observation  Observation;

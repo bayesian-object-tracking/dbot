@@ -45,8 +45,8 @@
  */
 
 
-#ifndef POSE_TRACKING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
-#define POSE_TRACKING_MODELS_PROCESS_BROWNIAN_OBJECT_MOTION_HPP
+#ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
+#define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 
 #include <fast_filtering/utils/helper_functions.hpp>
 #include <fast_filtering/utils/assertions.hpp>
@@ -60,7 +60,7 @@ namespace ff
 
 // Forward declarations
 //TODO: THIS IS REDUNDANT!!
-template <typename State, int OBJECTS> class BrownianObjectMotion;
+template <typename State, int OBJECTS> class BrownianObjectMotionModel;
 
 namespace internal
 {
@@ -69,7 +69,7 @@ namespace internal
  * \internal
  */
 template <typename State_, int OBJECTS>
-struct Traits<BrownianObjectMotion<State_, OBJECTS> >
+struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
 {
     enum
     {
@@ -84,10 +84,10 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
 
     typedef Eigen::Quaternion<Scalar>                      Quaternion;
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
-    typedef IntegratedDampedWienerProcess<ObjectState>     Process;
+    typedef IntegratedDampedWienerProcessModel<ObjectState>     Process;
 
-    typedef StationaryProcessModelInterface<State, Input>    ProcessModelBase;
-    typedef GaussianMappableInterface<State, Noise>          GaussianMappableBase;
+    typedef StationaryProcessModel<State, Input>    ProcessModelBase;
+    typedef GaussianMap<State, Noise>          GaussianMapBase;
 };
 }
 
@@ -98,12 +98,12 @@ struct Traits<BrownianObjectMotion<State_, OBJECTS> >
  * \ingroup process_models
  */
 template <typename State_, int OBJECTS = -1>
-class BrownianObjectMotion:
-        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::ProcessModelBase,
-        public internal::Traits<BrownianObjectMotion<State_, OBJECTS> >::GaussianMappableBase
+class BrownianObjectMotionModel:
+        public internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::ProcessModelBase,
+        public internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::GaussianMapBase
 {
 public:
-    typedef internal::Traits<BrownianObjectMotion<State_, OBJECTS> > Traits;
+    typedef internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> > Traits;
 
     typedef typename Traits::Scalar     Scalar;
     typedef typename Traits::State      State;
@@ -118,12 +118,12 @@ public:
     };
 
 public:
-    BrownianObjectMotion(const unsigned& count_objects = OBJECTS):
-        Traits::GaussianMappableBase(
+    BrownianObjectMotionModel(const unsigned& count_objects = OBJECTS):
+        Traits::GaussianMapBase(
             count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
-        REQUIRE_INTERFACE(State, FloatingBodySystem<OBJECTS>);
+        REQUIRE_INTERFACE(State, FreeFloatingRigidBodiesState<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
@@ -131,17 +131,17 @@ public:
         angular_process_.resize(count_objects);
     }
 
-    virtual ~BrownianObjectMotion() { }
+    virtual ~BrownianObjectMotionModel() { }
 
-    virtual State MapGaussian(const Noise& sample) const
+    virtual State MapStandardGaussian(const Noise& sample) const
     {
         State new_state(state_.bodies_size());
         for(size_t i = 0; i < new_state.bodies_size(); i++)
         {
             Eigen::Matrix<Scalar, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
             Eigen::Matrix<Scalar, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
-            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapGaussian(position_noise);
-            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapGaussian(orientation_noise);
+            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapStandardGaussian(position_noise);
+            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapStandardGaussian(orientation_noise);
 
             new_state.position(i) = state_.position(i) + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.quaternion(i).coeffs() + quaternion_map_[i] * angular_delta.topRows(3));

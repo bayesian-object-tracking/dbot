@@ -93,7 +93,7 @@ void MultiObjectTracker::Initialize(
         object_triangle_indices[i] = *file_reader.get_indices();
     }
 
-    boost::shared_ptr<State> rigid_bodies_state(new ff::FloatingBodySystem<>(object_names_.size()));
+    boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
     boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
                                                                       object_vertices,
                                                                       object_triangle_indices,
@@ -108,12 +108,12 @@ void MultiObjectTracker::Initialize(
     {
 
         // cpu obseration model
-        boost::shared_ptr<ff::KinectObserver>
-                kinect_pixel_observation_model(new ff::KinectObserver(tail_weight, model_sigma, sigma_factor));
-        boost::shared_ptr<ff::OcclusionProcess>
-                occlusion_process(new ff::OcclusionProcess(1. - p_visible_visible, 1. - p_visible_occluded));
-        observation_model = boost::shared_ptr<ObserverCPUType>(
-                    new ObserverCPUType(camera_matrix,
+        boost::shared_ptr<ff::KinectPixelObservationModel>
+                kinect_pixel_observation_model(new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<ff::OcclusionProcessModel>
+                occlusion_process(new ff::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
+        observation_model = boost::shared_ptr<ObservationModelCPUType>(
+                    new ObservationModelCPUType(camera_matrix,
                                         image.rows(),
                                         image.cols(),
                                         initial_states.size(),
@@ -126,14 +126,14 @@ void MultiObjectTracker::Initialize(
     {
 #ifdef BUILD_GPU
         // gpu obseration model
-        boost::shared_ptr<ObserverGPUType>
-                gpu_observer(new ObserverGPUType(camera_matrix,
+        boost::shared_ptr<ObservationModelGPUType>
+                gpu_observation_model(new ObservationModelGPUType(camera_matrix,
                                                  image.rows(),
                                                  image.cols(),
                                                  max_sample_count,
                                                  p_visible_init));
 
-        gpu_observer->Constants(object_vertices,
+        gpu_observation_model->Constants(object_vertices,
                                 object_triangle_indices,
                                 p_visible_visible,
                                 p_visible_occluded,
@@ -143,8 +143,8 @@ void MultiObjectTracker::Initialize(
                                 6.0f,         // max_depth
                                 -log(0.5));   // exponential_rate
 
-        gpu_observer->Initialize();
-        observation_model = gpu_observer;
+        gpu_observation_model->Initialize();
+        observation_model = gpu_observation_model;
 #endif
     }
 
@@ -177,11 +177,11 @@ void MultiObjectTracker::Initialize(
     if(state_is_partial)
     {
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        ff::FloatingBodySystem<> default_state(object_names_.size());
+        ff::FreeFloatingRigidBodiesState<> default_state(object_names_.size());
         for(size_t object_index = 0; object_index < object_names_.size(); object_index++)
             default_state.position(object_index) = Eigen::Vector3d(0, 0, 1.5); // outside of image
 
-        std::vector<ff::FloatingBodySystem<> > multi_body_samples(initial_states.size());
+        std::vector<ff::FreeFloatingRigidBodiesState<> > multi_body_samples(initial_states.size());
         for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             multi_body_samples[state_index] = default_state;
 
@@ -191,7 +191,7 @@ void MultiObjectTracker::Initialize(
             std::cout << "evalution of object " << object_names_[body_index] << std::endl;
             for(size_t state_index = 0; state_index < multi_body_samples.size(); state_index++)
             {
-                ff::FloatingBodySystem<> full_initial_state(multi_body_samples[state_index]);
+                ff::FreeFloatingRigidBodiesState<> full_initial_state(multi_body_samples[state_index]);
                 full_initial_state[body_index] = initial_states[state_index];
                 multi_body_samples[state_index] = full_initial_state;
             }
@@ -204,7 +204,7 @@ void MultiObjectTracker::Initialize(
     }
     else
     {
-        std::vector<ff::FloatingBodySystem<> > multi_body_samples(initial_states.size());
+        std::vector<ff::FreeFloatingRigidBodiesState<> > multi_body_samples(initial_states.size());
         for(size_t i = 0; i < multi_body_samples.size(); i++)
             multi_body_samples[i] = initial_states[i];
 
@@ -233,7 +233,7 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
 
 
     // visualize the mean state
-    ff::FloatingBodySystem<> mean = filter_->StateDistribution().Mean();
+    ff::FreeFloatingRigidBodiesState<> mean = filter_->StateDistribution().Mean();
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";

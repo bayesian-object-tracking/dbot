@@ -1,5 +1,5 @@
-#ifndef POSE_TRACKING_MODELS_OBSERVERS_IMAGE_OBSERVER_GPU_HPP
-#define POSE_TRACKING_MODELS_OBSERVERS_IMAGE_OBSERVER_GPU_HPP
+#ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_GPU_HPP
+#define POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_GPU_HPP
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
@@ -23,21 +23,21 @@ namespace ff
 {
 
 // Forward declarations
-template <typename State> class ImageObserverGPU;
+template <typename State> class KinectImageObservationModelGPU;
 
 namespace internal
 {
 /**
- * ImageObserverCPU distribution traits specialization
+ * ImageObservationModelCPU distribution traits specialization
  * \internal
  */
 template <typename State>
-struct Traits<ImageObserverGPU<State> >
+struct Traits<KinectImageObservationModelGPU<State> >
 {
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModelInterface<State, Observation> ObservationModelBase;
+    typedef RaoBlackwellObservationModel<State, Observation> ObservationModelBase;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
@@ -46,24 +46,24 @@ struct Traits<ImageObserverGPU<State> >
 }
 
 /**
- * \class ImageObserverGPU
+ * \class ImageObservationModelGPU
  *
  * \ingroup distributions
  * \ingroup observation_models
  */
 template <typename State>
-class ImageObserverGPU:
-        public internal::Traits<ImageObserverGPU<State> >::ObservationModelBase
+class KinectImageObservationModelGPU:
+        public internal::Traits<KinectImageObservationModelGPU<State> >::ObservationModelBase
 {
 public:
-    typedef internal::Traits<ImageObserverGPU<State> > Traits;
+    typedef internal::Traits<KinectImageObservationModelGPU<State> > Traits;
 
     typedef typename Traits::Scalar         Scalar;
     typedef typename Traits::Observation    Observation;
     typedef typename Traits::CameraMatrix   CameraMatrix;
 
 
-    ImageObserverGPU(const CameraMatrix& camera_matrix,
+    KinectImageObservationModelGPU(const CameraMatrix& camera_matrix,
                      const size_t& n_rows,
                      const size_t& n_cols,
                      const size_t& max_sample_count,
@@ -84,7 +84,7 @@ public:
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
 
-    ~ImageObserverGPU() { }
+    ~KinectImageObservationModelGPU() { }
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
     void Initialize()

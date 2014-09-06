@@ -45,10 +45,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;
 
-class TrackerInterface
+class Tracker
 {
 public:
-    TrackerInterface(boost::shared_ptr<MultiObjectTracker> tracker): tracker_(tracker), node_handle_("~")
+    Tracker(boost::shared_ptr<MultiObjectTracker> tracker): tracker_(tracker), node_handle_("~")
     {
         std::string config_file;
         ri::ReadParameter("config_file", config_file, node_handle_);
@@ -69,19 +69,19 @@ public:
 
         path_ /= "tracking_data_" + current_time + ".txt";
     }
-    ~TrackerInterface() {}
+    ~Tracker() {}
 
     void Filter(const sensor_msgs::Image& ros_image)
     {
         INIT_PROFILING
-        ff::FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
+        ff::FreeFloatingRigidBodiesState<-1> mean_state = tracker_->Filter(ros_image);
         MEASURE("total time for filtering")
     }
 
     void FilterAndStore(const sensor_msgs::Image& ros_image)
     {
         INIT_PROFILING
-        ff::FloatingBodySystem<-1> mean_state = tracker_->Filter(ros_image);
+        ff::FreeFloatingRigidBodiesState<-1> mean_state = tracker_->Filter(ros_image);
         MEASURE("total time for filtering")
 
         std::ofstream file;
@@ -137,9 +137,9 @@ int main (int argc, char **argv)
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
         tracker->Initialize(initial_states, *ros_image, camera_matrix);
         std::cout << "done initializing" << std::endl;
-        TrackerInterface interface(tracker);
+        Tracker interface(tracker);
 
-        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &TrackerInterface::FilterAndStore, &interface);
+        ros::Subscriber subscriber = node_handle.subscribe(depth_image_topic, 1, &Tracker::FilterAndStore, &interface);
         ros::spin();
     }
     // read from bagfile
@@ -153,7 +153,7 @@ int main (int argc, char **argv)
         std::cout << "setting initial state " << std::endl;
         std::cout << TrackingDataset.GetGroundTruth(0).transpose() << std::endl;
         std::cout << "done printing vector " << std::endl;
-        ff::FloatingBodySystem<-1> initial_state(object_names.size());
+        ff::FreeFloatingRigidBodiesState<-1> initial_state(object_names.size());
         initial_state.poses(TrackingDataset.GetGroundTruth(0).topRows(object_names.size()*6)); // we read only the part of the state we need
         std::vector<Eigen::VectorXd> initial_states(1, initial_state);
 
@@ -161,7 +161,7 @@ int main (int argc, char **argv)
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);
         tracker->Initialize(initial_states, *TrackingDataset.GetImage(0), TrackingDataset.GetCameraMatrix(0), false);
-        TrackerInterface interface(tracker);
+        Tracker interface(tracker);
 
         ros::Publisher image_publisher = node_handle.advertise<sensor_msgs::Image>("/bagfile/depth/image", 0);
         ros::Publisher cloud_publisher = node_handle.advertise<pcl::PointCloud<pcl::PointXYZ> > ("/bagfile/depth/points", 0);
