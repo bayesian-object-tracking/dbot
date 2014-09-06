@@ -320,12 +320,9 @@ int KinematicsFromURDF::num_joints()
   return kin_tree_.getNrOfJoints();
 }
 
-// TODO: IS THIS EFFICIENT?
 int KinematicsFromURDF::num_links()
 {
-    std::vector<boost::shared_ptr<urdf::Link> > links;
-    urdf_.getLinks(links);
-    return links.size();
+    return part_mesh_map_.size();
 }
 
 
