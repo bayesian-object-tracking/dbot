@@ -92,6 +92,9 @@ public:
   // Get the number of joints
   int num_joints();
 
+  int num_links();
+
+
   std::string GetLinkName(int idx);
 
   std::vector<std::string> GetJointMap();
