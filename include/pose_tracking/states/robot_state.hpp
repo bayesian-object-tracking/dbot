@@ -38,34 +38,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // SINCE IT IS IN A PACKAGE WHICH IS BELOW THIS PACKAGE.
 #include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
 
-template<int size_joints>
-struct RobotStateTypes
-{
-  enum
-    {
-      // For the joints
-      JOINT_ANGLE_INDEX = 0,
-      //JOINT_VELOCITY_INDEX = 1,
-      // TODO: Check if obsolete
-      // for the links
-      COUNT_PER_BODY = 12,
-      BLOCK_COUNT = 3,
-      POSITION_INDEX = 0,
-      ORIENTATION_INDEX = 3,
-      LINEAR_VELOCITY_INDEX = 6,
-      ANGULAR_VELOCITY_INDEX = 9
-    };
-
-  typedef ff::RigidBodiesState<size_joints> Base;
-};
-
 
 template<int size_joints = -1, int size_bodies = -1>
-class RobotState: public RobotStateTypes<size_joints>::Base
+class RobotState: public ff::RigidBodiesState<size_joints>
 {
 public:
-  typedef RobotStateTypes<size_joints> Types;
-  typedef typename Types::Base Base;
+
+  typedef ff::RigidBodiesState<size_joints> Base;
 
   typedef typename Base::Scalar   Scalar;
   typedef typename Base::State    State;
@@ -76,37 +55,15 @@ public:
   typedef typename Base::RotationMatrix       RotationMatrix;
   typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
 
-  enum
-    {
-      // for the joints
-      JOINT_ANGLE_INDEX = Types::JOINT_ANGLE_INDEX,
-      //JOINT_VELOCITY_INDEX = Types::JOINT_VELOCITY_INDEX,
-      // For the links
-      SIZE_BODIES = size_bodies,
-      COUNT_PER_BODY = Types::COUNT_PER_BODY,
-      BLOCK_COUNT = Types::BLOCK_COUNT,
-      POSITION_INDEX = Types::POSITION_INDEX,
-      ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
-      LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-      ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX
-    };
 
   // give access to base member functions (otherwise it is shadowed)
   //using Base::quaternion;
-  //using Base::state_size;
 
-  //TODO: SHOULD THIS BE ALLOWED?
   using Base::operator=;
   
   RobotState(): initialized_(false) {  }
-
-  // constructor for dynamic size without initial value
-
-  // TODO: COULD WE GET THE NUMBER OF BODIES AND THE NUMBER OF JOINTS FROM THE KINEMATICS?
-  RobotState(unsigned body_count,
-             const boost::shared_ptr<KinematicsFromURDF>& kinematics):
+  RobotState(const boost::shared_ptr<KinematicsFromURDF>& kinematics):
                                                 Base(State::Zero(kinematics->num_joints())),
-                                                body_count_(body_count),
                                                 kinematics_(kinematics),
                                                 initialized_(true)
   {
@@ -153,13 +110,6 @@ public:
       return kinematics_->num_links();
   }
 
-//  virtual unsigned joints_size() const
-//  {
-//    CheckInitialization("joints_size");
-//    return joint_count_;
-//  }
-
-
   void GetJointState(std::map<std::string, double>& joint_positions)
   {
       CheckInitialization("GetJointState");
@@ -183,9 +133,6 @@ private:
   }
 
   bool initialized_;
-
-  unsigned body_count_;
-
 
   // pointer to the robot kinematic
   boost::shared_ptr<KinematicsFromURDF>  kinematics_;

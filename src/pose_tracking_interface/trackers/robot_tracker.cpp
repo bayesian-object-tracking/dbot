@@ -118,8 +118,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 
     // the rigid_bodies_state is essentially the state vector with some convenience functions for retrieving
     // the poses of the rigid objects
-    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new RobotState<>(part_meshes_.size(),
-                                                                       urdf_kinematics));
+    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new RobotState<>(urdf_kinematics));
 
 
 
@@ -127,8 +126,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     dimension_ = robot_state->size();
 
     // initialize the result container for the emperical mean
-    mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(part_meshes_.size(),
-                                              urdf_kinematics));
+    mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(urdf_kinematics));
 
     robot_renderer_ = boost::shared_ptr<ff::RigidBodyRenderer>(
                 new ff::RigidBodyRenderer(part_vertices,
