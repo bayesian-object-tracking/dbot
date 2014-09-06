@@ -89,7 +89,6 @@ public:
       //JOINT_VELOCITY_INDEX = Types::JOINT_VELOCITY_INDEX,
       // For the links
       SIZE_BODIES = size_bodies,
-      SIZE_STATE = Base::SIZE_STATE,
       COUNT_PER_BODY = Types::COUNT_PER_BODY,
       BLOCK_COUNT = Types::BLOCK_COUNT,
       POSITION_INDEX = Types::POSITION_INDEX,
@@ -167,9 +166,9 @@ public:
   }
 
 
-  virtual unsigned bodies_size() const
+  virtual unsigned body_count() const
   {
-    CheckInitialization("bodies_size");
+    CheckInitialization("body_count");
     return num_bodies_;
   }
 

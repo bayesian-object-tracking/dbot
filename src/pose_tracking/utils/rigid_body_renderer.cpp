@@ -266,9 +266,9 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 {
     *state_ = state;
     state_->update();
-    R_.resize(state_->bodies_size());
-    t_.resize(state_->bodies_size());
-    for(size_t part_index = 0; part_index < state_->bodies_size(); part_index++)
+    R_.resize(state_->body_count());
+    t_.resize(state_->body_count());
+    for(size_t part_index = 0; part_index < state_->body_count(); part_index++)
     {
         R_[part_index] = state_->rotation_matrix(part_index);
         t_[part_index] = state_->position(part_index);

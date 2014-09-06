@@ -121,7 +121,11 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new RobotState<>(part_meshes_.size(),
                                                                        urdf_kinematics->num_joints(),
                                                                        urdf_kinematics));
-    dimension_ = robot_state->state_size();
+
+
+
+
+    dimension_ = robot_state->size();
 
     // initialize the result container for the emperical mean
     mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(part_meshes_.size(),

@@ -34,13 +34,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ff
 {
 
-template<int SIZE_STATE_ = -1>
-class RigidBodiesState: public Eigen::Matrix<double, SIZE_STATE_, 1>
+template<int Dimension = -1>
+class RigidBodiesState: public Eigen::Matrix<double, Dimension, 1>
 {
 public:
     typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, SIZE_STATE_, 1>       State;
-    typedef Eigen::Matrix<Scalar, 3, 1>                 Vector;
+    typedef Eigen::Matrix<Scalar, Dimension, 1>       State;
+    typedef Eigen::Matrix<Scalar, 3, 1>               Vector;
 
     // rotation types
     typedef Eigen::AngleAxis<Scalar>    AngleAxis;
@@ -48,12 +48,8 @@ public:
     typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
     typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
 
-    enum
-    {
-        SIZE_STATE = SIZE_STATE_
-    };
-
     // constructor and destructor
+    RigidBodiesState() { }
     template <typename T> RigidBodiesState(const Eigen::MatrixBase<T>& state_vector)
     {
         *this = state_vector;
@@ -64,7 +60,6 @@ public:
     template <typename T>
     void operator = (const Eigen::MatrixBase<T>& state_vector)
     {
-        count_state_ = state_vector.rows();
         *((State*)(this)) = state_vector;
     }
   
@@ -83,7 +78,6 @@ public:
         {
             return Quaternion(AngleAxis(angle, axis));
         }
-
         return Quaternion::Identity();
     }
     virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
@@ -99,17 +93,7 @@ public:
         return homogeneous_matrix;
     }
 
-    // counts
-    virtual unsigned state_size() const
-    {
-        return count_state_;
-    }
-
-    virtual unsigned bodies_size() const = 0;
-
-private:
-    // this is the actual state size, since the SIZE_STATE can also be -1 for dynamic size
-    unsigned count_state_;
+    virtual unsigned body_count() const = 0;
 };
 
 }

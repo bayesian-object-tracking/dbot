@@ -206,10 +206,10 @@ public:
 
             // convert to internal state format
             std::vector<std::vector<std::vector<float> > > states_internal_format( n_poses_,
-                                                                    std::vector<std::vector<float> >(states[0].bodies_size(),
+                                                                    std::vector<std::vector<float> >(states[0].body_count(),
                                                                     std::vector<float>(7, 0)));
             for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-                for(size_t body_index = 0; body_index < states[state_index].bodies_size(); body_index++)
+                for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
                 {
                     states_internal_format[state_index][body_index][0] = states[state_index].quaternion(body_index).w();
                     states_internal_format[state_index][body_index][1] = states[state_index].quaternion(body_index).x();

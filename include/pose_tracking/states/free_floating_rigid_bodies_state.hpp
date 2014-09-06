@@ -29,12 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_STATES_FREE_FLOATING_RIGID_BODIES_STATE_HPP
 #define POSE_TRACKING_STATES_FREE_FLOATING_RIGID_BODIES_STATE_HPP
 
+#include <Eigen/Dense>
+#include <vector>
+
 #include <pose_tracking/states/rigid_bodies_state.hpp>
 
-#include <Eigen/Dense>
-#include <boost/static_assert.hpp>
-
-#include <vector>
 
 namespace ff
 {
@@ -44,9 +43,9 @@ struct FreeFloatingRigidBodiesStateTypes
 {
     enum
     {
-        COUNT_PER_BODY = 12,
-        POSE_COUNT = 6,
-        BLOCK_COUNT = 3,
+        BODY_SIZE = 12,
+        POSE_SIZE = 6,
+        BLOCK_SIZE = 3,
         POSITION_INDEX = 0,
         POSE_INDEX = 0,
         ORIENTATION_INDEX = 3,
@@ -54,24 +53,21 @@ struct FreeFloatingRigidBodiesStateTypes
         ANGULAR_VELOCITY_INDEX = 9
     };
 
-    typedef RigidBodiesState<size_bodies == -1 ? -1 : size_bodies * COUNT_PER_BODY> Base;
-    typedef Eigen::Matrix<typename Base::Scalar, size_bodies == -1 ? -1 : size_bodies * POSE_COUNT, 1> Poses;
+    typedef RigidBodiesState<size_bodies == -1 ? -1 : size_bodies * BODY_SIZE> Base;
 };
 
 
-template<int size_bodies = -1>
-class FreeFloatingRigidBodiesState: public FreeFloatingRigidBodiesStateTypes<size_bodies>::Base
+template<int BodyCount = -1>
+class FreeFloatingRigidBodiesState: public FreeFloatingRigidBodiesStateTypes<BodyCount>::Base
 {
 public:
-    typedef FreeFloatingRigidBodiesStateTypes<size_bodies> Types;
+    typedef FreeFloatingRigidBodiesStateTypes<BodyCount> Types;
     typedef typename Types::Base Base;
     enum
     {
-        SIZE_BODIES = size_bodies,
-        SIZE_STATE = Base::SIZE_STATE,
-        COUNT_PER_BODY = Types::COUNT_PER_BODY,
-        POSE_COUNT = Types::POSE_COUNT,
-        BLOCK_COUNT = Types::BLOCK_COUNT,
+        BODY_SIZE = Types::BODY_SIZE,
+        POSE_SIZE = Types::POSE_SIZE,
+        BLOCK_SIZE = Types::BLOCK_SIZE,
         POSITION_INDEX = Types::POSITION_INDEX,
         POSE_INDEX = Types::POSE_INDEX,
         ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
@@ -82,8 +78,9 @@ public:
     typedef typename Base::Scalar   Scalar;
     typedef typename Base::State    State;
     typedef typename Base::Vector   Vector;
-    typedef typename Eigen::Matrix<Scalar, POSE_COUNT, 1> Pose;
-    typedef typename Types::Poses Poses;
+    typedef typename Eigen::Matrix<Scalar, POSE_SIZE, 1> Pose;
+
+    typedef Eigen::Matrix<Scalar, BodyCount == -1 ? -1 : BodyCount * POSE_SIZE, 1> Poses;
 
     typedef typename Base::AngleAxis            AngleAxis;
     typedef typename Base::Quaternion           Quaternion;
@@ -91,19 +88,15 @@ public:
     typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
     typedef typename Eigen::Transform<Scalar, 3, Eigen::Affine> Affine;
 
-    typedef Eigen::VectorBlock<State, BLOCK_COUNT>      Block;
-    typedef Eigen::VectorBlock<State, POSE_COUNT>       PoseBlock;
-    typedef Eigen::VectorBlock<State, COUNT_PER_BODY>   BodyBlock;
+    typedef Eigen::VectorBlock<State, BLOCK_SIZE>      Block;
+    typedef Eigen::VectorBlock<State, POSE_SIZE>       PoseBlock;
+    typedef Eigen::VectorBlock<State, BODY_SIZE>   BodyBlock;
 
     // give access to base member functions (otherwise it is shadowed)
     using Base::quaternion;
-    using Base::state_size;
 
-    // constructor for fixed size without initial value
-    FreeFloatingRigidBodiesState(): Base(State::Zero(SIZE_STATE == Eigen::Dynamic ? 0 : SIZE_STATE )) { }
-
-    // constructor for dynamic size without initial value
-    FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * COUNT_PER_BODY)) { }
+    FreeFloatingRigidBodiesState() { }
+    FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * BODY_SIZE)) { }
 
     // constructor with initial value
     template <typename T> FreeFloatingRigidBodiesState(const Eigen::MatrixBase<T>& state_vector):
@@ -116,30 +109,30 @@ public:
     // read
     virtual Vector position(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + POSITION_INDEX);
+        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + POSITION_INDEX);
     }
     virtual Vector euler_vector(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
     }
     virtual Vector linear_velocity(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
     }
     virtual Vector angular_velocity(const size_t& body_index = 0) const
     {
-        return this->template middleRows<BLOCK_COUNT>(body_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
     }
     virtual Pose pose(const size_t& body_index = 0) const
     {
-        return this->template middleRows<POSE_COUNT>(body_index * COUNT_PER_BODY + POSE_INDEX);
+        return this->template middleRows<POSE_SIZE>(body_index * BODY_SIZE + POSE_INDEX);
     }
     virtual Poses poses() const
     {
-        Poses poses_(bodies_size()*POSE_COUNT);
-        for(size_t body_index = 0; body_index < bodies_size(); body_index++)
+        Poses poses_(body_count()*POSE_SIZE);
+        for(size_t body_index = 0; body_index < body_count(); body_index++)
         {
-             poses_.template middleRows<POSE_COUNT>(body_index * POSE_COUNT) = pose(body_index);
+             poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE) = pose(body_index);
         }
         return poses_;
     }
@@ -147,34 +140,34 @@ public:
     // write
     virtual void poses(const Poses& poses_)
     {
-        for(size_t body_index = 0; body_index < bodies_size(); body_index++)
+        for(size_t body_index = 0; body_index < body_count(); body_index++)
         {
-             pose(body_index) = poses_.template middleRows<POSE_COUNT>(body_index * POSE_COUNT);
+             pose(body_index) = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
         }
     }
     Block position(const size_t& body_index = 0)
     {
-      return Block(this->derived(), body_index * COUNT_PER_BODY + POSITION_INDEX);
+      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
     }
     Block euler_vector(const size_t& body_index = 0)
     {
-      return Block(this->derived(), body_index * COUNT_PER_BODY + ORIENTATION_INDEX);
+      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
     }
     Block linear_velocity(const size_t& body_index = 0)
     {
-      return Block(this->derived(), body_index * COUNT_PER_BODY + LINEAR_VELOCITY_INDEX);
+      return Block(this->derived(), body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
     }
     Block angular_velocity(const size_t& body_index = 0)
     {
-      return Block(this->derived(), body_index * COUNT_PER_BODY + ANGULAR_VELOCITY_INDEX);
+      return Block(this->derived(), body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
     }
     PoseBlock pose(const size_t& body_index = 0)
     {
-      return PoseBlock(this->derived(), body_index * COUNT_PER_BODY + POSE_INDEX);
+      return PoseBlock(this->derived(), body_index * BODY_SIZE + POSE_INDEX);
     }
     BodyBlock operator [](const size_t& body_index)
     {
-      return BodyBlock(this->derived(), body_index * COUNT_PER_BODY);
+      return BodyBlock(this->derived(), body_index * BODY_SIZE);
     }
 
     // other representations
@@ -190,15 +183,10 @@ public:
     }
 
 
-    virtual unsigned bodies_size() const
+    virtual unsigned body_count() const
     {
-        return ((State*)(this))->rows()/COUNT_PER_BODY;
+        return ((State*)(this))->rows()/BODY_SIZE;
     }
-private:
-//    unsigned count_bodies_;
-
-    template <bool dummy> void assert_fixed_size() const {BOOST_STATIC_ASSERT(size_bodies > -1);}
-    template <bool dummy> void assert_dynamic_size() const {BOOST_STATIC_ASSERT(size_bodies == -1);}
 };
 
 }
