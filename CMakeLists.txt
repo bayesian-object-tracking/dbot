@@ -133,7 +133,9 @@ catkin_package(
     INCLUDE_DIRS
         include
     LIBRARIES
-        ${PROJECT_NAME}
+        pose_tracking_cuda
+        pose_tracking
+        pose_tracking_interface
     CATKIN_DEPENDS
         roscpp
         roslib
@@ -168,8 +170,9 @@ file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INT
 
 set(tracking_sources
     src/${PROJECT_NAME_TRACKING}/utils/rigid_body_renderer.cpp
+)
 
-    ## TODO: THESE SHOULD BE IN A SEPAREATE PACKAGE CALLED TRACKING INTERFACE
+set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker.cpp
 
@@ -186,8 +189,24 @@ set(tracking_sources
 ## state_filtering
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME_TRACKING} ${filtering_headers} ${tracking_headers} ${tracking_interface_headers} ${tracking_sources})
-target_link_libraries(${PROJECT_NAME_TRACKING} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} assimp)
+add_library(${PROJECT_NAME_TRACKING} ${filtering_headers}
+                                     ${tracking_headers}
+                                     ${tracking_interface_headers}
+                                     ${tracking_sources})
+
+target_link_libraries(${PROJECT_NAME_TRACKING} ${catkin_LIBRARIES}
+                                               ${OpenCV_LIBRARIES}
+                                               assimp)
+
+add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${filtering_headers}
+                                               ${tracking_headers}
+                                               ${tracking_interface_headers}
+                                               ${tracking_interface_sources})
+
+target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
+                                                         ${catkin_LIBRARIES}
+                                                         ${OpenCV_LIBRARIES}
+                                                         assimp)
 
 
 #set(CUDA_FOUND False)
@@ -220,6 +239,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
     target_link_libraries(object_tracker
         ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
         ${PROJECT_NAME_TRACKING}_gpu
         ${PROJECT_NAME_TRACKING}_cuda
         ${catkin_LIBRARIES}
@@ -233,6 +253,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
         ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
         ${PROJECT_NAME_TRACKING}_gpu
         ${PROJECT_NAME_TRACKING}_cuda
         ${catkin_LIBRARIES}
@@ -247,6 +268,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
       src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
         ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
@@ -257,6 +279,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
     target_link_libraries(object_tracker
         ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
         ${catkin_LIBRARIES}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
