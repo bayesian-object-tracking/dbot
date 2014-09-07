@@ -66,7 +66,6 @@ public:
     // read
     virtual Vector position(const size_t& object_index = 0) const = 0;
     virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
-    virtual void update() const = 0;
 
     // other representations
     virtual Quaternion quaternion(const size_t& object_index = 0) const

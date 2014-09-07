@@ -35,6 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
+using namespace std;
+
 RobotTracker::RobotTracker():
     node_handle_("~"),
     tf_prefix_("MEAN"),
@@ -94,6 +96,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     std::vector<boost::shared_ptr<PartMeshModel> > part_meshes_;
     urdf_kinematics->GetPartMeshes(part_meshes_);
     ROS_INFO("Number of part meshes %d", (int)part_meshes_.size());
+    ROS_INFO("Number of links %d", urdf_kinematics->num_links());
     ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
     std::vector<std::string> joints = urdf_kinematics->GetJointMap();
@@ -116,17 +119,15 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     }
 
 
-    // the rigid_bodies_state is essentially the state vector with some convenience functions for retrieving
-    // the poses of the rigid objects
-    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new RobotState<>(urdf_kinematics));
+    cout << "setting kinematics " << endl;
+   State::kinematics_ = urdf_kinematics;\
+   cout << "done setting kinematics " << endl;
 
-
-
-
-    dimension_ = robot_state->size();
+    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new State(State::Zero(urdf_kinematics->num_joints())));
+    dimension_ = urdf_kinematics->num_joints();
 
     // initialize the result container for the emperical mean
-    mean_ = boost::shared_ptr<RobotState<> > (new RobotState<>(urdf_kinematics));
+    mean_ = boost::shared_ptr<State > (new State);
 
     robot_renderer_ = boost::shared_ptr<ff::RigidBodyRenderer>(
                 new ff::RigidBodyRenderer(part_vertices,

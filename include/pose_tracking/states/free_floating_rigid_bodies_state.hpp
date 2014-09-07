@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ff
 {
 
-template<int size_bodies>
+template<int BodyCount>
 struct FreeFloatingRigidBodiesStateTypes
 {
     enum
@@ -53,7 +53,7 @@ struct FreeFloatingRigidBodiesStateTypes
         ANGULAR_VELOCITY_INDEX = 9
     };
 
-    typedef RigidBodiesState<size_bodies == -1 ? -1 : size_bodies * BODY_SIZE> Base;
+    typedef RigidBodiesState<BodyCount == -1 ? -1 : BodyCount * BODY_SIZE> Base;
 };
 
 
@@ -103,8 +103,6 @@ public:
         Base(state_vector) { }
 
     virtual ~FreeFloatingRigidBodiesState() {}
-
-    virtual void update() const { }
   
     // read
     virtual Vector position(const size_t& body_index = 0) const

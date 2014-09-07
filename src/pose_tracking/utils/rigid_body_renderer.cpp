@@ -265,7 +265,6 @@ RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) 
 void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 {
     *state_ = state;
-    state_->update();
     R_.resize(state_->body_count());
     t_.resize(state_->body_count());
     for(size_t part_index = 0; part_index < state_->body_count(); part_index++)

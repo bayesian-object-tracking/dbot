@@ -150,11 +150,14 @@ void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
   for (int i = 0; i < vec.size(); ++i)
     jnt_array_.data(i) = joint_state(vec[i]);
   */
+  if(jnt_array_.data.size() == 0 || !jnt_array_.data.isApprox(joint_state))
+  {
   jnt_array_.data = joint_state;
   // Get the transform from the robot base to the camera frame
   SetCameraTransform();
   // Given the new joint angles, compute all link transforms in one go
   ComputeLinkTransforms();
+  }
 }
 
 void KinematicsFromURDF::SetCameraTransform()

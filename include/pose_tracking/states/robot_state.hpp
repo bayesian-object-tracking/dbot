@@ -39,105 +39,78 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
 
 
-template<int size_joints = -1, int size_bodies = -1>
-class RobotState: public ff::RigidBodiesState<size_joints>
+template<int JointCount = Eigen::Dynamic, int BodyCount = Eigen::Dynamic>
+class RobotState: public ff::RigidBodiesState<JointCount>
 {
 public:
+    typedef ff::RigidBodiesState<JointCount>    Base;
+    typedef typename Base::Vector               Vector;
+    typedef typename Base::AngleAxis            AngleAxis;
+    typedef typename Base::Quaternion           Quaternion;
 
-  typedef ff::RigidBodiesState<size_joints> Base;
+public:
+    RobotState(): Base() { }
 
-  typedef typename Base::Scalar   Scalar;
-  typedef typename Base::State    State;
-  typedef typename Base::Vector   Vector;
+    template <typename T>
+    RobotState(const Eigen::MatrixBase<T>& state_vector): Base(state_vector) { }
 
-  typedef typename Base::AngleAxis            AngleAxis;
-  typedef typename Base::Quaternion           Quaternion;
-  typedef typename Base::RotationMatrix       RotationMatrix;
-  typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
+    virtual ~RobotState() { }
 
+    using Base::operator=;
 
-  // give access to base member functions (otherwise it is shadowed)
-  //using Base::quaternion;
+    virtual Vector position(const size_t& object_index = 0) const
+    {
+        CheckKinematics();
+        kinematics_->InitKDLData(*this);
+        return kinematics_->GetLinkPosition(object_index);
+    }
 
-  using Base::operator=;
-  
-  RobotState(): initialized_(false) {  }
-  RobotState(const boost::shared_ptr<KinematicsFromURDF>& kinematics):
-                                                Base(State::Zero(kinematics->num_joints())),
-                                                kinematics_(kinematics),
-                                                initialized_(true)
-  {
-  }
+    virtual Vector euler_vector(const size_t& object_index = 0) const
+    {
+        CheckKinematics();
+        kinematics_->InitKDLData(*this);
+        return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
+    }
 
-  // constructor with initial value
-  template <typename T> RobotState(const Eigen::MatrixBase<T>& state_vector):
-    Base(state_vector)
-  { }
+    virtual unsigned body_count() const
+    {
+        CheckKinematics();
+        return kinematics_->num_links();
+    }
 
-
-  virtual ~RobotState() {}
-
-  virtual void update() const
-  {
-    CheckInitialization("update");
-    kinematics_->InitKDLData(*this);
-  }
-
-
-  virtual Vector position(const size_t& object_index = 0) const
-  {
-    CheckInitialization("position");
-    return kinematics_->GetLinkPosition(object_index);
-  }
-
-  virtual Vector euler_vector(const size_t& object_index = 0) const
-  {
-    CheckInitialization("euler_vector");
-    return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
-  }
-
-  virtual Vector Quaternion2EulerVector(const Quaternion& quaternion) const 
-  {
-    AngleAxis angle_axis(quaternion);
-    return angle_axis.angle()*angle_axis.axis();
-  }
-
-
-  virtual unsigned body_count() const
-  {
-      CheckInitialization("bodies_size");
-
-      return kinematics_->num_links();
-  }
-
-  void GetJointState(std::map<std::string, double>& joint_positions)
-  {
-      CheckInitialization("GetJointState");
-      std::vector<std::string> joint_map = kinematics_->GetJointMap();
-      for(std::vector<std::string>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it)
-      {
-          joint_positions[*it] = (*this)(it - joint_map.begin(),0);
-      }
-  }
-
+    // TODO: SHOULD THIS FUNCITON BE IN HERE?
+    void GetJointState(std::map<std::string, double>& joint_positions)
+    {
+        CheckKinematics();
+        std::vector<std::string> joint_map = kinematics_->GetJointMap();
+        for(std::vector<std::string>::const_iterator it = joint_map.begin(); it != joint_map.end(); ++it)
+        {
+            joint_positions[*it] = (*this)(it - joint_map.begin(),0);
+        }
+    }
 
 private:
-  void CheckInitialization(const std::string &func) const
-  {
-      if(!initialized_)
-      {
-          std::cout << func << " the kinematics were not passed"
-                    << " in the constructor of robot state " << std::endl;
-          exit(-1);
-      }
-  }
+    virtual Vector Quaternion2EulerVector(const Quaternion& quaternion) const
+    {
+        AngleAxis angle_axis(quaternion);
+        return angle_axis.angle()*angle_axis.axis();
+    }
 
-  bool initialized_;
+    void CheckKinematics() const
+    {
+        if(!kinematics_)
+        {
+            std::cout << "kinematics not set" << std::endl;
+            exit(-1);
+        }
+    }
 
-  // pointer to the robot kinematic
-  boost::shared_ptr<KinematicsFromURDF>  kinematics_;
+public:
+    static boost::shared_ptr<KinematicsFromURDF>  kinematics_;
 };
 
+template<int JointCount, int BodyCount>
+boost::shared_ptr<KinematicsFromURDF> RobotState<JointCount, BodyCount>::kinematics_;
 
 
 #endif
