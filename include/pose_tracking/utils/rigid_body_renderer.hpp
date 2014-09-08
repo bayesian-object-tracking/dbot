@@ -26,14 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#ifndef POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP_
-#define POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP_
+#ifndef POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP
+#define POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP
 
 #include <vector>
 #include <Eigen/Dense>
 
 #include <boost/shared_ptr.hpp>
-#include <fast_filtering/states/rigid_body_system.hpp>
+#include <pose_tracking/states/rigid_bodies_state.hpp>
 
 
 namespace ff
@@ -43,7 +43,7 @@ class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef ff::RigidBodySystem<Eigen::Dynamic> State;
+    typedef ff::RigidBodiesState<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
 

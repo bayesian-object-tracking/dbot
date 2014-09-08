@@ -25,9 +25,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#include <fast_filtering/utils/macros.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
+#include <iostream>
 
 #include <limits>
 
@@ -265,10 +265,9 @@ RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) 
 void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 {
     *state_ = state;
-    state_->update();
-    R_.resize(state_->bodies_size());
-    t_.resize(state_->bodies_size());
-    for(size_t part_index = 0; part_index < state_->bodies_size(); part_index++)
+    R_.resize(state_->body_count());
+    t_.resize(state_->body_count());
+    for(size_t part_index = 0; part_index < state_->body_count(); part_index++)
     {
         R_[part_index] = state_->rotation_matrix(part_index);
         t_[part_index] = state_->position(part_index);
@@ -278,12 +277,12 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
 
 // test the enchilada
 
-//VectorXd initial_rigid_body_system = VectorXd::Zero(15);
-//initial_rigid_body_system.middleRows(3, 4) = Quaterniond::Identity().coeffs();
+//VectorXd initial_rigid_bodies_state = VectorXd::Zero(15);
+//initial_rigid_bodies_state.middleRows(3, 4) = Quaterniond::Identity().coeffs();
 //
 //
 //obj_mod::LargeTrimmersModel objec_tmodel_enchilada(vertices, indices);
-//objec_tmodel_enchilada.set_state(initial_rigid_body_system);
+//objec_tmodel_enchilada.set_state(initial_rigid_bodies_state);
 //vector<std::vector<Eigen::Vector3d> > visualize_vertices;
 //while(ros::ok())
 //{
