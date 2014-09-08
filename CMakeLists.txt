@@ -206,6 +206,8 @@ add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${filtering_headers}
                                                ${tracking_interface_sources})
 
 target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
+                                                         ${PROJECT_NAME_TRACKING}_gpu
+                                                         ${PCL_LIBRARIES}
                                                          ${catkin_LIBRARIES}
                                                          ${OpenCV_LIBRARIES}
                                                          assimp)
