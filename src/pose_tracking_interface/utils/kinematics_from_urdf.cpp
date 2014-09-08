@@ -87,15 +87,7 @@ KinematicsFromURDF::KinematicsFromURDF()
 	}
     }
   
-  std::string cam_frame, base_frame;
-  nh_priv_.param<std::string>("camera_frame", cam_frame, "XTION");
-  nh_priv_.param<std::string>("kinematic_frame", base_frame, "BASE" );
-  // create chain from base to camera
-  if(kin_tree_.getChain(cam_frame, base_frame, base_2_cam_))
-    ROS_INFO("Sucessfully created chain from %s to %s", cam_frame.c_str(), base_frame.c_str());
-  else 
-    ROS_ERROR("Could not create chain from %s to %s", cam_frame.c_str(), base_frame.c_str());
-  chain_solver_ = new KDL::ChainFkSolverPos_recursive(base_2_cam_);
+  nh_priv_.param<std::string>("camera_frame", cam_frame_name_, "XTION");
   
   // initialise kinematic tree solver
   tree_solver_ = new KDL::TreeFkSolverPos_recursive(kin_tree_);
@@ -104,7 +96,6 @@ KinematicsFromURDF::KinematicsFromURDF()
 KinematicsFromURDF::~KinematicsFromURDF()
 {
   delete tree_solver_;
-  delete chain_solver_;
 }
 
 void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshModel> > &part_meshes)
@@ -138,57 +129,21 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
 void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
 {
   // Internally, KDL array use Eigen Vectors
-
-
-  // DEBUG: randomly shuffle Vector to see if it has a noticable effect
-  /*  std::vector<int> vec(joint_state.rows());
-  for (int i = 0; i < vec.size(); ++i)
-    vec[i] = i;
-  std::random_shuffle(vec.begin(),vec.end());
-  
-  jnt_array_.data.resize(joint_state.rows());
-  for (int i = 0; i < vec.size(); ++i)
-    jnt_array_.data(i) = joint_state(vec[i]);
-  */
   if(jnt_array_.data.size() == 0 || !jnt_array_.data.isApprox(joint_state))
-  {
+    {
   jnt_array_.data = joint_state;
-  // Get the transform from the robot base to the camera frame
-  SetCameraTransform();
   // Given the new joint angles, compute all link transforms in one go
   ComputeLinkTransforms();
   }
 }
 
-void KinematicsFromURDF::SetCameraTransform()
-{
-  // loop over all the joints in the chain from base to camera
-  KDL::JntArray chain_jnt_array(base_2_cam_.getNrOfJoints());
-  std::vector<std::string >::const_iterator location;
-  int j=0;
-  int n_segments = base_2_cam_.getNrOfSegments();
-  for( int i=0;i<n_segments;i++){
-    // for each valid joint in the chain from base to camera
-    if(base_2_cam_.getSegment(i).getJoint().getType()!=KDL::Joint::None){
-      // get the name of the joints
-      std::string name = base_2_cam_.getSegment(i).getJoint().getName();
-      // find its index in the joint map
-      location = std::find( joint_map_.begin(), joint_map_.end(), name );
-      if ( location == joint_map_.end() )
-	ROS_ERROR("Joint in chain not in JointState. This should never happen.\n");
-      // fill the associated joint array accordingly
-      chain_jnt_array(j) = jnt_array_(location-joint_map_.begin());
-      j++;
-    }
-  }
-  
-  // get transform from base to camera frame
-  if(chain_solver_->JntToCart(chain_jnt_array, cam_frame_)<0)
-    ROS_ERROR("Could get transform from base to camera\n");
-}
-
 void KinematicsFromURDF::ComputeLinkTransforms( )
 {
+  // get the transform from base to camera
+  if(tree_solver_->JntToCart(jnt_array_, cam_frame_, cam_frame_name_)<0)
+    ROS_ERROR("TreeSolver returned an error for link %s", cam_frame_name_.c_str());
+  cam_frame_ = cam_frame_.Inverse();
+
   // loop over all segments to compute the link transformation
   for (KDL::SegmentMap::const_iterator seg_it = segment_map_.begin(); 
        seg_it != segment_map_.end(); ++seg_it)

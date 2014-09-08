@@ -51,7 +51,6 @@
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/treefksolverpos_recursive.hpp>
-#include <kdl/chainfksolverpos_recursive.hpp>
 
 // tools
 #include <pose_tracking/utils/part_mesh_model.hpp>
@@ -124,8 +123,6 @@ private:
   urdf::Model urdf_;
   // KDL kinematic tree
   KDL::Tree kin_tree_;
-  // KDL Kinematic chain from camera to robot base
-  KDL::Chain base_2_cam_;
 
   // maps joint indices to joint names and joint limits
   std::vector<std::string> joint_map_;
@@ -141,13 +138,13 @@ private:
   KDL::SegmentMap segment_map_;
   // Forward kinematics solver
   KDL::TreeFkSolverPos_recursive *tree_solver_;
-  KDL::ChainFkSolverPos_recursive *chain_solver_;
 
   // KDL copy of the joint state
   KDL::JntArray jnt_array_;
   // Contains Camera pose relative to base
   KDL::Frame    cam_frame_;
-  
+  std::string   cam_frame_name_;
+
   // random generator for joint angle sampling
   boost::mt19937 generator_;
 
