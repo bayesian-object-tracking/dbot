@@ -108,8 +108,11 @@ private:
 
   int dimension_;
 
+  // determines whether it is necessary to convert depth data to meters
+  bool data_in_meters_;
+
   // For debugging
-  boost::shared_ptr<ff::RigidBodyRenderer> robot_renderer_;
+  boost::shared_ptr<ff::RigidBodyRenderer> robot_renderer_;  
 };
 
 #endif

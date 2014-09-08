@@ -45,6 +45,7 @@ RobotTracker::RobotTracker():
     ri::ReadParameter("downsampling_factor", downsampling_factor_, node_handle_);
     ri::ReadParameter("evaluation_count", evaluation_count_, node_handle_);
     ri::ReadParameter("camera_frame", camera_frame_, node_handle_);
+    ri::ReadParameter("data_in_meters", data_in_meters_, node_handle_);
 
 pub_point_cloud_ = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
 *pub_point_cloud_ = node_handle_.advertise<sensor_msgs::PointCloud2> ("/XTION/depth/points", 5);
@@ -70,8 +71,9 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     // convert camera matrix and image to desired format
     camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
     camera_matrix_ = camera_matrix;
-    // TODO: Fix with non-fake arm_rgbd node
-    Observation image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_)/ 1000.; // convert to meters
+    Observation image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);
+    if(!data_in_meters_)
+      image = image/1000.; // convert to meters
 
     // read some parameters ---------------------------------------------------------------------------------------------------------
     bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -218,7 +220,7 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     delta_time = 0.03;
 
     // convert image
-    Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_) / 1000.; // convert to m
+    Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_); // / 1000.; // convert to m
 
     // filter
     INIT_PROFILING;
@@ -324,9 +326,8 @@ void RobotTracker::publishPointCloud(const Observation&       image,
     for (size_t u = 0, nRows = image.rows(), nCols = image.cols(); u < nCols; ++u)
       for (size_t v = 0; v < nRows; ++v)
     {
-      //float depth = depth_row[u]/1000.0;
       float depth = image(v,u);
-      if(depth!=depth)
+      if(depth!=depth)// || depth==0.0)
         {
           // depth is invalid
           memcpy (&points->data[v * points->row_step + u * points->point_step + points->fields[0].offset], &bad_point, sizeof (float));
