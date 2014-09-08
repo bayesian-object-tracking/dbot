@@ -5,9 +5,8 @@
   <arg name="camera" default="XTION" />
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find arm_robot_model)/models/DarpaRobot.urdf.xacro'" />
   <!-- Pose Estimation Node-->
-  <node name="robot_tracker" type="robot_tracker" pkg="state_filtering" output="screen" respawn="false"><!-- launch-prefix="gdb -ex run args">< launch-prefix="valgrind"-->
-    
-    <param name="data_in_meters" type="bool" value="true" />
+  <node name="robot_tracker" type="robot_tracker" pkg="state_filtering" output="screen" respawn="false"><!-- launch-prefix="gdb -ex run args">< launch-prefix="valgrind"-->    
+    <param name="data_in_meters" type="bool" value="false" />
     <param name="robot_description_package_path" type="string" value="$(find arm_robot_model)" />
     <param name="camera_frame"  type="string"  value="$(arg camera)" /> 
     <rosparam command="load" file="$(arg config_file)" />

@@ -72,8 +72,10 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
     camera_matrix_ = camera_matrix;
     Observation image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);
-    if(!data_in_meters_)
+    if(!data_in_meters_) {
+      //ROS_INFO("Converting to meters");
       image = image/1000.; // convert to meters
+    }
 
     // read some parameters ---------------------------------------------------------------------------------------------------------
     bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
@@ -220,7 +222,10 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     delta_time = 0.03;
 
     // convert image
-    Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_); // / 1000.; // convert to m
+    Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_);
+    if(!data_in_meters_)
+      image = image/1000.; // convert to meters
+      
 
     // filter
     INIT_PROFILING;
@@ -288,8 +293,8 @@ void RobotTracker::publishTransform(const ros::Time& time,
     br.sendTransform(tf::StampedTransform(transform, time, from, to));
 }
 
-void RobotTracker::publishPointCloud(const Observation&       image,
-         const ros::Time&             stamp)
+void RobotTracker::publishPointCloud(const Observation& image,
+				     const ros::Time& stamp)
 {
 
     float bad_point = std::numeric_limits<float>::quiet_NaN();
