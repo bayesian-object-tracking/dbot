@@ -152,7 +152,7 @@ catkin_package(
         assimp
 )
 
-catkin_add_gtest(dummy_utest test/test_gtest_test.cpp)
+#catkin_add_gtest(dummy_utest test/test_gtest_test.cpp)
 
 ###########
 ## Build ##
