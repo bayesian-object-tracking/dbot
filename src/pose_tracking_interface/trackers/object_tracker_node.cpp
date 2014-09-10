@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking_interface/utils/pcl_interface.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 
+#include <fast_filtering/utils/distribution_test.hpp>
+
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;
 

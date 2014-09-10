@@ -30,8 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Dense>
 #include <fast_filtering/distributions/interfaces/evaluation.hpp>
+#include <fast_filtering/distributions/exponential_distribution.hpp>
 #include <cmath>
 
+#include <iostream>
+
+//TODO: THESE INCLUDES ARE JUST TEMPORARY
+#include <fast_filtering/utils/distribution_test.hpp>
 #include <iostream>
 
 namespace ff
@@ -78,7 +83,19 @@ public:
           tail_weight_(tail_weight),
           model_sigma_(model_sigma),
           sigma_factor_(sigma_factor),
-          max_depth_(max_depth) { }
+          max_depth_(max_depth)
+    {
+
+        ExponentialDistribution exponential(2.5);
+
+        std::cout << "testing distribution " << std::endl;
+        TestDistribution(exponential);
+        std::cout << "done testing " << std::endl;
+
+        exit(-1);
+
+
+    }
 
     virtual ~KinectPixelObservationModel() {}
 
