@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/JointState.h>
 
 #include <message_filters/simple_filter.h>
 
@@ -44,15 +45,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-//#include <fast_filtering/utils/helper_functions.hpp>
-//#include <fast_filtering/utils/ros.hpp>
-//#include <fast_filtering/utils/pcl.hpp>
-
 class DataFrame
 {
 public:
     sensor_msgs::Image::ConstPtr image_;
     sensor_msgs::CameraInfo::ConstPtr info_;
+    sensor_msgs::JointState::ConstPtr ground_truth_joints_;
+    sensor_msgs::JointState::ConstPtr noisy_joints_;
     Eigen::VectorXd ground_truth_;
     Eigen::VectorXd deviation_;
 
@@ -60,6 +59,13 @@ public:
               const sensor_msgs::CameraInfo::ConstPtr& info,
               const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
               const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
+  DataFrame(const sensor_msgs::Image::ConstPtr& image,
+	    const sensor_msgs::CameraInfo::ConstPtr& info,
+	    const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	    const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	    const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+	    const Eigen::VectorXd& deviation = Eigen::VectorXd());
 
 };
 
@@ -104,28 +110,27 @@ public:
 
     Eigen::VectorXd GetGroundTruth(const size_t& index);
 
-    Eigen::VectorXd GetDeviation(const size_t& index);
-
     size_t Size();
 
     void Load();
 
     void Store();
 
-private:
+protected:
 
   bool LoadTextFile(const char *filename, DataType type);
   bool StoreTextFile(const char *filename, DataType type);
+  
+  std::vector<DataFrame> data_;
+  const boost::filesystem::path path_;
 
-    std::vector<DataFrame> data_;
+  const std::string image_topic_;
+  const std::string info_topic_;
+  const std::string observations_filename_;
+  const std::string ground_truth_filename_;
 
-    const boost::filesystem::path path_;
-    const std::string image_topic_;
-    const std::string info_topic_;
-    const std::string observations_filename_;
-    const std::string ground_truth_filename_;
-    const std::string deviation_filename_;
-    const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
+private:
+  const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
 };
 
 #endif

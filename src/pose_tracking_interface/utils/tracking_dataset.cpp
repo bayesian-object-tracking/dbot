@@ -50,12 +50,24 @@ DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
     ground_truth_(ground_truth),
     deviation_(deviation) { }
 
+DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
+          const sensor_msgs::CameraInfo::ConstPtr& info,
+	  const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	  const sensor_msgs::JointState::ConstPtr& noisy_joints,
+          const Eigen::VectorXd& ground_truth,
+          const Eigen::VectorXd& deviation):
+    image_(image),
+    info_(info),
+    ground_truth_joints_(ground_truth_joints),
+    noisy_joints_(noisy_joints),
+    ground_truth_(ground_truth),
+    deviation_(deviation) { }
+
 TrackingDataset::TrackingDataset(const std::string& path):path_(path),
                             image_topic_("XTION/depth/image"),
                             info_topic_("XTION/depth/camera_info"),
                             observations_filename_("measurements.bag"),
                             ground_truth_filename_("ground_truth.txt"),
-                            deviation_filename_("deviation.txt"),
                             admissible_delta_time_(0.02) {}
 
 TrackingDataset::~TrackingDataset() {}
@@ -114,11 +126,6 @@ Eigen::VectorXd TrackingDataset::GetGroundTruth(const size_t& index)
     return data_[index].ground_truth_;
 }
 
-Eigen::VectorXd TrackingDataset::GetDeviation(const size_t& index)
-{
-    return data_[index].deviation_;
-}
-
 size_t TrackingDataset::Size()
 {
     return data_.size();
@@ -171,10 +178,6 @@ void TrackingDataset::Load()
       std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
     exit(-1);
     
-    // load deviation file   ---------------------------------------------------------------------
-    if (! LoadTextFile((path_ / deviation_filename_).c_str(), DataType::DEVIATION))
-      std::cout << "could not open file " << path_ / deviation_filename_ << std::endl;
-    exit(-1);
 }
 
 bool TrackingDataset::LoadTextFile(const char *filename, DataType type)
@@ -225,8 +228,7 @@ bool TrackingDataset::LoadTextFile(const char *filename, DataType type)
 void TrackingDataset::Store()
 {
     if(boost::filesystem::exists(path_ / observations_filename_) ||
-       boost::filesystem::exists(path_ / ground_truth_filename_) || 
-       boost::filesystem::exists(path_ / deviation_filename_))
+       boost::filesystem::exists(path_ / ground_truth_filename_))
     {
         std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
         return;
@@ -253,13 +255,6 @@ void TrackingDataset::Store()
     if(!StoreTextFile((path_ / ground_truth_filename_).c_str(), DataType::GROUND_TRUTH)) 
       {
 	std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
-	exit(-1);
-      }
-
-    // write deviation to txt file ----------------------------------------------------------
-    if(!StoreTextFile((path_ / deviation_filename_).c_str(), DataType::DEVIATION)) 
-      {
-	std::cout << "could not open file " << path_ / deviation_filename_ << std::endl;
 	exit(-1);
       }
 }
