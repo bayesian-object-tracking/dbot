@@ -17,12 +17,14 @@ approximate_density = hist(samples, bin_count) / (size(samples,1) * bin_width);
     figure;
     hold on;
 
-    plot(density(:,1), density(:,2));
-    plot(min(samples)+bin_width/2:bin_width:max(samples), approximate_density, 'r')
+    plot(density(:,1), density(:,2),'b');
+    plot(min(samples)+bin_width/2:bin_width:max(samples), approximate_density, 'r.')
     
-    x = 0:0.1:10;
-    y = exppdf(x,1/2.5);
-    plot(x,y,'g');
+     x = -3:0.01:9;
+     y = normpdf(x,3,1);
+     plot(x,y,'g');
+     
+%      axis([3.460380000000000 3.461920000000000 0 0.002]);
         
         
         

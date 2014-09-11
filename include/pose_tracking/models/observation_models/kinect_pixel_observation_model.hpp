@@ -28,12 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_PIXEL_OBSERVATION_MODEL_HPP
 #define POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_PIXEL_OBSERVATION_MODEL_HPP
 
+#include <cmath>
 #include <Eigen/Dense>
+
 #include <fast_filtering/distributions/interfaces/evaluation.hpp>
 #include <fast_filtering/distributions/exponential_distribution.hpp>
-#include <cmath>
-
-#include <iostream>
+#include <fast_filtering/distributions/uniform_distribution.hpp>
+#include <fast_filtering/distributions/truncated_gaussian.hpp>
 
 //TODO: THESE INCLUDES ARE JUST TEMPORARY
 #include <fast_filtering/utils/distribution_test.hpp>
@@ -86,13 +87,15 @@ public:
           max_depth_(max_depth)
     {
 
-        ExponentialDistribution exponential(2.5);
+//        UniformDistribution uniform(3.3, 10.5);
+//        ExponentialDistribution exponential(2.5);
+//        TruncatedGaussian gaussian(3.0, 1.0, 4.0, 5.0);
 
-        std::cout << "testing distribution " << std::endl;
-        TestDistribution(exponential);
-        std::cout << "done testing " << std::endl;
+//        std::cout << "testing distribution " << std::endl;
+//        TestDistribution(gaussian);
+//        std::cout << "done testing " << std::endl;
 
-        exit(-1);
+//        exit(-1);
 
 
     }
