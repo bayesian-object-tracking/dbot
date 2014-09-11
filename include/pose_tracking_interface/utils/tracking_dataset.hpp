@@ -54,10 +54,13 @@ public:
     sensor_msgs::Image::ConstPtr image_;
     sensor_msgs::CameraInfo::ConstPtr info_;
     Eigen::VectorXd ground_truth_;
+    Eigen::VectorXd deviation_;
 
     DataFrame(const sensor_msgs::Image::ConstPtr& image,
               const sensor_msgs::CameraInfo::ConstPtr& info,
-              const Eigen::VectorXd& ground_truth = Eigen::VectorXd());
+              const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+              const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
 };
 
 template <class M>
@@ -74,12 +77,19 @@ public:
 class TrackingDataset
 {
 public:
+  
+  enum DataType {
+    GROUND_TRUTH = 1,
+    DEVIATION
+  };
+
     TrackingDataset(const std::string& path);
     ~TrackingDataset();
 
     void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info,
-                  const Eigen::VectorXd& ground_truth = Eigen::VectorXd());
+                  const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+                  const Eigen::VectorXd& deviation = Eigen::VectorXd());
 
     void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info);
@@ -94,6 +104,8 @@ public:
 
     Eigen::VectorXd GetGroundTruth(const size_t& index);
 
+    Eigen::VectorXd GetDeviation(const size_t& index);
+
     size_t Size();
 
     void Load();
@@ -101,6 +113,10 @@ public:
     void Store();
 
 private:
+
+  bool LoadTextFile(const char *filename, DataType type);
+  bool StoreTextFile(const char *filename, DataType type);
+
     std::vector<DataFrame> data_;
 
     const boost::filesystem::path path_;
@@ -108,6 +124,7 @@ private:
     const std::string info_topic_;
     const std::string observations_filename_;
     const std::string ground_truth_filename_;
+    const std::string deviation_filename_;
     const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
 };
 
