@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
 
 // TODO: THIS NEEDS TO BE CLEANED!!
+// TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, THIS SHOULD THUS DISAPPEAR
 namespace ff
 {
 
