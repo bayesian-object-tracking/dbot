@@ -109,9 +109,9 @@ sigma_factor: 0.00142478 #0.0014247
 # initial prob of the source being the object for each pixels
 initial_occlusion_prob: 0.1 #0.1
 # prob of source being object given that one second ago the source was the object
-p_visible_visible: 0.9 #0.9
+p_occluded_visible: 0.1 #0.1
 # prob of source being object given that one second ago source was not object
-p_visible_occluded: 0.3 #0.3
+p_occluded_occluded: 0.7 #0.7
 
 
 

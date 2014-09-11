@@ -94,11 +94,11 @@ public:
             const ObjectRendererPtr object_renderer,
             const PixelObservationModelPtr observation_model,
             const OcclusionProcessModelPtr occlusion_process_model,
-            const float& initial_occlusion_prob):
+            const float& initial_occlusion):
         camera_matrix_(camera_matrix),
         n_rows_(n_rows),
         n_cols_(n_cols),
-        initial_occlusion_prob_(initial_occlusion_prob),
+        initial_occlusion_(initial_occlusion),
         max_sample_count_(max_sample_count),
         object_model_(object_renderer),
         observation_model_(observation_model),
@@ -116,14 +116,14 @@ public:
                                  std::vector<size_t>& indices,
                                  const bool& update = false)
     {
-        std::vector<std::vector<float> > new_occlusion_probs(states.size());
+        std::vector<std::vector<float> > new_occlusions(states.size());
         std::vector<std::vector<double> > new_occlusion_times(states.size());
         std::vector<Scalar> loglikes(states.size(),0);
         for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
         {
             if(update)
             {
-                new_occlusion_probs[state_index] = occlusion_probs_[indices[state_index]];
+                new_occlusions[state_index] = occlusions_[indices[state_index]];
                 new_occlusion_times[state_index] = occlusion_times_[indices[state_index]];
             }
             // we predict observations_
@@ -140,20 +140,23 @@ public:
                     loglikes[state_index] += log(1.);
                 else
                 {
-                    float occlusion_prob;
-                    // we predict the visiblity probability and set the time of the last update time to current
-                    occlusion_prob =
-                                occlusion_process_model_->Propagate(
-                                occlusion_probs_[indices[state_index]][intersect_indices[i]],
-                                observation_time_ - occlusion_times_[indices[state_index]][intersect_indices[i]]);
+                    double delta_time =
+                            observation_time_ -
+                            occlusion_times_[indices[state_index]][intersect_indices[i]];
+
+                    occlusion_process_model_->Condition(delta_time,
+                        occlusions_[indices[state_index]][intersect_indices[i]]);
+
+
+                    float occlusion = occlusion_process_model_->MapStandardGaussian();
 
                     observation_model_->Condition(predictions[i], false);
                     float p_obsIpred_vis =
-                            observation_model_->Probability(observations_[intersect_indices[i]]) * (1.0 - occlusion_prob);
+                            observation_model_->Probability(observations_[intersect_indices[i]]) * (1.0 - occlusion);
 
                     observation_model_->Condition(predictions[i], true);
                     float p_obsIpred_occl =
-                            observation_model_->Probability(observations_[intersect_indices[i]]) * occlusion_prob;
+                            observation_model_->Probability(observations_[intersect_indices[i]]) * occlusion;
 
                     observation_model_->Condition(std::numeric_limits<float>::infinity(), true);
                     float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
@@ -163,7 +166,7 @@ public:
                     // we update the occlusion with the observations
                     if(update)
                     {
-                        new_occlusion_probs[state_index][intersect_indices[i]] =
+                        new_occlusions[state_index][intersect_indices[i]] =
                                                         p_obsIpred_occl/(p_obsIpred_vis + p_obsIpred_occl);
                         new_occlusion_times[state_index][intersect_indices[i]] = observation_time_;
                     }
@@ -172,7 +175,7 @@ public:
         }
         if(update)
         {
-            occlusion_probs_ = new_occlusion_probs;
+            occlusions_ = new_occlusions;
             occlusion_times_ = new_occlusion_times;
             for(size_t state_index = 0; state_index < indices.size(); state_index++)
                 indices[state_index] = state_index;
@@ -193,8 +196,8 @@ public:
 
     virtual void Reset()
     {
-        occlusion_probs_.resize(1);
-        occlusion_probs_[0] =  std::vector<float>(n_rows_*n_cols_, initial_occlusion_prob_);
+        occlusions_.resize(1);
+        occlusions_[0] =  std::vector<float>(n_rows_*n_cols_, initial_occlusion_);
         occlusion_times_.resize(1);
         occlusion_times_[0] = std::vector<double>(n_rows_*n_cols_, 0);
         observation_time_ = 0;
@@ -203,7 +206,7 @@ public:
     //TODO: TYPES
     const std::vector<float> Occlusions(size_t index) const
     {
-        return occlusion_probs_[index];
+        return occlusions_[index];
     }
 
 private:
@@ -218,7 +221,7 @@ private:
     const Eigen::Matrix3d camera_matrix_;
     const size_t n_rows_;
     const size_t n_cols_;
-    const float initial_occlusion_prob_;
+    const float initial_occlusion_;
     const size_t max_sample_count_;
     const boost::shared_ptr<RigidBodiesState<-1> > rigid_bodies_state_;
 
@@ -228,7 +231,7 @@ private:
     OcclusionProcessModelPtr occlusion_process_model_;
 
     // occlusion parameters
-    std::vector<std::vector<float> > occlusion_probs_;
+    std::vector<std::vector<float> > occlusions_;
     std::vector<std::vector<double> > occlusion_times_;
 
     // observed data

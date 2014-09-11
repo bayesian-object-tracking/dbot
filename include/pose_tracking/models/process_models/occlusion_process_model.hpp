@@ -29,39 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 
 #include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
+#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
 
-// TODO: THIS NEEDS TO BE CLEANED!!
-// TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, THIS SHOULD THUS DISAPPEAR
+// TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, SHOULD DISAPPEAR
 namespace ff
 {
-
-// Forward declarations
-class OcclusionProcessModel;
-
-namespace internal
-{
-/**
- * OcclusionProcess distribution traits specialization
- * \internal
- */
-template < >
-struct Traits<OcclusionProcessModel>
-{
-    enum
-    {
-        VECTOR_SIZE = 1, //TODO: DO WE NEED THIS?
-        DIMENSION = 0 //TODO: THIS IS A HACK
-//        CONTROL_SIZE = 0,
-//        SAMPLE_SIZE = 0
-    };
-
-    typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, VECTOR_SIZE, 1>   Vector;
-    typedef Eigen::Matrix<Scalar, DIMENSION, 1>     Input;
-
-    typedef ff::StationaryProcessModel<Vector, Input> ProcessModelBase;
-};
-}
 
 /**
  * \class OcclusionProcess
@@ -70,91 +42,40 @@ struct Traits<OcclusionProcessModel>
  * \ingroup process_models
  */
 class OcclusionProcessModel:
-        public internal::Traits<OcclusionProcessModel>::ProcessModelBase
+        public StationaryProcessModel<double>,
+        public GaussianMap<double>
 {
-public:
-    typedef internal::Traits<OcclusionProcessModel> Traits;
-
-    typedef typename Traits::Scalar Scalar;
-    typedef typename Traits::Vector State;
-    typedef typename Traits::Input  Input;
-
-    enum
-    {
-        VECTOR_SIZE = Traits::VECTOR_SIZE,
-        DIMENSION = Traits::DIMENSION
-//        CONTROL_SIZE = Types::CONTROL_SIZE,
-//        SAMPLE_SIZE = Types::SAMPLE_SIZE
-    };
-
-
 public:
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
-    OcclusionProcessModel(Scalar p_occluded_visible,
-                          Scalar p_occluded_occluded)
-        : p_occluded_visible_(p_occluded_visible),
-          p_occluded_occluded_(p_occluded_occluded),
-          c_(p_occluded_occluded_ - p_occluded_visible_),
-          log_c_(std::log(c_)) {}
+    OcclusionProcessModel(double p_occluded_visible,
+                          double p_occluded_occluded):
+                                      p_occluded_visible_(p_occluded_visible),
+                                      p_occluded_occluded_(p_occluded_occluded),
+                                      c_(p_occluded_occluded_ - p_occluded_visible_),
+                                      log_c_(std::log(c_)) { }
 
     virtual ~OcclusionProcessModel() {}
 
-
-    virtual Scalar Propagate(Scalar occlusion_probability, Scalar delta_time /*in s*/)
+    virtual void Condition(const double& delta_time,
+                           const double& state)
     {
         delta_time_ = delta_time;
-        occlusion_probability_ = occlusion_probability;
-        return MapStandardGaussian()(0);
+        occlusion_probability_ = state;
     }
 
-    virtual void Condition(const Scalar& delta_time,
-                              const State& state,
-                              const Input& control)
+    virtual double MapStandardGaussian() const
     {
-        delta_time_ = delta_time;
-        occlusion_probability_ = state(0);
+        double pow_c_time = std::exp(delta_time_*log_c_);
+        return 1. - (pow_c_time*(1.-occlusion_probability_) +
+                    (1 - p_occluded_occluded_)*(pow_c_time-1.)/(c_-1.));
     }
-
-    virtual State MapStandardGaussian() const
-    {
-        State state_vector;
-
-        if(isnan(delta_time_))
-            state_vector(0) =  occlusion_probability_;
-        else
-        {
-            double pow_c_time = std::exp(delta_time_*log_c_);
-            state_vector(0) = 1. - (pow_c_time*(1.-occlusion_probability_) + (1 - p_occluded_occluded_)*(pow_c_time-1.)/(c_-1.));
-        }
-        return state_vector;
-    }
-
-
-    virtual State MapStandardGaussian(const Input& sample) const
-    {
-        return MapStandardGaussian();
-    }
-
-//    virtual int vector_size() const
-//    {
-//        return VECTOR_SIZE;
-//    }
-//    virtual int control_size() const
-//    {
-//        return CONTROL_SIZE;
-//    }
-//    virtual int NoiseDimension() const
-//    {
-//        return DIMENSION;
-//    }
 
 private:
     // conditionals
-    Scalar occlusion_probability_, delta_time_;
+    double occlusion_probability_, delta_time_;
     // parameters
-    Scalar p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
-
+    double p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
 };
 
 }

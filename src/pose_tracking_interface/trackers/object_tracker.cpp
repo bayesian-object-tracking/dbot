@@ -62,8 +62,8 @@ void MultiObjectTracker::Initialize(
     int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
     double initial_occlusion_prob; ri::ReadParameter("initial_occlusion_prob", initial_occlusion_prob, node_handle_);
-    double p_visible_visible; ri::ReadParameter("p_visible_visible", p_visible_visible, node_handle_);
-    double p_visible_occluded; ri::ReadParameter("p_visible_occluded", p_visible_occluded, node_handle_);
+    double p_occluded_visible; ri::ReadParameter("p_occluded_visible", p_occluded_visible, node_handle_);
+    double p_occluded_occluded; ri::ReadParameter("p_occluded_occluded", p_occluded_occluded, node_handle_);
 
     double linear_acceleration_sigma; ri::ReadParameter("linear_acceleration_sigma", linear_acceleration_sigma, node_handle_);
     double angular_acceleration_sigma; ri::ReadParameter("angular_acceleration_sigma", angular_acceleration_sigma, node_handle_);
@@ -111,7 +111,7 @@ void MultiObjectTracker::Initialize(
         boost::shared_ptr<ff::KinectPixelObservationModel>
                 kinect_pixel_observation_model(new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
         boost::shared_ptr<ff::OcclusionProcessModel>
-                occlusion_process(new ff::OcclusionProcessModel(1. - p_visible_visible, 1. - p_visible_occluded));
+                occlusion_process(new ff::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
         observation_model = boost::shared_ptr<ObservationModelCPUType>(
                     new ObservationModelCPUType(camera_matrix,
                                         image.rows(),
@@ -135,8 +135,8 @@ void MultiObjectTracker::Initialize(
 
         gpu_observation_model->Constants(object_vertices,
                                 object_triangle_indices,
-                                p_visible_visible,
-                                p_visible_occluded,
+                                p_occluded_visible,
+                                p_occluded_occluded,
                                 tail_weight,
                                 model_sigma,
                                 sigma_factor,

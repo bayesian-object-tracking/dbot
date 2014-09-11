@@ -136,8 +136,8 @@ public:
 
     void Constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
                    const std::vector<std::vector<std::vector<int> > > indices,
-                   const float p_visible_visible,
-                   const float p_visible_occluded,
+                   const float p_occluded_visible,
+                   const float p_occluded_occluded,
                    const float tail_weight,
                    const float model_sigma,
                    const float sigma_factor,
@@ -157,8 +157,8 @@ public:
 
 
         indices_ = indices;
-        p_visible_visible_ = p_visible_visible;
-        p_visible_occluded_ = p_visible_occluded;
+        p_visible_visible_ = 1.0 - p_occluded_visible;
+        p_visible_occluded_ = 1.0 - p_occluded_occluded;
         tail_weight_ = tail_weight;
         model_sigma_ = model_sigma;
         sigma_factor_ = sigma_factor;
