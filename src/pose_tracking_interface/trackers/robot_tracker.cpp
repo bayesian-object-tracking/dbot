@@ -181,7 +181,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                          robot_renderer_,
                                          kinect_pixel_observation_model,
                                          occlusion_process_model,
-                                         initial_occlusion_prob);
+                                         initial_occlusion_prob));
 
 
     // initialize process model =====================================================================================================
