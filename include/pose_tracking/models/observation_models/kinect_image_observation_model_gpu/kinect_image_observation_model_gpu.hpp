@@ -68,7 +68,7 @@ public:
                      const size_t& n_rows,
                      const size_t& n_cols,
                      const size_t& max_sample_count,
-                     const Scalar& initial_occlusion_prob, float d_dog):
+                     const Scalar& initial_occlusion_prob):
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),

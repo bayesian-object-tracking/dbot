@@ -94,7 +94,7 @@ public:
             const ObjectRendererPtr object_renderer,
             const PixelObservationModelPtr observation_model,
             const OcclusionProcessModelPtr occlusion_process_model,
-            const float& initial_occlusion_prob, float d_dog):
+            const float& initial_occlusion_prob):
         camera_matrix_(camera_matrix),
         n_rows_(n_rows),
         n_cols_(n_cols),

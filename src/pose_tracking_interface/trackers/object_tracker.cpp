@@ -120,7 +120,7 @@ void MultiObjectTracker::Initialize(
                                         object_renderer,
                                         kinect_pixel_observation_model,
                                         occlusion_process,
-                                        initial_occlusion_prob, 232.23));
+                                        initial_occlusion_prob));
     }
     else
     {
@@ -131,7 +131,7 @@ void MultiObjectTracker::Initialize(
                                                  image.rows(),
                                                  image.cols(),
                                                  max_sample_count,
-                                                 initial_occlusion_prob, 212312.122));
+                                                 initial_occlusion_prob));
 
         gpu_observation_model->Constants(object_vertices,
                                 object_triangle_indices,
