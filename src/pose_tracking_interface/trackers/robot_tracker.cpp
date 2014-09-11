@@ -80,7 +80,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     // read some parameters ---------------------------------------------------------------------------------------------------------
     bool use_gpu; ri::ReadParameter("use_gpu", use_gpu, node_handle_);
     int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
-    double p_visible_init; ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
+    double initial_occlusion_prob; ri::ReadParameter("initial_occlusion_prob", initial_occlusion_prob, node_handle_);
     double p_visible_visible; ri::ReadParameter("p_visible_visible", p_visible_visible, node_handle_);
     double p_visible_occluded; ri::ReadParameter("p_visible_occluded", p_visible_occluded, node_handle_);
     double joint_angle_sigma; ri::ReadParameter("joint_angle_sigma", joint_angle_sigma, node_handle_);
@@ -181,7 +181,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                          robot_renderer_,
                                          kinect_pixel_observation_model,
                                          occlusion_process_model,
-                                         p_visible_init));
+                                         initial_occlusion_prob, 2.32));
 
 
     // initialize process model =====================================================================================================

@@ -63,15 +63,16 @@ public:
     typedef typename Traits::CameraMatrix   CameraMatrix;
 
 
+    // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION
     KinectImageObservationModelGPU(const CameraMatrix& camera_matrix,
                      const size_t& n_rows,
                      const size_t& n_cols,
                      const size_t& max_sample_count,
-                     const Scalar& initial_visibility_prob):
+                     const Scalar& initial_occlusion_prob, float d_dog):
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),
-            initial_visibility_prob_(initial_visibility_prob),
+            initial_visibility_prob_(1 - initial_occlusion_prob),
             max_sample_count_(max_sample_count),
             n_poses_(max_sample_count),
             constants_set_(false),

@@ -61,7 +61,7 @@ void MultiObjectTracker::Initialize(
 
     int max_sample_count; ri::ReadParameter("max_sample_count", max_sample_count, node_handle_);
 
-    double p_visible_init; ri::ReadParameter("p_visible_init", p_visible_init, node_handle_);
+    double initial_occlusion_prob; ri::ReadParameter("initial_occlusion_prob", initial_occlusion_prob, node_handle_);
     double p_visible_visible; ri::ReadParameter("p_visible_visible", p_visible_visible, node_handle_);
     double p_visible_occluded; ri::ReadParameter("p_visible_occluded", p_visible_occluded, node_handle_);
 
@@ -120,7 +120,7 @@ void MultiObjectTracker::Initialize(
                                         object_renderer,
                                         kinect_pixel_observation_model,
                                         occlusion_process,
-                                        p_visible_init));
+                                        initial_occlusion_prob, 232.23));
     }
     else
     {
@@ -131,7 +131,7 @@ void MultiObjectTracker::Initialize(
                                                  image.rows(),
                                                  image.cols(),
                                                  max_sample_count,
-                                                 p_visible_init));
+                                                 initial_occlusion_prob, 212312.122));
 
         gpu_observation_model->Constants(object_vertices,
                                 object_triangle_indices,

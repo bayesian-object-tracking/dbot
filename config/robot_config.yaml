@@ -107,7 +107,7 @@ sigma_factor: 0.00142478 #0.0014247
  
 # visibility process model stuff ------------------------------------------------------------
 # initial prob of the source being the object for each pixels
-p_visible_init: 0.9 #0.9
+initial_occlusion_prob: 0.1 #0.1
 # prob of source being object given that one second ago the source was the object
 p_visible_visible: 0.9 #0.9
 # prob of source being object given that one second ago source was not object
