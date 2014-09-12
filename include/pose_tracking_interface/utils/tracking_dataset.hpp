@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/JointState.h>
 
 #include <message_filters/simple_filter.h>
 
@@ -44,20 +45,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-//#include <fast_filtering/utils/helper_functions.hpp>
-//#include <fast_filtering/utils/ros.hpp>
-//#include <fast_filtering/utils/pcl.hpp>
-
 class DataFrame
 {
 public:
     sensor_msgs::Image::ConstPtr image_;
     sensor_msgs::CameraInfo::ConstPtr info_;
+    sensor_msgs::JointState::ConstPtr ground_truth_joints_;
+    sensor_msgs::JointState::ConstPtr noisy_joints_;
     Eigen::VectorXd ground_truth_;
+    Eigen::VectorXd deviation_;
 
     DataFrame(const sensor_msgs::Image::ConstPtr& image,
               const sensor_msgs::CameraInfo::ConstPtr& info,
-              const Eigen::VectorXd& ground_truth = Eigen::VectorXd());
+              const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+              const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
+  DataFrame(const sensor_msgs::Image::ConstPtr& image,
+	    const sensor_msgs::CameraInfo::ConstPtr& info,
+	    const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	    const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	    const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+	    const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
 };
 
 template <class M>
@@ -74,12 +83,19 @@ public:
 class TrackingDataset
 {
 public:
+  
+  enum DataType {
+    GROUND_TRUTH = 1,
+    DEVIATION
+  };
+
     TrackingDataset(const std::string& path);
     ~TrackingDataset();
 
     void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info,
-                  const Eigen::VectorXd& ground_truth = Eigen::VectorXd());
+                  const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+                  const Eigen::VectorXd& deviation = Eigen::VectorXd());
 
     void AddFrame(const sensor_msgs::Image::ConstPtr& image,
                   const sensor_msgs::CameraInfo::ConstPtr& info);
@@ -100,15 +116,21 @@ public:
 
     void Store();
 
-private:
-    std::vector<DataFrame> data_;
+protected:
 
-    const boost::filesystem::path path_;
-    const std::string image_topic_;
-    const std::string info_topic_;
-    const std::string observations_filename_;
-    const std::string ground_truth_filename_;
-    const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
+  bool LoadTextFile(const char *filename, DataType type);
+  bool StoreTextFile(const char *filename, DataType type);
+  
+  std::vector<DataFrame> data_;
+  const boost::filesystem::path path_;
+
+  const std::string image_topic_;
+  const std::string info_topic_;
+  const std::string observations_filename_;
+  const std::string ground_truth_filename_;
+
+private:
+  const double admissible_delta_time_; // admissible time difference in s for comparing time stamps
 };
 
 #endif

@@ -183,6 +183,7 @@ set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/object_file_reader.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/kinematics_from_urdf.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/tracking_dataset.cpp
+    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/robot_tracking_dataset.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/pcl_interface.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/ros_interface.cpp
 )

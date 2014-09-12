@@ -43,10 +43,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
           const sensor_msgs::CameraInfo::ConstPtr& info,
-          const Eigen::VectorXd& ground_truth):
+          const Eigen::VectorXd& ground_truth,
+          const Eigen::VectorXd& deviation):
     image_(image),
     info_(info),
-    ground_truth_(ground_truth) { }
+    ground_truth_(ground_truth),
+    deviation_(deviation) { }
+
+DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
+          const sensor_msgs::CameraInfo::ConstPtr& info,
+	  const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	  const sensor_msgs::JointState::ConstPtr& noisy_joints,
+          const Eigen::VectorXd& ground_truth,
+          const Eigen::VectorXd& deviation):
+    image_(image),
+    info_(info),
+    ground_truth_joints_(ground_truth_joints),
+    noisy_joints_(noisy_joints),
+    ground_truth_(ground_truth),
+    deviation_(deviation) { }
 
 TrackingDataset::TrackingDataset(const std::string& path):path_(path),
                             image_topic_("XTION/depth/image"),
@@ -60,9 +75,10 @@ TrackingDataset::~TrackingDataset() {}
 void TrackingDataset::AddFrame(
         const sensor_msgs::Image::ConstPtr& image,
         const sensor_msgs::CameraInfo::ConstPtr& info,
-        const Eigen::VectorXd& ground_truth)
+        const Eigen::VectorXd& ground_truth,
+        const Eigen::VectorXd& deviation)
 {
-    DataFrame data(image, info, ground_truth);
+  DataFrame data(image, info, ground_truth,deviation);
     data_.push_back(data);
 }
 
@@ -158,41 +174,61 @@ void TrackingDataset::Load()
     bag.close();
 
     // load ground_truth.txt ---------------------------------------------------------------------
-    std::ifstream file; file.open((path_ / ground_truth_filename_).c_str(), std::ios::in); // open file
-    if(file.is_open())
+    if (! LoadTextFile((path_ / ground_truth_filename_).c_str(), DataType::GROUND_TRUTH))
+      std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
+    exit(-1);
+    
+}
+
+bool TrackingDataset::LoadTextFile(const char *filename, DataType type)
+{
+  std::ifstream file; file.open(filename, std::ios::in); // open file
+  if(file.is_open())
     {
-        std::string temp; std::getline(file, temp); std::istringstream line(temp); // get a line from file
-        double time_stamp; line >> time_stamp; // get the timestamp
-        double scalar; Eigen::VectorXd state;
-        while(line >> scalar) // get the state
+      std::string temp; std::getline(file, temp); std::istringstream line(temp); // get a line from file
+      double time_stamp; line >> time_stamp; // get the timestamp
+      double scalar; Eigen::VectorXd state;
+      while(line >> scalar) // get the state
         {
-            Eigen::VectorXd temp(state.rows() + 1);
-            temp.topRows(state.rows()) = state;
-            temp(temp.rows()-1) = scalar;
-            state = temp;
+	  Eigen::VectorXd temp(state.rows() + 1);
+	  temp.topRows(state.rows()) = state;
+	  temp(temp.rows()-1) = scalar;
+	  state = temp;
         }
-
-        std::cout << "read state " << state.transpose() << std::endl;
-        std::cout << "read bagfile of size " << data_.size() << std::endl;
-        std::cout << "timestamp of first image is " << data_[0].image_->header.stamp << std::endl;
-        file.close();
-
-        // attach the state to the appropriate data frames
-        for(size_t i = 0; i < data_.size(); i++)
-            if(std::fabs(data_[i].image_->header.stamp.toSec() - time_stamp) <= admissible_delta_time_)
-                data_[i].ground_truth_ = state;
+      
+      std::cout << "read state " << state.transpose() << std::endl;
+      std::cout << "read bagfile of size " << data_.size() << std::endl;
+      std::cout << "timestamp of first image is " << data_[0].image_->header.stamp << std::endl;
+      file.close();
+      
+      // attach the state to the appropriate data frames
+      for(size_t i = 0; i < data_.size(); i++)
+	if(std::fabs(data_[i].image_->header.stamp.toSec() - time_stamp) <= admissible_delta_time_)
+	  switch (type)
+	    {
+	    case DataType::GROUND_TRUTH:
+	      data_[i].ground_truth_ = state;
+	      break;
+	    case DataType::DEVIATION:
+	      data_[i].deviation_ = state;
+	      break;
+	    default:
+	      return false;
+	    }
+      return true;
     }
-    else
+  else return false;
     {
-        std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
-        exit(-1);
+      std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
+      exit(-1);
     }
+
 }
 
 void TrackingDataset::Store()
 {
     if(boost::filesystem::exists(path_ / observations_filename_) ||
-       boost::filesystem::exists(path_ / ground_truth_filename_) )
+       boost::filesystem::exists(path_ / ground_truth_filename_))
     {
         std::cout << "TrackingDataset with name " << path_ << " already exists, will not overwrite." << std::endl;
         return;
@@ -216,22 +252,45 @@ void TrackingDataset::Store()
     bag.close();
 
     // write ground truth to txt file ----------------------------------------------------------
-    std::ofstream file; file.open((path_ / ground_truth_filename_).c_str(), std::ios::out | std::ios::trunc);
-    if(file.is_open())
-    {
-        for(size_t i = 0; i < data_.size(); i++)
-        {
-            if(data_[i].ground_truth_.rows() != 0)
-            {
-                file << data_[i].image_->header.stamp << " ";
-                file << data_[i].ground_truth_.transpose() << std::endl;
-            }
-        }
-        file.close();
-    }
-    else
-    {
-        std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
-        exit(-1);
-    }
+    if(!StoreTextFile((path_ / ground_truth_filename_).c_str(), DataType::GROUND_TRUTH)) 
+      {
+	std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
+	exit(-1);
+      }
 }
+
+
+bool TrackingDataset::StoreTextFile(const char *filename, DataType type)
+{
+  std::ofstream file; file.open(filename, std::ios::out | std::ios::trunc);
+  if(file.is_open())
+    {
+      for(size_t i = 0; i < data_.size(); i++)
+        {
+	  switch(type) 
+	    {
+	    case(DataType::GROUND_TRUTH):
+	      if(data_[i].ground_truth_.rows() != 0)
+		{
+		  file << data_[i].image_->header.stamp << " ";
+		  file << data_[i].ground_truth_.transpose() << std::endl;
+		}
+	      break;
+	    case(DataType::DEVIATION):
+	      if(data_[i].deviation_.rows() != 0)
+		{
+		  file << data_[i].image_->header.stamp << " ";
+		  file << data_[i].deviation_.transpose() << std::endl;
+		}
+	      break;
+	    default:
+	      return false;
+	    }
+        }
+      file.close();
+    }
+  else return false;
+  
+  return true;
+}
+
