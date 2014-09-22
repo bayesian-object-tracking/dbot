@@ -152,8 +152,11 @@ catkin_package(
         assimp
 )
 
-catkin_add_gtest(factorized_unscented_transform_test
-                 tests/factorized_unscented_transform_test.cpp)
+catkin_add_gtest(partitioned_unscented_transform_test
+                 tests/partitioned_unscented_transform_test.cpp)
+
+catkin_add_gtest(smw_inversion_test
+                 tests/smw_inversion_test.cpp)
 
 catkin_add_gtest(llt_diagonal_test
                  tests/llt_diagonal_test.cpp)
