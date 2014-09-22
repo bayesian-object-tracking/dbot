@@ -50,6 +50,11 @@
 
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <ctime>
+
+#include <boost/iterator/zip_iterator.hpp>
+#include <boost/range.hpp>
 
 #include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
 #include <fast_filtering/filters/deterministic/factorized_unscented_kalman_filter.hpp>
@@ -96,214 +101,127 @@ public:
 
     virtual void SetUp()
     {
-        state_a = State::Random();
-        cov_aa = Filter::StateDistribution::CovAA::Random();
-        cov_aa = cov_aa * cov_aa.transpose();
-        Qa = Filter::StateDistribution::CovAA::Identity() * 5;
-
-        state_b = State::Random();
-        cov_bb = Filter::StateDistribution::CovBB::Random();
-        cov_bb = cov_bb * cov_bb.transpose();
-        Qb = Filter::StateDistribution::CovAA::Identity() * 3;
-
-        state_b2 = State::Random();
-        cov_bb2 = Filter::StateDistribution::CovBB::Random();
-        cov_bb2 = cov_bb2 * cov_bb2.transpose();
-        Qb2 = Filter::StateDistribution::CovAA::Identity() * 3;
-
-        y = Filter::StateDistribution::Y::Random();
-        cov_yy = Filter::StateDistribution::CovYY::Random();
-        cov_yy = cov_yy * cov_yy.transpose();
-        R = Filter::StateDistribution::CovYY::Identity() * 2;
+        SetRandom(mu_a,  cov_aa,  Qa,  1.342);
+        SetRandom(mu_b,  cov_bb,  Qb,  2.357);
+        SetRandom(mu_b2, cov_bb2, Qb2, 5.234);
+        SetRandom(mu_y,  cov_yy,  R,   3.523);
     }
 
-    virtual size_t JointDimension()
+    template <typename Mean, typename Covariance, typename NoiseCovaiance>
+    void SetRandom(Mean& mu, Covariance& cov, NoiseCovaiance& noise_cov, double sigma)
     {
-        return state.CohesiveStatesDimension() * 2
-                + state.FactorizedStateDimension() * 2
-                + 1;
+        mu = Mean::Random();
+        cov = Covariance::Random();
+        cov = cov * cov.transpose();
+        noise_cov = NoiseCovaiance::Identity() * sigma;
     }
 
-    virtual size_t JointDimensionNoNoise()
+    void ComputeSigmaPointPartitions(
+            const std::vector<std::pair<Eigen::MatrixXd, Eigen::MatrixXd> >& moments_list,
+            std::vector<Eigen::MatrixXd>& sigma_point_partitions)
     {
-        return state.CohesiveStatesDimension()
-                + state.FactorizedStateDimension()
-                + 1;
-    }
+        size_t dim = 0;
+        for (auto& moments : moments_list)
+        {
+            dim += moments.first.rows();
+        }
+        size_t number_of_points = 2 * dim + 1;
 
-    void ComputeSigmaPointPartitions(Filter::SigmaPoints& Xa,
-                                     Filter::SigmaPoints& XQa,
-                                     Filter::SigmaPoints& Xb,
-                                     Filter::SigmaPoints& XQb,
-                                     Filter::SigmaPoints& XR)
-    {
-        size_t number_of_points = 2 * JointDimension() + 1;
+        Eigen::MatrixXd sigma_points;
         size_t offset = 0;
+        for (auto& moments : moments_list)
+        {
+            sigma_points = Filter::SigmaPoints(moments.first.rows(), number_of_points);
 
-        Xa = Filter::SigmaPoints(state.CohesiveStatesDimension(), number_of_points);
-        XQa = Filter::SigmaPoints(state.CohesiveStatesDimension(), number_of_points);
+            filter.ComputeSigmaPoints(moments.first, moments.second, offset, sigma_points);
+            sigma_point_partitions.push_back(sigma_points);
 
-        Xb = Filter::SigmaPoints(state.FactorizedStateDimension(), number_of_points);
-        XQb = Filter::SigmaPoints(state.FactorizedStateDimension(), number_of_points);
-        XR = Filter::SigmaPoints(1, number_of_points);
-
-        filter.ComputeSigmaPoints(state_a, cov_aa, offset, Xa);
-        offset += state.CohesiveStatesDimension();
-
-        filter.ComputeSigmaPoints<State>(State::Zero(), Qa, offset, XQa);
-        offset += state.CohesiveStatesDimension();
-
-        filter.ComputeSigmaPoints(state_b, cov_bb, offset, Xb);
-        offset += state.FactorizedStateDimension();
-
-        filter.ComputeSigmaPoints<State>(State::Zero(), Qb, offset, XQb);
-        offset += state.FactorizedStateDimension();
-
-        filter.ComputeSigmaPoints<Filter::StateDistribution::Y>(
-                    Filter::StateDistribution::Y::Zero(), R, offset, XR);
-
+            offset += moments.first.rows();
+        }
     }
 
-    void ComputeSigmaPointPartitionsNoNoise(Filter::SigmaPoints& Xa,
-                                            Filter::SigmaPoints& Xb,
-                                            Filter::SigmaPoints& XR)
+    Eigen::MatrixXd AugmentPartitionedSigmaPoints(
+            const std::vector<Filter::SigmaPoints>& sigma_point_list)
     {
-        size_t number_of_points = 2 * JointDimensionNoNoise() + 1;
-        size_t offset = 0;
-
-        Xa = Filter::SigmaPoints(state.CohesiveStatesDimension(), number_of_points);
-        Xb = Filter::SigmaPoints(state.FactorizedStateDimension(), number_of_points);
-        XR = Filter::SigmaPoints(1, number_of_points);
-
-        filter.ComputeSigmaPoints(state_a, cov_aa, offset, Xa);
-        offset += state.CohesiveStatesDimension();
-
-        filter.ComputeSigmaPoints(state_b, cov_bb, offset, Xb);
-        offset += state.FactorizedStateDimension();
-
-        filter.ComputeSigmaPoints<Filter::StateDistribution::Y>(
-                    Filter::StateDistribution::Y::Zero(), R, offset, XR);
-
-    }
-
-    Eigen::MatrixXd JointPartitionedSigmaPoints(
-            Filter::SigmaPoints& Xa,
-            Filter::SigmaPoints& XQa,
-            Filter::SigmaPoints& Xb,
-            Filter::SigmaPoints& XQb,
-            Filter::SigmaPoints& XR)
-    {
-        size_t number_of_points = 2 * JointDimension() + 1;
-
-        Eigen::MatrixXd joint_partitions_X = Eigen::MatrixXd::Zero(JointDimension(), number_of_points);
+        size_t dim = 0;
+        for (auto& sigma_points: sigma_point_list)
+        {
+            dim += sigma_points.rows();
+        }
+        size_t number_of_points = sigma_point_list[0].cols();
+        Eigen::MatrixXd joint_partitions_X =
+                Eigen::MatrixXd::Zero(dim, number_of_points);
 
         size_t dim_offset = 0;
-        joint_partitions_X.block(dim_offset, 0, Xa.rows(), number_of_points) = Xa;
-        dim_offset += Xa.rows();
-        joint_partitions_X.block(dim_offset, 0, XQa.rows(), number_of_points) = XQa;
-        dim_offset += XQa.rows();
-        joint_partitions_X.block(dim_offset, 0, Xb.rows(), number_of_points) = Xb;
-        dim_offset += Xb.rows();
-        joint_partitions_X.block(dim_offset, 0, XQb.rows(), number_of_points) = XQb;
-        dim_offset += XQb.rows();
-        joint_partitions_X.block(dim_offset, 0, XR.rows(), number_of_points) = XR;
+        for (auto& sigma_points: sigma_point_list)
+        {
+            joint_partitions_X.block(dim_offset,
+                                     0,
+                                     sigma_points.rows(),
+                                     number_of_points) = sigma_points;
+
+            dim_offset += sigma_points.rows();
+        }
 
         return joint_partitions_X;
     }
 
-    Eigen::MatrixXd JointPartitionedSigmaPointsNoNoise(
-            Filter::SigmaPoints& Xa,
-            Filter::SigmaPoints& Xb,
-            Filter::SigmaPoints& XR)
+    size_t AugmentedDimension(const std::vector<Eigen::MatrixXd>& matrices)
     {
-        size_t number_of_points = 2 * JointDimensionNoNoise() + 1;
+        size_t dim = 0;
+        for (Eigen::MatrixXd matrix : matrices)
+        {
+            dim += matrix.rows();
+        }
 
-        Eigen::MatrixXd joint_partitions_X = Eigen::MatrixXd::Zero(JointDimensionNoNoise(), number_of_points);
-
-        size_t dim_offset = 0;
-        joint_partitions_X.block(dim_offset, 0, Xa.rows(), number_of_points) = Xa;
-        dim_offset += Xa.rows();
-        joint_partitions_X.block(dim_offset, 0, Xb.rows(), number_of_points) = Xb;
-        dim_offset += Xb.rows();
-        joint_partitions_X.block(dim_offset, 0, XR.rows(), number_of_points) = XR;
-
-        return joint_partitions_X;
+        return dim;
     }
 
-    Eigen::MatrixXd JointSigmaPoints()
+    Eigen::MatrixXd AugmentedCovariance(
+            const std::vector<Eigen::MatrixXd>& covariances)
     {
-        size_t number_of_points = 2 * JointDimension() + 1;
+        size_t dim = AugmentedDimension(covariances);
+        Eigen::MatrixXd augmented_cov = Eigen::MatrixXd::Zero(dim, dim);
+
         size_t offset = 0;
+        for (Eigen::MatrixXd covariance : covariances)
+        {
+            augmented_cov.block(offset,
+                                offset,
+                                covariance.rows(),
+                                covariance.cols()) = covariance;
+            offset += covariance.rows();
+        }
 
-
-        size_t dim_offset = 0;
-
-        Eigen::MatrixXd joint_mean = Eigen::MatrixXd::Zero(JointDimension(), 1);
-        Eigen::MatrixXd joint_cov = Eigen::MatrixXd::Zero(JointDimension(), JointDimension());
-
-        joint_mean.block(dim_offset, 0, state_a.rows(), 1) = state_a;
-        joint_cov.block(dim_offset, dim_offset, cov_aa.rows(), cov_aa.cols()) = cov_aa;
-        dim_offset += cov_aa.rows();
-
-        joint_mean.block(dim_offset, 0, state_a.rows(), 1) = State::Zero();
-        joint_cov.block(dim_offset, dim_offset, Qa.rows(), Qa.cols()) = Qa;
-        dim_offset += Qa.rows();
-
-        joint_mean.block(dim_offset, 0, state_b.rows(), 1) = state_b;
-        joint_cov.block(dim_offset, dim_offset, cov_bb.rows(), cov_bb.cols()) = cov_bb;
-        dim_offset += cov_bb.rows();
-
-        joint_mean.block(dim_offset, 0, state_b.rows(), 1) = State::Zero();
-        joint_cov.block(dim_offset, dim_offset, Qb.rows(), Qb.cols()) = Qb;
-        dim_offset += Qb.rows();
-
-        joint_mean.block(dim_offset, 0, y.rows(), 1) = Filter::StateDistribution::Y::Zero();
-        joint_cov.block(dim_offset, dim_offset, R.rows(), R.cols()) = R;
-
-        Eigen::MatrixXd joint_X = Eigen::MatrixXd::Zero(JointDimension(), number_of_points);
-
-        filter.ComputeSigmaPoints(joint_mean, joint_cov, 0, joint_X);
-
-        return joint_X;
+        return augmented_cov;
     }
 
-
-    Eigen::MatrixXd JointSigmaPointsNoNoise()
+    Eigen::MatrixXd AugmentedVector(
+            const std::vector<Eigen::MatrixXd>& vectors)
     {
-        size_t number_of_points = 2 * JointDimensionNoNoise() + 1;
+        size_t dim = AugmentedDimension(vectors);
+        Eigen::MatrixXd augmented_vector = Eigen::MatrixXd::Zero(dim, dim);
+
         size_t offset = 0;
+        for (Eigen::MatrixXd vector : vectors)
+        {
+            augmented_vector.block(offset,
+                                   0,
+                                   vector.rows(),
+                                   vector.cols()) = vector;
+            offset += vector.rows();
+        }
 
-
-        size_t dim_offset = 0;
-
-        Eigen::MatrixXd joint_mean = Eigen::MatrixXd::Zero(JointDimensionNoNoise(), 1);
-        Eigen::MatrixXd joint_cov = Eigen::MatrixXd::Zero(JointDimensionNoNoise(), JointDimensionNoNoise());
-
-        joint_mean.block(dim_offset, 0, state_a.rows(), 1) = state_a;
-        joint_cov.block(dim_offset, dim_offset, cov_aa.rows(), cov_aa.cols()) = cov_aa;
-        dim_offset += cov_aa.rows();
-
-        joint_mean.block(dim_offset, 0, state_b.rows(), 1) = state_b;
-        joint_cov.block(dim_offset, dim_offset, cov_bb.rows(), cov_bb.cols()) = cov_bb;
-        dim_offset += cov_bb.rows();
-
-        joint_mean.block(dim_offset, 0, y.rows(), 1) = Filter::StateDistribution::Y::Zero();
-        joint_cov.block(dim_offset, dim_offset, R.rows(), R.cols()) = R;
-
-        Eigen::MatrixXd joint_X = Eigen::MatrixXd::Zero(JointDimensionNoNoise(), number_of_points);
-
-        filter.ComputeSigmaPoints(joint_mean, joint_cov, 0, joint_X);
-
-        return joint_X;
+        return augmented_vector;
     }
 
 protected:
     Filter::StateDistribution state;
     Filter filter;
-    State state_a;
-    State state_b;
-    State state_b2;
-    Filter::StateDistribution::Y y;
+    State mu_a;
+    State mu_b;
+    State mu_b2;
+    Filter::StateDistribution::Y mu_y;
 
     Filter::StateDistribution::CovAA cov_aa;
     Filter::StateDistribution::CovBB cov_bb;
@@ -323,13 +241,122 @@ const double EPSILON = 1.0e-12;
  */
 TEST_F(PartitionedUnscentedTransformTest, firstUTColumn)
 {
-    size_t number_of_points = 2 * JointDimension() + 1;
+    size_t number_of_points = 2 * state.CohesiveStatesDimension()*5 + 1;
 
     Filter::SigmaPoints X(state.CohesiveStatesDimension(), number_of_points);
-    filter.ComputeSigmaPoints(state_a, cov_aa, 0, X);
+    filter.ComputeSigmaPoints(mu_a, cov_aa, 0, X);
 
-    EXPECT_TRUE(X.col(0).isApprox(state_a));
+    EXPECT_TRUE(X.col(0).isApprox(mu_a));
 }
+
+TEST_F(PartitionedUnscentedTransformTest, partitionUT)
+{
+    Eigen::MatrixXd augmented_X;
+    Eigen::MatrixXd augmented_partitioned_X;
+
+    // compute the sigma point partitions X = [Xa  XQa  Xb  XQb  XR]
+    std::vector<Filter::SigmaPoints> X_partitions;
+    ComputeSigmaPointPartitions({ {mu_a, cov_aa},
+                                  {State::Zero(), Qa},
+                                  {mu_b, cov_bb},
+                                  {State::Zero(), Qb},
+                                  {Filter::StateDistribution::Y::Zero(), R} },
+                                X_partitions);
+    augmented_partitioned_X = AugmentPartitionedSigmaPoints(X_partitions);
+
+    // compute the sigma point from augmented covariance and mean
+    size_t dim = AugmentedDimension({cov_aa, Qa, cov_bb, Qb, R});
+    size_t number_of_points = 2 * dim + 1;
+    Eigen::MatrixXd augmented_mean = AugmentedVector({ mu_a,
+                                                       State::Zero(),
+                                                       mu_b,
+                                                       State::Zero(),
+                                                       State::Zero() });
+    Eigen::MatrixXd augmented_cov = AugmentedCovariance({ cov_aa,
+                                                          Qa,
+                                                          cov_bb,
+                                                          Qb,
+                                                          R });
+    augmented_X = Eigen::MatrixXd::Zero(dim, number_of_points);
+    filter.ComputeSigmaPoints(augmented_mean, augmented_cov, 0, augmented_X);
+
+    // verify identity
+    EXPECT_TRUE(augmented_partitioned_X.isApprox(augmented_X, EPSILON));
+}
+
+TEST_F(PartitionedUnscentedTransformTest, partitionCovariance)
+{
+    Filter::SigmaPoints Xa, Xb, Xy;
+
+    Eigen::MatrixXd S_aa, S_ab, S_ay,
+                          S_bb, S_by,
+                                S_yy;
+
+    std::vector<Filter::SigmaPoints> X_partitions;
+
+    ComputeSigmaPointPartitions({ {mu_a, cov_aa},
+                                  {mu_b, cov_bb},
+                                  {mu_y, cov_yy} },
+                                X_partitions);
+
+    Xa = X_partitions[0];
+    Xb = X_partitions[1];
+    Xy = X_partitions[2];
+
+    size_t dim = Xa.rows() + Xb.rows() + Xy.rows();
+
+    S_aa = Xa * Xa.transpose();
+    S_ab = Xa * Xb.transpose();
+    S_ay = Xa * Xy.transpose();
+    S_bb = Xb * Xb.transpose();
+    S_by = Xb * Xy.transpose();
+    S_yy = Xy * Xy.transpose();
+
+    Eigen::MatrixXd joint_partitioned_cov = Eigen::MatrixXd::Zero(dim, dim);
+    size_t offset_i = 0;
+    size_t offset_j = 0;
+    joint_partitioned_cov.block(0, offset_j, Xa.rows(), Xa.rows()) = S_aa;
+
+    offset_j += Xa.rows();
+
+    joint_partitioned_cov.block(
+                offset_i, offset_j, Xa.rows(), Xb.rows()) = S_ab;
+    joint_partitioned_cov.transpose().block(
+                offset_i, offset_j, Xa.rows(), Xb.rows()) = S_ab;
+
+    offset_j += Xb.rows();
+
+    joint_partitioned_cov.block(
+                offset_i, offset_j, Xa.rows(), Xy.rows()) = S_ay;
+    joint_partitioned_cov.transpose().block(
+                offset_i, offset_j, Xa.rows(), Xy.rows()) = S_ay;
+
+    offset_i = Xa.rows();
+    offset_j = Xa.rows();
+
+    joint_partitioned_cov.block(
+                offset_i, offset_j, Xb.rows(), Xb.rows()) = S_bb;
+
+    offset_j += Xb.rows();
+    joint_partitioned_cov.block(
+                offset_i, offset_j, Xb.rows(), Xy.rows()) = S_by;
+    joint_partitioned_cov.transpose().block(
+                offset_i, offset_j, Xb.rows(), Xy.rows()) = S_by;
+
+    offset_i = Xa.rows() + Xb.rows();
+    offset_j = Xa.rows() + Xb.rows();
+
+    joint_partitioned_cov.block(
+                offset_i, offset_j, Xy.rows(), Xy.rows()) = S_yy;
+
+
+    // compute joint covariance
+    Eigen::MatrixXd joint_X = AugmentPartitionedSigmaPoints({Xa, Xb, Xy});
+    Eigen::MatrixXd joint_cov = joint_X * joint_X.transpose();
+
+    EXPECT_TRUE(joint_partitioned_cov.isApprox(joint_cov, EPSILON));
+}
+
 
 
 /**
@@ -349,182 +376,113 @@ TEST_F(PartitionedUnscentedTransformTest, partitionOffset)
     // iterate over all possible offsets
     for (int offset = 0; offset < max_offset; ++offset)
     {
-        filter.ComputeSigmaPoints(state_a, cov_aa, offset, X);
+        filter.ComputeSigmaPoints(mu_a, cov_aa, offset, X);
 
         // check if the first column is actually the mean
-        EXPECT_TRUE(X.col(0).isApprox(state_a, EPSILON));
+        EXPECT_TRUE(X.col(0).isApprox(mu_a, EPSILON));
 
         // the segment before the offset must be equal to the mean
         for (int i = 1; i < offset + 1; ++i)
         {
-            EXPECT_TRUE(X.col(i).isApprox(state_a, EPSILON));
-            EXPECT_TRUE(X.col(joint_dimension + i).isApprox(state_a, EPSILON));
+            EXPECT_TRUE(X.col(i).isApprox(mu_a, EPSILON));
+            EXPECT_TRUE(X.col(joint_dimension + i).isApprox(mu_a, EPSILON));
         }
 
         // the segment starting at the offset contain the distinct sigma points
         for (int i = offset + 1; i < offset + 1 + state.CohesiveStatesDimension(); ++i)
         {
-            EXPECT_FALSE(X.col(i).isApprox(state_a, EPSILON));
-            EXPECT_FALSE(X.col(joint_dimension + i).isApprox(state_a, EPSILON));
+            EXPECT_FALSE(X.col(i).isApprox(mu_a, EPSILON));
+            EXPECT_FALSE(X.col(joint_dimension + i).isApprox(mu_a, EPSILON));
         }
 
         // the segment after the offset must be equal to the mean
         for (int i = offset + 1 + state.CohesiveStatesDimension(); i <= joint_dimension; ++i)
         {
-            EXPECT_TRUE(X.col(i).isApprox(state_a, EPSILON));
-            EXPECT_TRUE(X.col(joint_dimension + i).isApprox(state_a, EPSILON));
+            EXPECT_TRUE(X.col(i).isApprox(mu_a, EPSILON));
+            EXPECT_TRUE(X.col(joint_dimension + i).isApprox(mu_a, EPSILON));
         }
     }
     */
 
     // for offset = 0
-    filter.ComputeSigmaPoints(state_a, cov_aa, 0, X);
+    filter.ComputeSigmaPoints(mu_a, cov_aa, 0, X);
     // check if the first column is actually the mean
-    EXPECT_TRUE(X.col(0).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(0).isApprox(mu_a, EPSILON));
     // the segment starting at the offset contain the distinct sigma points
-    EXPECT_FALSE(X.col(1 + 0).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(2 + 0).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(3 + 0).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 1 + 0).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 2 + 0).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 3 + 0).isApprox(state_a, EPSILON));
+    EXPECT_FALSE(X.col(1 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(2 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(3 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 1 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 2 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 3 + 0).isApprox(mu_a, EPSILON));
     // the segment after the offset must be equal to the mean
-    EXPECT_TRUE(X.col(4 + 0).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(5 + 0).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(6 + 0).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 4 + 0).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 5 + 0).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 6 + 0).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(4 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(5 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(6 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 4 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 5 + 0).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 6 + 0).isApprox(mu_a, EPSILON));
 
     //  for offset = 1
-    filter.ComputeSigmaPoints(state_a, cov_aa, 1, X);
+    filter.ComputeSigmaPoints(mu_a, cov_aa, 1, X);
     // check if the first column is actually the mean
-    EXPECT_TRUE(X.col(0).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(0).isApprox(mu_a, EPSILON));
     // the segment before the offset must be equal to the mean
-    EXPECT_TRUE(X.col(1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(mu_a, EPSILON));
     // the segment starting at the offset contain the distinct sigma points
-    EXPECT_FALSE(X.col(1 + 1).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(2 + 1).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(3 + 1).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 1 + 1).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 2 + 1).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 3 + 1).isApprox(state_a, EPSILON));
+    EXPECT_FALSE(X.col(1 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(2 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(3 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 1 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 2 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 3 + 1).isApprox(mu_a, EPSILON));
     // the segment after the offset must be equal to the mean
-    EXPECT_TRUE(X.col(4 + 1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(5 + 1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 4 + 1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 5 + 1).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(4 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(5 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 4 + 1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 5 + 1).isApprox(mu_a, EPSILON));
 
     //  for offset = 2
-    filter.ComputeSigmaPoints(state_a, cov_aa, 2, X);
+    filter.ComputeSigmaPoints(mu_a, cov_aa, 2, X);
     // check if the first column is actually the mean
-    EXPECT_TRUE(X.col(0).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(0).isApprox(mu_a, EPSILON));
     // the segment before the offset must be equal to the mean
-    EXPECT_TRUE(X.col(1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(2).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 2).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(2).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 2).isApprox(mu_a, EPSILON));
     // the segment starting at the offset contain the distinct sigma points
-    EXPECT_FALSE(X.col(1 + 2).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(2 + 2).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(3 + 2).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 1 + 2).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 2 + 2).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 3 + 2).isApprox(state_a, EPSILON));
+    EXPECT_FALSE(X.col(1 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(2 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(3 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 1 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 2 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 3 + 2).isApprox(mu_a, EPSILON));
     // the segment after the offset must be equal to the mean
-    EXPECT_TRUE(X.col(4 + 2).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 4 + 2).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(4 + 2).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 4 + 2).isApprox(mu_a, EPSILON));
 
     //  for offset = 3
-    filter.ComputeSigmaPoints(state_a, cov_aa, 3, X);
+    filter.ComputeSigmaPoints(mu_a, cov_aa, 3, X);
     // check if the first column is actually the mean
-    EXPECT_TRUE(X.col(0).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(0).isApprox(mu_a, EPSILON));
     // the segment before the offset must be equal to the mean
-    EXPECT_TRUE(X.col(1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(2).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(3).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 2).isApprox(state_a, EPSILON));
-    EXPECT_TRUE(X.col(joint_dimension + 3).isApprox(state_a, EPSILON));
+    EXPECT_TRUE(X.col(1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(2).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(3).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 1).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 2).isApprox(mu_a, EPSILON));
+    EXPECT_TRUE(X.col(joint_dimension + 3).isApprox(mu_a, EPSILON));
     // the segment starting at the offset contain the distinct sigma points
-    EXPECT_FALSE(X.col(1 + 3).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(2 + 3).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(3 + 3).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 1 + 3).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 2 + 3).isApprox(state_a, EPSILON));
-    EXPECT_FALSE(X.col(joint_dimension + 3 + 3).isApprox(state_a, EPSILON));
+    EXPECT_FALSE(X.col(1 + 3).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(2 + 3).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(3 + 3).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 1 + 3).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 2 + 3).isApprox(mu_a, EPSILON));
+    EXPECT_FALSE(X.col(joint_dimension + 3 + 3).isApprox(mu_a, EPSILON));
 }
 
-TEST_F(PartitionedUnscentedTransformTest, partitionUT)
-{
-    Filter::SigmaPoints Xa;
-    Filter::SigmaPoints XQa;
-    Filter::SigmaPoints Xb;
-    Filter::SigmaPoints XQb;
-    Filter::SigmaPoints XR;
-
-    ComputeSigmaPointPartitions(Xa, XQa, Xb, XQb, XR);
-
-    Eigen::MatrixXd joint_partitions_X = JointPartitionedSigmaPoints(Xa, XQa, Xb, XQb, XR);
-
-    Eigen::MatrixXd joint_X = JointSigmaPoints();
-
-    EXPECT_TRUE(joint_partitions_X.isApprox(joint_X, EPSILON));
-}
-
-TEST_F(PartitionedUnscentedTransformTest, partitionUTNoNoise)
-{
-    Filter::SigmaPoints Xa;
-    Filter::SigmaPoints Xb;
-    Filter::SigmaPoints XR;
-    ComputeSigmaPointPartitionsNoNoise(Xa, Xb, XR);
-    Eigen::MatrixXd joint_partitions_X = JointPartitionedSigmaPointsNoNoise(Xa, Xb, XR);
-
-    Eigen::MatrixXd joint_X = JointSigmaPointsNoNoise();
-
-    EXPECT_TRUE(joint_partitions_X.isApprox(joint_X, EPSILON));
-}
-
-TEST_F(PartitionedUnscentedTransformTest, partitionCovariance)
-{
-    Filter::SigmaPoints Xa;
-    Filter::SigmaPoints Xb;
-    Filter::SigmaPoints XR;
-
-    ComputeSigmaPointPartitionsNoNoise(Xa, Xb, XR);
-
-    Eigen::MatrixXd joint_partition_cov = Eigen::MatrixXd::Zero(Xa.rows()+Xb.rows()+XR.rows(), Xa.rows()+Xb.rows()+XR.rows());
-
-    size_t offset_i = 0;
-    size_t offset_j = 0;
-    joint_partition_cov.block(0, offset_j, Xa.rows(), Xa.rows()) = Xa * Xa.transpose();
-
-    offset_j += Xa.rows();
-    joint_partition_cov.block(0, offset_j, Xa.rows(), Xb.rows()) = Xa * Xb.transpose();
-    joint_partition_cov.transpose().block(0, offset_j, Xa.rows(), Xb.rows()) = Xa * Xb.transpose();
-
-    offset_j += Xb.rows();
-    joint_partition_cov.block(0, offset_j, Xa.rows(), XR.rows()) = Xa * XR.transpose();
-    joint_partition_cov.transpose().block(0, offset_j, Xa.rows(), XR.rows()) = Xa * XR.transpose();
-
-    offset_i = Xa.rows();
-    offset_j = Xa.rows();
-    joint_partition_cov.block(offset_i, offset_j, Xb.rows(), Xb.rows()) = Xb * Xb.transpose();
-
-    offset_j += Xb.rows();
-    joint_partition_cov.block(offset_i, offset_j, Xb.rows(), XR.rows()) = Xb * XR.transpose();
-    joint_partition_cov.transpose().block(offset_i, offset_j, Xb.rows(), XR.rows()) = Xb * XR.transpose();
-
-    offset_i = Xa.rows() + Xb.rows();
-    offset_j = Xa.rows() + Xb.rows();
-    joint_partition_cov.block(offset_i, offset_j, XR.rows(), XR.rows()) = XR * XR.transpose();
-
-    Eigen::MatrixXd joint_X = JointSigmaPointsNoNoise();
-    Eigen::MatrixXd joint_cov = joint_X * joint_X.transpose();
-
-    EXPECT_TRUE(joint_partition_cov.isApprox(joint_cov, EPSILON));
-}
 
 
 int main(int argc, char **argv)
@@ -533,24 +491,3 @@ int main(int argc, char **argv)
 
   return RUN_ALL_TESTS();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
