@@ -152,7 +152,17 @@ catkin_package(
         assimp
 )
 
-#catkin_add_gtest(dummy_utest test/test_gtest_test.cpp)
+catkin_add_gtest(fukf_partitioned_ut_test
+                 tests/fukf_partitioned_ut_test.cpp)
+
+catkin_add_gtest(fukf_smw_inversion_test
+                 tests/fukf_smw_inversion_test.cpp)
+
+catkin_add_gtest(fukf_llt_diagonal_test
+                 tests/fukf_llt_diagonal_test.cpp)
+
+catkin_add_gtest(fukf_square_root_test
+                 tests/fukf_square_root_test.cpp)
 
 ###########
 ## Build ##
