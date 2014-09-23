@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/JointState.h>
+#include <tf/tfMessage.h>
 
 #include <message_filters/simple_filter.h>
 
@@ -52,6 +53,8 @@ public:
     sensor_msgs::CameraInfo::ConstPtr info_;
     sensor_msgs::JointState::ConstPtr ground_truth_joints_;
     sensor_msgs::JointState::ConstPtr noisy_joints_;
+  tf::tfMessage::ConstPtr gt_tf_;
+  tf::tfMessage::ConstPtr gt_tf_fixed_;
     Eigen::VectorXd ground_truth_;
     Eigen::VectorXd deviation_;
 
@@ -64,6 +67,15 @@ public:
 	    const sensor_msgs::CameraInfo::ConstPtr& info,
 	    const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
 	    const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	    const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+	    const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
+  DataFrame(const sensor_msgs::Image::ConstPtr& image,
+	    const sensor_msgs::CameraInfo::ConstPtr& info,
+	    const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	    const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	    const tf::tfMessage::ConstPtr& tf,
+	    const tf::tfMessage::ConstPtr& fixed_tf,
 	    const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
 	    const Eigen::VectorXd& deviation = Eigen::VectorXd());
 

@@ -42,9 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
-          const sensor_msgs::CameraInfo::ConstPtr& info,
-          const Eigen::VectorXd& ground_truth,
-          const Eigen::VectorXd& deviation):
+		     const sensor_msgs::CameraInfo::ConstPtr& info,
+		     const Eigen::VectorXd& ground_truth,
+		     const Eigen::VectorXd& deviation):
     image_(image),
     info_(info),
     ground_truth_(ground_truth),
@@ -62,6 +62,23 @@ DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
     noisy_joints_(noisy_joints),
     ground_truth_(ground_truth),
     deviation_(deviation) { }
+
+DataFrame::DataFrame(const sensor_msgs::Image::ConstPtr& image,
+		     const sensor_msgs::CameraInfo::ConstPtr& info,
+		     const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+		     const sensor_msgs::JointState::ConstPtr& noisy_joints,
+		     const tf::tfMessage::ConstPtr& tf,
+		     const tf::tfMessage::ConstPtr& fixed_tf,
+		     const Eigen::VectorXd& ground_truth,
+		     const Eigen::VectorXd& deviation):
+  image_(image),
+  info_(info),
+  ground_truth_joints_(ground_truth_joints),
+  noisy_joints_(noisy_joints),
+  gt_tf_(tf),
+  gt_tf_fixed_(fixed_tf),
+  ground_truth_(ground_truth),
+  deviation_(deviation) { }
 
 TrackingDataset::TrackingDataset(const std::string& path):path_(path),
                             image_topic_("XTION/depth/image"),
