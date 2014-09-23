@@ -50,6 +50,32 @@ void RobotTrackingDataset::AddFrame(
         const sensor_msgs::CameraInfo::ConstPtr& info,
 	const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
 	const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	const tf::tfMessage::ConstPtr& tf,
+	const tf::tfMessage::ConstPtr& fixed_tf,
+        const Eigen::VectorXd& ground_truth,
+        const Eigen::VectorXd& deviation)
+{
+  DataFrame data(image, info, ground_truth_joints, noisy_joints, tf, fixed_tf, ground_truth, deviation);
+  data_.push_back(data);
+}
+
+void RobotTrackingDataset::AddFrame(
+        const sensor_msgs::Image::ConstPtr& image,
+        const sensor_msgs::CameraInfo::ConstPtr& info,
+	const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	const sensor_msgs::JointState::ConstPtr& noisy_joints,
+	const tf::tfMessage::ConstPtr& tf,
+	const tf::tfMessage::ConstPtr& fixed_tf)
+{
+  DataFrame data(image, info, ground_truth_joints, noisy_joints, tf, fixed_tf);
+  data_.push_back(data);
+}
+
+void RobotTrackingDataset::AddFrame(
+        const sensor_msgs::Image::ConstPtr& image,
+        const sensor_msgs::CameraInfo::ConstPtr& info,
+	const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+	const sensor_msgs::JointState::ConstPtr& noisy_joints,
         const Eigen::VectorXd& ground_truth,
         const Eigen::VectorXd& deviation)
 {
@@ -178,7 +204,18 @@ void RobotTrackingDataset::Store()
         bag.write(info_topic_, data_[i].info_->header.stamp, data_[i].info_);
         bag.write(ground_truth_joints_topic_, data_[i].ground_truth_joints_->header.stamp, data_[i].ground_truth_joints_);
         bag.write(noisy_joints_topic_, data_[i].noisy_joints_->header.stamp, data_[i].noisy_joints_);
+	bag.write("/tf", data_[i].gt_tf_->transforms.back().header.stamp, data_[i].gt_tf_);
+	std::cout << "Time Image\t" << data_[i].image_->header.stamp << std::endl;
+	std::cout << "Camera Info\t" << data_[i].info_->header.stamp << std::endl;
+	std::cout << "GT Joints\t" << data_[i].ground_truth_joints_->header.stamp << std::endl;
+	std::cout << "Noisy Joints\t" << data_[i].noisy_joints_->header.stamp << std::endl;
+	std::cout << "tf\t" << data_[i].gt_tf_->header.stamp << std::endl;
+	std::cout << "tf_fixed\t" << data_[i].gt_tf_fixed_->header.stamp << std::endl;
     }
+
+    for(size_t i = 0; i < data_.size(); i++)
+      bag.write("/tf", data_[i].gt_tf_fixed_->transforms.back().header.stamp, data_[i].gt_tf_fixed_);
+
     bag.close();
 
     // write ground truth to txt file ----------------------------------------------------------

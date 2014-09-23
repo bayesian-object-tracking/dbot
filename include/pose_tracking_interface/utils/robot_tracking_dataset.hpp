@@ -40,6 +40,22 @@ public:
 		const sensor_msgs::CameraInfo::ConstPtr& info,
 		const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
 		const sensor_msgs::JointState::ConstPtr& noisy_joints,
+		const tf::tfMessage::ConstPtr& tf,
+		const tf::tfMessage::ConstPtr& fixed_tf,
+		const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
+		const Eigen::VectorXd& deviation = Eigen::VectorXd());
+
+  void AddFrame(const sensor_msgs::Image::ConstPtr& image,
+		const sensor_msgs::CameraInfo::ConstPtr& info,
+		const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+		const sensor_msgs::JointState::ConstPtr& noisy_joints,
+		const tf::tfMessage::ConstPtr& tf,
+		const tf::tfMessage::ConstPtr& fixed_tf);
+
+  void AddFrame(const sensor_msgs::Image::ConstPtr& image,
+		const sensor_msgs::CameraInfo::ConstPtr& info,
+		const sensor_msgs::JointState::ConstPtr& ground_truth_joints,
+		const sensor_msgs::JointState::ConstPtr& noisy_joints,
 		const Eigen::VectorXd& ground_truth = Eigen::VectorXd(),
 		const Eigen::VectorXd& deviation = Eigen::VectorXd());
 
