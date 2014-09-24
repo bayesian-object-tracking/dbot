@@ -152,6 +152,9 @@ catkin_package(
         assimp
 )
 
+catkin_add_gtest(fukf_ut_test
+                 tests/fukf_ut_test.cpp)
+
 catkin_add_gtest(fukf_partitioned_ut_test
                  tests/fukf_partitioned_ut_test.cpp)
 
