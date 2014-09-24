@@ -205,12 +205,14 @@ void RobotTrackingDataset::Store()
         bag.write(ground_truth_joints_topic_, data_[i].ground_truth_joints_->header.stamp, data_[i].ground_truth_joints_);
         bag.write(noisy_joints_topic_, data_[i].noisy_joints_->header.stamp, data_[i].noisy_joints_);
 	bag.write("/tf", data_[i].gt_tf_->transforms.back().header.stamp, data_[i].gt_tf_);
+	/* DEBUG
 	std::cout << "Time Image\t" << data_[i].image_->header.stamp << std::endl;
 	std::cout << "Camera Info\t" << data_[i].info_->header.stamp << std::endl;
 	std::cout << "GT Joints\t" << data_[i].ground_truth_joints_->header.stamp << std::endl;
 	std::cout << "Noisy Joints\t" << data_[i].noisy_joints_->header.stamp << std::endl;
-	std::cout << "tf\t" << data_[i].gt_tf_->header.stamp << std::endl;
-	std::cout << "tf_fixed\t" << data_[i].gt_tf_fixed_->header.stamp << std::endl;
+	std::cout << "tf\t" << data_[i].gt_tf_->transforms.back().header.stamp << std::endl;
+	std::cout << "tf_fixed\t" << data_[i].gt_tf_fixed_->transforms.back().header.stamp << std::endl;
+	*/
     }
 
     for(size_t i = 0; i < data_.size(); i++)
