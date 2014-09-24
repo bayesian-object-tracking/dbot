@@ -137,7 +137,9 @@ public:
             for(size_t i = 0; i < size_t(predictions.size()); i++)
             {
                 if(isnan(observations_[intersect_indices[i]]))
+                {
                     loglikes[state_index] += log(1.);
+                }
                 else
                 {
                     double delta_time =
@@ -145,7 +147,7 @@ public:
                             occlusion_times_[indices[state_index]][intersect_indices[i]];
 
                     occlusion_process_model_->Condition(delta_time,
-                        occlusions_[indices[state_index]][intersect_indices[i]]);
+                       occlusions_[indices[state_index]][intersect_indices[i]]);
 
 
                     float occlusion = occlusion_process_model_->MapStandardGaussian();

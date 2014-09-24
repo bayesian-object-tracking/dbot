@@ -76,11 +76,11 @@ public:
     typedef typename internal::Traits<KinectPixelObservationModel>::Observation Observation;
 
     KinectPixelObservationModel(Scalar tail_weight = 0.01,
-                           Scalar model_sigma = 0.003,
-                           Scalar sigma_factor = 0.00142478,
-                           Scalar half_life_depth = 1.0,
-                           Scalar max_depth = 6.0)
-        : exponential_rate_(-log(0.5)/half_life_depth),
+                                Scalar model_sigma = 0.003,
+                                Scalar sigma_factor = 0.00142478,
+                                Scalar half_life_depth = 1.0,
+                                Scalar max_depth = 6.0)
+        : lambda_(-log(0.5)/half_life_depth),
           tail_weight_(tail_weight),
           model_sigma_(model_sigma),
           sigma_factor_(sigma_factor),
@@ -121,15 +121,15 @@ public:
         {
             if(isinf(prediction_)) // if the prediction_ is infinite we return the limit
                 probability = tail_weight_/max_depth_ +
-                        (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(-2*observation + exponential_rate_*sigma*sigma));
+                        (1-tail_weight_)*lambda_*
+                        std::exp(0.5*lambda_*(-2*observation + lambda_*sigma*sigma));
 
             else
                 probability = tail_weight_/max_depth_ +
-                        (1-tail_weight_)*exponential_rate_*
-                        std::exp(0.5*exponential_rate_*(2*prediction_-2*observation + exponential_rate_*sigma*sigma))
-            *(1+erf((prediction_-observation+exponential_rate_*sigma*sigma)/(sqrt(2)*sigma)))
-            /(2*(std::exp(prediction_*exponential_rate_)-1));
+                        (1-tail_weight_)*lambda_*
+                        std::exp(0.5*lambda_*(2*prediction_-2*observation + lambda_*sigma*sigma))
+            *(1+erf((prediction_-observation+lambda_*sigma*sigma)/(sqrt(2)*sigma)))
+            /(2*(std::exp(prediction_*lambda_)-1));
         }
 
         return probability;
@@ -147,7 +147,7 @@ public:
     }
 
 private:
-    const Scalar exponential_rate_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
+    const Scalar lambda_, tail_weight_, model_sigma_, sigma_factor_, max_depth_;
 
     Scalar prediction_;
     bool occlusion_;

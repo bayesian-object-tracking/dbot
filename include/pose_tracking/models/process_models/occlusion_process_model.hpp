@@ -58,10 +58,10 @@ public:
     virtual ~OcclusionProcessModel() {}
 
     virtual void Condition(const double& delta_time,
-                           const double& state)
+                           const double& occlusion_probability)
     {
         delta_time_ = delta_time;
-        occlusion_probability_ = state;
+        occlusion_probability_ = occlusion_probability;
     }
 
     virtual double MapStandardGaussian() const
