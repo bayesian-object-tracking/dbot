@@ -153,7 +153,8 @@ catkin_package(
 )
 
 catkin_add_gtest(fukf_ut_test
-                 tests/fukf_ut_test.cpp)
+                 tests/fukf_ut_test.cpp
+                 tests/fukf_dummy_models.hpp)
 
 catkin_add_gtest(fukf_partitioned_ut_test
                  tests/fukf_partitioned_ut_test.cpp)
@@ -166,6 +167,10 @@ catkin_add_gtest(fukf_llt_diagonal_test
 
 catkin_add_gtest(fukf_square_root_test
                  tests/fukf_square_root_test.cpp)
+
+catkin_add_gtest(fukf_predict_test
+                 tests/fukf_predict_test.cpp
+                 tests/fukf_stub_models.hpp)
 
 ###########
 ## Build ##
