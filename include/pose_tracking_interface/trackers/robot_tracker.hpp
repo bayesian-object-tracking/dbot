@@ -45,17 +45,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 
+#ifdef BUILD_GPU
+#include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/kinect_image_observation_model_gpu.hpp>
+#endif
+
+
 class RobotTracker
 {
 public:
     typedef RobotState<>    State;
     typedef State::Scalar   Scalar;
 
-    typedef ff::DampedWienerProcessModel<State>      ProcessModel;
-    typedef ff::KinectImageObservationModelCPU<Scalar, State> ObservationModel;
+    // process model
+    typedef ff::DampedWienerProcessModel<State>         ProcessModel;
+    typedef typename ProcessModel::Input                Input;
 
-    typedef typename ProcessModel::Input            Input;
-    typedef typename ObservationModel::Observation  Observation;
+    // observation models
+    typedef ff::KinectImageObservationModelCPU<Scalar,
+                                                State>  ObservationModelCPUType;
+#ifdef BUILD_GPU
+    typedef ff::KinectImageObservationModelGPU<State>   ObservationModelGPUType;
+#endif
+    typedef ObservationModelCPUType::Base ObservationModel;
+    typedef ObservationModelCPUType::Observation Observation;
 
     typedef ff::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 

@@ -88,9 +88,7 @@ public:
           exponential_distribution_(-log(0.5)/half_life_depth, min_depth),
           object_model_noise_(0.0, object_model_sigma),
           sensor_failure_distribution_(min_depth, max_depth),
-          lambda_(-log(0.5)/half_life_depth),
           sensor_failure_probability_(sensor_failure_probability),
-          object_model_sigma_(object_model_sigma),
           sigma_factor_(sigma_factor),
           max_depth_(max_depth),
           min_depth_(min_depth){ }
@@ -223,7 +221,7 @@ private:
     UniformDistribution sensor_failure_distribution_;
 
     // parameters
-    const Scalar lambda_, sensor_failure_probability_, object_model_sigma_, sigma_factor_,
+    const Scalar sensor_failure_probability_, sigma_factor_,
             max_depth_, min_depth_;
 };
 

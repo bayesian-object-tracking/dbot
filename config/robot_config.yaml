@@ -4,8 +4,8 @@ camera_info_topic: /XTION/depth/camera_info
 
 max_kl_divergence: 2.0
 
-use_gpu: false
-evaluation_count: 50 #100 #the number of evaluations
+use_gpu: true
+evaluation_count: 300 #100 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8
@@ -22,10 +22,10 @@ max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 
 joint_sigmas: [ 
  0.01, 0.01, 0.01, 0.01, 0.01, 0.01,     #head
- 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,      #left arm
- 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, #left hand
- 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,      #right arm
- 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  #right hand
+ 0.02, 0.02, 0.02, 0.05, 0.05, 0.05, 0.05,      #left arm
+ 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, #left hand
+ 0.02, 0.02, 0.02, 0.05, 0.05, 0.05, 0.05,      #right arm
+ 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, #right hand
  ]
 
 
