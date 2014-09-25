@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/distributions/uniform_distribution.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
+#include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 
 #include <fast_filtering/utils/distribution_test.hpp>
 
@@ -54,39 +55,6 @@ void MultiObjectTracker::Initialize(
         Eigen::Matrix3d camera_matrix,
         bool state_is_partial)
 {
-//    ff::ContinuousKinectPixelObservationModel pixel_observation_model(0.01,
-//                                                                      0.00,
-//                                                                      0.01424,
-//                                                                      1.0,
-//                                                                      6.0,
-//                                                                      0.0);
-
-//    ff::UniformDistribution uniform(3.3, 10.5);
-//    ff::ExponentialDistribution exponential(2.5);
-//    ff::TruncatedGaussian gaussian(3.0, 1.0, 4.0, 5.0);
-
-
-//    pixel_observation_model.Condition(4.0, 3.0);
-//    std::cout << "testing distribution " << std::endl;
-//    ff::TestDistribution(pixel_observation_model, 1000000);
-//    std::cout << "done testing " << std::endl;
-
-//    exit(-1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     boost::mutex::scoped_lock lock(mutex_);
 
     // convert camera matrix and image to desired format
@@ -116,6 +84,63 @@ void MultiObjectTracker::Initialize(
 
     std::cout << "sampling blocks: " << std::endl;
     ff::hf::PrintVector(sampling_blocks);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ff::ContinuousKinectPixelObservationModel pixel_observation_model(0.01,
+                                                                      0.01,
+                                                                      0.001424,
+                                                                      1.0,
+                                                                      6.0,
+                                                                      0.0);
+    pixel_observation_model.Condition(4.0, 3.0);
+
+
+    ff::UniformDistribution uniform(3.3, 10.5);
+    ff::ExponentialDistribution exponential(2.5);
+    ff::TruncatedGaussian gaussian(3.0, 1.0, 4.0, 5.0);
+
+    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
+                                                          p_occluded_occluded,
+                                                          0.2);
+    occlusion_process.Condition(1.0, -1000.0);
+
+
+
+
+    std::cout << "testing distribution " << std::endl;
+    ff::TestDistributionSampling(occlusion_process, 100000);
+//    ff::TestDistribution(pixel_observation_model, 1000000);
+    std::cout << "done testing " << std::endl;
+
+    exit(-1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
     // load object mesh
