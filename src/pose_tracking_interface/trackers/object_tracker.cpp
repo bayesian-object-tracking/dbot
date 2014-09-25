@@ -171,12 +171,11 @@ void MultiObjectTracker::Initialize(
 
     if(!use_gpu)
     {
-
         // cpu obseration model
-        boost::shared_ptr<ff::KinectPixelObservationModel>
-                kinect_pixel_observation_model(new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
-        boost::shared_ptr<ff::OcclusionProcessModel>
-                occlusion_process(new ff::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
+        boost::shared_ptr<ff::KinectPixelObservationModel> kinect_pixel_observation_model(
+                    new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<ff::OcclusionProcessModel> occlusion_process(
+                    new ff::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
         observation_model = boost::shared_ptr<ObservationModelCPUType>(
                     new ObservationModelCPUType(camera_matrix,
                                         image.rows(),
@@ -192,21 +191,22 @@ void MultiObjectTracker::Initialize(
 #ifdef BUILD_GPU
         // gpu obseration model
         boost::shared_ptr<ObservationModelGPUType>
-                gpu_observation_model(new ObservationModelGPUType(camera_matrix,
+                gpu_observation_model(new ObservationModelGPUType(
+                                                 camera_matrix,
                                                  image.rows(),
                                                  image.cols(),
                                                  max_sample_count,
                                                  initial_occlusion_prob));
 
         gpu_observation_model->Constants(object_vertices,
-                                object_triangle_indices,
-                                p_occluded_visible,
-                                p_occluded_occluded,
-                                tail_weight,
-                                model_sigma,
-                                sigma_factor,
-                                6.0f,         // max_depth
-                                -log(0.5));   // exponential_rate
+                                         object_triangle_indices,
+                                         p_occluded_visible,
+                                         p_occluded_occluded,
+                                         tail_weight,
+                                         model_sigma,
+                                         sigma_factor,
+                                         6.0f,         // max_depth
+                                         -log(0.5));   // exponential_rate
 
         gpu_observation_model->Initialize();
         observation_model = gpu_observation_model;
