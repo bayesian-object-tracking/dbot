@@ -37,28 +37,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/distributions/exponential_distribution.hpp>
 #include <fast_filtering/distributions/uniform_distribution.hpp>
 #include <fast_filtering/distributions/truncated_gaussian.hpp>
-
-#include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <fast_filtering/utils/helper_functions.hpp>
 
+#include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
+#include <pose_tracking/utils/hash_mapping.hpp>
 
 #include <boost/unordered_map.hpp>
-
-namespace Eigen
-{
-std::size_t hash_value(Eigen::MatrixXd const& b)
-{
-    size_t seed = 0;
-    size_t max = std::min(int(b.cols()), 6);
-    for (size_t i = 0; i < max; ++i)
-    {
-        boost::hash_combine(seed, b(i, 0));
-    }
-
-    return seed;
-}
-}
 
 namespace ff
 {
