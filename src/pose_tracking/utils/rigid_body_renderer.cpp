@@ -218,10 +218,10 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 
 
 // todo: does not handle the case properly when the depth is around zero or negative
-void RigidBodyRenderer::Render( Matrix camera_matrix,
+void RigidBodyRenderer::Render(Matrix camera_matrix,
                                 int n_rows,
                                 int n_cols,
-                                std::vector<int> &intersec_tindices,
+                                std::vector<int> &intersect_indices,
                                 std::vector<float> &depth) const
 {
     vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
@@ -229,9 +229,9 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
     Render(camera_matrix, n_rows, n_cols, depth_image);
 
     // fill the depths into the depth vector -------------------------------
-    intersec_tindices.clear();
+    intersect_indices.clear();
     depth.clear();
-    intersec_tindices.resize(n_rows*n_cols);
+    intersect_indices.resize(n_rows*n_cols);
     depth.resize(n_rows*n_cols);
     int count = 0;
     for(int row = 0; row < n_rows; row++)
@@ -240,13 +240,13 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
         {
             if(depth_image[row*n_cols + col] != numeric_limits<float>::max())
             {
-                intersec_tindices[count] = row*n_cols + col;
+                intersect_indices[count] = row*n_cols + col;
                 depth[count] = depth_image[row*n_cols + col];
                 count++;
             }
         }
     }
-    intersec_tindices.resize(count);
+    intersect_indices.resize(count);
     depth.resize(count);
 
 }
