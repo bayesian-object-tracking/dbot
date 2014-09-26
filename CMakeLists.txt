@@ -152,26 +152,6 @@ catkin_package(
         assimp
 )
 
-catkin_add_gtest(fukf_ut_test
-                 tests/fukf_ut_test.cpp
-                 tests/fukf_dummy_models.hpp)
-
-catkin_add_gtest(fukf_partitioned_ut_test
-                 tests/fukf_partitioned_ut_test.cpp)
-
-catkin_add_gtest(fukf_smw_inversion_test
-                 tests/fukf_smw_inversion_test.cpp)
-
-catkin_add_gtest(fukf_llt_diagonal_test
-                 tests/fukf_llt_diagonal_test.cpp)
-
-catkin_add_gtest(fukf_square_root_test
-                 tests/fukf_square_root_test.cpp)
-
-catkin_add_gtest(fukf_predict_test
-                 tests/fukf_predict_test.cpp
-                 tests/fukf_stub_models.hpp)
-
 ###########
 ## Build ##
 ###########
@@ -223,13 +203,6 @@ add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${filtering_headers}
                                                ${tracking_headers}
                                                ${tracking_interface_headers}
                                                ${tracking_interface_sources})
-
-target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
-                                                         ${PROJECT_NAME_TRACKING}_gpu
-                                                         ${PCL_LIBRARIES}
-                                                         ${catkin_LIBRARIES}
-                                                         ${OpenCV_LIBRARIES}
-                                                         assimp)
 
 
 #set(CUDA_FOUND False)
@@ -284,11 +257,29 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${PCL_LIBRARIES}
         ${CUDA_LIBRARIES}
         yaml-cpp)
+
+    target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
+                                                             ${PROJECT_NAME_TRACKING}_gpu
+                                                             ${PCL_LIBRARIES}
+                                                             ${catkin_LIBRARIES}
+                                                             ${OpenCV_LIBRARIES}
+                                                             assimp)
 else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
+    ## object_tracker
+    add_executable(object_tracker
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
+    target_link_libraries(object_tracker
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        yaml-cpp)
+
     ## robot_tracker
     add_executable(robot_tracker
-      src/${PROJECT_NAME}/trackers/robot_tracker_node.cpp)
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
@@ -297,15 +288,47 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${PCL_LIBRARIES}
         yaml-cpp)
 
-    ## object_tracker
-    add_executable(object_tracker
-        src/${PROJECT_NAME}/trackers/object_tracker_node.cpp)
-    target_link_libraries(object_tracker
-        ${PROJECT_NAME_TRACKING}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
+    target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
+                                                             ${PCL_LIBRARIES}
+                                                             ${catkin_LIBRARIES}
+                                                             ${OpenCV_LIBRARIES}
+                                                             assimp)
 endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
+
+###########
+## Tests ##
+###########
+
+catkin_add_gtest(fukf_partitioned_ut_test
+                 tests/gtest_main.cpp
+                 tests/fukf_partitioned_ut_test.cpp)
+
+catkin_add_gtest(fukf_smw_inversion_test
+                 tests/gtest_main.cpp
+                 tests/fukf_smw_inversion_test.cpp)
+
+catkin_add_gtest(fukf_square_root_test
+                 tests/gtest_main.cpp
+                 tests/fukf_square_root_test.cpp)
+
+catkin_add_gtest(fukf_llt_diagonal_test
+                 tests/gtest_main.cpp
+                 tests/fukf_llt_diagonal_test.cpp)
+
+catkin_add_gtest(fukf_ut_test
+                 tests/gtest_main.cpp
+                 tests/fukf_ut_test.cpp
+                 tests/fukf_dummy_models.hpp)
+
+catkin_add_gtest(fukf_predict_test
+                 tests/gtest_main.cpp
+                 tests/fukf_predict_test.cpp
+                 tests/fukf_stub_models.hpp)
+
+catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
+                 tests/gtest_main.cpp
+                 tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
+
+target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
+                      ${catkin_LIBRARIES})
