@@ -91,9 +91,9 @@ RigidBodyRenderer::~RigidBodyRenderer() {}
 
 // todo: does not handle the case properly when the depth is around zero or negative
 void RigidBodyRenderer::Render( Matrix camera_matrix,
-                                int n_rows, int n_cols,
-                                std::vector<int> &intersec_tindices,
-                                std::vector<float> &depth) const
+                                int n_rows,
+                                int n_cols,
+                                std::vector<float>& depth_image) const
 {
 	Matrix3d inv_camera_matrix = camera_matrix.inverse();
 
@@ -115,8 +115,8 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 	}
 
 	// we find the intersections with the triangles and the depths ---------------------------------------------------
-    vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
-	intersec_tindices.clear(); depth.clear();
+    depth_image = vector<float>(n_rows*n_cols, numeric_limits<float>::max());
+
     for(int part_index = 0; part_index < int(indices_.size()); part_index++)
 	{
         for(int triangle_index = 0; triangle_index < int(indices_[part_index].size()); triangle_index++)
@@ -214,23 +214,43 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 			}
 		}
 	}
+}
 
-	// fill the depths into the depth vector -------------------------------
-	intersec_tindices.resize(n_rows*n_cols);
-	depth.resize(n_rows*n_cols);
-	int count = 0;
-	for(int row = 0; row < n_rows; row++)
-		for(int col = 0; col < n_cols; col++)
-			if(depth_image[row*n_cols + col] != numeric_limits<float>::max())
-			{
-				intersec_tindices[count] = row*n_cols + col;
-				depth[count] = depth_image[row*n_cols + col];
-				count++;
-			}
-	intersec_tindices.resize(count);
-	depth.resize(count);
+
+// todo: does not handle the case properly when the depth is around zero or negative
+void RigidBodyRenderer::Render( Matrix camera_matrix,
+                                int n_rows,
+                                int n_cols,
+                                std::vector<int> &intersec_tindices,
+                                std::vector<float> &depth) const
+{
+    vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
+
+    Render(camera_matrix, n_rows, n_cols, depth_image);
+
+    // fill the depths into the depth vector -------------------------------
+    intersec_tindices.clear();
+    depth.clear();
+    intersec_tindices.resize(n_rows*n_cols);
+    depth.resize(n_rows*n_cols);
+    int count = 0;
+    for(int row = 0; row < n_rows; row++)
+    {
+        for(int col = 0; col < n_cols; col++)
+        {
+            if(depth_image[row*n_cols + col] != numeric_limits<float>::max())
+            {
+                intersec_tindices[count] = row*n_cols + col;
+                depth[count] = depth_image[row*n_cols + col];
+                count++;
+            }
+        }
+    }
+    intersec_tindices.resize(count);
+    depth.resize(count);
 
 }
+
 
 // get functions
 std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices() const

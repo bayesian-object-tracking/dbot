@@ -54,8 +54,14 @@ public:
     virtual ~RigidBodyRenderer();
 
     void Render(Matrix camera_matrix,
-                int n_rows, int n_cols,
+                int n_rows,
+                int n_cols,
                 std::vector<int> &intersec_tindices,
+                std::vector<float> &depth) const;
+
+    void Render(Matrix camera_matrix,
+                int n_rows,
+                int n_cols,
                 std::vector<float> &depth) const;
 
     // get functions
