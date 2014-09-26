@@ -62,7 +62,7 @@ public:
     void Render(Matrix camera_matrix,
                 int n_rows,
                 int n_cols,
-                std::vector<float> &depth) const;
+                std::vector<float> &depth_image) const;
 
     // get functions
     std::vector<std::vector<Vector> > vertices() const;
