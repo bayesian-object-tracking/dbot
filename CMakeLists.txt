@@ -163,19 +163,19 @@ set(PROJECT_NAME_FILTERING "fast_filtering")
 set(PROJECT_NAME_TRACKING "pose_tracking")
 set(PROJECT_NAME_TRACKING_INTERFACE "pose_tracking_interface")
 
-
 file(GLOB_RECURSE filtering_headers include/${PROJECT_NAME_FILTERING}/*.hpp include/${PROJECT_NAME_FILTERING}/*.h)
 file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INTERFACE}/*.hpp include/${PROJECT_NAME_TRACKING_INTERFACE}/*.h)
 
 
 set(tracking_sources
+    src/${PROJECT_NAME_TRACKING}/utils/hash_mapping.cpp
     src/${PROJECT_NAME_TRACKING}/utils/rigid_body_renderer.cpp
 )
 
 set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker.cpp
+    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker.cpp    
 
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/image_visualizer.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/cloud_visualizer.cpp
@@ -185,6 +185,9 @@ set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/robot_tracking_dataset.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/pcl_interface.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/ros_interface.cpp
+
+    # TESTING FUKF
+    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker.cpp
 )
 
 
@@ -264,6 +267,7 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
                                                              assimp)
 else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
+
     ## object_tracker
     add_executable(object_tracker
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
@@ -279,6 +283,17 @@ else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(robot_tracker
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        yaml-cpp)
+
+    ## fukf_test_tracker
+    add_executable(fukf_tracker
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker_node.cpp)
+    target_link_libraries(fukf_tracker
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
         ${catkin_LIBRARIES}
@@ -329,4 +344,4 @@ catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
                  tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
 
 target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
-                      ${catkin_LIBRARIES})
+                      ${PROJECT_NAME_TRACKING})
