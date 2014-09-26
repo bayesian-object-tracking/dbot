@@ -43,6 +43,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 
+#include <boost/unordered_map.hpp>
+
+namespace Eigen
+{
+std::size_t hash_value(Eigen::MatrixXd const& b)
+{
+    size_t seed = 0;
+    size_t max = std::min(int(b.cols()), 6);
+    for (size_t i = 0; i < max; ++i)
+    {
+        boost::hash_combine(seed, b(i, 0));
+    }
+
+    return seed;
+}
+}
+
 namespace ff
 {
 
@@ -79,6 +96,7 @@ public:
           camera_matrix_(camera_matrix),
           n_rows_(n_rows),
           n_cols_(n_cols),
+          predictions_(100), // the size of this vector reflects the number of different
           occluded_observation_model_(sensor_failure_probability,
                                      object_model_sigma,
                                      sigma_factor,
@@ -164,24 +182,29 @@ public:
 
     virtual void Condition(const State& state,
                            const Scalar& occlusion,
-                           size_t state_index,
-                           size_t occlusion_index)
+                           size_t index)
     {
-        Scalar rendered_depth_;
-
-        state_ = state;
-        state_index_ = state_index;
-        occlusion_index_ = occlusion_index;
-        occlusion_probability_ = hf::Sigmoid(occlusion);
-
-        occluded_observation_model_.Condition(rendered_depth, true);
-        visible_observation_model_.Condition(rendered_depth, false);
-
-        if (predictions_.size() < state_index)
+        // the first index resets the prediction hash map
+        if (index == 0)
         {
-            predictions_.resize(state_index);
+            predictions_.clear();
         }
 
+        // predict depth if needed
+        if (predictions_.find(state) == predictions_.end())
+        {
+            object_renderer_->state(state);
+            object_renderer_->Render(camera_matrix_,
+                                     n_rows_,
+                                     n_cols_,
+                                     predictions_[state]);
+        }
+
+        rendered_depth_ = predictions_[state][index];
+
+        occlusion_probability_ = hf::Sigmoid(occlusion);
+        occluded_observation_model_.Condition(rendered_depth_, true);
+        visible_observation_model_.Condition(rendered_depth_, false);
     }
 
     virtual void Condition(const Scalar& rendered_depth,
@@ -201,16 +224,13 @@ private:
     size_t n_rows_;
     size_t n_cols_;
 
-    State state_;
-    size_t state_index_;
-    size_t occlusion_index_;
-    std::vector<std::tuple<std::vector<int>,
-                           std::vector<float>,
-                           double> > predictions_;
+    /**
+     * Harbors pairs of (intersect_indices, image_prediction).
+     */
+    boost::unordered_map<Eigen::MatrixXd, std::vector<float> > predictions_;
 
     KinectPixelObservationModel occluded_observation_model_;
     KinectPixelObservationModel visible_observation_model_;
-
 
     Scalar rendered_depth_;
     Scalar occlusion_probability_;
