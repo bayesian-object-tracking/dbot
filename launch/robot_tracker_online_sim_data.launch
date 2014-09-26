@@ -5,6 +5,9 @@
   <arg name="camera" default="XTION" />
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find arm_robot_model)/models/DarpaRobot.urdf.xacro'" />
 
+  <!-- Kinect simulation publishes to different topics-->
+  <remap from="/XTION/depth/camera_info" to="/move_robot/depth/camera_info"/>
+  <remap from="/XTION/depth/image" to="/move_robot/depth/image"/>
   <!-- Pose Estimation Node-->
   <node name="robot_tracker" type="robot_tracker" pkg="state_filtering" output="screen" respawn="false"><!-- launch-prefix="gdb -ex run args">< launch-prefix="valgrind"-->
     <param name="data_in_meters" type="bool" value="true" />
