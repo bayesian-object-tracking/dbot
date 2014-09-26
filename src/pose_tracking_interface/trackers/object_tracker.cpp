@@ -92,19 +92,44 @@ void MultiObjectTracker::Initialize(
 
 
 
+    // load object mesh
+    std::vector<std::vector<Eigen::Vector3d> > object_vertices(object_names_.size());
+    std::vector<std::vector<std::vector<int> > > object_triangle_indices(object_names_.size());
+    for(size_t i = 0; i < object_names_.size(); i++)
+    {
+        std::string object_model_path = ros::package::getPath("arm_object_models") +
+                "/objects/" + object_names_[i] + "/" + object_names_[i] + "_downsampled" + ".obj";
+        ObjectFileReader file_reader;
+        file_reader.set_filename(object_model_path);
+        file_reader.Read();
+
+        object_vertices[i] = *file_reader.get_vertices();
+        object_triangle_indices[i] = *file_reader.get_indices();
+    }
+
+    boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
+    boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
+                                                                      object_vertices,
+                                                                      object_triangle_indices,
+                                                                      rigid_bodies_state));
 
 
 
 
 
 
+    ff::ContinuousKinectPixelObservationModel<State> pixel_observation_model(
+                object_renderer,
+                camera_matrix,
+                image.rows(),
+                image.cols(),
+                0.01,
+                0.01,
+                0.001424,
+                1.0,
+                6.0,
+                0.0);
 
-    ff::ContinuousKinectPixelObservationModel pixel_observation_model(0.01,
-                                                                      0.01,
-                                                                      0.001424,
-                                                                      1.0,
-                                                                      6.0,
-                                                                      0.0);
     pixel_observation_model.Condition(4.0, 3.0);
 
 
@@ -144,25 +169,25 @@ void MultiObjectTracker::Initialize(
 
     // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
     // load object mesh
-    std::vector<std::vector<Eigen::Vector3d> > object_vertices(object_names_.size());
-    std::vector<std::vector<std::vector<int> > > object_triangle_indices(object_names_.size());
-    for(size_t i = 0; i < object_names_.size(); i++)
-    {
-        std::string object_model_path = ros::package::getPath("arm_object_models") +
-                "/objects/" + object_names_[i] + "/" + object_names_[i] + "_downsampled" + ".obj";
-        ObjectFileReader file_reader;
-        file_reader.set_filename(object_model_path);
-        file_reader.Read();
+//    std::vector<std::vector<Eigen::Vector3d> > object_vertices(object_names_.size());
+//    std::vector<std::vector<std::vector<int> > > object_triangle_indices(object_names_.size());
+//    for(size_t i = 0; i < object_names_.size(); i++)
+//    {
+//        std::string object_model_path = ros::package::getPath("arm_object_models") +
+//                "/objects/" + object_names_[i] + "/" + object_names_[i] + "_downsampled" + ".obj";
+//        ObjectFileReader file_reader;
+//        file_reader.set_filename(object_model_path);
+//        file_reader.Read();
 
-        object_vertices[i] = *file_reader.get_vertices();
-        object_triangle_indices[i] = *file_reader.get_indices();
-    }
+//        object_vertices[i] = *file_reader.get_vertices();
+//        object_triangle_indices[i] = *file_reader.get_indices();
+//    }
 
-    boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
-    boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
-                                                                      object_vertices,
-                                                                      object_triangle_indices,
-                                                                      rigid_bodies_state));
+//    boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
+//    boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
+//                                                                      object_vertices,
+//                                                                      object_triangle_indices,
+//                                                                      rigid_bodies_state));
 
     boost::shared_ptr<ObservationModel> observation_model;
 #ifndef BUILD_GPU
