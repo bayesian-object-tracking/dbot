@@ -4,6 +4,7 @@ project(state_filtering)
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 add_definitions( -DPROFILING_ON=1 -std=c++0x ) #print profiling output
+set(USE_CUDA False)
 
 find_package(catkin REQUIRED
     roscpp
@@ -204,10 +205,7 @@ add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${filtering_headers}
                                                ${tracking_interface_headers}
                                                ${tracking_interface_sources})
 
-
-#set(CUDA_FOUND False)
-
-if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_definitions( -DBUILD_GPU=1 )
     message("building cuda implementation")
 
@@ -264,7 +262,7 @@ if(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
                                                              ${catkin_LIBRARIES}
                                                              ${OpenCV_LIBRARIES}
                                                              assimp)
-else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
     ## object_tracker
     add_executable(object_tracker
@@ -293,7 +291,7 @@ else(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
                                                              ${catkin_LIBRARIES}
                                                              ${OpenCV_LIBRARIES}
                                                              assimp)
-endif(CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 
 ###########
