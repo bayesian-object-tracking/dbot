@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define POSE_TRACKING_MODELS_OBSERVATION_MODELS_CONTINUOUS_KINECT_PIXEL_OBSERVATION_MODEL_HPP
 
 #include <cmath>
+#include <tuple>
+
 #include <Eigen/Dense>
 
 #include <fast_filtering/distributions/interfaces/evaluation.hpp>
@@ -39,6 +41,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <fast_filtering/utils/helper_functions.hpp>
 
+#include <pose_tracking/utils/rigid_body_renderer.hpp>
+
+#include <boost/unordered_map.hpp>
+
+namespace Eigen
+{
+std::size_t hash_value(Eigen::MatrixXd const& b)
+{
+    size_t seed = 0;
+    size_t max = std::min(int(b.cols()), 6);
+    for (size_t i = 0; i < max; ++i)
+    {
+        boost::hash_combine(seed, b(i, 0));
+    }
+
+    return seed;
+}
+}
+
 namespace ff
 {
 
@@ -48,6 +69,7 @@ namespace ff
  * \ingroup distributions
  * \ingroup observation_models
  */
+template <typename State>
 class ContinuousKinectPixelObservationModel:
         public GaussianMap<double, Eigen::Matrix<double, 5, 1> >,
         public Evaluation<double, double>
@@ -57,13 +79,25 @@ public:
     typedef double Scalar;
     typedef double Observation;
 
-    ContinuousKinectPixelObservationModel(Scalar sensor_failure_probability = 0.01,
-                                          Scalar object_model_sigma = 0.003,
-                                          Scalar sigma_factor = 0.00142478,
-                                          Scalar half_life_depth = 1.0,
-                                          Scalar max_depth = 6.0,
-                                          Scalar min_depth = 0.0)
-        :occluded_observation_model_(sensor_failure_probability,
+    typedef boost::shared_ptr<RigidBodyRenderer> ObjectRendererPtr;
+
+    ContinuousKinectPixelObservationModel(
+            const ObjectRendererPtr object_renderer,
+            const Eigen::Matrix3d& camera_matrix,
+            const size_t n_rows,
+            const size_t n_cols,
+            const Scalar sensor_failure_probability = 0.01,
+            const Scalar object_model_sigma = 0.003,
+            const Scalar sigma_factor = 0.00142478,
+            const Scalar half_life_depth = 1.0,
+            const Scalar max_depth = 6.0,
+            const Scalar min_depth = 0.0)
+        : object_renderer_(object_renderer),
+          camera_matrix_(camera_matrix),
+          n_rows_(n_rows),
+          n_cols_(n_cols),
+          predictions_(100), // the size of this vector reflects the number of different
+          occluded_observation_model_(sensor_failure_probability,
                                      object_model_sigma,
                                      sigma_factor,
                                      half_life_depth,
@@ -146,6 +180,33 @@ public:
         return std::log(Probability(observation));
     }
 
+    virtual void Condition(const State& state,
+                           const Scalar& occlusion,
+                           size_t index)
+    {
+        // the first index resets the prediction hash map
+        if (index == 0)
+        {
+            predictions_.clear();
+        }
+
+        // predict depth if needed
+        if (predictions_.find(state) == predictions_.end())
+        {
+            object_renderer_->state(state);
+            object_renderer_->Render(camera_matrix_,
+                                     n_rows_,
+                                     n_cols_,
+                                     predictions_[state]);
+        }
+
+        rendered_depth_ = predictions_[state][index];
+
+        occlusion_probability_ = hf::Sigmoid(occlusion);
+        occluded_observation_model_.Condition(rendered_depth_, true);
+        visible_observation_model_.Condition(rendered_depth_, false);
+    }
+
     virtual void Condition(const Scalar& rendered_depth,
                            const Scalar& occlusion)
     {
@@ -157,13 +218,22 @@ public:
     }
 
 private:
+    ObjectRendererPtr object_renderer_;
+
+    Eigen::Matrix3d camera_matrix_;
+    size_t n_rows_;
+    size_t n_cols_;
+
+    /**
+     * Harbors pairs of (intersect_indices, image_prediction).
+     */
+    boost::unordered_map<Eigen::MatrixXd, std::vector<float> > predictions_;
+
     KinectPixelObservationModel occluded_observation_model_;
     KinectPixelObservationModel visible_observation_model_;
 
-
     Scalar rendered_depth_;
     Scalar occlusion_probability_;
-
 
     TruncatedGaussian object_model_noise_;
     UniformDistribution uniform_distribution_;
@@ -173,7 +243,6 @@ private:
     // parameters
     const Scalar sensor_failure_probability_, sigma_factor_,
             max_depth_, min_depth_;
-
 };
 
 }
