@@ -41,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
+#include <fast_filtering/filters/deterministic/composed_state_distribution.hpp>
 #include <fast_filtering/filters/deterministic/factorized_unscented_kalman_filter.hpp>
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
@@ -48,15 +49,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class FukfTestTracker
 {
-public:   
-    typedef ff::FreeFloatingRigidBodiesState<>  State;
-    typedef State::Scalar                       Scalar;
+public:
+    typedef ff::FreeFloatingRigidBodiesState<> State_a;
+    typedef State_a::Scalar                    Scalar;
 
-    typedef ff::BrownianObjectMotionModel<State> ProcessModel_a;
-    typedef ff::ContinuousOcclusionProcessModel  ProcessModel_b;
-    typedef ff::ContinuousKinectPixelObservationModel<State> ObservationModel;
+    typedef ff::BrownianObjectMotionModel<State_a> ProcessModel_a;
+    typedef ff::ContinuousOcclusionProcessModel    ProcessModel_b;
 
+    typedef ff::ContinuousKinectPixelObservationModel<State_a> ObservationModel;
+
+    typedef ProcessModel_b::State State_b;
     typedef ObservationModel::Observation Observation;
+
+    typedef ff::ComposedStateDistribution<State_a, State_b> StateDistribution;
 
     typedef ff::FactorizedUnscentedKalmanFilter<ProcessModel_a,
                                                 ProcessModel_b,
@@ -64,12 +69,11 @@ public:
 
     FukfTestTracker();
 
-    void Initialize(std::vector<Eigen::VectorXd> initial_states,
+    void Initialize(State_a initial_state,
                     const sensor_msgs::Image& ros_image,
-                    Eigen::Matrix3d camera_matrix,
-                    bool state_is_partial = true);
+                    Eigen::Matrix3d camera_matrix);
 
-    Eigen::VectorXd Filter(const sensor_msgs::Image& ros_image);
+    void Filter(const sensor_msgs::Image& ros_image);
 
 private:  
     Scalar last_measurement_time_;
@@ -83,6 +87,8 @@ private:
     // parameters
     std::vector<std::string> object_names_;
     int downsampling_factor_;
+
+    StateDistribution state_distr;
 };
 
 
