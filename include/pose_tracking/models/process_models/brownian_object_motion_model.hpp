@@ -204,6 +204,11 @@ public:
         return this->NoiseDimension();
     }
 
+    virtual size_t Dimension()
+    {
+        return state_.rows();
+    }
+
 
 private:
     // conditionals
