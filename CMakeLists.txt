@@ -291,9 +291,9 @@ else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         yaml-cpp)
 
     ## fukf_test_tracker
-    add_executable(fukf_tracker
+    add_executable(fukf_test_tracker
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker_node.cpp)
-    target_link_libraries(fukf_tracker
+    target_link_libraries(fukf_test_tracker
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
         ${catkin_LIBRARIES}
