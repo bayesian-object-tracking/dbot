@@ -36,6 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/distributions/uniform_distribution.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
+#include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
+
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 
 #include <fast_filtering/utils/distribution_test.hpp>
@@ -118,29 +120,27 @@ void MultiObjectTracker::Initialize(
 
 
 
-    ff::ContinuousKinectPixelObservationModel<State> pixel_observation_model(
+    ff::ApproximateKinectPixelObservationModel<State> pixel_observation_model(
                 object_renderer,
                 camera_matrix,
                 image.rows(),
                 image.cols(),
-                0.01,
-                0.01,
+                0.5,
+                0.003,
                 0.001424,
                 1.0,
                 6.0,
-                0.0);
+                0.0,
+                2.0,
+                10000,
+                1000);
+    pixel_observation_model.Condition(1, 0);
 
-    pixel_observation_model.Condition(4.0, 3.0);
 
-
-    ff::UniformDistribution uniform(3.3, 10.5);
-    ff::ExponentialDistribution exponential(2.5);
-    ff::TruncatedGaussian gaussian(3.0, 1.0, 4.0, 5.0);
 
     ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
                                                           p_occluded_occluded,
                                                           0.2);
-
     ff::ContinuousOcclusionProcessModel::State occlusion;
     occlusion(0,0) = -1000.0;
     occlusion_process.Condition(1.0, occlusion);
@@ -149,8 +149,8 @@ void MultiObjectTracker::Initialize(
 
 
     std::cout << "testing distribution " << std::endl;
-    ff::TestDistributionSampling(occlusion_process, 100000);
-//    ff::TestDistribution(pixel_observation_model, 1000000);
+//    ff::TestDistributionSampling(occlusion_process, 100000);
+    ff::TestDistribution(pixel_observation_model, 1000000);
     std::cout << "done testing " << std::endl;
 
     exit(-1);
