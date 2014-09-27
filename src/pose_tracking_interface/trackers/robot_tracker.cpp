@@ -149,10 +149,10 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
             image.cols(),
             indices,
             depth);
-    vis::ImageVisualizer image_viz(image.rows(),image.cols());
-    image_viz.set_image(image);
-    image_viz.add_points(indices, depth);
-    image_viz.show_image("enchilada ");
+//    vis::ImageVisualizer image_viz(image.rows(),image.cols());
+//    image_viz.set_image(image);
+//    image_viz.add_points(indices, depth);
+//    image_viz.show_image("enchilada ");
 
 /*
     std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer_->vertices();
