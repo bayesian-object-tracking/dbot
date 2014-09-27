@@ -165,19 +165,25 @@ public:
         return std::log(Probability(observation));
     }
 
+    virtual void ResetCache()
+    {
+        predictions_.clear();
+    }
+
     virtual void Condition(const State& state,
                            const Scalar& occlusion,
                            size_t index)
     {
-        // the first index resets the prediction hash map
-        if (index == 0)
-        {
-            predictions_.clear();
-        }
+//        // the first index resets the prediction hash map
+//        if (index == 0)
+//        {
+//            predictions_.clear();
+//        }
 
         // predict depth if needed
         if (predictions_.find(state) == predictions_.end())
         {
+            //std::cout << "Rendering " << index << " which is the state " << state.transpose() << std::endl;
             object_renderer_->state(state);
             object_renderer_->Render(camera_matrix_,
                                      n_rows_,
