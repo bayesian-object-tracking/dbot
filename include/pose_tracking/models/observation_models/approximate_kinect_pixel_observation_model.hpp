@@ -66,6 +66,8 @@ public:
 
     typedef boost::shared_ptr<RigidBodyRenderer> ObjectRendererPtr;
 
+    typedef boost::unordered_map<Noise, int> NoiseIndexMap;
+
     ApproximateKinectPixelObservationModel(
             const ObjectRendererPtr object_renderer,
             const Eigen::Matrix3d& camera_matrix,
@@ -100,7 +102,8 @@ public:
           min_depth_(min_depth),
           approximation_depth_(approximation_depth),
           occlusion_step_(1.0 / double(occlusion_count - 1)),
-          depth_step_((max_depth_ - min_depth_) / double(depth_count - 1))
+          depth_step_((max_depth_ - min_depth_) / double(depth_count - 1)),
+          sample_cache_(occlusion_count)
     {
         for(size_t occlusion_index = 0; occlusion_index < occlusion_count; occlusion_index++)
         {
@@ -119,6 +122,8 @@ public:
 
     virtual ~ApproximateKinectPixelObservationModel() {}
 
+    std::vector<NoiseIndexMap> sample_cache_;
+
     virtual Observation MapStandardGaussian(const Noise& sample) const
     {
         int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
@@ -126,6 +131,23 @@ public:
         return rendered_depth_ - approximation_depth_ + min_depth_
                 + depth_step_ * double(depth_index);
     }
+
+    virtual Observation MapStandardGaussian_NONCONST(const Noise& sample)
+    {
+        NoiseIndexMap& cache = sample_cache_[occlusion_index_];
+
+        if (cache.find(sample) == cache.end())
+        {
+            std::cout << "CACHE MISSSSSSSSSSSSSSSSSSSSSSSSS" << std::endl;
+
+            cache[sample] = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
+        }
+
+        return rendered_depth_ - approximation_depth_ + min_depth_
+                + depth_step_ * double(cache[sample]);
+    }
+
+
 
     virtual Scalar Probability(const Observation& observation) const
     {
@@ -144,7 +166,7 @@ public:
         return std::log(Probability(observation));
     }
 
-    virtual void ResetCache()
+    virtual void ClearCache()
     {
         predictions_.clear();
     }
@@ -153,17 +175,20 @@ public:
                            const Scalar& occlusion,
                            size_t index)
     {
+        Eigen::MatrixXd pose = state.topRows(6);
 
-        if (predictions_.find(state) == predictions_.end())
+        if (predictions_.find(pose) == predictions_.end())
         {
             object_renderer_->state(state);
             object_renderer_->Render(camera_matrix_,
                                      n_rows_,
                                      n_cols_,
-                                     predictions_[state]);
+                                     predictions_[pose]);
+
+            std::cout << "CACHE MISSSDFSDFSDFSERSF" << std::endl;
         }
 
-        Condition(predictions_[state][index], occlusion);
+        Condition(predictions_[pose][index], occlusion);
     }
 
     virtual void Condition(const Scalar& rendered_depth,
@@ -172,6 +197,7 @@ public:
         rendered_depth_ = rendered_depth;
         occlusion_probability_ = hf::Sigmoid(occlusion);
         occlusion_index_ = occlusion_probability_ / occlusion_step_;
+
         occluded_observation_model_.Condition(rendered_depth, true);
         visible_observation_model_.Condition(rendered_depth, false);
     }

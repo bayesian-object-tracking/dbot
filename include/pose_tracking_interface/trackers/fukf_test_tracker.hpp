@@ -46,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
+#include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
 
 class FukfTestTracker
 {
@@ -56,7 +57,8 @@ public:
     typedef ff::BrownianObjectMotionModel<State_a> ProcessModel_a;
     typedef ff::ContinuousOcclusionProcessModel    ProcessModel_b;
 
-    typedef ff::ContinuousKinectPixelObservationModel<State_a> ObservationModel;
+    typedef ff::ApproximateKinectPixelObservationModel<State_a> ObservationModel;
+//    typedef ff::ContinuousKinectPixelObservationModel<State_a> ObservationModel;
 
     typedef ProcessModel_b::State State_b;
     typedef ObservationModel::Observation Observation;

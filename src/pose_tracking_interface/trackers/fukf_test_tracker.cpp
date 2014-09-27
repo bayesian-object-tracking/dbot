@@ -120,9 +120,9 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     std::cout << "creating observation model" << std::endl;
 
-    boost::shared_ptr<ff::ContinuousKinectPixelObservationModel<State_a> >
+    boost::shared_ptr<ObservationModel >
             pixel_observation_model(
-                new ff::ContinuousKinectPixelObservationModel<State_a>(
+                new ObservationModel(
                     object_renderer,
                     camera_matrix,
                     image.rows(),
