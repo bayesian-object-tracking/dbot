@@ -140,7 +140,10 @@ void MultiObjectTracker::Initialize(
     ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
                                                           p_occluded_occluded,
                                                           0.2);
-    occlusion_process.Condition(1.0, -1000.0);
+
+    ff::ContinuousOcclusionProcessModel::State occlusion;
+    occlusion(0,0) = -1000.0;
+    occlusion_process.Condition(1.0, occlusion);
 
 
 
