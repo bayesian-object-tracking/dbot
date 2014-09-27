@@ -165,7 +165,7 @@ public:
         return std::log(Probability(observation));
     }
 
-    virtual void ResetCache()
+    virtual void ClearCache()
     {
         predictions_.clear();
     }
@@ -174,24 +174,20 @@ public:
                            const Scalar& occlusion,
                            size_t index)
     {
-//        // the first index resets the prediction hash map
-//        if (index == 0)
-//        {
-//            predictions_.clear();
-//        }
+        Eigen::MatrixXd pose = state.topRows(6);
 
         // predict depth if needed
-        if (predictions_.find(state) == predictions_.end())
+        if (predictions_.find(pose) == predictions_.end())
         {
-            //std::cout << "Rendering " << index << " which is the state " << state.transpose() << std::endl;
+            std::cout << "Rendering " << index << " which is the state " << pose.transpose() << std::endl;
             object_renderer_->state(state);
             object_renderer_->Render(camera_matrix_,
                                      n_rows_,
                                      n_cols_,
-                                     predictions_[state]);
+                                     predictions_[pose]);
         }
 
-        rendered_depth_ = predictions_[state][index];
+        rendered_depth_ = predictions_[pose][index];
 
         occlusion_probability_ = hf::Sigmoid(occlusion);
         occluded_observation_model_.Condition(rendered_depth_, true);

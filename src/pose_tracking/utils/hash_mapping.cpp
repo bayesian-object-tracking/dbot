@@ -50,7 +50,7 @@
 std::size_t Eigen::hash_value(Eigen::MatrixXd const& matrix)
 {
     size_t seed = 0;
-    size_t max = std::min(int(matrix.cols()), 6);
+    size_t max = std::min(int(matrix.rows()), 6);
     for (size_t i = 0; i < max; ++i)
     {
         boost::hash_combine(seed, matrix(i, 0));
