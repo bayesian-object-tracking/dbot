@@ -86,7 +86,6 @@ public:
           camera_matrix_(camera_matrix),
           n_rows_(n_rows),
           n_cols_(n_cols),
-          predictions_(100), // the size of this vector reflects the number of different
           occluded_observation_model_(sensor_failure_probability,
                                      object_model_sigma,
                                      sigma_factor,
@@ -126,10 +125,12 @@ public:
 
     virtual Observation MapStandardGaussian(const Noise& sample) const
     {
-        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
+        // original content
+//        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
+        double depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
 
         return rendered_depth_ - approximation_depth_ + min_depth_
-                + depth_step_ * double(depth_index);
+                + depth_step_ * depth_index;
     }
 
     virtual Observation MapStandardGaussian_NONCONST(const Noise& sample)
@@ -166,29 +167,32 @@ public:
         return std::log(Probability(observation));
     }
 
-    virtual void ClearCache()
+    virtual void ClearCache(size_t size)
     {
-        predictions_.clear();
+        predictions_.resize(size);
+        for (auto& prediction: predictions_)
+        {
+            prediction.first = false;
+        }
     }
 
-    virtual void Condition(const State& state,
+    virtual void Condition(const State& state,                           
                            const Scalar& occlusion,
-                           size_t index)
+                           size_t state_index,
+                           size_t occlusion_index)
     {
-        Eigen::MatrixXd pose = state.topRows(6);
-
-        if (predictions_.find(pose) == predictions_.end())
+        if (!predictions_[state_index].first)
         {
             object_renderer_->state(state);
             object_renderer_->Render(camera_matrix_,
                                      n_rows_,
                                      n_cols_,
-                                     predictions_[pose]);
+                                     predictions_[state_index].second);
 
-            std::cout << "CACHE MISSSDFSDFSDFSERSF" << std::endl;
+            predictions_[state_index].first = true;
         }
 
-        Condition(predictions_[pose][index], occlusion);
+        Condition(predictions_[state_index].second[occlusion_index], occlusion);
     }
 
     virtual void Condition(const Scalar& rendered_depth,
@@ -209,10 +213,7 @@ private:
     size_t n_rows_;
     size_t n_cols_;
 
-    /**
-     * Harbors pairs of (intersect_indices, image_prediction).
-     */
-    boost::unordered_map<Eigen::MatrixXd, std::vector<float> > predictions_;
+    std::vector<std::pair<bool, std::vector<float> > > predictions_;
 
     KinectPixelObservationModel occluded_observation_model_;
     KinectPixelObservationModel visible_observation_model_;
