@@ -169,6 +169,7 @@ file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INT
 
 
 set(tracking_sources
+    src/${PROJECT_NAME_TRACKING}/utils/xxhash.c
     src/${PROJECT_NAME_TRACKING}/utils/hash_mapping.cpp
     src/${PROJECT_NAME_TRACKING}/utils/rigid_body_renderer.cpp
 )
@@ -313,35 +314,41 @@ endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 ## Tests ##
 ###########
 
-catkin_add_gtest(fukf_partitioned_ut_test
+catkin_add_gtest(fukf_hash_tests
                  tests/gtest_main.cpp
-                 tests/fukf_partitioned_ut_test.cpp)
-
-catkin_add_gtest(fukf_smw_inversion_test
-                 tests/gtest_main.cpp
-                 tests/fukf_smw_inversion_test.cpp)
-
-catkin_add_gtest(fukf_square_root_test
-                 tests/gtest_main.cpp
-                 tests/fukf_square_root_test.cpp)
-
-catkin_add_gtest(fukf_llt_diagonal_test
-                 tests/gtest_main.cpp
-                 tests/fukf_llt_diagonal_test.cpp)
-
-catkin_add_gtest(fukf_ut_test
-                 tests/gtest_main.cpp
-                 tests/fukf_ut_test.cpp
-                 tests/fukf_dummy_models.hpp)
-
-catkin_add_gtest(fukf_predict_test
-                 tests/gtest_main.cpp
-                 tests/fukf_predict_test.cpp
-                 tests/fukf_stub_models.hpp)
-
-catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
-                 tests/gtest_main.cpp
-                 tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
-
-target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
+                 tests/fukf_hash_tests.cpp)
+target_link_libraries(fukf_hash_tests
                       ${PROJECT_NAME_TRACKING})
+
+#catkin_add_gtest(fukf_partitioned_ut_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_partitioned_ut_test.cpp)
+
+#catkin_add_gtest(fukf_smw_inversion_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_smw_inversion_test.cpp)
+
+#catkin_add_gtest(fukf_square_root_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_square_root_test.cpp)
+
+#catkin_add_gtest(fukf_llt_diagonal_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_llt_diagonal_test.cpp)
+
+#catkin_add_gtest(fukf_ut_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_ut_test.cpp
+#                 tests/fukf_dummy_models.hpp)
+
+#catkin_add_gtest(fukf_predict_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_predict_test.cpp
+#                 tests/fukf_stub_models.hpp)
+
+#catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
+
+#target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
+#                      ${PROJECT_NAME_TRACKING})

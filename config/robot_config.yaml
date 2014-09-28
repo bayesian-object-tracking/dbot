@@ -2,6 +2,11 @@ depth_image_topic: /XTION/depth/image
 camera_info_topic: /XTION/depth/camera_info 
 #source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
 
+rendering_root_left: L_SHOULDER
+rendering_root_right: R_SHOULDER
+
+collision: true
+
 max_kl_divergence: 2.0
 
 use_gpu: true

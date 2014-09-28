@@ -148,6 +148,12 @@ private:
   // random generator for joint angle sampling
   boost::mt19937 generator_;
 
+  // rendering roots for left and right arm to exclude occluding head meshes
+  std::string rendering_root_left_, rendering_root_right_;
+  
+  // whether to render only collision model or full mesh model
+  bool collision_;
+  
 };
 
 #endif

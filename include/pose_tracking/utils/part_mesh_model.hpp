@@ -55,7 +55,8 @@ class PartMeshModel
 public:
   PartMeshModel(const boost::shared_ptr<urdf::Link> p_link,
 		const std::string &p_description_path,
-		unsigned p_index)
+		unsigned p_index,
+		bool collision)
     : proper_(false) 
     , link_(p_link)
     , name_(p_link->name)
@@ -63,37 +64,71 @@ public:
     , indices_(new std::vector<std::vector<int> >)
   {
     
-    if ((link_->visual.get() != NULL) &&
-	(link_->visual->geometry.get() != NULL) && 
-	(link_->visual->geometry->type == urdf::Geometry::MESH))
-      { 
-        boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh> (link_->visual->geometry);
-        std::string filename (mesh->filename);
-	filename_ = filename;
+    if(collision) {
+      if ((link_->collision.get() != NULL) &&
+	  (link_->collision->geometry.get() != NULL) && 
+	  (link_->collision->geometry->type == urdf::Geometry::MESH))
+	{ 
+	  boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh> (link_->collision->geometry);
+	  std::string filename (mesh->filename);
+	  filename_ = filename;
 
-        if (filename.substr(filename.size() - 4 , 4) == ".stl" || 
-	    filename.substr(filename.size() - 4 , 4) == ".dae")
-	  {
-	    if (filename.substr(filename.size() - 4 , 4) == ".dae")
-	      filename.replace(filename.size() - 4 , 4, ".stl");
-	    filename.erase(0,25);
-	    filename = p_description_path + filename;
+	  if (filename.substr(filename.size() - 4 , 4) == ".stl" || 
+	      filename.substr(filename.size() - 4 , 4) == ".dae")
+	    {
+	      if (filename.substr(filename.size() - 4 , 4) == ".dae")
+		filename.replace(filename.size() - 4 , 4, ".stl");
+	      filename.erase(0,25);
+	      filename = p_description_path + filename;
 	    	    
-	    scene_ =  aiImportFile(filename.c_str(),
-				   aiProcessPreset_TargetRealtime_Quality);
-	    numFaces_ = scene_->mMeshes[0]->mNumFaces;
+	      scene_ =  aiImportFile(filename.c_str(),
+				     aiProcessPreset_TargetRealtime_Quality);
+	      numFaces_ = scene_->mMeshes[0]->mNumFaces;
 
-	    original_transform_.linear() = Eigen::Quaterniond(link_->visual->origin.rotation.w,
-							      link_->visual->origin.rotation.x, 
-							      link_->visual->origin.rotation.y, 
-							      link_->visual->origin.rotation.z).toRotationMatrix(); 
-	    original_transform_.translation() = Eigen::Vector3d(link_->visual->origin.position.x, 
-								link_->visual->origin.position.y, 
-								link_->visual->origin.position.z);
+	      original_transform_.linear() = Eigen::Quaterniond(link_->collision->origin.rotation.w,
+								link_->collision->origin.rotation.x, 
+								link_->collision->origin.rotation.y, 
+								link_->collision->origin.rotation.z).toRotationMatrix(); 
+	      original_transform_.translation() = Eigen::Vector3d(link_->collision->origin.position.x, 
+								  link_->collision->origin.position.y, 
+								  link_->collision->origin.position.z);
 
-	    proper_=true;
-	  }
-      }
+	      proper_=true;
+	    }
+	}
+    } else {
+      if ((link_->visual.get() != NULL) &&
+	  (link_->visual->geometry.get() != NULL) && 
+	  (link_->visual->geometry->type == urdf::Geometry::MESH))
+	{ 
+	  boost::shared_ptr<urdf::Mesh> mesh = boost::dynamic_pointer_cast<urdf::Mesh> (link_->visual->geometry);
+	  std::string filename (mesh->filename);
+	  filename_ = filename;
+
+	  if (filename.substr(filename.size() - 4 , 4) == ".stl" || 
+	      filename.substr(filename.size() - 4 , 4) == ".dae")
+	    {
+	      if (filename.substr(filename.size() - 4 , 4) == ".dae")
+		filename.replace(filename.size() - 4 , 4, ".stl");
+	      filename.erase(0,25);
+	      filename = p_description_path + filename;
+	    	    
+	      scene_ =  aiImportFile(filename.c_str(),
+				     aiProcessPreset_TargetRealtime_Quality);
+	      numFaces_ = scene_->mMeshes[0]->mNumFaces;
+
+	      original_transform_.linear() = Eigen::Quaterniond(link_->visual->origin.rotation.w,
+								link_->visual->origin.rotation.x, 
+								link_->visual->origin.rotation.y, 
+								link_->visual->origin.rotation.z).toRotationMatrix(); 
+	      original_transform_.translation() = Eigen::Vector3d(link_->visual->origin.position.x, 
+								  link_->visual->origin.position.y, 
+								  link_->visual->origin.position.z);
+
+	      proper_=true;
+	    }
+	}
+    }
   }
 
   boost::shared_ptr<std::vector<Eigen::Vector3d> > get_vertices()
