@@ -38,7 +38,7 @@ p_occluded_visible: 0.1 #0.1
 p_occluded_occluded: 0.7 #0.7
 
 object_names: [
- mugbox
+ large_trimmers
   #,mugbox
   #,mugbox
   #,mugbox

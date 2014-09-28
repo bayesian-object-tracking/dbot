@@ -128,13 +128,21 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
 
 void KinematicsFromURDF::InitKDLData(const Eigen::VectorXd& joint_state)
 {
-  // Internally, KDL array use Eigen Vectors
+//  static bool initialized = false;
+//  if(initialized)
+//      return;
+//      initialized = true;
+
+
+      // Internally, KDL array use Eigen Vectors
+
   if(jnt_array_.data.size() == 0 || !jnt_array_.data.isApprox(joint_state))
     {
   jnt_array_.data = joint_state;
   // Given the new joint angles, compute all link transforms in one go
   ComputeLinkTransforms();
   }
+
 }
 
 void KinematicsFromURDF::ComputeLinkTransforms( )
@@ -164,7 +172,9 @@ void KinematicsFromURDF::ComputeLinkTransforms( )
 Eigen::VectorXd KinematicsFromURDF::GetLinkPosition( int idx)
 {
   Eigen::VectorXd pos(3);
-  pos << frame_map_[part_mesh_map_[idx]].p.x(), frame_map_[part_mesh_map_[idx]].p.y(),frame_map_[part_mesh_map_[idx]].p.z(); 
+
+  KDL::Frame& frame = frame_map_[part_mesh_map_[idx]];
+  pos << frame.p.x(), frame.p.y(),frame.p.z();
   return pos;
 }
 
