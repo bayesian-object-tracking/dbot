@@ -84,8 +84,9 @@ public:
         mean_.Condition(delta_time, initial_occlusion_probability);
         double mean = mean_.MapStandardGaussian();
 
-        occlusion_probability_ =
-              TruncatedGaussian(mean, sigma_ * std::sqrt(delta_time), 0.0, 1.0);
+        occlusion_probability_.SetParameters(mean,
+                                             sigma_ * std::sqrt(delta_time),
+                                             0.0, 1.0);
     }
 
     virtual State MapStandardGaussian(const Noise& sample) const
