@@ -43,7 +43,11 @@
  * University of Southern California
  */
 
+#include <iostream>
+
 #include <Eigen/Dense>
+
+#include <vector>
 
 #include <boost/unordered_map.hpp>
 
@@ -60,3 +64,71 @@ namespace Eigen
 std::size_t hash_value(Eigen::MatrixXd const& matrix);
 
 }
+
+
+//namespace ff
+//{
+
+//template <typename Key, typename Data>
+//class IndexedCache
+//{
+//public:
+//    IndexedCache()
+//    {
+
+//    }
+
+//    void reserve(size_t size)
+//    {
+//        data_.clear();
+//        data_.resize(size, {false, Data()});
+//    }
+
+//    void clear()
+//    {
+//        for (auto& datum: data_)
+//        {
+//            datum.first = false;
+//        }
+//    }
+
+//    bool hit(const Key& key, const size_t index)
+//    {
+//        if (!data_[index].first)
+//        {
+//            std::cout << "MISSSSSSSSSSSSSSSSSSS" << std::endl;
+//            if (key_map_.find(key) != key_map_.end())
+//            {
+//                std::cout << "FOUNDDDDDDDDDDDDDd" << std::endl;
+//                data_[index].first = true;
+//                data_[index].second = data_[key_map_[key]].second;
+//            }
+//            else
+//            {
+//                return false;
+//            }
+//        }
+
+//        return true;
+//    }
+
+//    void update(const Key& key, const size_t index)
+//    {
+//        data_[index].first = true;
+//        key_map_[key] = index;
+//    }
+
+//    Data& data(const size_t index)
+//    {
+//        return data_[index].second;
+//    }
+
+//protected:
+//    std::vector<std::pair<bool, Data> > data_;
+//    boost::unordered_map<Key, size_t> key_map_;
+//};
+
+//}
+
+
+
