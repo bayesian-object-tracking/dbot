@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking_interface/trackers/robot_tracker.hpp>
 #include <pose_tracking_interface/utils/image_visualizer.hpp>
+#include <pose_tracking_interface/utils/cloud_visualizer.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 
 
@@ -154,7 +155,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 //    image_viz.add_points(indices, depth);
 //    image_viz.show_image("enchilada ");
 
-/*
+    /*
     std::vector<std::vector<Eigen::Vector3d> > vertices = robot_renderer_->vertices();
     vis::CloudVisualizer cloud_vis;
     std::vector<std::vector<Eigen::Vector3d> >::iterator it = vertices.begin();
@@ -164,7 +165,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     }
 
     cloud_vis.show();
-*/
+    */
 
     boost::shared_ptr<ObservationModel> observation_model;
 

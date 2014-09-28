@@ -56,7 +56,9 @@ KinematicsFromURDF::KinematicsFromURDF()
 
   // setup path for robot description and root of the tree
   nh_priv_.param<std::string>("robot_description_package_path", description_path_, "..");
-  //nh_priv_.param<std::string>("tf_correction_root", tf_correction_root_, "L_SHOULDER" );
+  nh_priv_.param<std::string>("rendering_root_left", rendering_root_left_, "L_SHOULDER");
+  nh_priv_.param<std::string>("rendering_root_right", rendering_root_right_, "R_SHOULDER");
+  nh_priv_.param<bool>("collision", collision_, false);
 
 
   // create segment map for correct ordering of joints
@@ -108,13 +110,17 @@ void KinematicsFromURDF::GetPartMeshes(std::vector<boost::shared_ptr<PartMeshMod
     {
       // keep only the links descending from our root
       boost::shared_ptr<urdf::Link> tmp_link = links[i];
-      while(//tmp_link->name.compare(tf_correction_root_)!=0 && 
+      while(tmp_link->name.compare(rendering_root_left_)!=0 && 
+	    tmp_link->name.compare(rendering_root_right_)!=0 && 
 	    tmp_link->name.compare(global_root)!=0)
 	{
 	  tmp_link = tmp_link->getParent();
 	}
       
-      boost::shared_ptr<PartMeshModel> part_ptr(new PartMeshModel(links[i], description_path_, i));
+      if(tmp_link->name.compare(global_root)==0)
+	continue;
+      
+      boost::shared_ptr<PartMeshModel> part_ptr(new PartMeshModel(links[i], description_path_, i, collision_));
       if(part_ptr->proper_)
 	{
 	  // if the link has an actual mesh file to read
