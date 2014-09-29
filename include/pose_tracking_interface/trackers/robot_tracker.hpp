@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef BUILD_GPU
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/kinect_image_observation_model_gpu.hpp>
+#include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/kinect_image_observation_model_gpu_hack.hpp>
 #endif
 
 
@@ -64,7 +65,7 @@ public:
     typedef ff::KinectImageObservationModelCPU<Scalar,
                                                 State>  ObservationModelCPUType;
 #ifdef BUILD_GPU
-    typedef ff::KinectImageObservationModelGPU<State>   ObservationModelGPUType;
+    typedef ff::KinectImageObservationModelGPUHack<State>   ObservationModelGPUType;
 #endif
     typedef ObservationModelCPUType::Base ObservationModel;
     typedef ObservationModelCPUType::Observation Observation;
@@ -93,6 +94,8 @@ private:
                          const ros::Time& stamp);
 
   Scalar last_measurement_time_;
+
+  boost::shared_ptr<KinematicsFromURDF> urdf_kinematics_;
   
 
   boost::mutex mutex_;

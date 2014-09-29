@@ -100,13 +100,15 @@ public:
 
   std::string GetRootFrameID();
 
+
+  // compute the transformations for all the links in one go
+  void ComputeLinkTransforms();
+
 private:
   
   // compute the camera frame for the current joint angles
   void SetCameraTransform();
-  
-  // compute the transformations for all the links in one go
-  void ComputeLinkTransforms();
+
     
   // get the joint index in state array 
   int GetJointIndex(const std::string &name);

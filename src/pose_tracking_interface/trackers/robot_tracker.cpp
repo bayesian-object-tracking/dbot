@@ -34,6 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking_interface/utils/cloud_visualizer.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 
+#include <fast_filtering/utils/profiling.hpp>
+
 
 
 using namespace std;
@@ -63,6 +65,8 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                 boost::shared_ptr<KinematicsFromURDF> &urdf_kinematics)
 {
     boost::mutex::scoped_lock lock(mutex_);
+
+    urdf_kinematics_ = urdf_kinematics;
 
     // convert initial samples to our state format
     std::vector<State> initial_samples(initial_samples_eigen.size());
@@ -208,7 +212,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                          6.0f,         // max_depth
                                          -log(0.5));   // exponential_rate
 
-        gpu_observation_model->Initialize();
+        gpu_observation_model->Initialize(*urdf_kinematics);
         observation_model = gpu_observation_model;
 #endif
     }
@@ -241,16 +245,26 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 
 void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
 {
+    INIT_PROFILING;
     std::cout << "Calling the filter function " << std::endl;
     boost::mutex::scoped_lock lock(mutex_);
 
+    double delta_time;
     if(std::isnan(last_measurement_time_))
-        last_measurement_time_ = ros_image.header.stamp.toSec();
-    Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+        delta_time = 0;
+    else
+        delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+    last_measurement_time_ = ros_image.header.stamp.toSec();
 
-    // TODO: THIS IS JUST FOR DEBUGGING, SINCE OTHERWISE LARGE DELAYS
-    // MAKE IT GO WILD
-    delta_time = 0.03;
+    if(delta_time > 0.04)
+    {
+        std::cout << "delta_time: " << delta_time;
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!! SKIPPED FRAME!!!!!!! !!!!!!!!!" << std::endl;
+        std::cout << "last_measurement_time_: " << last_measurement_time_ << std::endl;
+        std::cout << "ros_image.header.stamp.toSec(): " << ros_image.header.stamp.toSec() << std::endl;
+
+
+    }
 
     // convert image
     Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_);
@@ -259,10 +273,11 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
       
 
     // filter
+    {
     INIT_PROFILING;
     filter_->Filter(image, delta_time, Eigen::VectorXd::Zero(dimension_));
     MEASURE("-----------------> total time for filtering");
-
+    }
 
     // get the mean estimation for the robot joints
     // Casting is a disgusting hack to make sure that the correct equal-operator is used
@@ -303,7 +318,12 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
 
     // publish point cloud
     publishPointCloud(image, t);
+
+
+    MEASURE("-----------------> GRAND TOTAL");
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 }
 
 void RobotTracker::publishImage(const ros::Time& time,
