@@ -24,8 +24,10 @@ public:
       * that index the vertices list and tell us which vertices to connect to a triangle (every group of 3).
       * For each object, the indices should be in the range of [0, nr_vertices - 1].
       */
-    ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> >vertices,
-                     const std::vector<std::vector<std::vector<int> > >indices);
+    ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
+                     const std::vector<std::vector<std::vector<int> > > indices,
+                     const std::string vertex_shader_path,
+                     const std::string fragment_shader_path);
 
     /// constructor with no arguments, should not be used
     ObjectRasterizer();

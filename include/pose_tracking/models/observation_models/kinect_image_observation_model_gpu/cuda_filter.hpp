@@ -1,7 +1,6 @@
 #ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_CUDA_FILTER_HPP
 #define POSE_TRACKING_MODELS_OBSERVATION_MODELS_CUDA_FILTER_HPP
 
-// #include "state_filter.hpp"
 #include "boost/shared_ptr.hpp"
 #include <curand_kernel.h>
 #include "GL/glut.h"

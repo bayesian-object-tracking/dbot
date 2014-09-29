@@ -95,8 +95,8 @@ void CloudVisualizer::add_cloud(const PointCloud<PointXYZ> &point_cloud,
 
 
 void CloudVisualizer::add_cloud(const std::vector<Eigen::Vector3d>  &points,
-                                const Eigen::Matrix3f R,
-                                const Eigen::Vector3f t)
+                                const Eigen::Matrix3d R,
+                                const Eigen::Vector3d t)
 {
 	pcl::PointCloud<pcl::PointXYZRGB> point_cloud;
 
@@ -118,7 +118,7 @@ void CloudVisualizer::add_cloud(const std::vector<Eigen::Vector3d>  &points,
 		point_cloud.points[i].b = 200;
 	}
 
-	add_cloud(point_cloud, R, t);
+    add_cloud(point_cloud, R.cast<float>(), t.cast<float>());
 }
 
 

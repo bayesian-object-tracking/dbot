@@ -7,7 +7,7 @@ source: camera
 
 max_kl_divergence: 2.0
 
-use_gpu: false
+use_gpu: true
 evaluation_count: 100 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
@@ -42,18 +42,18 @@ object_names: [
   #,mugbox
   #,mugbox
   #,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
-#  ,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
+  #,mugbox
 ]
 
 

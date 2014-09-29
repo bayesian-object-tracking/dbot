@@ -26,11 +26,13 @@ ObjectRasterizer::ObjectRasterizer()
 }
 
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
-                                   const std::vector<std::vector<std::vector<int> > > indices) :
+                                   const std::vector<std::vector<std::vector<int> > > indices,
+                                   const std::string vertex_shader_path,
+                                   const std::string fragment_shader_path) :
     n_rows_(WINDOW_HEIGHT),
     n_cols_(WINDOW_WIDTH),
-    vertex_shader_path_(ros::package::getPath("state_filter") + "/src/observation_models/gpu_image_observation_model/shaders/VertexShader.vertexshader"),
-    fragment_shader_path_(ros::package::getPath("state_filter") + "/src/observation_models/gpu_image_observation_model/shaders/FragmentShader.fragmentshader")
+    vertex_shader_path_(vertex_shader_path),
+    fragment_shader_path_(fragment_shader_path)
 {
 
     // ========== CREATE WINDOWLESS OPENGL CONTEXT =========== //

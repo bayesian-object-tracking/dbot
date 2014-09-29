@@ -31,9 +31,15 @@ CudaOpenglFilter::CudaOpenglFilter() :
 {
 }
 
-void CudaOpenglFilter::Initialize() {
-    if (constants_set_) {
-        opengl_ = boost::shared_ptr<ObjectRasterizer> (new ObjectRasterizer(vertices_, indices_));
+void CudaOpenglFilter::Initialize()
+{
+    if (constants_set_)
+    {
+        opengl_ = boost::shared_ptr<ObjectRasterizer>
+                (new ObjectRasterizer(vertices_,
+                                      indices_,
+                                      vertex_shader_path_,
+                                      fragment_shader_path_));
         cuda_ = boost::shared_ptr<CudaFilter> (new CudaFilter());        
 
         initialized_ = true;
@@ -328,7 +334,9 @@ void CudaOpenglFilter::set_constants(const std::vector<std::vector<Eigen::Vector
                                      const float model_sigma,
                                      const float sigma_factor,
                                      const float max_depth,
-                                     const float exponential_rate) {
+                                     const float exponential_rate,
+                                     const std::string vertex_shader_path,
+                                     const std::string fragment_shader_path) {
     vertices_ = vertices;
     indices_ = indices;
     n_init_poses_ = n_init_poses;
@@ -345,6 +353,8 @@ void CudaOpenglFilter::set_constants(const std::vector<std::vector<Eigen::Vector
     sigma_factor_ = sigma_factor;
     max_depth_ = max_depth;
     exponential_rate_ = exponential_rate;
+    vertex_shader_path_ =  vertex_shader_path;
+    fragment_shader_path_ = fragment_shader_path;
 
 
     constants_set_ = true;

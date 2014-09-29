@@ -132,8 +132,10 @@ int main (int argc, char **argv)
                 ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic, node_handle, ros::Duration(10.0));
         Image image = ri::Ros2Eigen<double>(*ros_image);
 
-        std::vector<Eigen::VectorXd> initial_states = pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
-                                                                  initial_sample_count);
+        std::vector<Eigen::VectorXd>
+                initial_states = pi::SampleTableClusters(
+                    ff::hf::Image2Points(image, camera_matrix),
+                    initial_sample_count);
 
         // intialize the filter
         boost::shared_ptr<MultiObjectTracker> tracker(new MultiObjectTracker);

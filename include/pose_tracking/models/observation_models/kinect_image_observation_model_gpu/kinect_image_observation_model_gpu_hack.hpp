@@ -123,7 +123,11 @@ public:
 
 
 
-            opengl_ = boost::shared_ptr<ObjectRasterizer> (new ObjectRasterizer(vertices_, indices_));
+            opengl_ = boost::shared_ptr<ObjectRasterizer>
+                    (new ObjectRasterizer(vertices_,
+                                          indices_,
+                                          vertex_shader_,
+                                          fragment_shader_));
             cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
 
             initialized_ = true;
@@ -173,8 +177,13 @@ public:
                    const float model_sigma,
                    const float sigma_factor,
                    const float max_depth,
-                   const float exponential_rate)
+                   const float exponential_rate,
+                   const std::string vertex_shader,
+                   const std::string fragment_shader)
     {
+
+        vertex_shader_ = vertex_shader;
+        fragment_shader_ = fragment_shader;
 
 
         // since you love doubles i changed the argument type of the vertices to double and convert it here :)
@@ -425,6 +434,10 @@ private:
     float sigma_factor_;
     float max_depth_;
     float exponential_rate_;
+
+
+    std::string vertex_shader_;
+    std::string fragment_shader_;
 
     double start_time_;
 

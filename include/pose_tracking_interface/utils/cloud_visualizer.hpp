@@ -55,8 +55,8 @@ public:
                    const Eigen::Vector3f t = Eigen::Vector3f::Zero());
 
     void add_cloud(const std::vector<Eigen::Vector3d>  &points,
-                   const Eigen::Matrix3f R = Eigen::Matrix3f::Identity(),
-                   const Eigen::Vector3f t = Eigen::Vector3f::Zero());
+                   const Eigen::Matrix3d R = Eigen::Matrix3d::Identity(),
+                   const Eigen::Vector3d t = Eigen::Vector3d::Zero());
 
     void add_cloud(const std::vector<Eigen::Vector3f> &points_,
                    const Eigen::Matrix3f R = Eigen::Matrix3f::Identity(),

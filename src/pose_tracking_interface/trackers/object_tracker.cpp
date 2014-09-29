@@ -42,6 +42,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/utils/distribution_test.hpp>
 
+#include <pose_tracking_interface/utils/cloud_visualizer.hpp>
+
+
+#include <boost/filesystem.hpp>
+
+
 MultiObjectTracker::MultiObjectTracker():
         node_handle_("~"),
         last_measurement_time_(std::numeric_limits<Scalar>::quiet_NaN())
@@ -59,6 +65,8 @@ void MultiObjectTracker::Initialize(
 {
     boost::mutex::scoped_lock lock(mutex_);
 
+
+    std::cout << "received " << initial_states.size() << " intial states " << std::endl;
     // convert camera matrix and image to desired format
     camera_matrix.topLeftCorner(2,3) /= double(downsampling_factor_);
     Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_); // convert to meters
@@ -101,6 +109,23 @@ void MultiObjectTracker::Initialize(
         object_vertices[i] = *file_reader.get_vertices();
         object_triangle_indices[i] = *file_reader.get_indices();
     }
+
+//    vis::CloudVisualizer vis;
+//    for(size_t i = 0; i < 100; i++)
+//    {
+//        size_t index = rand() % initial_states.size();
+//        ff::FreeFloatingRigidBodiesState<> state (initial_states[index]);
+
+
+//        vis.add_cloud(object_vertices[0],
+//                      state.rotation_matrix(),
+//                      state.position());
+//    }
+
+//    vis.add_cloud(ff::hf::Image2Points(image, camera_matrix));
+
+//    vis.show();
+
 
     boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
     boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
@@ -221,6 +246,31 @@ void MultiObjectTracker::Initialize(
                                                  max_sample_count,
                                                  initial_occlusion_prob));
 
+        std::string vertex_shader_path =
+                ros::package::getPath("state_filtering")
+                + "/src/pose_tracking/models/observation_models/"
+                + "kinect_image_observation_model_gpu/shaders/"
+                + "VertexShader.vertexshader";
+
+        std::string fragment_shader_path =
+                ros::package::getPath("state_filtering")
+                + "/src/pose_tracking/models/observation_models/"
+                + "kinect_image_observation_model_gpu/shaders/"
+                + "FragmentShader.fragmentshader";
+
+        if(!boost::filesystem::exists(fragment_shader_path))
+        {
+            std::cout << "vertex shader does not exist at: "
+                 << vertex_shader_path << std::endl;
+            exit(-1);
+        }
+        if(!boost::filesystem::exists(vertex_shader_path))
+        {
+            std::cout << "fragment_shader does not exist at: "
+                 << fragment_shader_path << std::endl;
+            exit(-1);
+        }
+
         gpu_observation_model->Constants(object_vertices,
                                          object_triangle_indices,
                                          p_occluded_visible,
@@ -229,7 +279,9 @@ void MultiObjectTracker::Initialize(
                                          model_sigma,
                                          sigma_factor,
                                          6.0f,         // max_depth
-                                         -log(0.5));   // exponential_rate
+                                         -log(0.5),
+                                         vertex_shader_path,
+                                         fragment_shader_path);   // exponential_rate
 
         gpu_observation_model->Initialize();
         observation_model = gpu_observation_model;
@@ -262,6 +314,7 @@ void MultiObjectTracker::Initialize(
     for(size_t i = 0; i < dependent_sampling_blocks[0].size(); i++)
         dependent_sampling_blocks[0][i] = i;
     filter_->SamplingBlocks(dependent_sampling_blocks);
+
     if(state_is_partial)
     {
         // create the multi body initial samples ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

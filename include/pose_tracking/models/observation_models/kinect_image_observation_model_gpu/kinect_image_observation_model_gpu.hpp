@@ -93,7 +93,11 @@ public:
     {
         if (constants_set_)
         {
-            opengl_ = boost::shared_ptr<ObjectRasterizer> (new ObjectRasterizer(vertices_, indices_));
+            opengl_ = boost::shared_ptr<ObjectRasterizer>
+                    (new ObjectRasterizer(vertices_,
+                                          indices_,
+                                          vertex_shader_path_,
+                                          fragment_shader_path_));
             cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
 
             initialized_ = true;
@@ -143,7 +147,9 @@ public:
                    const float model_sigma,
                    const float sigma_factor,
                    const float max_depth,
-                   const float exponential_rate)
+                   const float exponential_rate,
+                   const std::string vertex_shader_path,
+                   const std::string fragment_shader_path)
     {
 
 
@@ -165,6 +171,10 @@ public:
         sigma_factor_ = sigma_factor;
         max_depth_ = max_depth;
         exponential_rate_ = exponential_rate;
+
+
+        vertex_shader_path_ =  vertex_shader_path;
+        fragment_shader_path_ = fragment_shader_path;
 
 
         constants_set_ = true;
@@ -384,6 +394,10 @@ private:
     float sigma_factor_;
     float max_depth_;
     float exponential_rate_;
+
+    std::string vertex_shader_path_;
+    std::string fragment_shader_path_;
+
 
     double start_time_;
 

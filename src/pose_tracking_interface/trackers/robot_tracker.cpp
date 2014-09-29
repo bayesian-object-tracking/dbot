@@ -36,6 +36,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fast_filtering/utils/profiling.hpp>
 
+#include <ros/package.h>
+
 
 
 using namespace std;
@@ -206,6 +208,35 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                           max_sample_count,
                                           initial_occlusion_prob));
 
+
+
+
+        std::string vertex_shader_path =
+                ros::package::getPath("state_filtering")
+                + "/src/pose_tracking/models/observation_models/"
+                + "kinect_image_observation_model_gpu/shaders/"
+                + "VertexShader.vertexshader";
+
+        std::string fragment_shader_path =
+                ros::package::getPath("state_filtering")
+                + "/src/pose_tracking/models/observation_models/"
+                + "kinect_image_observation_model_gpu/shaders/"
+                + "FragmentShader.fragmentshader";
+
+        if(!boost::filesystem::exists(fragment_shader_path))
+        {
+            std::cout << "vertex shader does not exist at: "
+                 << vertex_shader_path << std::endl;
+            exit(-1);
+        }
+        if(!boost::filesystem::exists(vertex_shader_path))
+        {
+            std::cout << "fragment_shader does not exist at: "
+                 << fragment_shader_path << std::endl;
+            exit(-1);
+        }
+
+
         gpu_observation_model->Constants(part_vertices,
                                          part_triangle_indices,
                                          p_occluded_visible,
@@ -214,7 +245,9 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                                          model_sigma,
                                          sigma_factor,
                                          6.0f,         // max_depth
-                                         -log(0.5));   // exponential_rate
+                                         -log(0.5),
+                                         vertex_shader_path,
+                                         fragment_shader_path);   // exponential_rate
 
         gpu_observation_model->Initialize(*urdf_kinematics);
         observation_model = gpu_observation_model;
