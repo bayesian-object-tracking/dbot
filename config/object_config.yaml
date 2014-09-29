@@ -7,8 +7,8 @@ source: camera
 
 max_kl_divergence: 2.0
 
-use_gpu: true
-evaluation_count: 2000 #the number of evaluations
+use_gpu: false
+evaluation_count: 100 #the number of evaluations
 
 # filtering parameters ----------------------------------------------------------------------
 downsampling_factor: 8 #8

@@ -216,7 +216,7 @@ void ImageVisualizer::add_points(
 	}
 	if(min == max) min = 0;
 
-	std::cout << "Min and max of generated depth " << min << " " << max << std::endl;
+//	std::cout << "Min and max of generated depth " << min << " " << max << std::endl;
 
 	for(int i = 0; i < int(point_indices.size()); i++)
 	{

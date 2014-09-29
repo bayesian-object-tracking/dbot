@@ -87,13 +87,6 @@ void MultiObjectTracker::Initialize(
     std::cout << "sampling blocks: " << std::endl;
     ff::hf::PrintVector(sampling_blocks);
 
-
-
-
-
-
-
-
     // load object mesh
     std::vector<std::vector<Eigen::Vector3d> > object_vertices(object_names_.size());
     std::vector<std::vector<std::vector<int> > > object_triangle_indices(object_names_.size());
@@ -120,40 +113,63 @@ void MultiObjectTracker::Initialize(
 
 
 
-    ff::ApproximateKinectPixelObservationModel<State> pixel_observation_model(
-                object_renderer,
-                camera_matrix,
-                image.rows(),
-                image.cols(),
-                0.5,
-                0.003,
-                0.001424,
-                1.0,
-                6.0,
-                0.0,
-                2.0,
-                10000,
-                1000);
-    pixel_observation_model.Condition(1, 0);
-
-
-
-    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
-                                                          p_occluded_occluded,
-                                                          0.2);
-    ff::ContinuousOcclusionProcessModel::State occlusion;
-    occlusion(0,0) = -1000.0;
-    occlusion_process.Condition(1.0, occlusion);
 
 
 
 
-    std::cout << "testing distribution " << std::endl;
+
+
+
+
+//    ff::ApproximateKinectPixelObservationModel<State> pixel_observation_model(
+//                object_renderer,
+//                camera_matrix,
+//                image.rows(),
+//                image.cols(),
+//                0.5,
+//                0.003,
+//                0.001424,
+//                1.0,
+//                6.0,
+//                0.0,
+//                2.0,
+//                10000,
+//                1000);
+//    pixel_observation_model.Condition(1, 0);
+
+
+
+//    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
+//                                                          p_occluded_occluded,
+//                                                          0.2);
+//    ff::ContinuousOcclusionProcessModel::State occlusion;
+
+//    size_t N = 1000000;
+//    INIT_PROFILING;
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion_process.Condition(1.0, occlusion);
+//        occlusion(0,0) += 0.00001;
+//    }
+//    MEASURE("conditioning");
+//    occlusion_process.Condition(1.0, occlusion);
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion = occlusion_process.MapStandardGaussian(ff::ContinuousOcclusionProcessModel::State(0.12));
+//    }
+//    MEASURE("mapping");
+
+
+
+
+//    std::cout << "testing distribution " << std::endl;
+//    occlusion(0,0) = -1000.0;
+//    occlusion_process.Condition(1.0, occlusion);
 //    ff::TestDistributionSampling(occlusion_process, 100000);
-    ff::TestDistribution(pixel_observation_model, 1000000);
-    std::cout << "done testing " << std::endl;
+////    ff::TestDistribution(pixel_observation_model, 1000000);
+//    std::cout << "done testing " << std::endl;
 
-    exit(-1);
+//    exit(-1);
 
 
 
@@ -171,27 +187,6 @@ void MultiObjectTracker::Initialize(
 
 
     // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-    // load object mesh
-//    std::vector<std::vector<Eigen::Vector3d> > object_vertices(object_names_.size());
-//    std::vector<std::vector<std::vector<int> > > object_triangle_indices(object_names_.size());
-//    for(size_t i = 0; i < object_names_.size(); i++)
-//    {
-//        std::string object_model_path = ros::package::getPath("arm_object_models") +
-//                "/objects/" + object_names_[i] + "/" + object_names_[i] + "_downsampled" + ".obj";
-//        ObjectFileReader file_reader;
-//        file_reader.set_filename(object_model_path);
-//        file_reader.Read();
-
-//        object_vertices[i] = *file_reader.get_vertices();
-//        object_triangle_indices[i] = *file_reader.get_indices();
-//    }
-
-//    boost::shared_ptr<State> rigid_bodies_state(new ff::FreeFloatingRigidBodiesState<>(object_names_.size()));
-//    boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(new ff::RigidBodyRenderer(
-//                                                                      object_vertices,
-//                                                                      object_triangle_indices,
-//                                                                      rigid_bodies_state));
-
     boost::shared_ptr<ObservationModel> observation_model;
 #ifndef BUILD_GPU
     use_gpu = false;

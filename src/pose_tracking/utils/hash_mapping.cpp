@@ -45,16 +45,21 @@
 
 #include <boost/unordered_map.hpp>
 
+#include <pose_tracking/utils/xxhash.h>
 #include <pose_tracking/utils/hash_mapping.hpp>
+
+//std::size_t Eigen::hash_value(Eigen::MatrixXd const& matrix)
+//{
+//    size_t seed = 0;
+//    for (size_t i = 0; i < matrix.rows(); ++i)
+//    {
+//        boost::hash_combine(seed, matrix(i, 0));
+//    }
+
+//    return seed;
+//}
 
 std::size_t Eigen::hash_value(Eigen::MatrixXd const& matrix)
 {
-    size_t seed = 0;
-    size_t max = std::min(int(matrix.rows()), 6);
-    for (size_t i = 0; i < max; ++i)
-    {
-        boost::hash_combine(seed, matrix(i, 0));
-    }
-
-    return seed;
+    return XXH32(matrix.data(), sizeof(double)*6, 0);
 }

@@ -67,8 +67,25 @@ public:
     virtual double MapStandardGaussian() const
     {
         double pow_c_time = std::exp(delta_time_*log_c_);
-        return 1. - (pow_c_time*(1.-occlusion_probability_) +
+
+        double new_occlusion_probability =
+                1. - (pow_c_time*(1.-occlusion_probability_) +
                     (1 - p_occluded_occluded_)*(pow_c_time-1.)/(c_-1.));
+
+        if(new_occlusion_probability < 0.0 || new_occlusion_probability > 1.0)
+        {
+            if(std::fabs(c_ - 1.0) < 0.000000001)
+            {
+                new_occlusion_probability = occlusion_probability_;
+            }
+            else
+            {
+                std::cout << "unhandeled case in occlusion process mdoel " << std::endl;
+                exit(-1);
+            }
+        }
+
+        return new_occlusion_probability;
     }
 
 private:

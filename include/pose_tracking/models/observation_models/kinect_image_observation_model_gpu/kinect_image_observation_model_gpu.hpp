@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cuda_gl_interop.h>
 
+#include <fast_filtering/utils/profiling.hpp>
 
 namespace ff
 {
@@ -173,150 +174,85 @@ public:
                                   std::vector<size_t>& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
+        if (!initialized_)
+
+        {
+            std:: cout << "GPU: not initialized" << std::endl;
+            exit(-1);
+        }
+        else if(!observations_set_)
+        {
+            std:: cout << "GPU: observations not set" << std::endl;
+            exit(-1);
+        }
+
         n_poses_ = states.size();
         std::vector<float> flog_likelihoods (n_poses_, 0);
+        set_number_of_poses(n_poses_);
 
-        if (initialized_ && observations_set_) {
-
-
-    #ifdef PROFILING_ACTIVE
-            cudaEvent_t start_event, stop_event;
-            cudaEventCreate(&start_event);
-            cudaEventCreate(&stop_event);
-            float milliseconds;
-            double start;
-            double stop;
-            std::vector<float> cuda_times;
-            std::vector<double> cpu_times;
-            cudaEventRecord(start_event);
-            start = sf::hf::get_wall_time();
-    #endif
-
-    //        std:: cout << "setting number of poses to " << n_poses_ << std::endl;
-
-            set_number_of_poses(n_poses_);
-
-            // transform occlusion indices from size_t to int
-            std::vector<int> occlusion_indices_transformed (occlusion_indices.size(), 0);
-            for (size_t i = 0; i < occlusion_indices.size(); i++) {
-                occlusion_indices_transformed[i] = (int) occlusion_indices[i];
-            }
-
-            // copy occlusion indices to GPU
-            cuda_->set_prev_sample_indices(occlusion_indices_transformed.data());
-
-            // convert to internal state format
-            std::vector<std::vector<std::vector<float> > > states_internal_format( n_poses_,
-                                                                    std::vector<std::vector<float> >(states[0].body_count(),
-                                                                    std::vector<float>(7, 0)));
-            for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-                for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
-                {
-                    states_internal_format[state_index][body_index][0] = states[state_index].quaternion(body_index).w();
-                    states_internal_format[state_index][body_index][1] = states[state_index].quaternion(body_index).x();
-                    states_internal_format[state_index][body_index][2] = states[state_index].quaternion(body_index).y();
-                    states_internal_format[state_index][body_index][3] = states[state_index].quaternion(body_index).z();
-                    states_internal_format[state_index][body_index][4] = states[state_index].position(body_index)[0];
-                    states_internal_format[state_index][body_index][5] = states[state_index].position(body_index)[1];
-                    states_internal_format[state_index][body_index][6] = states[state_index].position(body_index)[2];
-                }
-
-    #ifdef PROFILING_ACTIVE
-            stop = sf::hf::get_wall_time();
-            cpu_times.push_back(stop - start);
-            cudaEventRecord(stop_event);
-            cudaEventSynchronize(stop_event);
-            cudaEventElapsedTime(&milliseconds, start_event, stop_event);
-            cuda_times.push_back(milliseconds);
-            cudaEventRecord(start_event);
-            start = sf::hf::get_wall_time();
-    #endif
-
-            opengl_->Render(states_internal_format);
-
-    #ifdef PROFILING_ACTIVE
-            stop = sf::hf::get_wall_time();
-            cpu_times.push_back(stop - start);
-            cudaEventRecord(stop_event);
-            cudaEventSynchronize(stop_event);
-            cudaEventElapsedTime(&milliseconds, start_event, stop_event);
-            cuda_times.push_back(milliseconds);
-            cudaEventRecord(start_event);
-            start = sf::hf::get_wall_time();
-    #endif
-
-
-            cudaGraphicsMapResources(1, &combined_texture_resource_, 0);
-            cudaGraphicsSubResourceGetMappedArray(&texture_array_, combined_texture_resource_, 0, 0);
-            cuda_->set_texture_array(texture_array_);
-            cuda_->MapTexture();
-
-
-    #ifdef PROFILING_ACTIVE
-            stop = sf::hf::get_wall_time();
-            cpu_times.push_back(stop - start);
-            cudaEventRecord(stop_event);
-            cudaEventSynchronize(stop_event);
-            cudaEventElapsedTime(&milliseconds, start_event, stop_event);
-            cuda_times.push_back(milliseconds);
-            cudaEventRecord(start_event);
-            start = sf::hf::get_wall_time();
-    #endif
-
-
-            cuda_->CompareMultiple(update_occlusions, flog_likelihoods);
-            cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
-
-            if(update_occlusions) {
-                for(size_t state_index = 0; state_index < occlusion_indices.size(); state_index++)
-                    occlusion_indices[state_index] = state_index;
-            }
-
-
-    #ifdef PROFILING_ACTIVE
-            stop = sf::hf::get_wall_time();
-            cpu_times.push_back(stop - start);
-            cudaEventRecord(stop_event);
-            cudaEventSynchronize(stop_event);
-            cudaEventElapsedTime(&milliseconds, start_event, stop_event);
-            cuda_times.push_back(milliseconds);
-
-            cpu_times_.push_back(cpu_times);
-            cuda_times_.push_back(cuda_times);
-            count_++;
-
-            if (count_ == COUNT) {
-                string names[TIME_MEASUREMENTS_COUNT];
-                names[SEND_INDICES] = "send indices";
-                names[RENDER] = "render poses";
-                names[MAP_RESOURCE] = "map resource";
-                names[COMPUTE_LIKELIHOODS] = "compute likelihoods";
-
-                float final_cpu_times[TIME_MEASUREMENTS_COUNT] = {0};
-                float final_cuda_times[TIME_MEASUREMENTS_COUNT] = {0};
-
-                for (int i = 0; i < count_; i++) {
-                    for (int j = 0; j < TIME_MEASUREMENTS_COUNT; j++) {
-                        final_cpu_times[j] += cpu_times_[i][j];
-                        final_cuda_times[j] += cuda_times_[i][j];
-                    }
-                }
-
-                float total_time_cuda = 0;
-                float total_time_cpu = 0;
-                std:: cout << "EvaluateMultiple() runtimes: " << std::endl;
-                for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-                    std:: cout << names[i] << ": \t(GPU) " << final_cuda_times[i] * 1e3 / count_<< "\t(CPU) " << final_cpu_times[i] * 1e6 / count_<< std::endl;
-                    total_time_cuda += final_cuda_times[i] * 1e3 / count_;
-                    total_time_cpu += final_cpu_times[i] * 1e6 / count_;
-                }
-                std:: cout << "TOTAL: " << "\t(GPU) " << total_time_cuda << "\t(CPU) " << total_time_cpu << std::endl;
-            }
-    #endif
-
-        } else {
-            std:: cout << "WARNING: GPUImageObservationModel::EvaluateMultiple() was not executed, because GPUImageObservationModel::Initialize() or GPUImageObservationModel::set_observations() has not been called previously." << std::endl;
+        // transform occlusion indices from size_t to int
+        std::vector<int> occlusion_indices_transformed (occlusion_indices.size(), 0);
+        for (size_t i = 0; i < occlusion_indices.size(); i++)
+        {
+            occlusion_indices_transformed[i] = (int) occlusion_indices[i];
         }
+
+        INIT_PROFILING;
+        // copy occlusion indices to GPU
+        cuda_->set_prev_sample_indices(occlusion_indices_transformed.data());
+        MEASURE("gpu: setting occlusion indices");
+        // convert to internal state format
+        std::vector<std::vector<std::vector<float> > > states_internal_format(
+                    n_poses_,
+                    std::vector<std::vector<float> >(states[0].body_count(),
+                    std::vector<float>(7, 0)));
+
+        MEASURE("gpu: creating state vectors");
+
+
+        for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
+            for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
+            {
+                const Eigen::Quaternion<Scalar>& quaternion = states[state_index].quaternion(body_index);
+                states_internal_format[state_index][body_index][0] = quaternion.w();
+                states_internal_format[state_index][body_index][1] = quaternion.x();
+                states_internal_format[state_index][body_index][2] = quaternion.y();
+                states_internal_format[state_index][body_index][3] = quaternion.z();
+                const Eigen::Matrix<Scalar, 3, 1>& position =  states[state_index].position(body_index);
+                states_internal_format[state_index][body_index][4] = position[0];
+                states_internal_format[state_index][body_index][5] = position[1];
+                states_internal_format[state_index][body_index][6] = position[2];
+            }
+
+        MEASURE("gpu: converting state format");
+
+
+
+        opengl_->Render(states_internal_format);
+
+        MEASURE("gpu: rendering");
+
+
+        cudaGraphicsMapResources(1, &combined_texture_resource_, 0);
+        cudaGraphicsSubResourceGetMappedArray(&texture_array_, combined_texture_resource_, 0, 0);
+        cuda_->set_texture_array(texture_array_);
+        cuda_->MapTexture();
+        MEASURE("gpu: mapping texture");
+
+        cuda_->CompareMultiple(update_occlusions, flog_likelihoods);
+        cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
+
+        MEASURE("gpu: computing likelihoods");
+
+
+        if(update_occlusions)
+        {
+            for(size_t state_index = 0; state_index < occlusion_indices.size(); state_index++)
+                occlusion_indices[state_index] = state_index;
+
+            MEASURE("gpu: updating occlusions");
+        }
+
 
         // convert
         std::vector<Scalar> log_likelihoods(flog_likelihoods.size());

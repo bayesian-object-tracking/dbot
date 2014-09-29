@@ -20,26 +20,42 @@ max_sample_count: 10000 #10000 this is for the gpu to allocate memory
 #angular_acceleration_sigma: 30.0 #1.5  3.0  15.0 30.0
 #damping: 1000.0 #5.0  20.0  1000.0 1000.0
 
-linear_acceleration_sigma:   0.4 #0.1  0.2  1.0 2.0
-angular_acceleration_sigma: 6.0 #1.5  3.0  15.0 30.0
-damping: 5.0 #5.0  20.0  1000.0 1000.0
+linear_acceleration_sigma:   0.1 #0.1  0.2  1.0 2.0
+angular_acceleration_sigma: 1.5 #1.5  3.0  15.0 30.0
+damping: 20.0 #5.0  20.0  1000.0 1000.0
 
 # observation model parameters --------------------------------------------------------------
-sensor_failure_probability: 0.01
-object_model_sigma: 0.003
+sensor_failure_probability: 0.0
+object_model_sigma: 0.005
 sigma_factor: 0.00142478
 half_life_depth: 1.0
 max_depth: 6.0
 min_depth: 0.0
 
+# # occlusion process model stuff
+# # initial prob of the source being the object for each pixels
+# initial_occlusion_prob: 0.1 #0.1
+# # prob of source being object given that one second ago the source was the object
+# p_occluded_visible: 0.1 #0.1
+# # prob of source being object given that one second ago source was not object
+# p_occluded_occluded: 0.7 #0.7
+# occlusion_process_sigam: 0.2
+
+
+
+# 
 # occlusion process model stuff
 # initial prob of the source being the object for each pixels
-initial_occlusion_prob: 0.1 #0.1
+initial_occlusion_prob: 0.0 #0.1
 # prob of source being object given that one second ago the source was the object
-p_occluded_visible: 0.1 #0.1
+p_occluded_visible: 0.0 #0.1
 # prob of source being object given that one second ago source was not object
-p_occluded_occluded: 0.7 #0.7
-occlusion_process_sigam: 0.2
+p_occluded_occluded: 0.0 #0.7
+occlusion_process_sigam: 0.00000001
+
+
+
+
 
 object_names: [
  mugbox

@@ -12,6 +12,7 @@
 
 #include <fast_filtering/utils/profiling.hpp>
 
+#include <pose_tracking_interface/trackers/object_tracker.hpp>
 #include <pose_tracking_interface/trackers/fukf_test_tracker.hpp>
 #include <pose_tracking_interface/utils/pcl_interface.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
@@ -50,27 +51,27 @@ int main (int argc, char **argv)
 
     std::vector<Eigen::VectorXd> initial_states =
             pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
-                                    initial_sample_count);
+                                    1000);
 
     std::cout << "new tracker" << std::endl;
 
     // intialize the filter
+    boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
+    ff::FreeFloatingRigidBodiesState<-1> mean_state;
+    tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);
+
+    sensor_msgs::Image fuck_you = *ros_image;
+    for (int var = 0; var < 100; ++var)
+    {
+        fuck_you.header.stamp += ros::Duration(1./30.);
+        mean_state = tracker_particle_filter->Filter(fuck_you);
+    }
+
+//    // intialize the filter
     boost::shared_ptr<FukfTestTracker> tracker(new FukfTestTracker());
 
-    std::cout << "tracker created" << std::endl;
-
-//    // FIXME replace this with the result of the particle filter
-    std::cout << "mean of " << initial_states.size() << " initial states " << std::endl;
-    Eigen::VectorXd mean_initial_state;
-    mean_initial_state = Eigen::VectorXd::Zero(initial_states[0].rows(), 1);
-    for (auto& initial_state: initial_states)
-    {
-        mean_initial_state += initial_state;
-    }
-    mean_initial_state /= double(initial_states.size());
-
     std::cout << "tracker->Initialize" << std::endl;
-    tracker->Initialize(mean_initial_state,
+    tracker->Initialize(mean_state,
                         *ros_image,
                         camera_matrix);
 

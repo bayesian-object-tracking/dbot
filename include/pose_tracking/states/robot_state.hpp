@@ -72,6 +72,11 @@ public:
         return Quaternion2EulerVector(kinematics_->GetLinkOrientation(object_index));
     }
 
+    virtual Quaternion quaternion(const size_t& object_index = 0) const
+    {
+        return kinematics_->GetLinkOrientation(object_index);
+    }
+
     virtual unsigned body_count() const
     {
         CheckKinematics();

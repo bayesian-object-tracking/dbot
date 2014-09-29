@@ -115,7 +115,7 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
 	}
 
 	// we find the intersections with the triangles and the depths ---------------------------------------------------
-    depth_image = vector<float>(n_rows*n_cols, numeric_limits<float>::max());
+    depth_image = vector<float>(n_rows*n_cols, numeric_limits<float>::infinity());
 
     for(int part_index = 0; part_index < int(indices_.size()); part_index++)
 	{
@@ -202,14 +202,14 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
                 float offset = normal.dot(trans_vertices[part_index][indices_[part_index][triangle_index][0]]);
 				for(int row = int(min_row_given_col); row <= int(max_row_given_col); row++)
 					if(row >= 0 && row < n_rows && col >= 0 && col < n_cols)
-					{
+                    {
 						//						intersec_tindices.push_back(row*n_cols + col);
 						// we find the intersection between the ray and the triangle --------------------------------------------
 						Vector3d line_vector = inv_camera_matrix * Vector3d(col, row, 1); // the depth is the z component
                         float depth = std::fabs(offset/normal.dot(line_vector));
 						//if(depth > 0.5)
 						  depth_image[row*n_cols + col] =
-						    depth < depth_image[row*n_cols + col] ? depth : depth_image[row*n_cols + col];
+                            depth < depth_image[row*n_cols + col] ? depth : depth_image[row*n_cols + col];
                     }
 			}
 		}
@@ -224,7 +224,7 @@ void RigidBodyRenderer::Render(Matrix camera_matrix,
                                 std::vector<int> &intersect_indices,
                                 std::vector<float> &depth) const
 {
-    vector<float> depth_image(n_rows*n_cols, numeric_limits<float>::max());
+    vector<float> depth_image;
 
     Render(camera_matrix, n_rows, n_cols, depth_image);
 
@@ -238,7 +238,7 @@ void RigidBodyRenderer::Render(Matrix camera_matrix,
     {
         for(int col = 0; col < n_cols; col++)
         {
-            if(depth_image[row*n_cols + col] != numeric_limits<float>::max())
+            if(depth_image[row*n_cols + col] != numeric_limits<float>::infinity())
             {
                 intersect_indices[count] = row*n_cols + col;
                 depth[count] = depth_image[row*n_cols + col];
