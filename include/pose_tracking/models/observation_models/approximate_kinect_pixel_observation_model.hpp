@@ -92,7 +92,7 @@ public:
                                      half_life_depth,
                                      max_depth),
           visible_observation_model_(occluded_observation_model_),
-          exponential_distribution_(-log(0.5)/half_life_depth, min_depth),
+          exponential_distribution_(-log(0.5)/half_life_depth, min_depth, max_depth),
           object_model_noise_(0.0, object_model_sigma),
           sensor_failure_distribution_(min_depth, max_depth),
           sensor_failure_probability_(sensor_failure_probability),
@@ -125,29 +125,16 @@ public:
 
     virtual Observation MapStandardGaussian(const Noise& sample) const
     {
-        // original content
-//        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
-        double depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
-
-        return rendered_depth_ - approximation_depth_ + min_depth_
-                + depth_step_ * depth_index;
-    }
-
-    virtual Observation MapStandardGaussian_NONCONST(const Noise& sample)
-    {
-        NoiseIndexMap& cache = sample_cache_[occlusion_index_];
-
-        if (cache.find(sample) == cache.end())
+        if(std::isinf(rendered_depth_))
         {
-            std::cout << "CACHE MISSSSSSSSSSSSSSSSSSSSSSSSS" << std::endl;
-
-            cache[sample] = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
+            return exponential_distribution_.MapStandardGaussian(sample(0));
         }
 
-        return rendered_depth_ - approximation_depth_ + min_depth_
-                + depth_step_ * double(cache[sample]);
-    }
+        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
 
+        return rendered_depth_ - approximation_depth_ + min_depth_
+                + depth_step_ * double(depth_index);
+    }
 
 
     virtual Scalar Probability(const Observation& observation) const
@@ -179,7 +166,7 @@ public:
     virtual void Condition(const State& state,                           
                            const Scalar& occlusion,
                            size_t state_index,
-                           size_t occlusion_index)
+                           size_t pixel_index)
     {
         if (!predictions_[state_index].first)
         {
@@ -192,14 +179,25 @@ public:
             predictions_[state_index].first = true;
         }
 
-        Condition(predictions_[state_index].second[occlusion_index], occlusion);
+        Condition(predictions_[state_index].second[pixel_index], occlusion);
+
+
     }
 
     virtual void Condition(const Scalar& rendered_depth,
                            const Scalar& occlusion)
     {
+        if(std::isnan(occlusion))
+        {
+            std::cout << "occlusion is nan " << std::endl;
+
+            exit(-1);
+        }
+
+
         rendered_depth_ = rendered_depth;
         occlusion_probability_ = hf::Sigmoid(occlusion);
+
         occlusion_index_ = occlusion_probability_ / occlusion_step_;
 
         occluded_observation_model_.Condition(rendered_depth, true);

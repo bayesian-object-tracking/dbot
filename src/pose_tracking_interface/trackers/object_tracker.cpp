@@ -139,37 +139,37 @@ void MultiObjectTracker::Initialize(
 
 
 
-    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
-                                                          p_occluded_occluded,
-                                                          0.2);
-    ff::ContinuousOcclusionProcessModel::State occlusion;
+//    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
+//                                                          p_occluded_occluded,
+//                                                          0.2);
+//    ff::ContinuousOcclusionProcessModel::State occlusion;
 
-    size_t N = 1000000;
-    INIT_PROFILING;
-    for(size_t i = 0; i < N; i++)
-    {
-        occlusion_process.Condition(1.0, occlusion);
-        occlusion(0,0) += 0.00001;
-    }
-    MEASURE("conditioning");
-    occlusion_process.Condition(1.0, occlusion);
-    for(size_t i = 0; i < N; i++)
-    {
-        occlusion = occlusion_process.MapStandardGaussian(ff::ContinuousOcclusionProcessModel::State(0.12));
-    }
-    MEASURE("mapping");
-
-
+//    size_t N = 1000000;
+//    INIT_PROFILING;
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion_process.Condition(1.0, occlusion);
+//        occlusion(0,0) += 0.00001;
+//    }
+//    MEASURE("conditioning");
+//    occlusion_process.Condition(1.0, occlusion);
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion = occlusion_process.MapStandardGaussian(ff::ContinuousOcclusionProcessModel::State(0.12));
+//    }
+//    MEASURE("mapping");
 
 
-    std::cout << "testing distribution " << std::endl;
-    occlusion(0,0) = -1000.0;
-    occlusion_process.Condition(1.0, occlusion);
-    ff::TestDistributionSampling(occlusion_process, 100000);
-//    ff::TestDistribution(pixel_observation_model, 1000000);
-    std::cout << "done testing " << std::endl;
 
-    exit(-1);
+
+//    std::cout << "testing distribution " << std::endl;
+//    occlusion(0,0) = -1000.0;
+//    occlusion_process.Condition(1.0, occlusion);
+//    ff::TestDistributionSampling(occlusion_process, 100000);
+////    ff::TestDistribution(pixel_observation_model, 1000000);
+//    std::cout << "done testing " << std::endl;
+
+//    exit(-1);
 
 
 

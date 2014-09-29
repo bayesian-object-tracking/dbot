@@ -79,12 +79,31 @@ public:
     virtual void Condition(const double& delta_time,
                            const State& occlusion)
     {
+        if(std::isnan(occlusion(0,0)))
+        {
+            std::cout << "error: received nan occlusion in process model" << std::endl;
+            exit(-1);
+        }
+
+
         double initial_occlusion_probability = hf::Sigmoid(occlusion(0, 0));
 
         mean_.Condition(delta_time, initial_occlusion_probability);
         double mean = mean_.MapStandardGaussian();
 
-        occlusion_probability_.SetParameters(mean,
+
+
+        if(std::isnan(mean))
+        {
+            std::cout << "error: produced nan mean in process model" << std::endl;
+            std::cout << "delta_time " << delta_time << std::endl;
+            std::cout << "initial_occlusion_probability " << initial_occlusion_probability << std::endl;
+
+            exit(-1);
+        }
+
+
+        truncated_gaussian_.SetParameters(mean,
                                              sigma_ * std::sqrt(delta_time),
                                              0.0, 1.0);
     }
@@ -93,7 +112,15 @@ public:
     {
         State l;
         l(0, 0) = hf::Logit(
-                    occlusion_probability_.MapStandardGaussian(sample(0,0)));
+                    truncated_gaussian_.MapStandardGaussian(sample(0,0)));
+
+
+        if(std::isnan(l(0,0)))
+        {
+            std::cout << "error: produced nan occlusion in process model" << std::endl;
+            exit(-1);
+        }
+
         return l;
     }
 
@@ -104,7 +131,7 @@ public:
 
 private:
     OcclusionProcessModel mean_;
-    TruncatedGaussian occlusion_probability_;
+    TruncatedGaussian truncated_gaussian_;
     double sigma_;
 };
 

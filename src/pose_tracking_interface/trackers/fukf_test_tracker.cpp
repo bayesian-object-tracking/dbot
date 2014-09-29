@@ -102,6 +102,8 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
         object_vertices[i] = *file_reader.get_vertices();
         object_triangle_indices[i] = *file_reader.get_indices();
+
+        std::cout << "Loaded " << object_names_[i] << " object file. !!!!!!!!!!!!!!!!" << std::endl;
     }
 
     std::cout << "creating state" << std::endl;
@@ -174,36 +176,39 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
         last_measurement_time_ = ros_image.header.stamp.toSec();
     }
 
-    Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+//    Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+    Scalar delta_time = 1.0/30.0;
+
 
     Eigen::MatrixXd image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);
 
+    for (size_t i = 0; i < image.rows(); ++i)
+    {
+        for (int j = 0; j < image.cols(); ++j)
+        {
+            if (std::isnan(image(i, j)))
+            {
+                image(i, j) = 3.5;
+            }
+        }
+    }
+
 
     INIT_PROFILING;
-
     filter_->predict(state_distr, delta_time, state_distr);
-
-
-
-    // predict
-    // update
-    //filter_->predict();
-
-//    filter_->Filter(image,
-//                    delta_time,
-//                    ProcessModel::Input::Zero(object_names_.size()*6));
-    MEASURE("-----------------> total time for filtering");
-
+    MEASURE("-----------------> filter_->predict");
+    filter_->update(state_distr, image, state_distr);
+    MEASURE("<----------------- filter_->update");
 
 //    // visualize the mean state
-//    ff::FreeFloatingRigidBodiesState<> mean = filter_->StateDistribution().Mean();
-//    for(size_t i = 0; i < object_names_.size(); i++)
-//    {
-//        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-//        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-//                          ros_image.header, object_model_path, object_publisher_,
-//                          i, 1, 0, 0);
-//    }
+    ff::FreeFloatingRigidBodiesState<> mean = state_distr.a;
+    for(size_t i = 0; i < object_names_.size(); i++)
+    {
+        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
+        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
+                          ros_image.header, object_model_path, object_publisher_,
+                          i, 1, 0, 0);
+    }
 
-//    last_measurement_time_ = ros_image.header.stamp.toSec();
+    last_measurement_time_ = ros_image.header.stamp.toSec();
 }
