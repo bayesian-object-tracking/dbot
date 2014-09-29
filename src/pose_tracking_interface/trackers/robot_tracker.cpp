@@ -117,11 +117,15 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 
     std::vector<std::vector<Eigen::Vector3d> > part_vertices(part_meshes_.size());
     std::vector<std::vector<std::vector<int> > > part_triangle_indices(part_meshes_.size());
+    int n_triangles = 0;
     for(size_t i = 0; i < part_meshes_.size(); i++)
     {
         part_vertices[i] = *(part_meshes_[i]->get_vertices());
         part_triangle_indices[i] = *(part_meshes_[i]->get_indices());
+	n_triangles +=part_triangle_indices[i].size();
     }
+
+    std::cout << "Total number of triangles " << n_triangles << std::endl;
 
 
     cout << "setting kinematics " << endl;
