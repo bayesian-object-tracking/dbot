@@ -186,6 +186,7 @@ set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/robot_tracking_dataset.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/pcl_interface.cpp
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/ros_interface.cpp
+    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/image_publisher.cpp
 
     # TESTING FUKF
     src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker.cpp

@@ -113,7 +113,7 @@ void ImageVisualizer::set_image(
         min = min_value;
     }
 
-    //std::cout << "Min and Max of depth image " << max << " " << min << std::endl;
+    std::cout << "Min and Max of depth image " << max << " " << min << std::endl;
 
 	for(size_t i = 0; i < display_image.size(); i++)
 		display_image[i] = (display_image[i] - min) / (max-min) * 255.;
