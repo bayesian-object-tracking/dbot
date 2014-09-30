@@ -47,25 +47,31 @@ int main (int argc, char **argv)
                                                            ros::Duration(10.0));
     Image image = ri::Ros2Eigen<double>(*ros_image);
 
-    std::cout << "ri::Ros2Eigen" << std::endl;
+    ff::FreeFloatingRigidBodiesState<-1> mean_state(1);
 
-    std::vector<Eigen::VectorXd> initial_states =
-            pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
-                                    1000);
+//    // alternative initialization
+//    std::vector<Eigen::VectorXd> initial_states =
+//            pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
+//                                    1000);
+//    boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
+//    tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);
+//    sensor_msgs::Image fuck_you = *ros_image;
+//    for (int var = 0; var < 50  && ros::ok(); ++var)
+//    {
+//        fuck_you.header.stamp += ros::Duration(1./30.);
+//        mean_state = tracker_particle_filter->Filter(fuck_you);
+//    }
 
-    std::cout << "new tracker" << std::endl;
+    // calib_obj
+    mean_state.setZero();
+    mean_state(0, 0) = 0.119531491;
+    mean_state(1, 0) = 0.040621002;
+    mean_state(2, 0) = 0.838543503;
+    mean_state(3, 0) = 0.560296146;
+    mean_state(4, 0) = 2.564343082;
+    mean_state(5, 0) = -1.352442605;
 
-    // intialize the filter
-    boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
-    ff::FreeFloatingRigidBodiesState<-1> mean_state;
-    tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);
-
-    sensor_msgs::Image fuck_you = *ros_image;
-    for (int var = 0; var < 100; ++var)
-    {
-        fuck_you.header.stamp += ros::Duration(1./30.);
-        mean_state = tracker_particle_filter->Filter(fuck_you);
-    }
+    std::cout << mean_state << std::endl;
 
 //    // intialize the filter
     boost::shared_ptr<FukfTestTracker> tracker(new FukfTestTracker());
