@@ -71,8 +71,8 @@ public:
             const Eigen::Matrix3d& camera_matrix,
             const size_t n_rows,
             const size_t n_cols,
-            const Scalar sensor_failure_probability = 0.01,
-            const Scalar object_model_sigma = 0.003,
+            const Scalar tail_weight = 0.01,
+            const Scalar model_sigma = 0.003,
             const Scalar sigma_factor = 0.00142478,
             const Scalar half_life_depth = 1.0,
             const Scalar max_depth = 6.0,
@@ -82,16 +82,16 @@ public:
           n_rows_(n_rows),
           n_cols_(n_cols),
           predictions_(100), // the size of this vector reflects the number of different
-          occluded_observation_model_(sensor_failure_probability,
-                                     object_model_sigma,
+          occluded_observation_model_(tail_weight,
+                                     model_sigma,
                                      sigma_factor,
                                      half_life_depth,
                                      max_depth),
           visible_observation_model_(occluded_observation_model_),
           exponential_distribution_(-log(0.5)/half_life_depth, min_depth),
-          object_model_noise_(0.0, object_model_sigma),
+          object_model_noise_(0.0, model_sigma),
           sensor_failure_distribution_(min_depth, max_depth),
-          sensor_failure_probability_(sensor_failure_probability),
+          tail_weight_(tail_weight),
           sigma_factor_(sigma_factor),
           max_depth_(max_depth),
           min_depth_(min_depth){ }
@@ -126,7 +126,7 @@ public:
         // measurement noise
         bool sensor_failure =
                 uniform_distribution_.MapStandardGaussian(sample(3))
-                <= sensor_failure_probability_ ? true : false;
+                <= tail_weight_ ? true : false;
         Scalar measured_depth;
         if(sensor_failure)
         {
@@ -228,7 +228,7 @@ private:
     UniformDistribution sensor_failure_distribution_;
 
     // parameters
-    const Scalar sensor_failure_probability_, sigma_factor_,
+    const Scalar tail_weight_, sigma_factor_,
             max_depth_, min_depth_;
 };
 
