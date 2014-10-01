@@ -268,6 +268,22 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${CUDA_LIBRARIES}
         yaml-cpp)
 
+
+
+    ## robot_tracker
+    add_executable(robot_tracker_evaluation
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_evaluation_node.cpp)
+    target_link_libraries(robot_tracker_evaluation
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        ${CUDA_LIBRARIES}
+        yaml-cpp)
+
     target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
                                                              ${PROJECT_NAME_TRACKING}_gpu
                                                              ${PCL_LIBRARIES}
@@ -292,6 +308,18 @@ else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(robot_tracker
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
     target_link_libraries(robot_tracker
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        yaml-cpp)
+
+
+    ## robot_tracker
+    add_executable(robot_tracker_evaluation
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_evaluation_node.cpp)
+    target_link_libraries(robot_tracker_evaluation
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
         ${catkin_LIBRARIES}
