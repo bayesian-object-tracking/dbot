@@ -58,7 +58,8 @@ public:
     virtual ~OcclusionProcessModel() {}
 
     virtual void Condition(const double& delta_time,
-                           const double& occlusion_probability)
+                           const double& occlusion_probability,
+                           const StationaryProcessModel<double>::Input& input = StationaryProcessModel<double>::Input())
     {
         delta_time_ = delta_time;
         occlusion_probability_ = occlusion_probability;

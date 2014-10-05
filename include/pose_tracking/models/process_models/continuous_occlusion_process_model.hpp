@@ -53,6 +53,8 @@ struct Traits<ContinuousOcclusionProcessModel>
 
     typedef StationaryProcessModel<State> ProcessModelBase;
     typedef GaussianMap<State, Noise>     GaussianMapBase;
+
+    typedef typename StationaryProcessModel<State>::Input Input;
 };
 }
 
@@ -65,6 +67,7 @@ public:
     typedef typename Traits::Scalar Scalar;
     typedef typename Traits::State  State;
     typedef typename Traits::Noise  Noise;
+    typedef typename Traits::Input  Input;
 
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object
@@ -77,7 +80,8 @@ public:
     virtual ~ContinuousOcclusionProcessModel() {}
 
     virtual void Condition(const double& delta_time,
-                           const State& occlusion)
+                           const State& occlusion,
+                           const Input& input = Input())
     {
         if(std::isnan(occlusion(0,0)))
         {
