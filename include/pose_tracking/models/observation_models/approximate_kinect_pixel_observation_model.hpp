@@ -150,9 +150,8 @@ public:
         return std::log(Probability(observation));
     }
 
-    virtual void ClearCache(size_t size)
+    virtual void ClearCache()
     {
-        predictions_.resize(size);
         for (auto& prediction: predictions_)
         {
             prediction.first = false;
@@ -164,6 +163,11 @@ public:
                            size_t state_index,
                            size_t pixel_index)
     {
+        if (state_index + 1 > predictions_.size())
+        {
+            predictions_.resize(state_index + 1, {false, std::vector<float>()});
+        }
+
         if (!predictions_[state_index].first)
         {
             object_renderer_->state(state);
@@ -177,18 +181,17 @@ public:
 
         Condition(predictions_[state_index].second[pixel_index], occlusion);
 
-
+        // if this was the last pixel, reset cache
+        if (pixel_index + 1 == n_rows_*n_cols_)
+        {
+            ClearCache();
+        }
     }
 
     virtual void Condition(const Scalar& rendered_depth,
                            const Scalar& occlusion)
     {
-        if(std::isnan(occlusion))
-        {
-            std::cout << "occlusion is nan " << std::endl;
-
-            exit(-1);
-        }
+        assert(!std::isnan(occlusion));
 
 
         rendered_depth_ = rendered_depth;
