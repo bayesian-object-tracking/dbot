@@ -67,11 +67,11 @@ damping: 5.0 #5.0  20.0  1000.0 1000.0
 # initial prob of the source being the object for each pixels
 initial_occlusion_prob: 0.0 #0.1
 # prob of source being object given that one second ago the source was the object
-p_occluded_visible: 0.1 #0.1
+p_occluded_visible: 0.0 #0.1
 # prob of source being object given that one second ago source was not object
-p_occluded_occluded: 0.2 #0.7
+p_occluded_occluded: 0.0 #0.7
 # continuous occlusion process model
-occlusion_process_sigma: 0.1
+occlusion_process_sigma: 0.000000000000000005 # 0.005
 
 # observation model parameters --------------------------------------------------------------
 tail_weight: 0.01 #0.01, 0.998
@@ -81,19 +81,14 @@ half_life_depth: 1.0
 max_depth: 6.0
 min_depth: 0.0
 # approximate model
-fukf_tail_weight: 0.01 # 0.001 # 0.01 #0.01, 0.998
-fukf_model_sigma: 0.005 #0.003, 0.005
-fukf_sigma_factor: 0.0014247 # 0.0014247
-
-
-
-
-
+fukf_tail_weight: 0.0055 # 0.001 # 0.01 #0.01, 0.998
+fukf_model_sigma: 0.0001 #0.003, 0.005
+fukf_sigma_factor:  0.0014247
 
 
 
 object_names: [
- calib_obj
+ mugbox #calib_obj
 ]
 
 sampling_blocks: [
