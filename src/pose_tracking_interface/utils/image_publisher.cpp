@@ -31,7 +31,7 @@ void ImagePublisher::publish(const Eigen::MatrixXd& m,
     }
 
     //std::cout << "publishing " << name << std::endl;
-    images[name] = measurementToRosImage(m, height, width, min, max);
+    images[name] = toRosImage(m, height, width, min, max);
     publisher[name].publish(images[name]);
 }
 
@@ -53,7 +53,7 @@ void ImagePublisher::publish(const Eigen::MatrixXd& m,
     }
 
     //std::cout << "publishing " << name << std::endl;
-    images[name] = measurementToRosImage(m, height, width);
+    images[name] = toRosImagePT(m, height, width);
     publisher[name].publish(images[name]);
 }
 
@@ -74,12 +74,12 @@ bool ImagePublisher::hasPublisher(const std::string& name)
     return (publisher.find(name) != publisher.end());
 }
 
-sensor_msgs::ImagePtr ImagePublisher::measurementToRosImage(const Eigen::MatrixXd& m,
+sensor_msgs::ImagePtr ImagePublisher::toRosImage(const Eigen::MatrixXd& m,
                                             int height,
                                             int width,
                                             float min,
                                             float max)
-{
+{    
     cv_bridge::CvImage cvImage;
 
     cvImage.image = cv::Mat(height, width, CV_8UC3);
@@ -96,7 +96,7 @@ sensor_msgs::ImagePtr ImagePublisher::measurementToRosImage(const Eigen::MatrixX
     return cvImage.toImageMsg();
 }
 
-sensor_msgs::ImagePtr ImagePublisher::measurementToRosImage(const Eigen::MatrixXd& m,
+sensor_msgs::ImagePtr ImagePublisher::toRosImage(const Eigen::MatrixXd& m,
                                             int height,
                                             int width)
 {
@@ -119,10 +119,11 @@ sensor_msgs::ImagePtr ImagePublisher::measurementToRosImage(const Eigen::MatrixX
               max_val = val;
             }
         }
-    }    
+    }
 
     float factor = (min_val < 1.0f && min_val> 0.0f) ?  1.0f/min_val: 1;
-    float shift = (min_val < 0 ? -min_val: 0);
+    //float shift = (min_val < 0 ? -min_val: 0);
+    float shift = -min_val;
 
     cvImage.image = cv::Mat(height, width, CV_8UC3);
 
@@ -154,16 +155,14 @@ sensor_msgs::ImagePtr ImagePublisher::measurementToRosImage(const Eigen::MatrixX
 }
 
 
-sensor_msgs::ImagePtr ImagePublisher::measurementToRosImagePT(const Eigen::MatrixXd& m,
+sensor_msgs::ImagePtr ImagePublisher::toRosImagePT(const Eigen::MatrixXd& m,
                                             int height,
-                                            int width,
-                                            float min,
-                                            float max)
+                                            int width)
 {
     cv_bridge::CvImage cvImage;
 
-    float min_val = 65535;
-    float max_val = 0;
+    float min_val =  1.e10f;
+    float max_val = -1.e10f;
     for(int i=0; i<height; i++)
     {
         for(int j=0; j<width; j++)
@@ -181,22 +180,19 @@ sensor_msgs::ImagePtr ImagePublisher::measurementToRosImagePT(const Eigen::Matri
         }
     }
 
-    cvImage.image = cv::Mat(height, width, CV_32FC1);
+    cvImage.image = cv::Mat(height, width, CV_8UC1);
 
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
         {
-            cvImage.image.at<float>(i, j) = m(i * width + j, 0);
+            cvImage.image.at<unsigned char>(i, j) = (m(i * width + j, 0) - min_val) / (max_val-min_val) * 255;
         }
     }
 
-    cvImage.image.convertTo(cvImage.image, CV_16UC3, (65535.0)/(max_val-min_val), -min_val*(65535.0)/(max_val-min_val));
+    //cvImage.image.convertTo(cvImage.image, CV_16SC1); //, (65535.0)/(max_val - min_val), - min_val*(65535.0)/(max_val - min_val));
+    cvImage.encoding = "mono8";
 
-    //cv::imshow("image", cvImage.image);
-    //cv::waitKey();
-
-    cvImage.encoding = "mono16";
     return cvImage.toImageMsg();
 }
 
