@@ -105,7 +105,7 @@ public:
         occlusion_process_model_(occlusion_process_model),
         observation_time_(0)
     {
-        REQUIRE_INTERFACE(State, RigidBodiesState<OBJECTS>);
+        static_assert_base(State, RigidBodiesState<OBJECTS>);
 
         Reset();
     }

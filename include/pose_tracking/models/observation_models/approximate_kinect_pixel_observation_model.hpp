@@ -73,8 +73,8 @@ public:
             const Eigen::Matrix3d& camera_matrix,
             const size_t n_rows,
             const size_t n_cols,
-            const Scalar sensor_failure_probability = 0.01,
-            const Scalar object_model_sigma = 0.003,
+            const Scalar tail_weight = 0.01,
+            const Scalar model_sigma = 0.003,
             const Scalar sigma_factor = 0.00142478,
             const Scalar half_life_depth = 1.0,
             const Scalar max_depth = 6.0,
@@ -86,22 +86,18 @@ public:
           camera_matrix_(camera_matrix),
           n_rows_(n_rows),
           n_cols_(n_cols),
-          occluded_observation_model_(sensor_failure_probability,
-                                     object_model_sigma,
+          occluded_observation_model_(tail_weight,
+                                     model_sigma,
                                      sigma_factor,
                                      half_life_depth,
                                      max_depth),
           visible_observation_model_(occluded_observation_model_),
           exponential_distribution_(-log(0.5)/half_life_depth, min_depth, max_depth),
-          object_model_noise_(0.0, object_model_sigma),
-          sensor_failure_distribution_(min_depth, max_depth),
-          sensor_failure_probability_(sensor_failure_probability),
-          sigma_factor_(sigma_factor),
           max_depth_(max_depth),
           min_depth_(min_depth),
           approximation_depth_(approximation_depth),
           occlusion_step_(1.0 / double(occlusion_count - 1)),
-          depth_step_((max_depth_ - min_depth_) / double(depth_count - 1)),
+          depth_step_((max_depth - min_depth) / double(depth_count - 1)),
           sample_cache_(occlusion_count)
     {
         for(size_t occlusion_index = 0; occlusion_index < occlusion_count; occlusion_index++)
@@ -154,9 +150,8 @@ public:
         return std::log(Probability(observation));
     }
 
-    virtual void ClearCache(size_t size)
+    virtual void ClearCache()
     {
-        predictions_.resize(size);
         for (auto& prediction: predictions_)
         {
             prediction.first = false;
@@ -168,6 +163,11 @@ public:
                            size_t state_index,
                            size_t pixel_index)
     {
+        if (state_index + 1 > predictions_.size())
+        {
+            predictions_.resize(state_index + 1, {false, std::vector<float>()});
+        }
+
         if (!predictions_[state_index].first)
         {
             object_renderer_->state(state);
@@ -181,18 +181,17 @@ public:
 
         Condition(predictions_[state_index].second[pixel_index], occlusion);
 
-
+        // if this was the last pixel, reset cache
+        if (pixel_index + 1 == n_rows_*n_cols_)
+        {
+            ClearCache();
+        }
     }
 
     virtual void Condition(const Scalar& rendered_depth,
                            const Scalar& occlusion)
     {
-        if(std::isnan(occlusion))
-        {
-            std::cout << "occlusion is nan " << std::endl;
-
-            exit(-1);
-        }
+        assert(!std::isnan(occlusion));
 
 
         rendered_depth_ = rendered_depth;
@@ -219,14 +218,11 @@ private:
     Scalar rendered_depth_;
     Scalar occlusion_probability_;
 
-    TruncatedGaussian object_model_noise_;
     UniformDistribution uniform_distribution_;
     ExponentialDistribution exponential_distribution_;
-    UniformDistribution sensor_failure_distribution_;
 
     // parameters
-    const Scalar sensor_failure_probability_, sigma_factor_,
-            max_depth_, min_depth_, approximation_depth_;
+    const Scalar max_depth_, min_depth_, approximation_depth_;
 
 
     std::vector<hf::DiscreteDistribution> samplers_;

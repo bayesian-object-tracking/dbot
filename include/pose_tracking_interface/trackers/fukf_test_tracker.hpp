@@ -48,6 +48,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
 #include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
 
+#include <pose_tracking_interface/utils/image_publisher.hpp>
+#include <pose_tracking_interface/utils/image_visualizer.hpp>
+
 class FukfTestTracker
 {
 public:
@@ -91,6 +94,10 @@ private:
     int downsampling_factor_;
 
     StateDistribution state_distr;
+
+    ff::ImagePublisher ip_;
+    int rows_;
+    int cols_;
 };
 
 

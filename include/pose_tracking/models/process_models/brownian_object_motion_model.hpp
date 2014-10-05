@@ -123,7 +123,7 @@ public:
             count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
-        REQUIRE_INTERFACE(State, FreeFloatingRigidBodiesState<OBJECTS>);
+        static_assert_base(State, FreeFloatingRigidBodiesState<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
