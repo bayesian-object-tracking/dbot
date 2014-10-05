@@ -378,12 +378,6 @@ target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
                       ${PROJECT_NAME_TRACKING}
                       ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_linear_gaussian_test
-                 tests/gtest_main.cpp
-                 tests/fukf_linear_gaussian_test.cpp)
-target_link_libraries(fukf_linear_gaussian_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
 
 
 
