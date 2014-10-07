@@ -4,13 +4,16 @@
 #include <fast_filtering/utils/profiling.hpp>
 #include <fast_filtering/distributions/uniform_distribution.hpp>
 
+#include <fast_filtering/utils/helper_functions.hpp>
+
 #include <pose_tracking_interface/trackers/fukf_test_tracker.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 #include <pose_tracking_interface/utils/object_file_reader.hpp>
 
 FukfTestTracker::FukfTestTracker():
         nh_("~"),
-        last_measurement_time_(std::numeric_limits<Scalar>::quiet_NaN())
+        last_measurement_time_(std::numeric_limits<Scalar>::quiet_NaN()),
+        ip_(nh_)
 {
     object_publisher_ = nh_.advertise<visualization_msgs::Marker>("object_model", 0);
 }
@@ -32,10 +35,10 @@ void FukfTestTracker::Initialize(State_a initial_state,
     double linear_acceleration_sigma;
     double angular_acceleration_sigma;
     double damping;    
-    double occlusion_process_sigam;
+    double occlusion_process_sigma;
 
-    double sensor_failure_probability;
-    double object_model_sigma;
+    double tail_weight;
+    double model_sigma;
     double sigma_factor;
     double half_life_depth;
     double max_depth;
@@ -47,14 +50,14 @@ void FukfTestTracker::Initialize(State_a initial_state,
     ri::ReadParameter("initial_occlusion_prob", initial_occlusion_prob, nh_);
     ri::ReadParameter("p_occluded_visible", p_occluded_visible, nh_);
     ri::ReadParameter("p_occluded_occluded", p_occluded_occluded, nh_);
-    ri::ReadParameter("occlusion_process_sigam", occlusion_process_sigam, nh_);
+    ri::ReadParameter("occlusion_process_sigma", occlusion_process_sigma, nh_);
     ri::ReadParameter("linear_acceleration_sigma", linear_acceleration_sigma, nh_);
     ri::ReadParameter("angular_acceleration_sigma", angular_acceleration_sigma, nh_);
     ri::ReadParameter("damping", damping, nh_);
 
-    ri::ReadParameter("sensor_failure_probability", sensor_failure_probability, nh_);
-    ri::ReadParameter("object_model_sigma", object_model_sigma, nh_);
-    ri::ReadParameter("sigma_factor", sigma_factor, nh_);
+    ri::ReadParameter("fukf_tail_weight", tail_weight, nh_);
+    ri::ReadParameter("fukf_model_sigma", model_sigma, nh_);
+    ri::ReadParameter("fukf_sigma_factor", sigma_factor, nh_);
     ri::ReadParameter("half_life_depth", half_life_depth, nh_);
     ri::ReadParameter("max_depth", max_depth, nh_);
     ri::ReadParameter("min_depth", min_depth, nh_);
@@ -129,8 +132,8 @@ void FukfTestTracker::Initialize(State_a initial_state,
                     camera_matrix,
                     image.rows(),
                     image.cols(),
-                    sensor_failure_probability,
-                    object_model_sigma,
+                    tail_weight,
+                    model_sigma,
                     sigma_factor,
                     half_life_depth,
                     max_depth,
@@ -143,7 +146,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     boost::shared_ptr<ProcessModel_b> process_b(
                 new ProcessModel_b(
-                    p_occluded_visible, p_occluded_occluded, occlusion_process_sigam));
+                    p_occluded_visible, p_occluded_occluded, occlusion_process_sigma));
 
     for(size_t i = 0; i < object_names_.size(); i++)
     {
@@ -158,12 +161,12 @@ void FukfTestTracker::Initialize(State_a initial_state,
                 new FilterType(process_a, process_b, pixel_observation_model));
 
     State_b b_i(1, 1);
-    b_i(0, 0) = 0.0;
+    b_i(0, 0) = ff::hf::Logit(initial_occlusion_prob);
     state_distr.initialize(initial_state,
                            image.rows()* image.cols(),
                            b_i,
                            0.002,
-                           occlusion_process_sigam);
+                           occlusion_process_sigma*occlusion_process_sigma);
     std::cout << "initialized state and created filter" << std::endl;
 }
 
@@ -182,14 +185,12 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
 
     Eigen::MatrixXd image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);
 
-    for (size_t i = 0; i < image.rows(); ++i)
+    Eigen::MatrixXd y(image.rows()*image.cols(), 1);
+    for (size_t i = 0, k = 0; i < image.rows(); ++i)
     {
         for (int j = 0; j < image.cols(); ++j)
         {
-            if (std::isnan(image(i, j)))
-            {
-                image(i, j) = 3.5;
-            }
+            y(k++, 0) = image(i, j);
         }
     }
 
@@ -197,18 +198,69 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
     INIT_PROFILING;
     filter_->predict(state_distr, delta_time, state_distr);
     MEASURE("-----------------> filter_->predict");
-    filter_->update(state_distr, image, state_distr);
+    filter_->update(state_distr, y, state_distr);
     MEASURE("<----------------- filter_->update");
 
-//    // visualize the mean state
-    ff::FreeFloatingRigidBodiesState<> mean = state_distr.a;
-    for(size_t i = 0; i < object_names_.size(); i++)
-    {
-        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-                          ros_image.header, object_model_path, object_publisher_,
-                          i, 1, 0, 0);
-    }
+    Eigen::MatrixXd image_vector(rows_*cols_, 1);
+
+//    // occlusion
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        image_vector(i, 0) = state_distr.joint_partitions[i].mean_b(0, 0);
+//    }
+//    ip_.publish(image_vector, "fukf/occlusion", rows_, cols_);
+
+//    // occlusion
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        image_vector(i, 0) = state_distr.joint_partitions[i].cov_bb(0, 0);
+//    }
+//    ip_.publish(image_vector, "fukf/occlusion_cov", rows_, cols_);
+
+//    // prediction
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        image_vector(i, 0) = state_distr.joint_partitions[i].mean_y(0, 0);
+//    }
+//    ip_.publish(image_vector, "fukf/prediction", rows_, cols_);
+
+//    // prediction_covariance
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        image_vector(i, 0) = state_distr.joint_partitions[i].cov_yy(0, 0);
+//    }
+//    ip_.publish(image_vector, "fukf/prediction_cov", rows_, cols_);
+
+//    // measurement
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        image_vector(i, 0) = (std::isnan(y(i, 0)) ? 0 : y(i, 0));
+//    }
+//    ip_.publish(y, "fukf/measurement", rows_, cols_);
+
+//    // innovation
+//    for (size_t i = 0; i < rows_*cols_; ++i)
+//    {
+//        if (!std::isnan(y(i, 0)))
+//        {
+//            image_vector(i, 0) = y(i, 0) - state_distr.joint_partitions[i].mean_y(0, 0);
+//        }
+//        else
+//        {
+//            image_vector(i, 0) = 0;
+//        }
+//    }
+//    ip_.publish(image_vector, "fukf/innovation", rows_, cols_);
+
+////    // visualize the mean state
+//    ff::FreeFloatingRigidBodiesState<> mean = state_distr.mean_a;
+//    for(size_t i = 0; i < object_names_.size(); i++)
+//    {
+//        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
+//        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
+//                          ros_image.header, object_model_path, object_publisher_,
+//                          i, 1, 0, 0);
+//    }
 
     last_measurement_time_ = ros_image.header.stamp.toSec();
 }

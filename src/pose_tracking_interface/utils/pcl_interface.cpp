@@ -636,7 +636,7 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
     Scalar standard_deviation_translation = 0.03;
     Scalar standard_deviation_rotation = 100.0;
     ff::Gaussian<Eigen::Matrix<Scalar, 1, 1> > unit_gaussian;
-    unit_gaussian.SetUnit();
+    unit_gaussian.SetStandard();
 
     for(size_t cluster_index = 0; cluster_index < clusters.size(); cluster_index++)
     {
