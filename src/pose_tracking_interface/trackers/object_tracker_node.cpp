@@ -116,6 +116,7 @@ int main (int argc, char **argv)
     std::cout << "reading parameters" << std::endl;
     std::string depth_image_topic; ri::ReadParameter("depth_image_topic", depth_image_topic, node_handle);
     std::string camera_info_topic; ri::ReadParameter("camera_info_topic", camera_info_topic, node_handle);
+    double min_delta_time; ri::ReadParameter("min_delta_time", min_delta_time, node_handle);
     std::string source; ri::ReadParameter("source", source, node_handle);
     std::vector<std::string> object_names; ri::ReadParameter("object_names", object_names, node_handle);
 
@@ -173,9 +174,20 @@ int main (int argc, char **argv)
         std::cout << "processing TrackingDataset of Size: " << TrackingDataset.Size() << std::endl;
         for(size_t i = 0; i < TrackingDataset.Size() && ros::ok(); i++)
         {
+            INIT_PROFILING
+            double start_time; GET_TIME(start_time);
+
             interface.FilterAndStore(*TrackingDataset.GetImage(i));
             image_publisher.publish(*TrackingDataset.GetImage(i));
             cloud_publisher.publish((*TrackingDataset.GetPointCloud(i)).makeShared());
+
+            double end_time; GET_TIME(end_time);
+            while(end_time - start_time < min_delta_time)
+                GET_TIME(end_time);
+            MEASURE("========================================================>>>>>>>>> ");
+
+
+            std::cout << "time for frame " << i << ": " << end_time - start_time << std::endl;
         }
         std::cout << std::endl << "done processing TrackingDataset" << std::endl;
     }

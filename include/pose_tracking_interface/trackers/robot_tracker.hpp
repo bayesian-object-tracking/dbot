@@ -81,6 +81,8 @@ public:
 
     void Filter(const sensor_msgs::Image& ros_image);
 
+    Eigen::VectorXd FilterAndReturn(const sensor_msgs::Image& ros_image);
+
 private:  
 
   void publishImage(const ros::Time& time,

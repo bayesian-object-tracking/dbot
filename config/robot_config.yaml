@@ -1,6 +1,6 @@
 depth_image_topic: /XTION/depth/image 
 camera_info_topic: /XTION/depth/camera_info 
-#source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/moving_boxes/sim/dataset
+source: /home/mwuethri_local/data/complete_projects/coordinate_particle_filter/humanoids.2014/evaluation/robot/sim/high_dimensional_motion/dataset
 
 rendering_root_left: L_SHOULDER
 rendering_root_right: R_SHOULDER
@@ -16,6 +16,10 @@ evaluation_count: 2000 #100 #the number of evaluations
 downsampling_factor: 8 #8
 initial_sample_count: 1 #10000 this is the number of samples for the initialization
 max_sample_count: 10000 #10000 this is for the gpu to allocate memory
+
+
+min_delta_time: 0.6666666666666666666666
+
 
 # process model parameters ------------------------------------------------------------------
  
