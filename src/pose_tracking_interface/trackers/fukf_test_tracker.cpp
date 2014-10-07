@@ -196,9 +196,9 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
 
 
     INIT_PROFILING;
-    filter_->predict(state_distr, delta_time, state_distr);
+    filter_->Predict(state_distr, delta_time, state_distr);
     MEASURE("-----------------> filter_->predict");
-    filter_->update(state_distr, y, state_distr);
+    filter_->Update(state_distr, y, state_distr);
     MEASURE("<----------------- filter_->update");
 
     Eigen::MatrixXd image_vector(rows_*cols_, 1);
