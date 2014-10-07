@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/distributions/uniform_distribution.hpp>
 #include <fast_filtering/distributions/truncated_gaussian.hpp>
 #include <fast_filtering/utils/helper_functions.hpp>
+#include <fast_filtering/utils/traits.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
@@ -48,25 +49,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ff
 {
 
+// Base template
+template <typename State_, internal::SpaceType space_type = internal::Scalar>
+class ApproximateKinectPixelObservationModel { };
+
 /**
- * \class KinectObservationModel
+ * Scalar implementation of the approximate continuous observation model
  *
  * \ingroup distributions
  * \ingroup observation_models
  */
-template <typename State>
-class ApproximateKinectPixelObservationModel:
-        public GaussianMap<double, Eigen::Matrix<double, 1, 1> >,
+template <typename State_>
+class ApproximateKinectPixelObservationModel<State_, internal::Scalar>:
+        public GaussianMap<double, double>,
         public Evaluation<double, double>
 {
 public:
-    typedef Eigen::Matrix<double, 1, 1> Noise;
+    typedef State_ State;
     typedef double Scalar;
+    typedef double Noise;
     typedef double Observation;
 
     typedef boost::shared_ptr<RigidBodyRenderer> ObjectRendererPtr;
-
-    typedef boost::unordered_map<Noise, int> NoiseIndexMap;
 
     ApproximateKinectPixelObservationModel(
             const ObjectRendererPtr object_renderer,
@@ -97,8 +101,7 @@ public:
           min_depth_(min_depth),
           approximation_depth_(approximation_depth),
           occlusion_step_(1.0 / double(occlusion_count - 1)),
-          depth_step_((max_depth - min_depth) / double(depth_count - 1)),
-          sample_cache_(occlusion_count)
+          depth_step_((max_depth - min_depth) / double(depth_count - 1))
     {
         for(size_t occlusion_index = 0; occlusion_index < occlusion_count; occlusion_index++)
         {
@@ -117,16 +120,14 @@ public:
 
     virtual ~ApproximateKinectPixelObservationModel() {}
 
-    std::vector<NoiseIndexMap> sample_cache_;
-
     virtual Observation MapStandardGaussian(const Noise& sample) const
     {
         if(std::isinf(rendered_depth_))
         {
-            return exponential_distribution_.MapStandardGaussian(sample(0));
+            return exponential_distribution_.MapStandardGaussian(sample);
         }
 
-        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample(0));
+        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample);
 
         return rendered_depth_ - approximation_depth_ + min_depth_
                 + depth_step_ * double(depth_index);
@@ -158,8 +159,8 @@ public:
         }
     }
 
-    virtual void Condition(const State& state,                           
-                           const Scalar& occlusion,
+    virtual void Condition(const State& state,
+                           const Observation& occlusion,
                            size_t state_index,
                            size_t pixel_index)
     {
@@ -189,7 +190,7 @@ public:
     }
 
     virtual void Condition(const Scalar& rendered_depth,
-                           const Scalar& occlusion)
+                           const Observation& occlusion)
     {
         assert(!std::isnan(occlusion));
 
@@ -232,8 +233,109 @@ private:
     int occlusion_index_;
 };
 
+
+
+namespace internal
+{
+/**
+ * \internal
+ */
+template <typename State_>
+struct Traits <ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >
+{
+    typedef State_ State;
+    typedef double Scalar;
+    typedef Eigen::Matrix<Scalar, 1, 1> Noise;
+    typedef Eigen::Matrix<Scalar, 1, 1> Observation;
+
+    typedef GaussianMap<Observation, Noise> GaussianMapBase;
+    typedef Evaluation<Observation, Scalar> EvaluationBase;
+};
 }
 
+/**
+ * Vectorial specialization of the scalar model
+ */
+template <typename State_>
+class ApproximateKinectPixelObservationModel<State_, internal::Vectorial>:
+        public internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >::GaussianMapBase,
+        public internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >::EvaluationBase
+{
+public:
+    typedef internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> > Traits;
 
+    typedef typename Traits::Scalar Scalar;
+    typedef typename Traits::State State;
+    typedef typename Traits::Noise Noise;
+    typedef typename Traits::Observation Observation;
+
+    typedef boost::shared_ptr<RigidBodyRenderer> ObjectRendererPtr;
+
+    ApproximateKinectPixelObservationModel(
+            const ObjectRendererPtr object_renderer,
+            const Eigen::Matrix3d& camera_matrix,
+            const size_t n_rows,
+            const size_t n_cols,
+            const Scalar tail_weight = 0.01,
+            const Scalar model_sigma = 0.003,
+            const Scalar sigma_factor = 0.00142478,
+            const Scalar half_life_depth = 1.0,
+            const Scalar max_depth = 6.0,
+            const Scalar min_depth = 0.0,
+            const Scalar approximation_depth = 1.5,
+            const size_t depth_count = 10000,
+            const size_t occlusion_count = 100):
+        scalar_model_(object_renderer, camera_matrix,
+                        n_rows,
+                        n_cols,
+                        tail_weight,
+                        model_sigma,
+                        sigma_factor,
+                        half_life_depth,
+                        max_depth,
+                        min_depth,
+                        approximation_depth,
+                        depth_count,
+                        occlusion_count)
+    { }
+
+    virtual ~ApproximateKinectPixelObservationModel() { }
+
+    virtual Observation MapStandardGaussian(const Noise& sample) const
+    {
+        Observation observation;
+        observation(0) = scalar_model_.MapStandardGaussian(sample(0));
+        return observation;
+    }
+
+    virtual Scalar Probability(const Observation& observation) const
+    {
+        return scalar_model_.Probability(observation(0));
+    }
+
+    virtual Scalar LogProbability(const Observation& observation) const
+    {
+        return scalar_model_.LogProbability(observation(0));
+    }
+
+    virtual void Condition(const State& state,
+                           const Observation& occlusion,
+                           size_t state_index,
+                           size_t pixel_index)
+    {
+        scalar_model_.Condition(state, occlusion(0), state_index, pixel_index);
+    }
+
+    virtual void Condition(const Scalar& rendered_depth,
+                           const Observation& occlusion)
+    {
+        scalar_model_.Condition(rendered_depth, occlusion(0));
+    }
+
+private:
+    ApproximateKinectPixelObservationModel<State_, internal::Scalar> scalar_model_;
+};
+
+}
 
 #endif
