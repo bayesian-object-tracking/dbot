@@ -283,7 +283,6 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
 void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
 {
     INIT_PROFILING;
-    std::cout << "Calling the filter function " << std::endl;
     boost::mutex::scoped_lock lock(mutex_);
 
     double delta_time;
@@ -354,7 +353,13 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     publishImage(t, overlay);
 
     // publish point cloud
-    publishPointCloud(image, t);
+    Observation full_image = ri::Ros2Eigen<Scalar>(ros_image, 1);
+    if(!data_in_meters_)
+      full_image = full_image/1000.; // convert to meters
+    Eigen::Matrix3d temp = camera_matrix_;
+    camera_matrix_.topLeftCorner(2,3) *= double(downsampling_factor_);
+    publishPointCloud(full_image, t);
+    camera_matrix_ = temp;
 
 
     MEASURE("-----------------> GRAND TOTAL");
@@ -362,6 +367,148 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Eigen::VectorXd RobotTracker::FilterAndReturn(const sensor_msgs::Image& ros_image)
+{
+    INIT_PROFILING;
+    boost::mutex::scoped_lock lock(mutex_);
+
+    double delta_time;
+    if(std::isnan(last_measurement_time_))
+        delta_time = 0;
+    else
+        delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
+    last_measurement_time_ = ros_image.header.stamp.toSec();
+
+    if(delta_time > 0.04)
+    {
+        std::cout << "delta_time: " << delta_time;
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!! SKIPPED FRAME!!!!!!! !!!!!!!!!" << std::endl;
+        std::cout << "last_measurement_time_: " << last_measurement_time_ << std::endl;
+        std::cout << "ros_image.header.stamp.toSec(): " << ros_image.header.stamp.toSec() << std::endl;
+
+
+    }
+
+    // convert image
+    Observation image = ri::Ros2Eigen<Scalar>(ros_image, downsampling_factor_);
+    if(!data_in_meters_)
+      image = image/1000.; // convert to meters
+
+    // filter
+    {
+    INIT_PROFILING;
+    filter_->Filter(image, delta_time, Eigen::VectorXd::Zero(dimension_));
+    MEASURE("-----------------> total time for filtering");
+    }
+
+    // get the mean estimation for the robot joints
+    // Casting is a disgusting hack to make sure that the correct equal-operator is used
+    // TODO: Make this right
+    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().Mean());
+
+    // DEBUG to see depth images
+    robot_renderer_->state(*mean_);
+        std::vector<int> indices;
+        std::vector<float> depth;
+        robot_renderer_->Render(camera_matrix_,
+                image.rows(),
+                image.cols(),
+                indices,
+                depth);
+    //image_viz_ = boost::shared_ptr<vis::ImageVisualizer>(new vis::ImageVisualizer(image.rows(),image.cols()));
+        vis::ImageVisualizer image_viz(image.rows(),image.cols());
+        image_viz.set_image(image);
+        image_viz.add_points(indices, depth);
+    //image_viz.show_image("enchilada ", 500, 500, 1.0);
+    //////
+
+    std::map<std::string, double> joint_positions;
+    mean_->GetJointState(joint_positions);
+
+
+    ros::Time t = ros::Time::now();
+    // publish movable joints
+    robot_state_publisher_->publishTransforms(joint_positions,  t, tf_prefix_);
+    // make sure there is a identity transformation between base of real robot and estimated robot
+    publishTransform(t, root_, tf::resolve(tf_prefix_, root_));
+    // publish fixed transforms
+    robot_state_publisher_->publishFixedTransforms(tf_prefix_);
+    // publish image
+    sensor_msgs::Image overlay;
+    image_viz.get_image(overlay);
+    publishImage(t, overlay);
+
+    // publish point cloud
+    Observation full_image = ri::Ros2Eigen<Scalar>(ros_image, 1);
+    if(!data_in_meters_)
+      full_image = full_image/1000.; // convert to meters
+    Eigen::Matrix3d temp = camera_matrix_;
+    camera_matrix_.topLeftCorner(2,3) *= double(downsampling_factor_);
+    publishPointCloud(full_image, t);
+    camera_matrix_ = temp;
+
+
+    MEASURE("-----------------> GRAND TOTAL");
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    return *mean_;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void RobotTracker::publishImage(const ros::Time& time,
         sensor_msgs::Image &image)
@@ -382,7 +529,7 @@ void RobotTracker::publishTransform(const ros::Time& time,
 }
 
 void RobotTracker::publishPointCloud(const Observation& image,
-				     const ros::Time& stamp)
+                                     const ros::Time& stamp)
 {
 
     float bad_point = std::numeric_limits<float>::quiet_NaN();

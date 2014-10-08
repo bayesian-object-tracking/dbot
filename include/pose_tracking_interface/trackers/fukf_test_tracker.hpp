@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_INTERFACE_FUKF_TEST_TRACKER_HPP
 #define POSE_TRACKING_INTERFACE_FUKF_TEST_TRACKER_HPP
 
-//#define PROFILING_ON
-
 #include <boost/thread/mutex.hpp>
 
 #include <Eigen/Dense>

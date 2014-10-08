@@ -193,51 +193,53 @@ void TrackingDataset::Load()
     // load ground_truth.txt ---------------------------------------------------------------------
     if (! LoadTextFile((path_ / ground_truth_filename_).c_str(), DataType::GROUND_TRUTH))
       std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
-    exit(-1);
     
 }
 
 bool TrackingDataset::LoadTextFile(const char *filename, DataType type)
 {
-  std::ifstream file; file.open(filename, std::ios::in); // open file
-  if(file.is_open())
+    std::ifstream file; file.open(filename, std::ios::in); // open file
+    if(file.is_open())
     {
-      std::string temp; std::getline(file, temp); std::istringstream line(temp); // get a line from file
-      double time_stamp; line >> time_stamp; // get the timestamp
-      double scalar; Eigen::VectorXd state;
-      while(line >> scalar) // get the state
+        std::string temp; std::getline(file, temp); std::istringstream line(temp); // get a line from file
+        double time_stamp; line >> time_stamp; // get the timestamp
+        double scalar; Eigen::VectorXd state;
+        while(line >> scalar) // get the state
         {
-	  Eigen::VectorXd temp(state.rows() + 1);
-	  temp.topRows(state.rows()) = state;
-	  temp(temp.rows()-1) = scalar;
-	  state = temp;
+            Eigen::VectorXd temp(state.rows() + 1);
+            temp.topRows(state.rows()) = state;
+            temp(temp.rows()-1) = scalar;
+            state = temp;
         }
-      
-      std::cout << "read state " << state.transpose() << std::endl;
-      std::cout << "read bagfile of size " << data_.size() << std::endl;
-      std::cout << "timestamp of first image is " << data_[0].image_->header.stamp << std::endl;
-      file.close();
-      
-      // attach the state to the appropriate data frames
-      for(size_t i = 0; i < data_.size(); i++)
-	if(std::fabs(data_[i].image_->header.stamp.toSec() - time_stamp) <= admissible_delta_time_)
-	  switch (type)
-	    {
-	    case DataType::GROUND_TRUTH:
-	      data_[i].ground_truth_ = state;
-	      break;
-	    case DataType::DEVIATION:
-	      data_[i].deviation_ = state;
-	      break;
-	    default:
-	      return false;
-	    }
-      return true;
+
+        std::cout << "read state " << state.transpose() << std::endl;
+        std::cout << "read bagfile of size " << data_.size() << std::endl;
+        std::cout << "timestamp of first image is " << data_[0].image_->header.stamp << std::endl;
+        file.close();
+
+        // attach the state to the appropriate data frames
+        std::cout << "writing states " << std::endl;
+        for(size_t i = 0; i < data_.size(); i++)
+            if(std::fabs(data_[i].image_->header.stamp.toSec() - time_stamp) <= admissible_delta_time_)
+                switch (type)
+                {
+                case DataType::GROUND_TRUTH:
+                    data_[i].ground_truth_ = state;
+                    break;
+                case DataType::DEVIATION:
+                    data_[i].deviation_ = state;
+                    break;
+                default:
+                    return false;
+                }
+
+        std::cout << "done writing states " << std::endl;
+        return true;
     }
-  else return false;
+    else return false;
     {
-      std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
-      exit(-1);
+        std::cout << "could not open file " << path_ / ground_truth_filename_ << std::endl;
+        exit(-1);
     }
 
 }
