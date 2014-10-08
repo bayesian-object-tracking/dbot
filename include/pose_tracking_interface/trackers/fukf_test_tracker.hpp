@@ -55,16 +55,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class FukfTestTracker
 {
 public:
-    typedef ff::FreeFloatingRigidBodiesState<> State_a;
-    typedef State_a::Scalar                    Scalar;
+    typedef ff::BrownianObjectMotionModel
+            < ff::FreeFloatingRigidBodiesState<> >  ProcessModel_a;
+    typedef ff::ContinuousOcclusionProcessModel     ProcessModel_b;
 
-    typedef ff::BrownianObjectMotionModel<State_a> ProcessModel_a;
-    typedef ff::ContinuousOcclusionProcessModel    ProcessModel_b;
-
-    typedef ff::ApproximateKinectPixelObservationModel<State_a, ff::internal::Vectorial> ObservationModel;
-//    typedef ff::ContinuousKinectPixelObservationModel<State_a> ObservationModel;
-
+    typedef ProcessModel_a::State State_a;
     typedef ProcessModel_b::State State_b;
+    typedef typename State_a::Scalar Scalar;
+
+    typedef ff::ApproximateKinectPixelObservationModel<
+                State_a,
+                State_b,
+                ff::internal::Vectorial> ObservationModel;
+
     typedef ObservationModel::Observation Observation;
 
     typedef ff::ComposedStateDistribution<State_a, State_b> StateDistribution;
