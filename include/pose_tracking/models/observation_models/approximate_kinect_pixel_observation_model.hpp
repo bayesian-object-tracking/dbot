@@ -50,7 +50,9 @@ namespace ff
 {
 
 // Base template
-template <typename State_, internal::SpaceType space_type = internal::Scalar>
+template <typename State_a_,
+          typename State_b_ = double,
+          internal::SpaceType space_type = internal::Scalar>
 class ApproximateKinectPixelObservationModel { };
 
 /**
@@ -59,13 +61,16 @@ class ApproximateKinectPixelObservationModel { };
  * \ingroup distributions
  * \ingroup observation_models
  */
-template <typename State_>
-class ApproximateKinectPixelObservationModel<State_, internal::Scalar>:
+template <typename State_a_, typename State_b_>
+class ApproximateKinectPixelObservationModel<State_a_,
+                                             State_b_,
+                                             internal::Scalar>:
         public GaussianMap<double, double>,
         public Evaluation<double, double>
 {
 public:
-    typedef State_ State;
+    typedef State_a_ State_a;
+    typedef State_b_ State_b;
     typedef double Scalar;
     typedef double Noise;
     typedef double Observation;
@@ -159,8 +164,8 @@ public:
         }
     }
 
-    virtual void Condition(const State& state,
-                           const Observation& occlusion,
+    virtual void Condition(const State_a& state,
+                           const State_b& occlusion,
                            size_t state_index,
                            size_t pixel_index)
     {
@@ -190,7 +195,7 @@ public:
     }
 
     virtual void Condition(const Scalar& rendered_depth,
-                           const Observation& occlusion)
+                           const State_b& occlusion)
     {
         assert(!std::isnan(occlusion));
 
@@ -225,7 +230,6 @@ private:
     // parameters
     const Scalar max_depth_, min_depth_, approximation_depth_;
 
-
     std::vector<hf::DiscreteDistribution> samplers_;
 
     double occlusion_step_;
@@ -240,10 +244,13 @@ namespace internal
 /**
  * \internal
  */
-template <typename State_>
-struct Traits <ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >
+template <typename State_a_, typename State_b_>
+struct Traits <ApproximateKinectPixelObservationModel<State_a_,
+                                                      State_b_,
+                                                      internal::Vectorial> >
 {
-    typedef State_ State;
+    typedef State_a_ State_a;
+    typedef State_b_ State_b;
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, 1, 1> Noise;
     typedef Eigen::Matrix<Scalar, 1, 1> Observation;
@@ -256,16 +263,17 @@ struct Traits <ApproximateKinectPixelObservationModel<State_, internal::Vectoria
 /**
  * Vectorial specialization of the scalar model
  */
-template <typename State_>
-class ApproximateKinectPixelObservationModel<State_, internal::Vectorial>:
-        public internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >::GaussianMapBase,
-        public internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> >::EvaluationBase
+template <typename State_a_, typename State_b_>
+class ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial>:
+        public internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::GaussianMapBase,
+        public internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::EvaluationBase
 {
 public:
-    typedef internal::Traits<ApproximateKinectPixelObservationModel<State_, internal::Vectorial> > Traits;
+    typedef internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> > Traits;
 
     typedef typename Traits::Scalar Scalar;
-    typedef typename Traits::State State;
+    typedef typename Traits::State_a State_a;
+    typedef typename Traits::State_b State_b;
     typedef typename Traits::Noise Noise;
     typedef typename Traits::Observation Observation;
 
@@ -318,8 +326,8 @@ public:
         return scalar_model_.LogProbability(observation(0));
     }
 
-    virtual void Condition(const State& state,
-                           const Observation& occlusion,
+    virtual void Condition(const State_a& state,
+                           const State_b& occlusion,
                            size_t state_index,
                            size_t pixel_index)
     {
@@ -327,13 +335,13 @@ public:
     }
 
     virtual void Condition(const Scalar& rendered_depth,
-                           const Observation& occlusion)
+                           const State_b& occlusion)
     {
         scalar_model_.Condition(rendered_depth, occlusion(0));
     }
 
 private:
-    ApproximateKinectPixelObservationModel<State_, internal::Scalar> scalar_model_;
+    ApproximateKinectPixelObservationModel<State_a, double, internal::Scalar> scalar_model_;
 };
 
 }
