@@ -146,55 +146,50 @@ void MultiObjectTracker::Initialize(
 
 
 
-//    ff::ApproximateKinectPixelObservationModel<State> pixel_observation_model(
-//                object_renderer,
-//                camera_matrix,
-//                image.rows(),
-//                image.cols(),
-//                0.5,
-//                0.003,
-//                0.001424,
-//                1.0,
-//                6.0,
-//                0.0,
-//                2.0,
-//                10000,
-//                1000);
-//    pixel_observation_model.Condition(1, 0);
+    ff::ApproximateKinectPixelObservationModel<State, double> pixel_observation_model(
+                object_renderer,
+                camera_matrix,
+                image.rows(),
+                image.cols(),
+                0.01,
+                0.003,
+                0.00142478,
+                1.0,
+                6.0,
+                0.0,
+                1.5,
+                10000,
+                100);
+    pixel_observation_model.Condition(1, 0);
 
+    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
+                                                          p_occluded_occluded,
+                                                          0.2);
+    ff::ContinuousOcclusionProcessModel::State occlusion;
 
+    size_t N = 1000000;
+    INIT_PROFILING;
+    for(size_t i = 0; i < N; i++)
+    {
+        occlusion_process.Condition(1.0, occlusion);
+        occlusion(0,0) += 0.00001;
+    }
+    MEASURE("conditioning");
+    occlusion_process.Condition(1.0, occlusion);
+    for(size_t i = 0; i < N; i++)
+    {
+        occlusion = occlusion_process.MapStandardGaussian(ff::ContinuousOcclusionProcessModel::State(0.12));
+    }
+    MEASURE("mapping");
 
-//    ff::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
-//                                                          p_occluded_occluded,
-//                                                          0.2);
-//    ff::ContinuousOcclusionProcessModel::State occlusion;
+    std::cout << "testing distribution " << std::endl;
+    occlusion(0,0) = -1000.0;
+    occlusion_process.Condition(1.0, occlusion);
+    ff::TestDistributionSampling(occlusion_process, 100000);
+    ff::TestDistribution(pixel_observation_model, 1000000);
+    std::cout << "done testing " << std::endl;
 
-//    size_t N = 1000000;
-//    INIT_PROFILING;
-//    for(size_t i = 0; i < N; i++)
-//    {
-//        occlusion_process.Condition(1.0, occlusion);
-//        occlusion(0,0) += 0.00001;
-//    }
-//    MEASURE("conditioning");
-//    occlusion_process.Condition(1.0, occlusion);
-//    for(size_t i = 0; i < N; i++)
-//    {
-//        occlusion = occlusion_process.MapStandardGaussian(ff::ContinuousOcclusionProcessModel::State(0.12));
-//    }
-//    MEASURE("mapping");
-
-
-
-
-//    std::cout << "testing distribution " << std::endl;
-//    occlusion(0,0) = -1000.0;
-//    occlusion_process.Condition(1.0, occlusion);
-//    ff::TestDistributionSampling(occlusion_process, 100000);
-////    ff::TestDistribution(pixel_observation_model, 1000000);
-//    std::cout << "done testing " << std::endl;
-
-//    exit(-1);
+    exit(-1);
 
 
 

@@ -323,6 +323,30 @@ endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 ## Tests ##
 ###########
 
+catkin_add_gtest(fukf_linear_gaussian_models_test
+                 tests/gtest_main.cpp
+                 tests/fukf_linear_gaussian_models_test.cpp)
+target_link_libraries(fukf_linear_gaussian_models_test
+                      ${catkin_LIBRARIES})
+
+catkin_add_gtest(ff_kalman_filter_test
+                 tests/gtest_main.cpp
+                 tests/ff_kalman_filter_test.cpp)
+target_link_libraries(ff_kalman_filter_test
+                      ${catkin_LIBRARIES})
+
+catkin_add_gtest(ff_linear_process_model_test
+                 tests/gtest_main.cpp
+                 tests/ff_linear_process_model_test.cpp)
+target_link_libraries(ff_linear_process_model_test
+                      ${catkin_LIBRARIES})
+
+catkin_add_gtest(ff_linear_observation_model_test
+                 tests/gtest_main.cpp
+                 tests/ff_linear_observation_model_test.cpp)
+target_link_libraries(ff_linear_observation_model_test
+                      ${catkin_LIBRARIES})
+
 catkin_add_gtest(ff_gaussian_test
                  tests/gtest_main.cpp
                  tests/ff_gaussian_test.cpp)
@@ -385,7 +409,3 @@ catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
 target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
                       ${PROJECT_NAME_TRACKING}
                       ${catkin_LIBRARIES})
-
-
-
-
