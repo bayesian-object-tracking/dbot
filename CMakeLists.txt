@@ -352,10 +352,10 @@ endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 ## Tests ##
 ###########
 
-catkin_add_gtest(fukf_linear_gaussian_models_test
+catkin_add_gtest(ff_fukf_kf_test
                  tests/gtest_main.cpp
-                 tests/fukf_linear_gaussian_models_test.cpp)
-target_link_libraries(fukf_linear_gaussian_models_test
+                 tests/ff_fukf_kf_test.cpp)
+target_link_libraries(ff_fukf_kf_test
                       ${catkin_LIBRARIES})
 
 catkin_add_gtest(ff_kalman_filter_test
@@ -380,6 +380,12 @@ catkin_add_gtest(ff_gaussian_test
                  tests/gtest_main.cpp
                  tests/ff_gaussian_test.cpp)
 target_link_libraries(ff_gaussian_test
+                      ${catkin_LIBRARIES})
+
+catkin_add_gtest(fukf_linear_gaussian_models_test
+                 tests/gtest_main.cpp
+                 tests/fukf_linear_gaussian_models_test.cpp)
+target_link_libraries(fukf_linear_gaussian_models_test
                       ${catkin_LIBRARIES})
 
 catkin_add_gtest(fukf_hash_tests
