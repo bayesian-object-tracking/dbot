@@ -68,7 +68,7 @@ public:
 
     typedef ObservationModel::Observation Observation;
 
-    typedef ff::ComposedStateDistribution<State_a, State_b> StateDistribution;
+    typedef ff::ComposedStateDistribution<State_a, State_b, Observation> StateDistribution;
 
     typedef ff::FactorizedUnscentedKalmanFilter<ProcessModel_a,
                                                 ProcessModel_b,
