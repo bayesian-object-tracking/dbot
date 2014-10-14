@@ -209,6 +209,11 @@ public:
         visible_observation_model_.Condition(rendered_depth, false);
     }
 
+    virtual size_t Dimension() const
+    {
+        return 1;
+    }
+
 private:
     ObjectRendererPtr object_renderer_;
 
@@ -249,6 +254,11 @@ struct Traits <ApproximateKinectPixelObservationModel<State_a_,
                                                       State_b_,
                                                       internal::Vectorial> >
 {
+    enum
+    {
+        Dimension = 1
+    };
+
     typedef State_a_ State_a;
     typedef State_b_ State_b;
     typedef double Scalar;
@@ -340,8 +350,14 @@ public:
         scalar_model_.Condition(rendered_depth, occlusion(0));
     }
 
+    virtual size_t Dimension() const
+    {
+        return Traits::Dimension;
+    }
+
 private:
-    ApproximateKinectPixelObservationModel<State_a, double, internal::Scalar> scalar_model_;
+    ApproximateKinectPixelObservationModel<
+    State_a, double, internal::Scalar> scalar_model_;
 };
 
 }
