@@ -52,7 +52,11 @@ public:
     void rainbow_set(cv::Vec3b& dst, float value, float min, float max);
 
     sensor_msgs::ImagePtr toRosImagePT(const Eigen::MatrixXd &m, int height, int width);
-    void publish(const Eigen::MatrixXd &m, const std::string &name, int height, int width, bool autoCreatePublisher = true);
+    void publish(const Eigen::MatrixXd &m,
+                 const std::string &name,
+                 int height,
+                 int width,
+                 bool autoCreatePublisher = true);
     sensor_msgs::ImagePtr toRosImage(const Eigen::MatrixXd &m, int height, int width);
 protected:
         uint8_t rainbow[0x10000][3];

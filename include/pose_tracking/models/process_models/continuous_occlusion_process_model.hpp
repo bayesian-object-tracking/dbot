@@ -113,11 +113,10 @@ public:
     }
 
     virtual State MapStandardGaussian(const Noise& sample) const
-    {
+    {        
         State l;
         l(0, 0) = hf::Logit(
-                    truncated_gaussian_.MapStandardGaussian(sample(0,0)));
-
+                    truncated_gaussian_.MapStandardGaussian(sample(0,0)));        
 
         if(std::isnan(l(0,0)))
         {
