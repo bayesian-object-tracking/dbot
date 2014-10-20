@@ -49,27 +49,27 @@ int main (int argc, char **argv)
 
     ff::FreeFloatingRigidBodiesState<-1> mean_state(1);
 
-//    // alternative initialization
-//    std::vector<Eigen::VectorXd> initial_states =
-//            pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
-//                                    1000);
-//    boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
-//    tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);
-//    sensor_msgs::Image fuck_you = *ros_image;
-//    for (int var = 0; var < 50  && ros::ok(); ++var)
-//    {
-//        fuck_you.header.stamp += ros::Duration(1./30.);
-//        mean_state = tracker_particle_filter->Filter(fuck_you);
-//    }
+    // alternative initialization
+    std::vector<Eigen::VectorXd> initial_states =
+            pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
+                                    1000);
+    boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
+    tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);
+    sensor_msgs::Image fuck_you = *ros_image;
+    for (int var = 0; var < 50  && ros::ok(); ++var)
+    {
+        fuck_you.header.stamp += ros::Duration(1./30.);
+        mean_state = tracker_particle_filter->Filter(fuck_you);
+    }
 
     // calib_obj
-    mean_state.setZero();
-    mean_state(0, 0) = 0.119531491;
-    mean_state(1, 0) = 0.040621002;
-    mean_state(2, 0) = 0.838543503;
-    mean_state(3, 0) = 0.560296146;
-    mean_state(4, 0) = 2.564343082;
-    mean_state(5, 0) = -1.352442605;
+//    mean_state.setZero();
+//    mean_state(0, 0) = 0.119531491;
+//    mean_state(1, 0) = 0.040621002;
+//    mean_state(2, 0) = 0.838543503;
+//    mean_state(3, 0) = 0.560296146;
+//    mean_state(4, 0) = 2.564343082;
+//    mean_state(5, 0) = -1.352442605;
 
     std::cout << mean_state << std::endl;
 

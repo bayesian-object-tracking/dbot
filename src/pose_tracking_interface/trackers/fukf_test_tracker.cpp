@@ -182,7 +182,6 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
 //    Scalar delta_time = ros_image.header.stamp.toSec() - last_measurement_time_;
     Scalar delta_time = 1.0/30.0;
 
-
     Eigen::MatrixXd image = ri::Ros2Eigen<double>(ros_image, downsampling_factor_);
 
     Eigen::MatrixXd y(image.rows()*image.cols(), 1);
@@ -194,6 +193,8 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
         }
     }
 
+    rows_ = image.rows();
+    cols_ = image.cols();
 
     INIT_PROFILING;
     filter_->Predict(state_distr, delta_time, state_distr);
@@ -201,66 +202,67 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
     filter_->Update(state_distr, y, state_distr);
     MEASURE("<----------------- filter_->update");
 
-    Eigen::MatrixXd image_vector(rows_*cols_, 1);
+    Eigen::MatrixXd image_vector;
+    image_vector.resize(rows_*cols_, 1);
 
-//    // occlusion
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        image_vector(i, 0) = state_distr.joint_partitions[i].mean_b(0, 0);
-//    }
-//    ip_.publish(image_vector, "fukf/occlusion", rows_, cols_);
+    // occlusion
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        image_vector(i, 0) = state_distr.joint_partitions[i].mean_b(0, 0);
+    }
+    ip_.publish(image_vector, "fukf/occlusion", rows_, cols_);
 
-//    // occlusion
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        image_vector(i, 0) = state_distr.joint_partitions[i].cov_bb(0, 0);
-//    }
-//    ip_.publish(image_vector, "fukf/occlusion_cov", rows_, cols_);
+    // occlusion
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        image_vector(i, 0) = state_distr.joint_partitions[i].cov_bb(0, 0);
+    }
+    ip_.publish(image_vector, "fukf/occlusion_cov", rows_, cols_);
 
-//    // prediction
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        image_vector(i, 0) = state_distr.joint_partitions[i].mean_y(0, 0);
-//    }
-//    ip_.publish(image_vector, "fukf/prediction", rows_, cols_);
+    // prediction
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        image_vector(i, 0) = state_distr.joint_partitions[i].mean_y(0, 0);
+    }
+    ip_.publish(image_vector, "fukf/prediction", rows_, cols_);
 
-//    // prediction_covariance
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        image_vector(i, 0) = state_distr.joint_partitions[i].cov_yy(0, 0);
-//    }
-//    ip_.publish(image_vector, "fukf/prediction_cov", rows_, cols_);
+    // prediction_covariance
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        image_vector(i, 0) = state_distr.joint_partitions[i].cov_yy(0, 0);
+    }
+    ip_.publish(image_vector, "fukf/prediction_cov", rows_, cols_);
 
-//    // measurement
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        image_vector(i, 0) = (std::isnan(y(i, 0)) ? 0 : y(i, 0));
-//    }
-//    ip_.publish(y, "fukf/measurement", rows_, cols_);
+    // measurement
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        image_vector(i, 0) = (std::isnan(y(i, 0)) ? 0 : y(i, 0));
+    }
+    ip_.publish(y, "fukf/measurement", rows_, cols_);
 
-//    // innovation
-//    for (size_t i = 0; i < rows_*cols_; ++i)
-//    {
-//        if (!std::isnan(y(i, 0)))
-//        {
-//            image_vector(i, 0) = y(i, 0) - state_distr.joint_partitions[i].mean_y(0, 0);
-//        }
-//        else
-//        {
-//            image_vector(i, 0) = 0;
-//        }
-//    }
-//    ip_.publish(image_vector, "fukf/innovation", rows_, cols_);
+    // innovation
+    for (size_t i = 0; i < rows_*cols_; ++i)
+    {
+        if (!std::isnan(y(i, 0)))
+        {
+            image_vector(i, 0) = y(i, 0) - state_distr.joint_partitions[i].mean_y(0, 0);
+        }
+        else
+        {
+            image_vector(i, 0) = 0;
+        }
+    }
+    ip_.publish(image_vector, "fukf/innovation", rows_, cols_);
 
-////    // visualize the mean state
-//    ff::FreeFloatingRigidBodiesState<> mean = state_distr.mean_a;
-//    for(size_t i = 0; i < object_names_.size(); i++)
-//    {
-//        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
-//        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
-//                          ros_image.header, object_model_path, object_publisher_,
-//                          i, 1, 0, 0);
-//    }
+    // visualize the mean state
+    ff::FreeFloatingRigidBodiesState<> mean = state_distr.mean_a;
+    for(size_t i = 0; i < object_names_.size(); i++)
+    {
+        std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
+        ri::PublishMarker(mean.homogeneous_matrix(i).cast<float>(),
+                          ros_image.header, object_model_path, object_publisher_,
+                          i, 0, 1, 0);
+    }
 
     last_measurement_time_ = ros_image.header.stamp.toSec();
 }
