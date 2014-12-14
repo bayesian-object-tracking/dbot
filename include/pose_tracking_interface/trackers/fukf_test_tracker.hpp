@@ -39,9 +39,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <fast_filtering/utils/traits.hpp>
-#include <fast_filtering/filters/deterministic/composed_state_distribution.hpp>
-#include <fast_filtering/filters/deterministic/factorized_unscented_kalman_filter.hpp>
+#include <ff/utils/traits.hpp>
+#include <ff/filters/deterministic/composed_state_distribution.hpp>
+#include <ff/filters/deterministic/factorized_unscented_kalman_filter.hpp>
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>

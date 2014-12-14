@@ -15,7 +15,7 @@
 
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/shader.hpp>
 
-#include <fast_filtering/utils/helper_functions.hpp>
+#include <ff/utils/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;

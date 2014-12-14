@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/filesystem.hpp>
 
-#include <fast_filtering/utils/profiling.hpp>
+#include <ff/utils/profiling.hpp>
 
 
 #include <sensor_msgs/Image.h>
@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking_interface/utils/pcl_interface.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 
-#include <fast_filtering/utils/distribution_test.hpp>
+#include <ff/utils/distribution_test.hpp>
 
 typedef sensor_msgs::CameraInfo::ConstPtr CameraInfoPtr;
 typedef Eigen::Matrix<double, -1, -1> Image;

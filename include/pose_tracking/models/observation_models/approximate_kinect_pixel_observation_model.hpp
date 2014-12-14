@@ -33,12 +33,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Dense>
 
-#include <fast_filtering/distributions/interfaces/evaluation.hpp>
-#include <fast_filtering/distributions/exponential_distribution.hpp>
-#include <fast_filtering/distributions/uniform_distribution.hpp>
-#include <fast_filtering/distributions/truncated_gaussian.hpp>
-#include <fast_filtering/utils/helper_functions.hpp>
-#include <fast_filtering/utils/traits.hpp>
+#include <fl/distribution/interface/evaluation.hpp>
+#include <fl/util/traits.hpp>
+
+#include <ff/distributions/exponential_distribution.hpp>
+#include <ff/distributions/uniform_distribution.hpp>
+#include <ff/distributions/truncated_gaussian.hpp>
+#include <ff/utils/helper_functions.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>

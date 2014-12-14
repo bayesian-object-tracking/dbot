@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <fast_filtering/filters/stochastic_filters/rao_blackwell_coordinate_particle_filter.hpp>
+#include <ff/filters/stochastic_filters/rao_blackwell_coordinate_particle_filter.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_cpu.hpp>
 #ifdef BUILD_GPU

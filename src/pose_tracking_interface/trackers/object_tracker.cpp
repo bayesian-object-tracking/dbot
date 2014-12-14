@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 #include <ros/package.h>
 
-#include <fast_filtering/utils/profiling.hpp>
+#include <ff/utils/profiling.hpp>
 
 #include <pose_tracking_interface/trackers/object_tracker.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
@@ -34,13 +34,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include <fast_filtering/distributions/uniform_distribution.hpp>
+#include <ff/distributions/uniform_distribution.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
 #include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
 
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 
-#include <fast_filtering/utils/distribution_test.hpp>
+#include <ff/utils/distribution_test.hpp>
 
 #include <pose_tracking_interface/utils/cloud_visualizer.hpp>
 

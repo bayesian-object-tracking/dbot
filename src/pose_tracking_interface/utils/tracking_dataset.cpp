@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/foreach.hpp>
 
-#include <fast_filtering/utils/helper_functions.hpp>
+#include <ff/utils/helper_functions.hpp>
 
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 #include <pose_tracking_interface/utils/pcl_interface.hpp>

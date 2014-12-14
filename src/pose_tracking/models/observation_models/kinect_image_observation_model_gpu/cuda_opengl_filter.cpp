@@ -14,7 +14,7 @@
 
 
 #include <cuda_gl_interop.h>
-#include <fast_filtering/utils/helper_functions.hpp>
+#include <ff/utils/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;

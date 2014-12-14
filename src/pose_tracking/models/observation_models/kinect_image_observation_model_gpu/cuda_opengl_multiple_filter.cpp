@@ -3,7 +3,7 @@
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_multiple_filter.hpp>
 #include <iostream>
 
-#include <fast_filtering/utils/helper_functions.hpp>
+#include <ff/utils/helper_functions.hpp>
 
 using namespace fil;
 using namespace std;

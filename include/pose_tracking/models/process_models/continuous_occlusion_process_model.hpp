@@ -28,11 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_CONTINUOUS_OCCLUSION_PROCESS_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_CONTINUOUS_OCCLUSION_PROCESS_MODEL_HPP
 
-#include <fast_filtering/utils/helper_functions.hpp>
+#include <ff/utils/helper_functions.hpp>
 
-#include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
-#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
-#include <fast_filtering/distributions/truncated_gaussian.hpp>
+#include <ff/models/process_models/interfaces/stationary_process_model.hpp>
+#include <fl/distribution/interface/gaussian_map.hpp>
+#include <ff/distributions/truncated_gaussian.hpp>
 
 #include <pose_tracking/models/process_models/occlusion_process_model.hpp>
 

@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 
-#include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
-#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
+#include <ff/models/process_models/interfaces/stationary_process_model.hpp>
+#include <fl/distribution/interface/gaussian_map.hpp>
 
 // TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, SHOULD DISAPPEAR
 namespace fl

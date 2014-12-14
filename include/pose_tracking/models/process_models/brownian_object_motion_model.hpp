@@ -48,12 +48,12 @@
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 
-#include <fast_filtering/utils/helper_functions.hpp>
-#include <fast_filtering/utils/assertions.hpp>
+#include <ff/utils/helper_functions.hpp>
+#include <ff/utils/assertions.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
-#include <fast_filtering/models/process_models/interfaces/stationary_process_model.hpp>
-#include <fast_filtering/models/process_models/damped_wiener_process_model.hpp>
-#include <fast_filtering/models/process_models/integrated_damped_wiener_process_model.hpp>
+#include <ff/models/process_models/interfaces/stationary_process_model.hpp>
+#include <ff/models/process_models/damped_wiener_process_model.hpp>
+#include <ff/models/process_models/integrated_damped_wiener_process_model.hpp>
 
 namespace fl
 {

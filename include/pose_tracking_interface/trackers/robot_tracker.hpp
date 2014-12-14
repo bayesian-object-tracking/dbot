@@ -38,8 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <robot_state_pub/robot_state_publisher.h>
 
-#include <fast_filtering/filters/stochastic_filters/rao_blackwell_coordinate_particle_filter.hpp>
-#include <fast_filtering/models/process_models/damped_wiener_process_model.hpp>
+#include <ff/filters/stochastic_filters/rao_blackwell_coordinate_particle_filter.hpp>
+#include <ff/models/process_models/damped_wiener_process_model.hpp>
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_cpu.hpp>
 #include <pose_tracking/states/robot_state.hpp>
 #include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>

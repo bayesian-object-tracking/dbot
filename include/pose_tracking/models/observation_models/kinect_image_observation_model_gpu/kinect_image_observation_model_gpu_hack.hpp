@@ -6,7 +6,7 @@
 #include "Eigen/Core"
 
 
-#include <fast_filtering/models/observation_models/interfaces/rao_blackwell_observation_model.hpp>
+#include <ff/models/observation_models/interfaces/rao_blackwell_observation_model.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
@@ -24,7 +24,7 @@
 #include <iostream>
 #include <cuda_gl_interop.h>
 
-#include <fast_filtering/utils/profiling.hpp>
+#include <ff/utils/profiling.hpp>
 
 namespace ff
 {
