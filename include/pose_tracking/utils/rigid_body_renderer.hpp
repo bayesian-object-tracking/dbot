@@ -36,14 +36,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/states/rigid_bodies_state.hpp>
 
 
-namespace ff
+namespace fl
 {
 
 class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef ff::RigidBodiesState<Eigen::Dynamic> State;
+    typedef fl::RigidBodiesState<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
 

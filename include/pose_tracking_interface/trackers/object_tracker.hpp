@@ -49,20 +49,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MultiObjectTracker
 {
 public:   
-    typedef ff::FreeFloatingRigidBodiesState<>  State;
+    typedef fl::FreeFloatingRigidBodiesState<>  State;
     typedef State::Scalar                       Scalar;
 
-    typedef ff::BrownianObjectMotionModel<State>        ProcessModel;
-    typedef ff::KinectImageObservationModelCPU<Scalar,
+    typedef fl::BrownianObjectMotionModel<State>        ProcessModel;
+    typedef fl::KinectImageObservationModelCPU<Scalar,
                                                 State>  ObservationModelCPUType;
 #ifdef BUILD_GPU
-    typedef ff::KinectImageObservationModelGPU<State>   ObservationModelGPUType;
+    typedef fl::KinectImageObservationModelGPU<State>   ObservationModelGPUType;
 #endif
 
     typedef ObservationModelCPUType::Base ObservationModel;
     typedef ObservationModelCPUType::Observation Observation;
 
-    typedef ff::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
+    typedef fl::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 
     MultiObjectTracker();
 

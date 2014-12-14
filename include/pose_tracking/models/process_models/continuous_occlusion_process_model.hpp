@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking/models/process_models/occlusion_process_model.hpp>
 
-namespace ff
+namespace fl
 {
 
 // Forward declarations

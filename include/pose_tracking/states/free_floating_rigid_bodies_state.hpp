@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <pose_tracking/states/rigid_bodies_state.hpp>
 
 
-namespace ff
+namespace fl
 {
 
 template<int BodyCount>

@@ -3,7 +3,7 @@
 
 #include <pose_tracking_interface/utils/image_publisher.hpp>
 
-using namespace ff;
+using namespace fl;
 
 ImagePublisher::ImagePublisher(ros::NodeHandle& node_handle):
     it(image_transport::ImageTransport(node_handle))

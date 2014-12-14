@@ -604,7 +604,7 @@ template <typename PointT> void FindCylinder(
 // this function creates some samples around clusters on a plane. it assumes
 // that when the object is standing on the table, the origin coincides with the
 // table plane and z points upwards
-template<typename Scalar> std::vector<ff::FreeFloatingRigidBodiesState<-1>::State>
+template<typename Scalar> std::vector<fl::FreeFloatingRigidBodiesState<-1>::State>
 SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
                     const size_t& n_rows, const size_t& n_cols,
                     const size_t& sample_count)
@@ -613,7 +613,7 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
     typedef Eigen::Matrix<Scalar,3,3> Matrix;
     typedef Eigen::Matrix<Scalar,4,1> Plane;
 
-    typedef ff::FreeFloatingRigidBodiesState<-1> BodySystem;
+    typedef fl::FreeFloatingRigidBodiesState<-1> BodySystem;
 
     std::vector<BodySystem::State> states;
 
@@ -635,7 +635,7 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
     // create gaussian for sampling
     Scalar standard_deviation_translation = 0.03;
     Scalar standard_deviation_rotation = 100.0;
-    ff::Gaussian<Eigen::Matrix<Scalar, 1, 1> > unit_gaussian;
+    fl::Gaussian<Eigen::Matrix<Scalar, 1, 1> > unit_gaussian;
     unit_gaussian.SetStandard();
 
     for(size_t cluster_index = 0; cluster_index < clusters.size(); cluster_index++)
@@ -669,7 +669,7 @@ SampleTableClusters(const std::vector<Eigen::Matrix<Scalar,3,1> >& points,
 }
 
 
-template<typename Scalar> std::vector<ff::FreeFloatingRigidBodiesState<-1>::State>
+template<typename Scalar> std::vector<fl::FreeFloatingRigidBodiesState<-1>::State>
 SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& points,
                     const size_t& sample_count)
 {
@@ -684,7 +684,7 @@ SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<Scalar,3,1>, -1, -1>& poin
 
 }
 
-template std::vector<ff::FreeFloatingRigidBodiesState<-1>::State>
+template std::vector<fl::FreeFloatingRigidBodiesState<-1>::State>
 pi::SampleTableClusters(const Eigen::Matrix<Eigen::Matrix<double,3,1>, -1, -1>&,
                         const size_t&);
 template void pi::Cluster(const pcl::PointCloud<pcl::PointXYZ>&,

@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fast_filtering/utils/distribution_test.hpp>
 #include <iostream>
 
-namespace ff
+namespace fl
 {
 
 // Forward declarations

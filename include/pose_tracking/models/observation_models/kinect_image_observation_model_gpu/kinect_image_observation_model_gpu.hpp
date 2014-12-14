@@ -20,7 +20,7 @@
 
 #include <fast_filtering/utils/profiling.hpp>
 
-namespace ff
+namespace fl
 {
 
 // Forward declarations

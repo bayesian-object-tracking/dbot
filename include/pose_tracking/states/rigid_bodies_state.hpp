@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <vector>
 
-namespace ff
+namespace fl
 {
 
 template<int Dimension = -1>

@@ -19,17 +19,18 @@ find_package(catkin REQUIRED
     message_filters
     robot_state_pub
     image_transport
+    fl
 )
 
-find_package(Doxygen)
-
-if(DOXYGEN_FOUND)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-    add_custom_target(doc
-        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen" VERBATIM)
-endif(DOXYGEN_FOUND)
+# find_package(Doxygen)
+# 
+# if(DOXYGEN_FOUND)
+#     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+#     add_custom_target(doc
+#         ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+#         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#         COMMENT "Generating API documentation with Doxygen" VERBATIM)
+# endif(DOXYGEN_FOUND)
 
 set(PROJECT_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${PROJECT_MODULE_PATH})
@@ -156,6 +157,7 @@ catkin_package(
         message_filters
         robot_state_pub
         image_transport
+        fl
     DEPENDS
         OpenCV
         eigen
@@ -168,18 +170,14 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
-set(PROJECT_NAME_FILTERING "fast_filtering")
 set(PROJECT_NAME_TRACKING "pose_tracking")
 set(PROJECT_NAME_TRACKING_INTERFACE "pose_tracking_interface")
 
-file(GLOB_RECURSE filtering_headers include/${PROJECT_NAME_FILTERING}/*.hpp include/${PROJECT_NAME_FILTERING}/*.h)
 file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INTERFACE}/*.hpp include/${PROJECT_NAME_TRACKING_INTERFACE}/*.h)
 
 
 set(tracking_sources
-    src/${PROJECT_NAME_TRACKING}/utils/xxhash.c
-    src/${PROJECT_NAME_TRACKING}/utils/hash_mapping.cpp
     src/${PROJECT_NAME_TRACKING}/utils/rigid_body_renderer.cpp
 )
 
@@ -205,8 +203,7 @@ set(tracking_interface_sources
 ## state_filtering
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME_TRACKING} ${filtering_headers}
-                                     ${tracking_headers}
+add_library(${PROJECT_NAME_TRACKING} ${tracking_headers}
                                      ${tracking_interface_headers}
                                      ${tracking_sources})
 
@@ -214,8 +211,7 @@ target_link_libraries(${PROJECT_NAME_TRACKING} ${catkin_LIBRARIES}
                                                ${OpenCV_LIBRARIES}
                                                assimp)
 
-add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${filtering_headers}
-                                               ${tracking_headers}
+add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${tracking_headers}
                                                ${tracking_interface_headers}
                                                ${tracking_interface_sources})
 
@@ -352,95 +348,95 @@ endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 ## Tests ##
 ###########
 
-catkin_add_gtest(ff_fukf_kf_test
-                 tests/gtest_main.cpp
-                 tests/ff_fukf_kf_test.cpp)
-target_link_libraries(ff_fukf_kf_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(ff_fukf_kf_test
+#                 tests/gtest_main.cpp
+#                 tests/ff_fukf_kf_test.cpp)
+#target_link_libraries(ff_fukf_kf_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(ff_kalman_filter_test
-                 tests/gtest_main.cpp
-                 tests/ff_kalman_filter_test.cpp)
-target_link_libraries(ff_kalman_filter_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(ff_kalman_filter_test
+#                 tests/gtest_main.cpp
+#                 tests/ff_kalman_filter_test.cpp)
+#target_link_libraries(ff_kalman_filter_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(ff_linear_process_model_test
-                 tests/gtest_main.cpp
-                 tests/ff_linear_process_model_test.cpp)
-target_link_libraries(ff_linear_process_model_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(ff_linear_process_model_test
+#                 tests/gtest_main.cpp
+#                 tests/ff_linear_process_model_test.cpp)
+#target_link_libraries(ff_linear_process_model_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(ff_linear_observation_model_test
-                 tests/gtest_main.cpp
-                 tests/ff_linear_observation_model_test.cpp)
-target_link_libraries(ff_linear_observation_model_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(ff_linear_observation_model_test
+#                 tests/gtest_main.cpp
+#                 tests/ff_linear_observation_model_test.cpp)
+#target_link_libraries(ff_linear_observation_model_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(ff_gaussian_test
-                 tests/gtest_main.cpp
-                 tests/ff_gaussian_test.cpp)
-target_link_libraries(ff_gaussian_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(ff_gaussian_test
+#                 tests/gtest_main.cpp
+#                 tests/ff_gaussian_test.cpp)
+#target_link_libraries(ff_gaussian_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_linear_gaussian_models_test
-                 tests/gtest_main.cpp
-                 tests/fukf_linear_gaussian_models_test.cpp)
-target_link_libraries(fukf_linear_gaussian_models_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_linear_gaussian_models_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_linear_gaussian_models_test.cpp)
+#target_link_libraries(fukf_linear_gaussian_models_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_hash_tests
-                 tests/gtest_main.cpp
-                 tests/fukf_hash_tests.cpp)
-target_link_libraries(fukf_hash_tests
-                      ${PROJECT_NAME_TRACKING}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_hash_tests
+#                 tests/gtest_main.cpp
+#                 tests/fukf_hash_tests.cpp)
+#target_link_libraries(fukf_hash_tests
+#                      ${PROJECT_NAME_TRACKING}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_partitioned_ut_test
-                 tests/gtest_main.cpp
-                 tests/fukf_partitioned_ut_test.cpp)
-target_link_libraries(fukf_partitioned_ut_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_partitioned_ut_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_partitioned_ut_test.cpp)
+#target_link_libraries(fukf_partitioned_ut_test
+#                      ${PROJECT_NAME_TRACKING_INTERFACE}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_smw_inversion_test
-                 tests/gtest_main.cpp
-                 tests/fukf_smw_inversion_test.cpp)
-target_link_libraries(fukf_smw_inversion_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_smw_inversion_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_smw_inversion_test.cpp)
+#target_link_libraries(fukf_smw_inversion_test
+#                      ${PROJECT_NAME_TRACKING_INTERFACE}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_square_root_test
-                 tests/gtest_main.cpp
-                 tests/fukf_square_root_test.cpp)
-target_link_libraries(fukf_square_root_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_square_root_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_square_root_test.cpp)
+#target_link_libraries(fukf_square_root_test
+#                      ${PROJECT_NAME_TRACKING_INTERFACE}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_llt_diagonal_test
-                 tests/gtest_main.cpp
-                 tests/fukf_llt_diagonal_test.cpp)
-target_link_libraries(fukf_llt_diagonal_test
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_llt_diagonal_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_llt_diagonal_test.cpp)
+#target_link_libraries(fukf_llt_diagonal_test
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_ut_test
-                 tests/gtest_main.cpp
-                 tests/fukf_ut_test.cpp
-                 tests/fukf_dummy_models.hpp)
-target_link_libraries(fukf_ut_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_ut_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_ut_test.cpp
+#                 tests/fukf_dummy_models.hpp)
+#target_link_libraries(fukf_ut_test
+#                      ${PROJECT_NAME_TRACKING_INTERFACE}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_predict_test
-                 tests/gtest_main.cpp
-                 tests/fukf_predict_test.cpp
-                 tests/fukf_stub_models.hpp)
-target_link_libraries(fukf_predict_test
-                      ${PROJECT_NAME_TRACKING_INTERFACE}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_predict_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_predict_test.cpp
+#                 tests/fukf_stub_models.hpp)
+#target_link_libraries(fukf_predict_test
+#                      ${PROJECT_NAME_TRACKING_INTERFACE}
+#                      ${catkin_LIBRARIES})
 
-catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
-                 tests/gtest_main.cpp
-                 tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
-target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
-                      ${PROJECT_NAME_TRACKING}
-                      ${catkin_LIBRARIES})
+#catkin_add_gtest(fukf_continuous_kinect_pixel_observation_model_test
+#                 tests/gtest_main.cpp
+#                 tests/fukf_continuous_kinect_pixel_observation_model_test.cpp)
+#target_link_libraries(fukf_continuous_kinect_pixel_observation_model_test
+#                      ${PROJECT_NAME_TRACKING}
+#                      ${catkin_LIBRARIES})
