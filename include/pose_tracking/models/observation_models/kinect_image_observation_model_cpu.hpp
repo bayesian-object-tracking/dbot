@@ -49,8 +49,6 @@ namespace fl
 // Forward declarations
 template <typename Scalar, typename State, int OBJECTS> class KinectImageObservationModelCPU;
 
-namespace internal
-{
 /**
  * ImageObservationModelCPU distribution traits specialization
  * \internal
@@ -66,7 +64,6 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
     typedef boost::shared_ptr<fl::KinectPixelObservationModel> PixelObservationModelPtr;
     typedef boost::shared_ptr<fl::OcclusionProcessModel> OcclusionProcessModelPtr;
 };
-}
 
 /**
  * \class ImageObservationModelCPU
@@ -76,16 +73,16 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
  */
 template <typename Scalar, typename State, int OBJECTS = -1>
 class KinectImageObservationModelCPU:
-        public internal::Traits<KinectImageObservationModelCPU<Scalar, State> >::ObservationModelBase
+        public Traits<KinectImageObservationModelCPU<Scalar, State> >::ObservationModelBase
 {
 public:
-    typedef internal::Traits<KinectImageObservationModelCPU<Scalar, State> > Traits;
+    typedef KinectImageObservationModelCPU<Scalar, State> This;
 
-    typedef typename Traits::ObservationModelBase     Base;
-    typedef typename Traits::Observation              Observation;
-    typedef typename Traits::ObjectRendererPtr        ObjectRendererPtr;
-    typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
-    typedef typename Traits::OcclusionProcessModelPtr OcclusionProcessModelPtr;
+    typedef typename Traits<This>::ObservationModelBase     Base;
+    typedef typename Traits<This>::Observation              Observation;
+    typedef typename Traits<This>::ObjectRendererPtr        ObjectRendererPtr;
+    typedef typename Traits<This>::PixelObservationModelPtr PixelObservationModelPtr;
+    typedef typename Traits<This>::OcclusionProcessModelPtr OcclusionProcessModelPtr;
 
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
     KinectImageObservationModelCPU(

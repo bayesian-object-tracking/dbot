@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
-#include <pose_tracking/utils/hash_mapping.hpp>
 
 #include <boost/unordered_map.hpp>
 

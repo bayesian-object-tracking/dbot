@@ -5,7 +5,7 @@ set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
 add_definitions(-std=c++0x )
 #add_definitions(-DPROFILING_ON=1) #print profiling output
-set(USE_CUDA True)
+set(USE_CUDA False)
 
 find_package(catkin REQUIRED
     roscpp

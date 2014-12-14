@@ -10,7 +10,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include <fast_filtering/utils/profiling.hpp>
+#include <ff/utils/profiling.hpp>
 
 #include <pose_tracking_interface/trackers/object_tracker.hpp>
 #include <pose_tracking_interface/trackers/fukf_test_tracker.hpp>
@@ -47,11 +47,11 @@ int main (int argc, char **argv)
                                                            ros::Duration(10.0));
     Image image = ri::Ros2Eigen<double>(*ros_image);
 
-    ff::FreeFloatingRigidBodiesState<-1> mean_state(1);
+    fl::FreeFloatingRigidBodiesState<-1> mean_state(1);
 
     // alternative initialization
     std::vector<Eigen::VectorXd> initial_states =
-            pi::SampleTableClusters(ff::hf::Image2Points(image, camera_matrix),
+            pi::SampleTableClusters(fl::hf::Image2Points(image, camera_matrix),
                                     1000);
     boost::shared_ptr<MultiObjectTracker> tracker_particle_filter(new MultiObjectTracker);
     tracker_particle_filter->Initialize(initial_states, *ros_image, camera_matrix);

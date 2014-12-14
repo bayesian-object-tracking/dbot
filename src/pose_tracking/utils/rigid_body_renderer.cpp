@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace Eigen;
 
-using namespace ff;
+using namespace fl;
 
 RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
                                      const std::vector<std::vector<std::vector<int> > >& indices,

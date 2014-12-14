@@ -39,9 +39,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <ff/utils/traits.hpp>
+#include <fl/util/traits.hpp>
+
 #include <ff/filters/deterministic/composed_state_distribution.hpp>
 #include <ff/filters/deterministic/factorized_unscented_kalman_filter.hpp>
+
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
@@ -53,24 +55,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class FukfTestTracker
 {
 public:
-    typedef ff::BrownianObjectMotionModel
-            < ff::FreeFloatingRigidBodiesState<> >  ProcessModel_a;
-    typedef ff::ContinuousOcclusionProcessModel     ProcessModel_b;
+    typedef fl::BrownianObjectMotionModel
+            < fl::FreeFloatingRigidBodiesState<> >  ProcessModel_a;
+    typedef fl::ContinuousOcclusionProcessModel     ProcessModel_b;
 
     typedef ProcessModel_a::State State_a;
     typedef ProcessModel_b::State State_b;
     typedef typename State_a::Scalar Scalar;
 
-    typedef ff::ApproximateKinectPixelObservationModel<
+    typedef fl::ApproximateKinectPixelObservationModel<
                 State_a,
                 State_b,
-                ff::internal::Vectorial> ObservationModel;
+                fl::internal::Vectorial> ObservationModel;
 
     typedef ObservationModel::Observation Observation;
 
-    typedef ff::ComposedStateDistribution<State_a, State_b, Observation> StateDistribution;
+    typedef fl::ComposedStateDistribution<State_a, State_b, Observation> StateDistribution;
 
-    typedef ff::FactorizedUnscentedKalmanFilter<ProcessModel_a,
+    typedef fl::FactorizedUnscentedKalmanFilter<ProcessModel_a,
                                                 ProcessModel_b,
                                                 ObservationModel> FilterType;
 
@@ -97,7 +99,7 @@ private:
 
     StateDistribution state_distr;
 
-    ff::ImagePublisher ip_;
+    fl::ImagePublisher ip_;
     int rows_;
     int cols_;
 };

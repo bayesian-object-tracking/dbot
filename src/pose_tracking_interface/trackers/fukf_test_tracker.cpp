@@ -117,8 +117,8 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     std::cout << "creating renderer" << std::endl;
 
-    boost::shared_ptr<ff::RigidBodyRenderer> object_renderer(
-                new ff::RigidBodyRenderer(
+    boost::shared_ptr<fl::RigidBodyRenderer> object_renderer(
+                new fl::RigidBodyRenderer(
                     object_vertices,
                     object_triangle_indices,
                     rigid_bodies_state));
@@ -161,7 +161,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
                 new FilterType(process_a, process_b, pixel_observation_model));
 
     State_b b_i(1, 1);
-    b_i(0, 0) = ff::hf::Logit(initial_occlusion_prob);
+    b_i(0, 0) = fl::hf::Logit(initial_occlusion_prob);
     state_distr.initialize(initial_state,
                            image.rows()* image.cols(),
                            b_i,
@@ -255,7 +255,7 @@ void FukfTestTracker::Filter(const sensor_msgs::Image& ros_image)
     ip_.publish(image_vector, "fukf/innovation", rows_, cols_);
 
     // visualize the mean state
-    ff::FreeFloatingRigidBodiesState<> mean = state_distr.mean_a;
+    fl::FreeFloatingRigidBodiesState<> mean = state_distr.mean_a;
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";

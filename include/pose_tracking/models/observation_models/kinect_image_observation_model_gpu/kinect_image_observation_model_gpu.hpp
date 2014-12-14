@@ -26,8 +26,6 @@ namespace fl
 // Forward declarations
 template <typename State> class KinectImageObservationModelGPU;
 
-namespace internal
-{
 /**
  * ImageObservationModelCPU distribution traits specialization
  * \internal
@@ -44,7 +42,6 @@ struct Traits<KinectImageObservationModelGPU<State> >
 
 //  typedef sf::RigidBodySystem<-1>           State;
 };
-}
 
 /**
  * \class ImageObservationModelGPU
@@ -54,14 +51,14 @@ struct Traits<KinectImageObservationModelGPU<State> >
  */
 template <typename State>
 class KinectImageObservationModelGPU:
-        public internal::Traits<KinectImageObservationModelGPU<State> >::ObservationModelBase
+        public Traits<KinectImageObservationModelGPU<State> >::ObservationModelBase
 {
 public:
-    typedef internal::Traits<KinectImageObservationModelGPU<State> > Traits;
+    typedef KinectImageObservationModelGPU<State> This;
 
-    typedef typename Traits::Scalar         Scalar;
-    typedef typename Traits::Observation    Observation;
-    typedef typename Traits::CameraMatrix   CameraMatrix;
+    typedef typename Traits<This>::Scalar         Scalar;
+    typedef typename Traits<This>::Observation    Observation;
+    typedef typename Traits<This>::CameraMatrix   CameraMatrix;
 
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION

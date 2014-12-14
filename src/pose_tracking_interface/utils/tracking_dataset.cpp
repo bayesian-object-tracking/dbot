@@ -119,7 +119,7 @@ pcl::PointCloud<pcl::PointXYZ>::ConstPtr TrackingDataset::GetPointCloud(
         const size_t& index)
 {
     Eigen::MatrixXd image = ri::Ros2Eigen<double>(*data_[index].image_);
-    Eigen::Matrix<Eigen::Matrix<double, 3, 1> , -1, -1> points = ff::hf::Image2Points(image, GetCameraMatrix(index));
+    Eigen::Matrix<Eigen::Matrix<double, 3, 1> , -1, -1> points = fl::hf::Image2Points(image, GetCameraMatrix(index));
     pcl::PointCloud<pcl::PointXYZ>::Ptr
             point_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
 

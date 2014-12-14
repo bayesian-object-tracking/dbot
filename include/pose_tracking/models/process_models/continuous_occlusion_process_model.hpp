@@ -42,8 +42,6 @@ namespace fl
 // Forward declarations
 class ContinuousOcclusionProcessModel;
 
-namespace internal
-{
 template <>
 struct Traits<ContinuousOcclusionProcessModel>
 {
@@ -56,18 +54,17 @@ struct Traits<ContinuousOcclusionProcessModel>
 
     typedef typename StationaryProcessModel<State>::Input Input;
 };
-}
 
 class ContinuousOcclusionProcessModel:
-        public internal::Traits<ContinuousOcclusionProcessModel>::ProcessModelBase,
-        public internal::Traits<ContinuousOcclusionProcessModel>::GaussianMapBase
+        public Traits<ContinuousOcclusionProcessModel>::ProcessModelBase,
+        public Traits<ContinuousOcclusionProcessModel>::GaussianMapBase
 {
 public:
-    typedef internal::Traits<ContinuousOcclusionProcessModel> Traits;
-    typedef typename Traits::Scalar Scalar;
-    typedef typename Traits::State  State;
-    typedef typename Traits::Noise  Noise;
-    typedef typename Traits::Input  Input;
+    typedef ContinuousOcclusionProcessModel This;
+    typedef typename Traits<This>::Scalar Scalar;
+    typedef typename Traits<This>::State  State;
+    typedef typename Traits<This>::Noise  Noise;
+    typedef typename Traits<This>::Input  Input;
 
 	// the prob of source being object given source was object one sec ago,
 	// and prob of source being object given one sec ago source was not object

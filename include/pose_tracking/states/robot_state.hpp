@@ -40,10 +40,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 template<int JointCount = Eigen::Dynamic, int BodyCount = Eigen::Dynamic>
-class RobotState: public ff::RigidBodiesState<JointCount>
+class RobotState: public fl::RigidBodiesState<JointCount>
 {
 public:
-    typedef ff::RigidBodiesState<JointCount>    Base;
+    typedef fl::RigidBodiesState<JointCount>    Base;
     typedef typename Base::Vector               Vector;
     typedef typename Base::AngleAxis            AngleAxis;
     typedef typename Base::Quaternion           Quaternion;

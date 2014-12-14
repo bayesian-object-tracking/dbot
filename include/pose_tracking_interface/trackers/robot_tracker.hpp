@@ -58,19 +58,19 @@ public:
     typedef State::Scalar   Scalar;
 
     // process model
-    typedef ff::DampedWienerProcessModel<State>         ProcessModel;
+    typedef fl::DampedWienerProcessModel<State>         ProcessModel;
     typedef typename ProcessModel::Input                Input;
 
     // observation models
-    typedef ff::KinectImageObservationModelCPU<Scalar,
+    typedef fl::KinectImageObservationModelCPU<Scalar,
                                                 State>  ObservationModelCPUType;
 #ifdef BUILD_GPU
-    typedef ff::KinectImageObservationModelGPUHack<State>   ObservationModelGPUType;
+    typedef fl::KinectImageObservationModelGPUHack<State>   ObservationModelGPUType;
 #endif
     typedef ObservationModelCPUType::Base ObservationModel;
     typedef ObservationModelCPUType::Observation Observation;
 
-    typedef ff::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
+    typedef fl::RaoBlackwellCoordinateParticleFilter<ProcessModel, ObservationModel> FilterType;
 
     RobotTracker();
 
@@ -129,7 +129,7 @@ private:
   bool data_in_meters_;
 
   // For debugging
-  boost::shared_ptr<ff::RigidBodyRenderer> robot_renderer_;  
+  boost::shared_ptr<fl::RigidBodyRenderer> robot_renderer_;
 };
 
 #endif

@@ -111,7 +111,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     ROS_INFO("Number of joints %d", urdf_kinematics->num_joints());
 
     std::vector<std::string> joints = urdf_kinematics->GetJointMap();
-    ff::hf::PrintVector(joints);
+    fl::hf::PrintVector(joints);
 
 
     // get the name of the root frame
@@ -138,14 +138,14 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
    State::kinematics_ = urdf_kinematics;\
    cout << "done setting kinematics " << endl;
 
-    boost::shared_ptr<ff::RigidBodiesState<> > robot_state(new State(State::Zero(urdf_kinematics->num_joints())));
+    boost::shared_ptr<fl::RigidBodiesState<> > robot_state(new State(State::Zero(urdf_kinematics->num_joints())));
     dimension_ = urdf_kinematics->num_joints();
 
     // initialize the result container for the emperical mean
     mean_ = boost::shared_ptr<State > (new State);
 
-    robot_renderer_ = boost::shared_ptr<ff::RigidBodyRenderer>(
-                new ff::RigidBodyRenderer(part_vertices,
+    robot_renderer_ = boost::shared_ptr<fl::RigidBodyRenderer>(
+                new fl::RigidBodyRenderer(part_vertices,
                                                part_triangle_indices,
                                                robot_state));
 
@@ -182,10 +182,10 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     if(!use_gpu)
     {
         // cpu obseration model
-        boost::shared_ptr<ff::KinectPixelObservationModel> kinect_pixel_observation_model(
-                    new ff::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
-        boost::shared_ptr<ff::OcclusionProcessModel> occlusion_process_model(
-                    new ff::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
+        boost::shared_ptr<fl::KinectPixelObservationModel> kinect_pixel_observation_model(
+                    new fl::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
+        boost::shared_ptr<fl::OcclusionProcessModel> occlusion_process_model(
+                    new fl::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
         observation_model = boost::shared_ptr<ObservationModelCPUType>(
                     new ObservationModelCPUType(camera_matrix,
                                                 image.rows(),

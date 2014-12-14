@@ -26,14 +26,12 @@
 
 #include <ff/utils/profiling.hpp>
 
-namespace ff
+namespace fl
 {
 
 // Forward declarations
 template <typename State> class KinectImageObservationModelGPUHack;
 
-namespace internal
-{
 /**
  * ImageObservationModelCPU distribution traits specialization
  * \internal
@@ -50,7 +48,6 @@ struct Traits<KinectImageObservationModelGPUHack<State> >
 
 //  typedef sf::RigidBodySystem<-1>           State;
 };
-}
 
 /**
  * \class ImageObservationModelGPU
@@ -60,14 +57,14 @@ struct Traits<KinectImageObservationModelGPUHack<State> >
  */
 template <typename State>
 class KinectImageObservationModelGPUHack:
-        public internal::Traits<KinectImageObservationModelGPUHack<State> >::ObservationModelBase
+        public Traits<KinectImageObservationModelGPUHack<State> >::ObservationModelBase
 {
 public:
-    typedef internal::Traits<KinectImageObservationModelGPUHack<State> > Traits;
+    typedef KinectImageObservationModelGPUHack<State> This;
 
-    typedef typename Traits::Scalar         Scalar;
-    typedef typename Traits::Observation    Observation;
-    typedef typename Traits::CameraMatrix   CameraMatrix;
+    typedef typename Traits<This>::Scalar         Scalar;
+    typedef typename Traits<This>::Observation    Observation;
+    typedef typename Traits<This>::CameraMatrix   CameraMatrix;
 
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION

@@ -114,7 +114,7 @@ void MultiObjectTracker::Initialize(
 //    for(size_t i = 0; i < 100; i++)
 //    {
 //        size_t index = rand() % initial_states.size();
-//        ff::FreeFloatingRigidBodiesState<> state (initial_states[index]);
+//        fl::FreeFloatingRigidBodiesState<> state (initial_states[index]);
 
 
 //        vis.add_cloud(object_vertices[0],
@@ -122,7 +122,7 @@ void MultiObjectTracker::Initialize(
 //                      state.position());
 //    }
 
-//    vis.add_cloud(ff::hf::Image2Points(image, camera_matrix));
+//    vis.add_cloud(fl::hf::Image2Points(image, camera_matrix));
 
 //    vis.show();
 

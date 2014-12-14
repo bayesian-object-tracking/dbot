@@ -43,7 +43,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
-#include <pose_tracking/utils/hash_mapping.hpp>
 
 #include <boost/unordered_map.hpp>
 
@@ -245,8 +244,6 @@ private:
 
 
 
-namespace internal
-{
 /**
  * \internal
  */
@@ -269,24 +266,23 @@ struct Traits <ApproximateKinectPixelObservationModel<State_a_,
     typedef GaussianMap<Observation, Noise> GaussianMapBase;
     typedef Evaluation<Observation, Scalar> EvaluationBase;
 };
-}
 
 /**
  * Vectorial specialization of the scalar model
  */
 template <typename State_a_, typename State_b_>
 class ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial>:
-        public internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::GaussianMapBase,
-        public internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::EvaluationBase
+        public Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::GaussianMapBase,
+        public Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::EvaluationBase
 {
 public:
-    typedef internal::Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> > Traits;
+    typedef ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> This;
 
-    typedef typename Traits::Scalar Scalar;
-    typedef typename Traits::State_a State_a;
-    typedef typename Traits::State_b State_b;
-    typedef typename Traits::Noise Noise;
-    typedef typename Traits::Observation Observation;
+    typedef typename Traits<This>::Scalar Scalar;
+    typedef typename Traits<This>::State_a State_a;
+    typedef typename Traits<This>::State_b State_b;
+    typedef typename Traits<This>::Noise Noise;
+    typedef typename Traits<This>::Observation Observation;
 
     typedef boost::shared_ptr<RigidBodyRenderer> ObjectRendererPtr;
 
@@ -353,7 +349,7 @@ public:
 
     virtual size_t Dimension() const
     {
-        return Traits::Dimension;
+        return Traits<This>::Dimension;
     }
 
 private:

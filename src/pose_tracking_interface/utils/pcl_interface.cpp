@@ -64,8 +64,9 @@
 
 #include <boost/assert.hpp>
 
+#include <fl/distribution/gaussian.hpp>
+
 #include <ff/utils/helper_functions.hpp>
-#include <ff/distributions/gaussian.hpp>
 
 #include <pose_tracking_interface/utils/pcl_interface.hpp>
 #include <pose_tracking_interface/utils/cloud_visualizer.hpp>

@@ -47,8 +47,6 @@ namespace fl
 // Forward declarations
 class KinectPixelObservationModel;
 
-namespace internal
-{
 /**
  * KinectObservationModel distribution traits specialization
  * \internal
@@ -60,7 +58,6 @@ struct Traits<KinectPixelObservationModel>
     typedef double Observation;
     typedef Evaluation<Observation, Scalar>   EvaluationBase;
 };
-}
 
 
 /**
@@ -70,11 +67,11 @@ struct Traits<KinectPixelObservationModel>
  * \ingroup observation_models
  */
 class KinectPixelObservationModel:
-        public internal::Traits<KinectPixelObservationModel>::EvaluationBase
+        public Traits<KinectPixelObservationModel>::EvaluationBase
 {
 public:
-    typedef typename internal::Traits<KinectPixelObservationModel>::Scalar Scalar;
-    typedef typename internal::Traits<KinectPixelObservationModel>::Observation Observation;
+    typedef typename Traits<KinectPixelObservationModel>::Scalar Scalar;
+    typedef typename Traits<KinectPixelObservationModel>::Observation Observation;
 
     KinectPixelObservationModel(Scalar tail_weight = 0.01,
                                 Scalar model_sigma = 0.003,

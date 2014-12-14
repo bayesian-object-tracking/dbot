@@ -62,8 +62,6 @@ namespace fl
 //TODO: THIS IS REDUNDANT!!
 template <typename State, int OBJECTS> class BrownianObjectMotionModel;
 
-namespace internal
-{
 /**
  * BrownianObjectMotion distribution traits specialization
  * \internal
@@ -89,7 +87,6 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
     typedef StationaryProcessModel<State, Input>    ProcessModelBase;
     typedef GaussianMap<State, Noise>          GaussianMapBase;
 };
-}
 
 /**
  * \class BrownianObjectMotion
@@ -99,27 +96,28 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
  */
 template <typename State_, int OBJECTS = -1>
 class BrownianObjectMotionModel:
-        public internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::ProcessModelBase,
-        public internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::GaussianMapBase
+        public Traits<BrownianObjectMotionModel<State_, OBJECTS> >::ProcessModelBase,
+        public Traits<BrownianObjectMotionModel<State_, OBJECTS> >::GaussianMapBase
 {
 public:
-    typedef internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> > Traits;
 
-    typedef typename Traits::Scalar     Scalar;
-    typedef typename Traits::State      State;
-    typedef typename Traits::Input      Input;
-    typedef typename Traits::Noise      Noise;
-    typedef typename Traits::Quaternion Quaternion;
-    typedef typename Traits::Process    Process;
+    typedef BrownianObjectMotionModel<State_, OBJECTS> This;
+
+    typedef typename Traits<This>::Scalar     Scalar;
+    typedef typename Traits<This>::State      State;
+    typedef typename Traits<This>::Input      Input;
+    typedef typename Traits<This>::Noise      Noise;
+    typedef typename Traits<This>::Quaternion Quaternion;
+    typedef typename Traits<This>::Process    Process;
 
     enum
     {
-        DIMENSION_PER_OBJECT = Traits::DIMENSION_PER_OBJECT
+        DIMENSION_PER_OBJECT = Traits<This>::DIMENSION_PER_OBJECT
     };
 
 public:
     BrownianObjectMotionModel(const unsigned& count_objects = OBJECTS):
-        Traits::GaussianMapBase(
+        Traits<This>::GaussianMapBase(
             count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
