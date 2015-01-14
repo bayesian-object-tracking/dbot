@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(state_filtering)
+project(pose_tracking)
 
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE Debug)
@@ -200,7 +200,7 @@ set(tracking_interface_sources
 )
 
 
-## state_filtering
+## pose_tracking
 #message("CATKING LIBRARIES" ${catkin_LIBRARIES})
 
 add_library(${PROJECT_NAME_TRACKING} ${tracking_headers}

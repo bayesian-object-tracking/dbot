@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fl/util/traits.hpp>
 
-#include <ff/utils/assertions.hpp>
+#include <fl/util/assertions.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
 #include <ff/models/observation_models/interfaces/rao_blackwell_observation_model.hpp>
 

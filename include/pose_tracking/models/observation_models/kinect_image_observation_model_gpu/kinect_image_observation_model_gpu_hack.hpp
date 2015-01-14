@@ -24,7 +24,7 @@
 #include <iostream>
 #include <cuda_gl_interop.h>
 
-#include <ff/utils/profiling.hpp>
+#include <fl/util/profiling.hpp>
 
 namespace fl
 {

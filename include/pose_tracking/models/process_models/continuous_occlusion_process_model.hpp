@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <ff/models/process_models/interfaces/stationary_process_model.hpp>
 #include <fl/distribution/interface/gaussian_map.hpp>
-#include <ff/distributions/truncated_gaussian.hpp>
+#include <fl/distribution/truncated_gaussian.hpp>
 
 #include <pose_tracking/models/process_models/occlusion_process_model.hpp>
 

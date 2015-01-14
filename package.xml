@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <package>
-  <name>state_filtering</name>
+  <name>pose_tracking</name>
   <version>0.0.0</version>
-  <description>The state_filtering package</description>
+  <description>The pose_tracking package</description>
 
   <maintainer email="jan.issac@gmail.com">Jan Issac</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://github.com/jan-issac/state_filtering</url>
+  <url type="website"></url>
 
   <author email="jan.issac@gmail.com">Jan Issac</author>
   <author email="manuel.wuthrich@gmail.com">Manuel Wuthrich</author>

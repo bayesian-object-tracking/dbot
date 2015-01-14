@@ -33,12 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fl/distribution/interface/evaluation.hpp>
 
-#include <ff/distributions/exponential_distribution.hpp>
-#include <ff/distributions/uniform_distribution.hpp>
-#include <ff/distributions/truncated_gaussian.hpp>
+#include <fl/distribution/exponential_distribution.hpp>
+#include <fl/distribution/uniform_distribution.hpp>
+#include <fl/distribution/truncated_gaussian.hpp>
 
 //TODO: THESE INCLUDES ARE JUST TEMPORARY
-#include <ff/utils/distribution_test.hpp>
+#include <pose_tracking/utils/distribution_test.hpp>
 #include <iostream>
 
 namespace fl

@@ -36,9 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/distribution/interface/evaluation.hpp>
 #include <fl/util/traits.hpp>
 
-#include <ff/distributions/exponential_distribution.hpp>
-#include <ff/distributions/uniform_distribution.hpp>
-#include <ff/distributions/truncated_gaussian.hpp>
+#include <fl/distribution/exponential_distribution.hpp>
+#include <fl/distribution/uniform_distribution.hpp>
+#include <fl/distribution/truncated_gaussian.hpp>
 #include <ff/utils/helper_functions.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>

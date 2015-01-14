@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 #include <ros/package.h>
 
-#include <ff/utils/profiling.hpp>
+#include <fl/util/profiling.hpp>
 
 #include <pose_tracking_interface/trackers/object_tracker.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
@@ -34,13 +34,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include <ff/distributions/uniform_distribution.hpp>
+#include <fl/distribution/uniform_distribution.hpp>
 #include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
 #include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
 
 #include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
 
-#include <ff/utils/distribution_test.hpp>
+#include <pose_tracking/utils/distribution_test.hpp>
 
 #include <pose_tracking_interface/utils/cloud_visualizer.hpp>
 
@@ -136,60 +136,50 @@ void MultiObjectTracker::Initialize(
 
 
 
+//    fl::ApproximateKinectPixelObservationModel<State, double> pixel_observation_model(
+//                object_renderer,
+//                camera_matrix,
+//                image.rows(),
+//                image.cols(),
+//                0.01,
+//                0.003,
+//                0.00142478,
+//                1.0,
+//                6.0,
+//                0.0,
+//                1.5,
+//                10000,
+//                100);
+//    pixel_observation_model.Condition(1, 0);
 
+//    fl::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
+//                                                          p_occluded_occluded,
+//                                                          0.2);
+//    fl::ContinuousOcclusionProcessModel::State occlusion;
 
+//    size_t N = 1000000;
+//    INIT_PROFILING;
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion_process.Condition(1.0, occlusion);
+//        occlusion(0,0) += 0.00001;
+//    }
+//    MEASURE("conditioning");
+//    occlusion_process.Condition(1.0, occlusion);
+//    for(size_t i = 0; i < N; i++)
+//    {
+//        occlusion = occlusion_process.MapStandardGaussian(fl::ContinuousOcclusionProcessModel::State(0.12));
+//    }
+//    MEASURE("mapping");
 
+//    std::cout << "testing distribution " << std::endl;
+//    occlusion(0,0) = -1000.0;
+//    occlusion_process.Condition(1.0, occlusion);
+//    fl::TestDistributionSampling(occlusion_process, 100000);
+//    fl::TestDistribution(pixel_observation_model, 1000000);
+//    std::cout << "done testing " << std::endl;
 
-
-
-
-
-
-
-    fl::ApproximateKinectPixelObservationModel<State, double> pixel_observation_model(
-                object_renderer,
-                camera_matrix,
-                image.rows(),
-                image.cols(),
-                0.01,
-                0.003,
-                0.00142478,
-                1.0,
-                6.0,
-                0.0,
-                1.5,
-                10000,
-                100);
-    pixel_observation_model.Condition(1, 0);
-
-    fl::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
-                                                          p_occluded_occluded,
-                                                          0.2);
-    fl::ContinuousOcclusionProcessModel::State occlusion;
-
-    size_t N = 1000000;
-    INIT_PROFILING;
-    for(size_t i = 0; i < N; i++)
-    {
-        occlusion_process.Condition(1.0, occlusion);
-        occlusion(0,0) += 0.00001;
-    }
-    MEASURE("conditioning");
-    occlusion_process.Condition(1.0, occlusion);
-    for(size_t i = 0; i < N; i++)
-    {
-        occlusion = occlusion_process.MapStandardGaussian(fl::ContinuousOcclusionProcessModel::State(0.12));
-    }
-    MEASURE("mapping");
-
-    std::cout << "testing distribution " << std::endl;
-    occlusion(0,0) = -1000.0;
-    occlusion_process.Condition(1.0, occlusion);
-    fl::TestDistributionSampling(occlusion_process, 100000);
-    fl::TestDistribution(pixel_observation_model, 1000000);
-    std::cout << "done testing " << std::endl;
-
-    exit(-1);
+//    exit(-1);
 
 
 
