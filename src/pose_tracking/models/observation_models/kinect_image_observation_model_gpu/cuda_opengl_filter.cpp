@@ -15,6 +15,7 @@
 
 #include <cuda_gl_interop.h>
 #include <ff/utils/helper_functions.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;
@@ -288,7 +289,7 @@ void CudaOpenglFilter::Evaluate(
 vector<int> CudaOpenglFilter::Resample()
 {
     vector<int> resampling_indices;
-    fl::hf::DiscreteSampler sampler(log_likelihoods_);
+    fl::hf::DiscreteDistribution sampler(log_likelihoods_);
 
     for (int i = 0; i < n_poses_; i++) {
         resampling_indices.push_back(sampler.Sample());
