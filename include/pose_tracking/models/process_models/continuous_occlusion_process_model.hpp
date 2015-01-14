@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_CONTINUOUS_OCCLUSION_PROCESS_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_CONTINUOUS_OCCLUSION_PROCESS_MODEL_HPP
 
-#include <ff/utils/helper_functions.hpp>
+#include <fl/util/math.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 #include <ff/models/process_models/interfaces/stationary_process_model.hpp>
 #include <fl/distribution/interface/gaussian_map.hpp>
@@ -87,7 +88,7 @@ public:
         }
 
 
-        double initial_occlusion_probability = hf::Sigmoid(occlusion(0, 0));
+        double initial_occlusion_probability = fl::sigmoid(occlusion(0, 0));
 
         mean_.Condition(delta_time, initial_occlusion_probability);
         double mean = mean_.MapStandardGaussian();
@@ -112,7 +113,7 @@ public:
     virtual State MapStandardGaussian(const Noise& sample) const
     {        
         State l;
-        l(0, 0) = hf::Logit(
+        l(0, 0) = fl::logit(
                     truncated_gaussian_.MapStandardGaussian(sample(0,0)));        
 
         if(std::isnan(l(0,0)))

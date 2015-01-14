@@ -1,10 +1,11 @@
 
 #include <ros/package.h>
 
+#include <fl/util/math.hpp>
 #include <fl/util/profiling.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
 
-#include <ff/utils/helper_functions.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 #include <pose_tracking_interface/trackers/fukf_test_tracker.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
@@ -161,7 +162,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
                 new FilterType(process_a, process_b, pixel_observation_model));
 
     State_b b_i(1, 1);
-    b_i(0, 0) = fl::hf::Logit(initial_occlusion_prob);
+    b_i(0, 0) = fl::logit(initial_occlusion_prob);
     state_distr.initialize(initial_state,
                            image.rows()* image.cols(),
                            b_i,

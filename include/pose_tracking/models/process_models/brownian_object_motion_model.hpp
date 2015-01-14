@@ -48,8 +48,9 @@
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 
-#include <ff/utils/helper_functions.hpp>
 #include <fl/util/assertions.hpp>
+#include <fl/util/math.hpp>
+
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
 #include <ff/models/process_models/interfaces/stationary_process_model.hpp>
 #include <ff/models/process_models/damped_wiener_process_model.hpp>
@@ -162,7 +163,7 @@ public:
         state_ = state;
         for(size_t i = 0; i < state_.body_count(); i++)
         {
-            quaternion_map_[i] = fl::hf::QuaternionMatrix(state_.quaternion(i).coeffs());
+            quaternion_map_[i] = fl::QuaternionMatrix(state_.quaternion(i).coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center

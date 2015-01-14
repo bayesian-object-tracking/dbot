@@ -35,11 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fl/distribution/interface/evaluation.hpp>
 #include <fl/util/traits.hpp>
+#include <fl/util/math.hpp>
 
 #include <fl/distribution/exponential_distribution.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
 #include <fl/distribution/truncated_gaussian.hpp>
+
 #include <ff/utils/helper_functions.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
@@ -114,7 +117,7 @@ public:
             for(size_t depth_index = 0; depth_index < depth_count; depth_index++)
             {
                 Condition(approximation_depth_,
-                          hf::Logit(double(occlusion_index) * occlusion_step_));
+                          fl::logit(double(occlusion_index) * occlusion_step_));
                 log_probs[depth_index] = LogProbability(
                             min_depth_ + double(depth_index) * depth_step_);
             }
@@ -201,7 +204,7 @@ public:
 
 
         rendered_depth_ = rendered_depth;
-        occlusion_probability_ = hf::Sigmoid(occlusion);
+        occlusion_probability_ = fl::sigmoid(occlusion);
 
         occlusion_index_ = occlusion_probability_ / occlusion_step_;
 

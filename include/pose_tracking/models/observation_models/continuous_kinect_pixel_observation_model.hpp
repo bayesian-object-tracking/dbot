@@ -38,7 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/distribution/exponential_distribution.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
 #include <fl/distribution/truncated_gaussian.hpp>
-#include <ff/utils/helper_functions.hpp>
+#include <fl/util/math.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
@@ -189,7 +190,7 @@ public:
 
         rendered_depth_ = predictions_[pose][index];
 
-        occlusion_probability_ = hf::Sigmoid(occlusion);
+        occlusion_probability_ = fl::sigmoid(occlusion);
         occluded_observation_model_.Condition(rendered_depth_, true);
         visible_observation_model_.Condition(rendered_depth_, false);
     }
@@ -198,7 +199,7 @@ public:
                            const Scalar& occlusion)
     {
         rendered_depth_ = rendered_depth;
-        occlusion_probability_ = hf::Sigmoid(occlusion);
+        occlusion_probability_ = fl::sigmoid(occlusion);
 
         occluded_observation_model_.Condition(rendered_depth, true);
         visible_observation_model_.Condition(rendered_depth, false);
