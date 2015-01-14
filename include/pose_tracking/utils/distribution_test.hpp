@@ -3,14 +3,73 @@
 
 #include <iostream>
 
-#include <ff/utils/helper_functions.hpp>
-
 #include <boost/filesystem.hpp>
 #include <limits>
 
+#include <ff/utils/helper_functions.hpp>
 
 namespace fl
 {
+
+template <typename T>
+int IndexNextReal(
+        const std::vector<T>& data,
+        const int& current_index = -1,
+        const int& step_size = 1)
+{
+    int index_next_real = current_index + step_size;
+    while(
+            index_next_real < int(data.size()) &&
+            index_next_real >= 0 &&
+            !std::isfinite(data[index_next_real])) index_next_real+=step_size;
+
+    return index_next_real;
+}
+
+// this function will interpolat the vector wherever it is NAN or INF
+template <typename T>
+void LinearlyInterpolate(std::vector<T>& data)
+{
+    std::vector<int> limits;
+    limits.push_back(0);
+    limits.push_back(data.size()-1);
+    std::vector<int> step_direction;
+    step_direction.push_back(1);
+    step_direction.push_back(-1);
+
+    // extrapolate
+    for(int i = 0; i < 2; i++)
+    {
+        int index_first_real = IndexNextReal(data, limits[i] - step_direction[i], step_direction[i]);
+        int index_next_real = IndexNextReal(data, index_first_real, step_direction[i]);
+        if(index_next_real >= int(data.size()) || index_next_real < 0)
+            return;
+
+        double slope =
+                double(data[index_next_real] - data[index_first_real]) /
+                double(index_next_real - index_first_real);
+
+        for(int j = limits[i]; j != index_first_real; j += step_direction[i])
+            data[j] = data[index_first_real] + (j - index_first_real) * slope;
+    }
+
+    // interpolate
+    int index_current_real = IndexNextReal(data, limits[0] - step_direction[0], step_direction[0]);
+    int index_next_real = IndexNextReal(data, index_current_real, step_direction[0]);
+
+    while(index_next_real < int(data.size()))
+    {
+        double slope =
+                double(data[index_next_real] - data[index_current_real]) /
+                double(index_next_real - index_current_real);
+
+        for(int i = index_current_real + 1; i < index_next_real; i++)
+            data[i] =  data[index_current_real] + (i - index_current_real) * slope;
+
+        index_current_real = index_next_real;
+        index_next_real = IndexNextReal(data, index_next_real, step_direction[0]);
+    }
+}
 
 template<typename Distribution>
 void TestDistribution(Distribution distribution, size_t sample_count = 100000, size_t evaluation_count = 100000)
@@ -25,7 +84,7 @@ void TestDistribution(Distribution distribution, size_t sample_count = 100000, s
     double max = hf::bound_value(samples, true);
     evaluation_inputs[0] = min - (max - min)*0.1;
     evaluation_inputs.back() = max + (max - min)*0.1;
-    hf::LinearlyInterpolate(evaluation_inputs);
+    LinearlyInterpolate(evaluation_inputs);
 
     std::vector<double> evaluation_outputs(evaluation_count, 0);
     for(size_t i = 0; i < evaluation_inputs.size(); i++)
@@ -94,7 +153,7 @@ void TestDistributionSampling(Distribution distribution, size_t sample_count = 1
     double max = hf::bound_value(samples, true);
     evaluation_inputs[0] = min - (max - min)*0.1;
     evaluation_inputs.back() = max + (max - min)*0.1;
-    hf::LinearlyInterpolate(evaluation_inputs);
+    LinearlyInterpolate(evaluation_inputs);
 
     std::vector<double> evaluation_outputs(sample_count, 0);
 
