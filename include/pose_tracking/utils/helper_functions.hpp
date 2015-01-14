@@ -189,6 +189,11 @@ template <typename T> std::vector<int> SortDescend(const std::vector<T> &values)
 }
 
 
+/// \note use
+///         \code std::sort(vec.begin(), vec.end(), std::less<T>()); \endcode
+///       for ascendant sorting and
+///         \code std::sort(vec.begin(), vec.end(), std::greater<T>()); \endcode
+///       for descendant sorting
 template <typename T> void Sort(std::vector<T> &ref_values, bool order = 0)
 {
     std::vector<T> temp_ref_values = ref_values;
