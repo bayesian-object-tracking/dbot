@@ -2,6 +2,11 @@
 #define POSE_TRACKING_MODELS_OBSERVATION_MODELS_CUDA_OPENGL_MULTIPLE_FILTER_HPP
 
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.hpp>
+
+#include <iostream>
+#include <fstream>
+#include <sys/time.h>
+
 namespace fil {
 
 class CudaOpenglMultipleFilter : public fil::CudaOpenglFilter
@@ -30,6 +35,15 @@ public:
     void set_states_multiple(int n_objects, int n_features, int seed);
 
 private:
+
+    double get_wall_time(){
+        struct timeval time;
+        if (gettimeofday(&time,NULL)){
+            std::cerr << "WARNING: gettimeofday() Error" << std::endl;
+            return 0;
+        }
+        return (double)time.tv_sec + (double)time.tv_usec * .000001;
+    }
 
     static const int TIME_MEASUREMENTS_COUNT = 4;
     static const int COUNT = 500;
