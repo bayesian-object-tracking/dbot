@@ -29,21 +29,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 
 #include <fl/util/profiling.hpp>
+#include <fl/distribution/uniform_distribution.hpp>
 
 #include <pose_tracking/utils/helper_functions.hpp>
+#include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
+#include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
+#include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
+#include <pose_tracking/utils/distribution_test.hpp>
+
 #include <pose_tracking_interface/trackers/object_tracker.hpp>
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 #include <pose_tracking_interface/utils/object_file_reader.hpp>
-
-#include <fl/distribution/uniform_distribution.hpp>
-#include <pose_tracking/models/observation_models/continuous_kinect_pixel_observation_model.hpp>
-#include <pose_tracking/models/observation_models/approximate_kinect_pixel_observation_model.hpp>
-
-#include <pose_tracking/models/process_models/continuous_occlusion_process_model.hpp>
-
-#include <pose_tracking/utils/distribution_test.hpp>
-
 #include <pose_tracking_interface/utils/cloud_visualizer.hpp>
+
 
 #include <boost/filesystem.hpp>
 
@@ -140,14 +138,6 @@ void MultiObjectTracker::Initialize(
 
 
 
-
-
-
-
-
-
-
-
 //    fl::ApproximateKinectPixelObservationModel<State, double> pixel_observation_model(
 //                object_renderer,
 //                camera_matrix,
@@ -192,10 +182,6 @@ void MultiObjectTracker::Initialize(
 //    std::cout << "done testing " << std::endl;
 
 //    exit(-1);
-
-
-
-
 
 
 
