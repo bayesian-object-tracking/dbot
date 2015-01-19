@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 #include <ros/package.h>
 
+#include <memory>
+
 #include <fl/util/profiling.hpp>
 
 #include <pose_tracking/utils/helper_functions.hpp>
@@ -160,7 +162,7 @@ void MultiObjectTracker::Initialize(
 //                1.5,
 //                10000,
 //                100);
-//    pixel_observation_model.Condition(1, 0);
+//    pixel_observation_model.condition(1, 0);
 
 //    fl::ContinuousOcclusionProcessModel occlusion_process(p_occluded_visible,
 //                                                          p_occluded_occluded,
@@ -171,20 +173,20 @@ void MultiObjectTracker::Initialize(
 //    INIT_PROFILING;
 //    for(size_t i = 0; i < N; i++)
 //    {
-//        occlusion_process.Condition(1.0, occlusion);
+//        occlusion_process.condition(1.0, occlusion);
 //        occlusion(0,0) += 0.00001;
 //    }
 //    MEASURE("conditioning");
-//    occlusion_process.Condition(1.0, occlusion);
+//    occlusion_process.condition(1.0, occlusion);
 //    for(size_t i = 0; i < N; i++)
 //    {
-//        occlusion = occlusion_process.MapStandardGaussian(fl::ContinuousOcclusionProcessModel::State(0.12));
+//        occlusion = occlusion_process.map_standard_normal(fl::ContinuousOcclusionProcessModel::State(0.12));
 //    }
 //    MEASURE("mapping");
 
 //    std::cout << "testing distribution " << std::endl;
 //    occlusion(0,0) = -1000.0;
-//    occlusion_process.Condition(1.0, occlusion);
+//    occlusion_process.condition(1.0, occlusion);
 //    fl::TestDistributionSampling(occlusion_process, 100000);
 //    fl::TestDistribution(pixel_observation_model, 1000000);
 //    std::cout << "done testing " << std::endl;
@@ -207,7 +209,7 @@ void MultiObjectTracker::Initialize(
 
 
     // initialize observation model ========================================================================================================================================================================================================================================================================================================================================================================================================================
-    boost::shared_ptr<ObservationModel> observation_model;
+    std::shared_ptr<ObservationModel> observation_model;
 #ifndef BUILD_GPU
     use_gpu = false;
 #endif
@@ -219,7 +221,7 @@ void MultiObjectTracker::Initialize(
                     new fl::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
         boost::shared_ptr<fl::OcclusionProcessModel> occlusion_process(
                     new fl::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
-        observation_model = boost::shared_ptr<ObservationModelCPUType>(
+        observation_model = std::shared_ptr<ObservationModelCPUType>(
                     new ObservationModelCPUType(camera_matrix,
                                         image.rows(),
                                         image.cols(),
@@ -233,7 +235,7 @@ void MultiObjectTracker::Initialize(
     {
 #ifdef BUILD_GPU
         // gpu obseration model
-        boost::shared_ptr<ObservationModelGPUType>
+        std::shared_ptr<ObservationModelGPUType>
                 gpu_observation_model(new ObservationModelGPUType(
                                                  camera_matrix,
                                                  image.rows(),
@@ -289,7 +291,7 @@ void MultiObjectTracker::Initialize(
     Eigen::MatrixXd linear_acceleration_covariance = Eigen::MatrixXd::Identity(3, 3) * pow(double(linear_acceleration_sigma), 2);
     Eigen::MatrixXd angular_acceleration_covariance = Eigen::MatrixXd::Identity(3, 3) * pow(double(angular_acceleration_sigma), 2);
 
-    boost::shared_ptr<ProcessModel> process(new ProcessModel(object_names_.size()));
+    std::shared_ptr<ProcessModel> process(new ProcessModel(object_names_.size()));
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         process->Parameters(i, object_renderer->object_center(i).cast<double>(),
@@ -369,7 +371,7 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
 
 
     // visualize the mean state
-    fl::FreeFloatingRigidBodiesState<> mean = filter_->StateDistribution().Mean();
+    fl::FreeFloatingRigidBodiesState<> mean = filter_->StateDistribution().mean();
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -379,5 +381,5 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
     }
 
     last_measurement_time_ = ros_image.header.stamp.toSec();
-    return filter_->StateDistribution().Mean();
+    return filter_->StateDistribution().mean();
 }

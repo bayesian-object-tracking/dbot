@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/lexical_cast.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
 
-#include <fl/util/random_seed.hpp>
+#include <fl/util/random.hpp>
 
 
 
@@ -54,6 +54,29 @@ namespace fl
 
 namespace hf
 {
+
+
+// use std::min_element & std::max_element instead. better API if split into two functions
+template <typename T> int BoundIndex(const std::vector<T> &values, bool bound_type) // bound type 1 for max and 0 for min
+{
+    int BoundIndex = 0;
+    T bound_value = bound_type ? -std::numeric_limits<T>::max() : std::numeric_limits<T>::max();
+
+    for(int i = 0; i < int(values.size()); i++)
+        if(bound_type ? (values[i] > bound_value) : (values[i] < bound_value) )
+        {
+            BoundIndex = i;
+            bound_value = values[i];
+        }
+
+    return BoundIndex;
+}
+
+// use std::min_element & std::max_element instead
+template <typename T> T bound_value(const std::vector<T> &values, bool bound_type) // bound type 1 for max and 0 for min
+{
+    return values[BoundIndex(values, bound_type)];
+}
 
 template <typename T>  void PrintVector(std::vector<T> v)
 {
@@ -315,7 +338,7 @@ public:
 
 
 
-    int MapStandardGaussian(double gaussian_sample) const
+    int map_standard_normal(double gaussian_sample) const
     {
         // map from a gaussian to a uniform distribution
         double uniform_sample = 0.5 *

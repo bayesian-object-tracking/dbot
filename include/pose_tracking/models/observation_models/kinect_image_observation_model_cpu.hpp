@@ -145,22 +145,22 @@ public:
                             observation_time_ -
                             occlusion_times_[indices[state_index]][intersect_indices[i]];
 
-                    occlusion_process_model_->Condition(delta_time,
+                    occlusion_process_model_->condition(delta_time,
                        occlusions_[indices[state_index]][intersect_indices[i]]);
 
 
-                    float occlusion = occlusion_process_model_->MapStandardGaussian();
+                    float occlusion = occlusion_process_model_->map_standard_normal();
 
-                    observation_model_->Condition(predictions[i], false);
+                    observation_model_->condition(predictions[i], false);
                     float p_obsIpred_vis =
-                            observation_model_->Probability(observations_[intersect_indices[i]]) * (1.0 - occlusion);
+                            observation_model_->probability(observations_[intersect_indices[i]]) * (1.0 - occlusion);
 
-                    observation_model_->Condition(predictions[i], true);
+                    observation_model_->condition(predictions[i], true);
                     float p_obsIpred_occl =
-                            observation_model_->Probability(observations_[intersect_indices[i]]) * occlusion;
+                            observation_model_->probability(observations_[intersect_indices[i]]) * occlusion;
 
-                    observation_model_->Condition(std::numeric_limits<float>::infinity(), true);
-                    float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
+                    observation_model_->condition(std::numeric_limits<float>::infinity(), true);
+                    float p_obsIinf = observation_model_->probability(observations_[intersect_indices[i]]);
 
                     loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 

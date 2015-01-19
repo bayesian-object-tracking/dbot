@@ -25,6 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
+#include <memory>
+
 #include <sensor_msgs/PointCloud2.h>
 
 #include <fl/util/profiling.hpp>
@@ -177,7 +179,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     cloud_vis.show();
     */
 
-    boost::shared_ptr<ObservationModel> observation_model;
+    std::shared_ptr<ObservationModel> observation_model;
 
     if(!use_gpu)
     {
@@ -186,7 +188,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
                     new fl::KinectPixelObservationModel(tail_weight, model_sigma, sigma_factor));
         boost::shared_ptr<fl::OcclusionProcessModel> occlusion_process_model(
                     new fl::OcclusionProcessModel(p_occluded_visible, p_occluded_occluded));
-        observation_model = boost::shared_ptr<ObservationModelCPUType>(
+        observation_model = std::shared_ptr<ObservationModelCPUType>(
                     new ObservationModelCPUType(camera_matrix,
                                                 image.rows(),
                                                 image.cols(),
@@ -200,7 +202,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     {
 #ifdef BUILD_GPU
         // gpu obseration model
-        boost::shared_ptr<ObservationModelGPUType>
+        std::shared_ptr<ObservationModelGPUType>
                 gpu_observation_model(new ObservationModelGPUType(
                                           camera_matrix,
                                           image.rows(),
@@ -263,7 +265,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
              << " while the state dimension is " << dimension_ << std::endl;
         exit(-1);
     }
-    boost::shared_ptr<ProcessModel> process(new ProcessModel(dimension_));
+    std::shared_ptr<ProcessModel> process(new ProcessModel(dimension_));
     Eigen::MatrixXd joint_covariance = Eigen::MatrixXd::Zero(dimension_, dimension_);
     for(size_t i = 0; i < dimension_; i++)
         joint_covariance(i, i) = pow(joint_sigmas[i], 2);
@@ -318,7 +320,7 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     // get the mean estimation for the robot joints
     // Casting is a disgusting hack to make sure that the correct equal-operator is used
     // TODO: Make this right
-    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().Mean());
+    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().mean());
 
     // DEBUG to see depth images
     robot_renderer_->state(*mean_);
@@ -427,7 +429,7 @@ Eigen::VectorXd RobotTracker::FilterAndReturn(const sensor_msgs::Image& ros_imag
     // get the mean estimation for the robot joints
     // Casting is a disgusting hack to make sure that the correct equal-operator is used
     // TODO: Make this right
-    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().Mean());
+    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().mean());
 
     // DEBUG to see depth images
     robot_renderer_->state(*mean_);

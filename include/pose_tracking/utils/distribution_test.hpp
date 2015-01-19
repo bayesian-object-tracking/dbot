@@ -6,6 +6,8 @@
 #include <boost/filesystem.hpp>
 #include <limits>
 
+#include <algorithm>
+
 #include <ff/utils/helper_functions.hpp>
 
 namespace fl
@@ -77,18 +79,19 @@ void TestDistribution(Distribution distribution, size_t sample_count = 100000, s
     // for now we assume that it is just a univariate distribution
     std::vector<double> samples;
     for(size_t i = 0; i < sample_count; i++)
-        samples.push_back(distribution.Sample());
+        samples.push_back(distribution.sample());
 
     std::vector<double> evaluation_inputs(evaluation_count, std::numeric_limits<double>::quiet_NaN());
-    double min = hf::bound_value(samples, false);
-    double max = hf::bound_value(samples, true);
+
+    double min = *(std::min_element(samples.begin(), samples.end()));
+    double max = *(std::max_element(samples.begin(), samples.end()));
     evaluation_inputs[0] = min - (max - min)*0.1;
     evaluation_inputs.back() = max + (max - min)*0.1;
     LinearlyInterpolate(evaluation_inputs);
 
     std::vector<double> evaluation_outputs(evaluation_count, 0);
     for(size_t i = 0; i < evaluation_inputs.size(); i++)
-        evaluation_outputs[i] = distribution.Probability(evaluation_inputs[i]);
+        evaluation_outputs[i] = distribution.probability(evaluation_inputs[i]);
 
     boost::filesystem::path path = "/tmp";
     path /= "distribution_test";
@@ -146,11 +149,11 @@ void TestDistributionSampling(Distribution distribution, size_t sample_count = 1
     // for now we assume that it is just a univariate distribution
     std::vector<double> samples;
     for(size_t i = 0; i < sample_count; i++)
-        samples.push_back(distribution.Sample()(0,0));
+        samples.push_back(distribution.sample()(0,0));
 
     std::vector<double> evaluation_inputs(sample_count, std::numeric_limits<double>::quiet_NaN());
-    double min = hf::bound_value(samples, false);
-    double max = hf::bound_value(samples, true);
+    double min = *(std::min_element(samples.begin(), samples.end()));
+    double max = *(std::max_element(samples.begin(), samples.end()));
     evaluation_inputs[0] = min - (max - min)*0.1;
     evaluation_inputs.back() = max + (max - min)*0.1;
     LinearlyInterpolate(evaluation_inputs);

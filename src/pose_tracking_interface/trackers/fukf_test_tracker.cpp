@@ -1,6 +1,8 @@
 
 #include <ros/package.h>
 
+#include <memory>
+
 #include <fl/util/math.hpp>
 #include <fl/util/profiling.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
@@ -24,7 +26,6 @@ void FukfTestTracker::Initialize(State_a initial_state,
                                  Eigen::Matrix3d camera_matrix)
 {
     boost::mutex::scoped_lock lock(mutex_);
-
 
     // read some parameters
     int evaluation_count;
@@ -112,12 +113,13 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     std::cout << "creating state" << std::endl;
 
-
+    // needs to be changed to std::shared_ptr
     boost::shared_ptr<State_a> rigid_bodies_state(
                 new State_a(object_names_.size()));
 
     std::cout << "creating renderer" << std::endl;
 
+    // needs to be changed to std::shared_ptr
     boost::shared_ptr<fl::RigidBodyRenderer> object_renderer(
                 new fl::RigidBodyRenderer(
                     object_vertices,
@@ -126,7 +128,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     std::cout << "creating observation model" << std::endl;
 
-    boost::shared_ptr<ObservationModel >
+    std::shared_ptr<ObservationModel >
             pixel_observation_model(
                 new ObservationModel(
                     object_renderer,
@@ -142,10 +144,10 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     std::cout << "initialized observation omodel " << std::endl;
 
-    boost::shared_ptr<ProcessModel_a> process_a(
+    std::shared_ptr<ProcessModel_a> process_a(
                 new ProcessModel_a(object_names_.size()));
 
-    boost::shared_ptr<ProcessModel_b> process_b(
+    std::shared_ptr<ProcessModel_b> process_b(
                 new ProcessModel_b(
                     p_occluded_visible, p_occluded_occluded, occlusion_process_sigma));
 
@@ -158,7 +160,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
     }
 
     std::cout << "initialized process model " << std::endl;   
-    filter_ = boost::shared_ptr<FilterType>(
+    filter_ = std::shared_ptr<FilterType>(
                 new FilterType(process_a, process_b, pixel_observation_model));
 
     State_b b_i(1, 1);

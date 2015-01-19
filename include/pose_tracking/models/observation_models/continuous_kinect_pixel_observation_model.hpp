@@ -100,24 +100,24 @@ public:
 
     virtual ~ContinuousKinectPixelObservationModel() {}
 
-    virtual Observation MapStandardGaussian(const Noise& sample) const
+    virtual Observation map_standard_normal(const Noise& sample) const
     {
         // object model inaccuracies
         Scalar object_depth = rendered_depth_
-                + object_model_noise_.MapStandardGaussian(sample(0));
+                + object_model_noise_.map_standard_normal(sample(0));
 
         // if the depth is outside of the range we return nan
         if(object_depth < min_depth_ || object_depth > max_depth_)
             return std::numeric_limits<Observation>::quiet_NaN();
 
         // occlusion
-        bool occluded = uniform_distribution_.MapStandardGaussian(sample(1))
+        bool occluded = uniform_distribution_.map_standard_normal(sample(1))
                 <= occlusion_probability_ ? true : false;
         Scalar true_depth;
         if(occluded)
         {
             true_depth = exponential_distribution_.
-                                MapStandardGaussian(sample(2), object_depth);
+                                map_standard_normal(sample(2), object_depth);
         }
         else
         {
@@ -126,13 +126,13 @@ public:
 
         // measurement noise
         bool sensor_failure =
-                uniform_distribution_.MapStandardGaussian(sample(3))
+                uniform_distribution_.map_standard_normal(sample(3))
                 <= tail_weight_ ? true : false;
         Scalar measured_depth;
         if(sensor_failure)
         {
             measured_depth =
-                    sensor_failure_distribution_.MapStandardGaussian(sample(4));
+                    sensor_failure_distribution_.map_standard_normal(sample(4));
         }
         else
         {
@@ -143,27 +143,27 @@ public:
                                         max_depth_);
 
             measured_depth =
-                    measurement_distribution.MapStandardGaussian(sample(4));
+                    measurement_distribution.map_standard_normal(sample(4));
         }
 
         return measured_depth;
     }
 
-    virtual Scalar Probability(const Observation& observation) const
+    virtual Scalar probability(const Observation& observation) const
     {
         Scalar probability_given_occluded =
-                occluded_observation_model_.Probability(observation);
+                occluded_observation_model_.probability(observation);
 
         Scalar probability_given_visible =
-                visible_observation_model_.Probability(observation);
+                visible_observation_model_.probability(observation);
 
         return probability_given_occluded * occlusion_probability_ +
                 probability_given_visible * (1.0 - occlusion_probability_);
     }
 
-    virtual Scalar LogProbability(const Observation& observation) const
+    virtual Scalar log_probability(const Observation& observation) const
     {
-        return std::log(Probability(observation));
+        return std::log(probability(observation));
     }
 
     virtual void ClearCache()
@@ -171,7 +171,7 @@ public:
         predictions_.clear();
     }
 
-    virtual void Condition(const State& state,
+    virtual void condition(const State& state,
                            const Scalar& occlusion,
                            size_t index)
     {
@@ -191,18 +191,18 @@ public:
         rendered_depth_ = predictions_[pose][index];
 
         occlusion_probability_ = fl::sigmoid(occlusion);
-        occluded_observation_model_.Condition(rendered_depth_, true);
-        visible_observation_model_.Condition(rendered_depth_, false);
+        occluded_observation_model_.condition(rendered_depth_, true);
+        visible_observation_model_.condition(rendered_depth_, false);
     }
 
-    virtual void Condition(const Scalar& rendered_depth,
+    virtual void condition(const Scalar& rendered_depth,
                            const Scalar& occlusion)
     {
         rendered_depth_ = rendered_depth;
         occlusion_probability_ = fl::sigmoid(occlusion);
 
-        occluded_observation_model_.Condition(rendered_depth, true);
-        visible_observation_model_.Condition(rendered_depth, false);
+        occluded_observation_model_.condition(rendered_depth, true);
+        visible_observation_model_.condition(rendered_depth, false);
     }
 
 private:

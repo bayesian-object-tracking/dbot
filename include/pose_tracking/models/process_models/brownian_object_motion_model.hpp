@@ -87,6 +87,7 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
 
     typedef StationaryProcessModel<State, Input>    ProcessModelBase;
     typedef GaussianMap<State, Noise>          GaussianMapBase;
+    typedef ProcessModelInterface<State, Noise, Input> ProcessInterfaceBase;
 };
 
 /**
@@ -97,8 +98,9 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
  */
 template <typename State_, int OBJECTS = -1>
 class BrownianObjectMotionModel:
-        public Traits<BrownianObjectMotionModel<State_, OBJECTS> >::ProcessModelBase,
-        public Traits<BrownianObjectMotionModel<State_, OBJECTS> >::GaussianMapBase
+        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessModelBase,
+        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::GaussianMapBase,
+        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessInterfaceBase
 {
 public:
 
@@ -132,15 +134,15 @@ public:
 
     virtual ~BrownianObjectMotionModel() { }
 
-    virtual State MapStandardGaussian(const Noise& sample) const
+    virtual State map_standard_normal(const Noise& sample) const
     {
         State new_state(state_.body_count());
         for(size_t i = 0; i < new_state.body_count(); i++)
         {
             Eigen::Matrix<Scalar, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
             Eigen::Matrix<Scalar, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
-            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapStandardGaussian(position_noise);
-            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapStandardGaussian(orientation_noise);
+            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].map_standard_normal(position_noise);
+            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].map_standard_normal(orientation_noise);
 
             new_state.position(i) = state_.position(i) + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.quaternion(i).coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
@@ -156,7 +158,7 @@ public:
         return new_state;
     }
 
-    virtual void Condition(const Scalar& delta_time,
+    virtual void condition(const Scalar& delta_time,
                            const State&  state,
                            const Input&  control)
     {
@@ -174,14 +176,14 @@ public:
             Eigen::Matrix<Scalar, 6, 1> linear_state;
             linear_state.topRows(3) = Eigen::Vector3d::Zero();
             linear_state.bottomRows(3) = state_.linear_velocity(i);
-            linear_process_[i].Condition(delta_time,
+            linear_process_[i].condition(delta_time,
                                          linear_state,
                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
 
             Eigen::Matrix<Scalar, 6, 1> angular_state;
             angular_state.topRows(3) = Eigen::Vector3d::Zero();
             angular_state.bottomRows(3) = state_.angular_velocity(i);
-            angular_process_[i].Condition(delta_time,
+            angular_process_[i].condition(delta_time,
                                           angular_state,
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
@@ -200,13 +202,40 @@ public:
 
     virtual unsigned InputDimension() const
     {
-        return this->NoiseDimension();
+        return this->variate_dimension();
     }
 
-    virtual size_t Dimension()
+    virtual size_t dimension()
     {
         return state_.rows();
     }
+
+    /* interface API */
+    virtual State predict_state(double delta_time,
+                                const State& state,
+                                const Noise& noise,
+                                const Input& input)
+    {
+        condition(delta_time, state, input);
+
+        return map_standard_normal(noise);
+    }
+
+    virtual size_t state_dimension() const
+    {
+        return state_.rows();
+    }
+
+    virtual size_t noise_dimension() const
+    {
+        return this->variate_dimension();
+    }
+
+    virtual size_t input_dimension() const
+    {
+        return this->variate_dimension();
+    }
+
 
 
 private:

@@ -77,7 +77,7 @@ public:
 
     virtual ~ContinuousOcclusionProcessModel() {}
 
-    virtual void Condition(const double& delta_time,
+    virtual void condition(const double& delta_time,
                            const State& occlusion,
                            const Input& input = Input())
     {
@@ -90,8 +90,8 @@ public:
 
         double initial_occlusion_probability = fl::sigmoid(occlusion(0, 0));
 
-        mean_.Condition(delta_time, initial_occlusion_probability);
-        double mean = mean_.MapStandardGaussian();
+        mean_.condition(delta_time, initial_occlusion_probability);
+        double mean = mean_.map_standard_normal();
 
 
 
@@ -110,11 +110,11 @@ public:
                                              0.0, 1.0);
     }
 
-    virtual State MapStandardGaussian(const Noise& sample) const
+    virtual State map_standard_normal(const Noise& sample) const
     {        
         State l;
         l(0, 0) = fl::logit(
-                    truncated_gaussian_.MapStandardGaussian(sample(0,0)));        
+                    truncated_gaussian_.map_standard_normal(sample(0,0)));
 
         if(std::isnan(l(0,0)))
         {
@@ -125,7 +125,7 @@ public:
         return l;
     }
 
-    virtual size_t Dimension()
+    virtual size_t dimension()
     {
         return 1;
     }

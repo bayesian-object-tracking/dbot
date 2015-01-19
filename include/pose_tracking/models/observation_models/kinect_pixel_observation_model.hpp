@@ -100,7 +100,7 @@ public:
 
     virtual ~KinectPixelObservationModel() {}
 
-    virtual Scalar Probability(const Observation& observation) const
+    virtual Scalar probability(const Observation& observation) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
@@ -133,12 +133,12 @@ public:
         return probability;
     }
 
-    virtual Scalar LogProbability(const Observation& observation) const
+    virtual Scalar log_probability(const Observation& observation) const
     {
-        return std::log(Probability(observation));
+        return std::log(probability(observation));
     }
 
-    virtual void Condition(const Scalar& prediction, const bool& occlusion)
+    virtual void condition(const Scalar& prediction, const bool& occlusion)
     {
         prediction_ = prediction;
         occlusion_ = occlusion;

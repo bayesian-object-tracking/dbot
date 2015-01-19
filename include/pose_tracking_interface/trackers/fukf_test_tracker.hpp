@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <string>
+#include <memory>
 
 // ros stuff
 #include <ros/ros.h>
@@ -91,7 +92,7 @@ private:
     ros::NodeHandle nh_;
     ros::Publisher object_publisher_;
 
-    boost::shared_ptr<FilterType> filter_;
+    std::shared_ptr<FilterType> filter_;
 
     // parameters
     std::vector<std::string> object_names_;

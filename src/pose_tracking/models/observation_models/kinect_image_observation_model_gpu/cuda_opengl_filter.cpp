@@ -292,7 +292,7 @@ vector<int> CudaOpenglFilter::Resample()
     fl::hf::DiscreteDistribution sampler(log_likelihoods_);
 
     for (int i = 0; i < n_poses_; i++) {
-        resampling_indices.push_back(sampler.Sample());
+        resampling_indices.push_back(sampler.sample());
     }
 
     if (initialized_ && states_set_) {

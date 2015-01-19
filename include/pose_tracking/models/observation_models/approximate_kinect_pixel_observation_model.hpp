@@ -39,13 +39,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fl/distribution/exponential_distribution.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
-#include <fl/distribution/truncated_gaussian.hpp>
 
 #include <ff/utils/helper_functions.hpp>
-#include <pose_tracking/utils/helper_functions.hpp>
 
+#include <fl/distribution/truncated_gaussian.hpp>
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
+#include <pose_tracking/utils/helper_functions.hpp>
 
 #include <boost/unordered_map.hpp>
 
@@ -116,9 +116,9 @@ public:
             std::vector<double> log_probs(depth_count);
             for(size_t depth_index = 0; depth_index < depth_count; depth_index++)
             {
-                Condition(approximation_depth_,
+                condition(approximation_depth_,
                           fl::logit(double(occlusion_index) * occlusion_step_));
-                log_probs[depth_index] = LogProbability(
+                log_probs[depth_index] = log_probability(
                             min_depth_ + double(depth_index) * depth_step_);
             }
             samplers_.push_back(hf::DiscreteDistribution(log_probs));
@@ -128,35 +128,35 @@ public:
 
     virtual ~ApproximateKinectPixelObservationModel() {}
 
-    virtual Observation MapStandardGaussian(const Noise& sample) const
+    virtual Observation map_standard_normal(const Noise& sample) const
     {
         if(std::isinf(rendered_depth_))
         {
-            return exponential_distribution_.MapStandardGaussian(sample);
+            return exponential_distribution_.map_standard_normal(sample);
         }
 
-        int depth_index = samplers_[occlusion_index_].MapStandardGaussian(sample);
+        int depth_index = samplers_[occlusion_index_].map_standard_normal(sample);
 
         return rendered_depth_ - approximation_depth_ + min_depth_
                 + depth_step_ * double(depth_index);
     }
 
 
-    virtual Scalar Probability(const Observation& observation) const
+    virtual Scalar probability(const Observation& observation) const
     {
         Scalar probability_given_occluded =
-                occluded_observation_model_.Probability(observation);
+                occluded_observation_model_.probability(observation);
 
         Scalar probability_given_visible =
-                visible_observation_model_.Probability(observation);
+                visible_observation_model_.probability(observation);
 
         return probability_given_occluded * occlusion_probability_ +
                 probability_given_visible * (1.0 - occlusion_probability_);
     }
 
-    virtual Scalar LogProbability(const Observation& observation) const
+    virtual Scalar log_probability(const Observation& observation) const
     {
-        return std::log(Probability(observation));
+        return std::log(probability(observation));
     }
 
     virtual void ClearCache()
@@ -167,7 +167,7 @@ public:
         }
     }
 
-    virtual void Condition(const State_a& state,
+    virtual void condition(const State_a& state,
                            const State_b& occlusion,
                            size_t state_index,
                            size_t pixel_index)
@@ -188,7 +188,7 @@ public:
             predictions_[state_index].first = true;
         }
 
-        Condition(predictions_[state_index].second[pixel_index], occlusion);
+        condition(predictions_[state_index].second[pixel_index], occlusion);
 
         // if this was the last pixel, reset cache
         if (pixel_index + 1 == n_rows_*n_cols_)
@@ -197,7 +197,7 @@ public:
         }
     }
 
-    virtual void Condition(const Scalar& rendered_depth,
+    virtual void condition(const Scalar& rendered_depth,
                            const State_b& occlusion)
     {
         assert(!std::isnan(occlusion));
@@ -208,11 +208,11 @@ public:
 
         occlusion_index_ = occlusion_probability_ / occlusion_step_;
 
-        occluded_observation_model_.Condition(rendered_depth, true);
-        visible_observation_model_.Condition(rendered_depth, false);
+        occluded_observation_model_.condition(rendered_depth, true);
+        visible_observation_model_.condition(rendered_depth, false);
     }
 
-    virtual size_t Dimension() const
+    virtual size_t dimension() const
     {
         return 1;
     }
@@ -319,38 +319,38 @@ public:
 
     virtual ~ApproximateKinectPixelObservationModel() { }
 
-    virtual Observation MapStandardGaussian(const Noise& sample) const
+    virtual Observation map_standard_normal(const Noise& sample) const
     {
         Observation observation;
-        observation(0) = scalar_model_.MapStandardGaussian(sample(0));
+        observation(0) = scalar_model_.map_standard_normal(sample(0));
         return observation;
     }
 
-    virtual Scalar Probability(const Observation& observation) const
+    virtual Scalar probability(const Observation& observation) const
     {
-        return scalar_model_.Probability(observation(0));
+        return scalar_model_.probability(observation(0));
     }
 
-    virtual Scalar LogProbability(const Observation& observation) const
+    virtual Scalar log_probability(const Observation& observation) const
     {
-        return scalar_model_.LogProbability(observation(0));
+        return scalar_model_.log_probability(observation(0));
     }
 
-    virtual void Condition(const State_a& state,
+    virtual void condition(const State_a& state,
                            const State_b& occlusion,
                            size_t state_index,
                            size_t pixel_index)
     {
-        scalar_model_.Condition(state, occlusion(0), state_index, pixel_index);
+        scalar_model_.condition(state, occlusion(0), state_index, pixel_index);
     }
 
-    virtual void Condition(const Scalar& rendered_depth,
+    virtual void condition(const Scalar& rendered_depth,
                            const State_b& occlusion)
     {
-        scalar_model_.Condition(rendered_depth, occlusion(0));
+        scalar_model_.condition(rendered_depth, occlusion(0));
     }
 
-    virtual size_t Dimension() const
+    virtual size_t dimension() const
     {
         return Traits<This>::Dimension;
     }

@@ -57,7 +57,7 @@ public:
 
     virtual ~OcclusionProcessModel() {}
 
-    virtual void Condition(const double& delta_time,
+    virtual void condition(const double& delta_time,
                            const double& occlusion_probability,
                            const StationaryProcessModel<double>::Input& input = StationaryProcessModel<double>::Input())
     {
@@ -65,7 +65,7 @@ public:
         occlusion_probability_ = occlusion_probability;
     }
 
-    virtual double MapStandardGaussian() const
+    virtual double map_standard_normal() const
     {
         double pow_c_time = std::exp(delta_time_*log_c_);
 
