@@ -57,7 +57,7 @@ namespace fl
  */
 template <typename State>
 class ContinuousKinectPixelObservationModel:
-        public GaussianMap<double, Eigen::Matrix<double, 5, 1> >,
+        public StandardGaussianMapping<double, Eigen::Matrix<double, 5, 1> >,
         public Evaluation<double, double>
 {
 public:

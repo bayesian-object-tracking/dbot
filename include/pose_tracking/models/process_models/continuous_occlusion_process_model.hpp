@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/util/math.hpp>
 #include <pose_tracking/utils/helper_functions.hpp>
 
-#include <ff/models/process_models/interfaces/stationary_process_model.hpp>
-#include <fl/distribution/interface/gaussian_map.hpp>
+
+#include <fl/distribution/interface/standard_gaussian_mapping.hpp>
 #include <fl/distribution/truncated_gaussian.hpp>
 
 #include <pose_tracking/models/process_models/occlusion_process_model.hpp>
@@ -50,15 +50,15 @@ struct Traits<ContinuousOcclusionProcessModel>
     typedef Eigen::Matrix<Scalar, 1, 1> State;
     typedef Eigen::Matrix<Scalar, 1, 1> Noise;
 
-    typedef StationaryProcessModel<State> ProcessModelBase;
-    typedef GaussianMap<State, Noise>     GaussianMapBase;
+    typedef ProcessModelInterface<State, Noise> ProcessModelBase;
+    typedef StandardGaussianMapping<State, Noise>     GaussianMappingBase;
 
-    typedef typename StationaryProcessModel<State>::Input Input;
+    typedef internal::Empty Input;
 };
 
 class ContinuousOcclusionProcessModel:
         public Traits<ContinuousOcclusionProcessModel>::ProcessModelBase,
-        public Traits<ContinuousOcclusionProcessModel>::GaussianMapBase
+        public Traits<ContinuousOcclusionProcessModel>::GaussianMappingBase
 {
 public:
     typedef ContinuousOcclusionProcessModel This;
@@ -91,7 +91,7 @@ public:
         double initial_occlusion_probability = fl::sigmoid(occlusion(0, 0));
 
         mean_.condition(delta_time, initial_occlusion_probability);
-        double mean = mean_.map_standard_normal();
+        double mean = mean_.sample();
 
 
 
@@ -109,6 +109,19 @@ public:
                                              sigma_ * std::sqrt(delta_time),
                                              0.0, 1.0);
     }
+
+    virtual State predict_state(double delta_time,
+                                const State& state,
+                                const Noise& noise,
+                                const Input& input = Input())
+    {
+        condition(delta_time, state, input);
+        return map_standard_normal(noise);
+    }
+
+    virtual size_t state_dimension() const { return 1; }
+    virtual size_t noise_dimension() const { return 1; }
+    virtual size_t input_dimension() const { return 0; }
 
     virtual State map_standard_normal(const Noise& sample) const
     {        

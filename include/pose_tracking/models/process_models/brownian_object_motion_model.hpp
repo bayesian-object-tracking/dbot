@@ -48,19 +48,17 @@
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 
-#include <fl/util/assertions.hpp>
 #include <fl/util/math.hpp>
+#include <fl/util/assertions.hpp>
+#include <fl/model/process/integrated_damped_wiener_process_model.hpp>
 
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
-#include <ff/models/process_models/interfaces/stationary_process_model.hpp>
 #include <ff/models/process_models/damped_wiener_process_model.hpp>
-#include <ff/models/process_models/integrated_damped_wiener_process_model.hpp>
 
 namespace fl
 {
 
 // Forward declarations
-//TODO: THIS IS REDUNDANT!!
 template <typename State, int OBJECTS> class BrownianObjectMotionModel;
 
 /**
@@ -85,8 +83,7 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
     typedef IntegratedDampedWienerProcessModel<ObjectState>     Process;
 
-    typedef StationaryProcessModel<State, Input>    ProcessModelBase;
-    typedef GaussianMap<State, Noise>          GaussianMapBase;
+    typedef StandardGaussianMapping<State, Noise>          GaussianMappingBase;
     typedef ProcessModelInterface<State, Noise, Input> ProcessInterfaceBase;
 };
 
@@ -97,10 +94,9 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
  * \ingroup process_models
  */
 template <typename State_, int OBJECTS = -1>
-class BrownianObjectMotionModel:
-        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessModelBase,
-        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::GaussianMapBase,
-        public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessInterfaceBase
+class BrownianObjectMotionModel
+        : public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::GaussianMappingBase,
+          public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessInterfaceBase
 {
 public:
 
@@ -120,7 +116,7 @@ public:
 
 public:
     BrownianObjectMotionModel(const unsigned& count_objects = OBJECTS):
-        Traits<This>::GaussianMapBase(
+        Traits<This>::GaussianMappingBase(
             count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
         state_(count_objects)
     {
@@ -192,8 +188,8 @@ public:
     virtual void Parameters(const size_t&                           object_index,
                             const Eigen::Matrix<Scalar, 3, 1>&  rotation_center,
                             const Scalar&                       damping,
-                            const typename Process::Operator&   linear_acceleration_covariance,
-                            const typename Process::Operator&   angular_acceleration_covariance)
+                            const typename Traits<Process>::SecondMoment&   linear_acceleration_covariance,
+                            const typename Traits<Process>::SecondMoment&   angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
         linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
@@ -202,7 +198,7 @@ public:
 
     virtual unsigned InputDimension() const
     {
-        return this->variate_dimension();
+        return this->standard_variate_dimension();
     }
 
     virtual size_t dimension()
@@ -228,15 +224,13 @@ public:
 
     virtual size_t noise_dimension() const
     {
-        return this->variate_dimension();
+        return this->standard_variate_dimension();
     }
 
     virtual size_t input_dimension() const
     {
-        return this->variate_dimension();
+        return this->standard_variate_dimension();
     }
-
-
 
 private:
     // conditionals

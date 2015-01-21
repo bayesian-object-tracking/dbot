@@ -149,7 +149,7 @@ public:
                        occlusions_[indices[state_index]][intersect_indices[i]]);
 
 
-                    float occlusion = occlusion_process_model_->map_standard_normal();
+                    float occlusion = occlusion_process_model_->sample();
 
                     observation_model_->condition(predictions[i], false);
                     float p_obsIpred_vis =

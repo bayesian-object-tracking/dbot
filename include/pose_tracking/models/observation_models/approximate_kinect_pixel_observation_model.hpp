@@ -68,7 +68,7 @@ template <typename State_a_, typename State_b_>
 class ApproximateKinectPixelObservationModel<State_a_,
                                              State_b_,
                                              internal::Scalar>:
-        public GaussianMap<double, double>,
+        public StandardGaussianMapping<double, double>,
         public Evaluation<double, double>
 {
 public:
@@ -266,7 +266,7 @@ struct Traits <ApproximateKinectPixelObservationModel<State_a_,
     typedef Eigen::Matrix<Scalar, 1, 1> Noise;
     typedef Eigen::Matrix<Scalar, 1, 1> Observation;
 
-    typedef GaussianMap<Observation, Noise> GaussianMapBase;
+    typedef StandardGaussianMapping<Observation, Noise> GaussianMappingBase;
     typedef Evaluation<Observation, Scalar> EvaluationBase;
 };
 
@@ -275,7 +275,7 @@ struct Traits <ApproximateKinectPixelObservationModel<State_a_,
  */
 template <typename State_a_, typename State_b_>
 class ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial>:
-        public Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::GaussianMapBase,
+        public Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::GaussianMappingBase,
         public Traits<ApproximateKinectPixelObservationModel<State_a_, State_b_, internal::Vectorial> >::EvaluationBase
 {
 public:
