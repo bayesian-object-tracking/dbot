@@ -105,9 +105,9 @@ public:
         }
 
 
-        truncated_gaussian_.SetParameters(mean,
-                                             sigma_ * std::sqrt(delta_time),
-                                             0.0, 1.0);
+        truncated_gaussian_.parameters(mean,
+                                       sigma_ * std::sqrt(delta_time),
+                                       0.0, 1.0);
     }
 
     virtual State predict_state(double delta_time,

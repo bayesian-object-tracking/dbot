@@ -280,7 +280,7 @@ void MultiObjectTracker::Initialize(
     std::shared_ptr<ProcessModel> process(new ProcessModel(object_names_.size()));
     for(size_t i = 0; i < object_names_.size(); i++)
     {
-        process->Parameters(i, object_renderer->object_center(i).cast<double>(),
+        process->parameters(i, object_renderer->object_center(i).cast<double>(),
                                damping,
                                linear_acceleration_covariance,
                                angular_acceleration_covariance);

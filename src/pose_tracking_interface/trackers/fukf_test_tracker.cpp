@@ -153,7 +153,7 @@ void FukfTestTracker::Initialize(State_a initial_state,
 
     for(size_t i = 0; i < object_names_.size(); i++)
     {
-        process_a->Parameters(i, object_renderer->object_center(i).cast<double>(),
+        process_a->parameters(i, object_renderer->object_center(i).cast<double>(),
                                damping,
                                linear_acceleration_covariance,
                                angular_acceleration_covariance);

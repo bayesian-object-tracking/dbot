@@ -185,15 +185,15 @@ public:
         }
     }
 
-    virtual void Parameters(const size_t&                           object_index,
+    virtual void parameters(const size_t&                           object_index,
                             const Eigen::Matrix<Scalar, 3, 1>&  rotation_center,
                             const Scalar&                       damping,
                             const typename Traits<Process>::SecondMoment&   linear_acceleration_covariance,
                             const typename Traits<Process>::SecondMoment&   angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
-        linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
-        angular_process_[object_index].Parameters(damping, angular_acceleration_covariance);
+        linear_process_[object_index].parameters(damping, linear_acceleration_covariance);
+        angular_process_[object_index].parameters(damping, angular_acceleration_covariance);
     }
 
     virtual unsigned InputDimension() const

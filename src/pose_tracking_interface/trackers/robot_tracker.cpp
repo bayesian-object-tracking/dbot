@@ -269,7 +269,7 @@ void RobotTracker::Initialize(std::vector<Eigen::VectorXd> initial_samples_eigen
     Eigen::MatrixXd joint_covariance = Eigen::MatrixXd::Zero(dimension_, dimension_);
     for(size_t i = 0; i < dimension_; i++)
         joint_covariance(i, i) = pow(joint_sigmas[i], 2);
-    process->Parameters(damping, joint_covariance);
+    process->parameters(damping, joint_covariance);
 
     // initialize coordinate_filter =================================================================================================
     filter_ = boost::shared_ptr<FilterType>(
