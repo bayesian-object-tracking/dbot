@@ -33,14 +33,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Dense>
 
-#include <fl/distribution/interface/evaluation.hpp>
 #include <fl/util/traits.hpp>
 #include <fl/util/math.hpp>
+#include <fl/util/discrete_distribution.hpp>
+#include <fl/distribution/interface/evaluation.hpp>
 
 #include <fl/distribution/exponential_distribution.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
 
-#include <ff/utils/helper_functions.hpp>
+
 
 #include <fl/distribution/truncated_gaussian.hpp>
 #include <pose_tracking/models/observation_models/kinect_pixel_observation_model.hpp>

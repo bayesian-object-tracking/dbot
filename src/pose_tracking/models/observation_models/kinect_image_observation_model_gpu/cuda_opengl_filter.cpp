@@ -8,13 +8,14 @@
 
 #include <boost/timer.hpp>
 
+#include <fl/util/discrete_distribution.hpp>
+
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.hpp>
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 #include <pose_tracking/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
 
 
 #include <cuda_gl_interop.h>
-#include <ff/utils/helper_functions.hpp>
 #include <pose_tracking/utils/helper_functions.hpp>
 
 using namespace std;

@@ -357,7 +357,7 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
 
 
     // visualize the mean state
-    fl::FreeFloatingRigidBodiesState<> mean = filter_->StateDistribution().mean();
+    fl::FreeFloatingRigidBodiesState<> mean = filter_->state_distribution().mean();
     for(size_t i = 0; i < object_names_.size(); i++)
     {
         std::string object_model_path = "package://arm_object_models/objects/" + object_names_[i] + "/" + object_names_[i] + ".obj";
@@ -367,5 +367,5 @@ Eigen::VectorXd MultiObjectTracker::Filter(const sensor_msgs::Image& ros_image)
     }
 
     last_measurement_time_ = ros_image.header.stamp.toSec();
-    return filter_->StateDistribution().mean();
+    return filter_->state_distribution().mean();
 }

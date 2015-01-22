@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-#include <ff/utils/helper_functions.hpp>
+#include <fl/util/discrete_distribution.hpp>
 
 namespace fl
 {

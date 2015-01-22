@@ -320,7 +320,7 @@ void RobotTracker::Filter(const sensor_msgs::Image& ros_image)
     // get the mean estimation for the robot joints
     // Casting is a disgusting hack to make sure that the correct equal-operator is used
     // TODO: Make this right
-    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().mean());
+    *mean_ = (Eigen::VectorXd)(filter_->state_distribution().mean());
 
     // DEBUG to see depth images
     robot_renderer_->state(*mean_);
@@ -429,7 +429,7 @@ Eigen::VectorXd RobotTracker::FilterAndReturn(const sensor_msgs::Image& ros_imag
     // get the mean estimation for the robot joints
     // Casting is a disgusting hack to make sure that the correct equal-operator is used
     // TODO: Make this right
-    *mean_ = (Eigen::VectorXd)(filter_->StateDistribution().mean());
+    *mean_ = (Eigen::VectorXd)(filter_->state_distribution().mean());
 
     // DEBUG to see depth images
     robot_renderer_->state(*mean_);

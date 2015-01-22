@@ -53,7 +53,7 @@
 #include <fl/model/process/integrated_damped_wiener_process_model.hpp>
 
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
-#include <ff/models/process_models/damped_wiener_process_model.hpp>
+#include <fl/model/process/damped_wiener_process_model.hpp>
 
 namespace fl
 {
