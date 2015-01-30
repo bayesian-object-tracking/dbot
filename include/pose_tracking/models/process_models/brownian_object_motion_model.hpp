@@ -161,7 +161,7 @@ public:
         state_ = state;
         for(size_t i = 0; i < state_.body_count(); i++)
         {
-            quaternion_map_[i] = fl::QuaternionMatrix(state_.quaternion(i).coeffs());
+            quaternion_map_[i] = fl::quaternion_matrix(state_.quaternion(i).coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center
