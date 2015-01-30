@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pose_tracking)
 
-set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE Debug)
-add_definitions(-std=c++0x )
+#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+add_definitions(-std=c++0x -O0 )
 #add_definitions(-DPROFILING_ON=1) #print profiling output
 set(USE_CUDA True)
 
@@ -196,7 +196,7 @@ set(tracking_interface_sources
     src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/image_publisher.cpp
 
     # TESTING FUKF
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker.cpp
+#    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker.cpp
 )
 
 
@@ -267,7 +267,6 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         yaml-cpp)
 
 
-
     ## robot_tracker
     add_executable(robot_tracker_evaluation
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_evaluation_node.cpp)
@@ -288,6 +287,21 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
                                                              ${catkin_LIBRARIES}
                                                              ${OpenCV_LIBRARIES}
                                                              assimp)
+
+    ## dev_test_tracker
+    add_executable(dev_test_tracker
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp)
+    target_link_libraries(dev_test_tracker
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        ${CUDA_LIBRARIES}
+        yaml-cpp)
+
 else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
 
@@ -326,15 +340,15 @@ else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         yaml-cpp)
 
     ## fukf_test_tracker
-    add_executable(fukf_test_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker_node.cpp)
-    target_link_libraries(fukf_test_tracker
-        ${PROJECT_NAME_TRACKING}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
+#    add_executable(fukf_test_tracker
+#        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/fukf_test_tracker_node.cpp)
+#    target_link_libraries(fukf_test_tracker
+#        ${PROJECT_NAME_TRACKING}
+#        ${PROJECT_NAME_TRACKING_INTERFACE}
+#        ${catkin_LIBRARIES}
+#        ${OpenCV_LIBS}
+#        ${PCL_LIBRARIES}
+#        yaml-cpp)
 
     target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_TRACKING}
                                                              ${PCL_LIBRARIES}

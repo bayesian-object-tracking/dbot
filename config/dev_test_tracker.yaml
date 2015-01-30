@@ -1,0 +1,22 @@
+
+depth_image_topic: /XTION/depth/image
+camera_info_topic: /XTION/depth/camera_info
+
+object_package: pose_tracking
+object_model: /object/calib_obj.obj
+
+downsampling: 32.0 # wrt VGA resolution
+
+pose_x: 0.0
+pose_y: 0.065
+pose_z: 0.5
+pose_alpha: 0.325
+pose_beta: -0.5
+pose_gamma: 0.125
+
+pose_alpha_v: 0.0
+pose_beta_v: 0.0
+pose_gamma_v: 0.085
+
+
+camera_sigma: 1.0
