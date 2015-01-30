@@ -40,6 +40,19 @@ using namespace fl;
 
 RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
                                      const std::vector<std::vector<std::vector<int> > >& indices,
+                                     const boost::shared_ptr<State>&                     state_ptr,
+                                     Matrix camera_matrix,
+                                     int n_rows,
+                                     int n_cols)
+    : RigidBodyRenderer(vertices, indices, state_ptr),
+      camera_matrix_(camera_matrix),
+      n_rows_(n_rows),
+      n_cols_(n_cols)
+{
+}
+
+RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
+                                     const std::vector<std::vector<std::vector<int> > >& indices,
                                      const boost::shared_ptr<State>&                     state_ptr)
 :vertices_(vertices), indices_(indices), state_(state_ptr)
 {
@@ -213,9 +226,13 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
                     }
 			}
 		}
-	}
+    }
 }
 
+void RigidBodyRenderer::Render(std::vector<float>& depth_image) const
+{
+    Render(camera_matrix_, n_rows_, n_cols_, depth_image);
+}
 
 // todo: does not handle the case properly when the depth is around zero or negative
 void RigidBodyRenderer::Render(Matrix camera_matrix,
@@ -292,6 +309,13 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
         R_[part_index] = state_->rotation_matrix(part_index);
         t_[part_index] = state_->position(part_index);
     }
+}
+
+void RigidBodyRenderer::parameters(Matrix camera_matrix, int n_rows, int n_cols)
+{
+    camera_matrix_ = camera_matrix;
+    n_rows_ = n_rows;
+    n_cols_ = n_cols;
 }
 
 

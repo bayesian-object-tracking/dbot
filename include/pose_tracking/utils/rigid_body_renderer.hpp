@@ -51,6 +51,13 @@ public:
                       const std::vector<std::vector<std::vector<int> > >& indices,
                       const boost::shared_ptr<State>& state_ptr);
 
+    RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
+                      const std::vector<std::vector<std::vector<int> > >& indices,
+                      const boost::shared_ptr<State>& state_ptr,
+                      Matrix camera_matrix,
+                      int n_rows,
+                      int n_cols);
+
     virtual ~RigidBodyRenderer();
 
     void Render(Matrix camera_matrix,
@@ -64,6 +71,8 @@ public:
                 int n_cols,
                 std::vector<float> &depth_image) const;
 
+    void Render(std::vector<float> &depth_image) const;
+
     // get functions
     std::vector<std::vector<Vector> > vertices() const;
     Vector system_center() const;
@@ -71,6 +80,10 @@ public:
 
     // set function
     virtual void state(const Eigen::VectorXd& state);
+
+    void parameters(Matrix camera_matrix,
+                    int n_rows,
+                    int n_cols);
 
 protected:
     // triangles
@@ -86,6 +99,10 @@ protected:
     // cached center of mass
     std::vector<Vector> coms_;
     std::vector<float>  com_weights_;
+
+    Matrix camera_matrix_;
+    int n_rows_;
+    int n_cols_;
 };
 
 }
