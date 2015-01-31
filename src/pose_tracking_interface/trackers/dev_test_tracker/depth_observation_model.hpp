@@ -164,9 +164,7 @@ public:
             map(state, predictions_cache_[pose]);
         }
 
-        state_internal_ = predictions_cache_[pose];
-
-        return state_internal_;
+        return predictions_cache_[pose];
     }
 
     /**
@@ -183,12 +181,17 @@ public:
             map(state, predictions_cache_[pose]);
         }
 
-        state_internal_ = predictions_cache_[pose];
-
         return camera_obsrv_model_.predict_observation(
-                    state_internal_,
-                      noise,
+                    predictions_cache_[pose],
+                    noise,
                     delta_time);
+
+//        map(state, s_i_);
+
+//        return camera_obsrv_model_.predict_observation(
+//                    s_i_,
+//                    noise,
+//                    delta_time);
     }
 
     virtual size_t observation_dimension() const
@@ -247,8 +250,8 @@ protected:
     Scalar camera_sigma_;
     std::shared_ptr<fl::RigidBodyRenderer> renderer_;
     std::vector<float> depth_rendering_;
-    StateInternal state_internal_;
     size_t state_dimension_;
+    StateInternal s_i_;
 
     std::unordered_map<Eigen::MatrixXd,
                        StateInternal,

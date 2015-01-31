@@ -67,8 +67,7 @@ public:
     typedef fl::GaussianFilter<
                 ProcessModel,
                 ObsrvModel,
-                fl::UnscentedTransform,
-                fl::AdditiveObservationNoise
+                fl::UnscentedTransform
             > FilterAlgo;
 
     typedef fl::FilterInterface<FilterAlgo> Filter;
@@ -92,7 +91,7 @@ public:
           y(filter_->observation_model()->observation_dimension(), 1)
     {
         state_distr_.mean(object.state);
-        state_distr_.covariance(state_distr_.covariance() * 0.0001);
+        state_distr_.covariance(state_distr_.covariance() * 0.0000001);
 
         ri::ReadParameter("inv_sigma", filter_->inv_sigma, nh);
         ri::ReadParameter("threshold", filter_->threshold, nh);
@@ -183,10 +182,17 @@ public:
             const std::shared_ptr<ProcessModel>& process_model,
             const std::shared_ptr<ObsrvModel>& obsrv_model)
     {
+        double ut_alpha;
+        double ut_beta;
+        double ut_kappa;
+        ri::ReadParameter("ut_alpha", ut_alpha, nh);
+        ri::ReadParameter("ut_beta", ut_beta, nh);
+        ri::ReadParameter("ut_kappa", ut_kappa, nh);
+
         return std::make_shared<FilterAlgo>(
                     process_model,
                     obsrv_model,
-                    std::make_shared<fl::UnscentedTransform>());
+                    std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
     }
 
 public:
@@ -225,10 +231,10 @@ int main (int argc, char **argv)
     std::cout << tracker.state_distr_.mean().transpose() << std::endl;
     while(ros::ok())
     {
-//        std::cout <<  "==========================================" << std::endl;
-//        std::cout << tracker.state_distr_.mean().transpose() << std::endl;
-//        std::cout <<  "--------------------" << std::endl;
-//        std::cout << tracker.state_distr_.covariance() << std::endl;
+        std::cout <<  "==========================================" << std::endl;
+        std::cout << tracker.state_distr_.mean().transpose() << std::endl;
+        std::cout <<  "--------------------" << std::endl;
+        std::cout << tracker.state_distr_.covariance() << std::endl;
 
         /* ############################## */
         /* # Animate & Render           # */
@@ -249,22 +255,22 @@ int main (int argc, char **argv)
         object.publish_marker(object.state, 1, 1, 0, 0);
         object.publish_marker(tracker.state_distr_.mean(), 2, 0, 1, 0);
 
-//        image_vector.setZero();
-//        for (size_t i = 0; i < depth.size(); ++i)
-//        {
-//            image_vector(i, 0) = (std::isinf(depth[i]) ? 0 : depth[i]);
-//        }
-//        ip.publish(image_vector, "/dev_test_tracker/observation",
-//                   object.res_rows,
-//                   object.res_cols);
+        image_vector.setZero();
+        for (size_t i = 0; i < depth.size(); ++i)
+        {
+            image_vector(i, 0) = (std::isinf(depth[i]) ? 0 : depth[i]);
+        }
+        ip.publish(image_vector, "/dev_test_tracker/observation",
+                   object.res_rows,
+                   object.res_cols);
 
-//        ip.publish(tracker.filter_->innovation, "/dev_test_tracker/innovation",
-//                   object.res_rows,
-//                   object.res_cols);
+        ip.publish(tracker.filter_->innovation, "/dev_test_tracker/innovation",
+                   object.res_rows,
+                   object.res_cols);
 
-//        ip.publish(tracker.filter_->prediction, "/dev_test_tracker/prediction",
-//                   object.res_rows,
-//                   object.res_cols);
+        ip.publish(tracker.filter_->prediction, "/dev_test_tracker/prediction",
+                   object.res_rows,
+                   object.res_cols);
 
 //        ip.publish(tracker.filter_->invR, "/dev_test_tracker/inv_covariance",
 //                   object.res_rows,
