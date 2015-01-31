@@ -3,7 +3,10 @@
 depth_image_topic: /XTION/depth/image
 camera_info_topic: /XTION/depth/camera_info
 
-downsampling: 5.0 # wrt VGA resolution
+# 100 is more or less the limit to track
+# with threshold: 0.75 and sigmas at 0.0005
+
+downsampling: 64.0 # wrt VGA resolution
 
 
 # VirtualObject 
@@ -32,4 +35,4 @@ camera_sigma: 0.0005
 model_sigma: 0.0005
 
 inv_sigma: 1000000000000.0
-threshold: 0.15
+threshold: 0.75

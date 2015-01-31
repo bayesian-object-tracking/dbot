@@ -1,6 +1,10 @@
+
+
+
 #include <fstream>
 #include <ctime>
 #include <memory>
+#include <unordered_map>
 
 #include <std_msgs/Header.h>
 #include <ros/ros.h>
@@ -23,6 +27,39 @@
 
 
 #include <fl/util/profiling.hpp>
+
+
+
+template <typename Vector> class VectorHash;
+
+template<> class VectorHash<Eigen::MatrixXd>
+{
+public:
+    std::size_t operator()(Eigen::MatrixXd const& s) const
+    {
+        /* primes */
+        static constexpr int p1 = 15487457;
+        static constexpr int p2 = 24092821;
+        static constexpr int p3 = 73856093;
+        static constexpr int p4 = 19349663;
+        static constexpr int p5 = 83492791;
+        static constexpr int p6 = 17353159;
+
+        /* map size */
+        static constexpr int n = 1200;
+
+        /* precision */
+        static constexpr int c = 1000000;
+
+        return  ((int(s(0, 0)*c) * p1) ^
+                 (int(s(1, 0)*c) * p2) ^
+                 (int(s(2, 0)*c) * p3) ^
+                 (int(s(3, 0)*c) * p4) ^
+                 (int(s(4, 0)*c) * p5) ^
+                 (int(s(5, 0)*c) * p6) % n);
+    }
+};
+
 
 
 /* ############################## */
@@ -147,7 +184,14 @@ public:
     virtual Observation predict_observation(const State& state,
                                             double delta_time)
     {
-        map(state, state_internal_);
+        Eigen::MatrixXd pose = state.topRows(6);
+
+        if (predictions_cache_.find(pose) == predictions_cache_.end())
+        {
+            map(state, predictions_cache_[pose]);
+        }
+
+        state_internal_ = predictions_cache_[pose];
 
 //        return camera_obsrv_model_.predict_observation(
 //                    state_internal_,
@@ -176,6 +220,11 @@ public:
     {
         return Noise::Ones(noise_dimension(), 1) *
                (model_sigma_ * model_sigma_ + camera_sigma_ * camera_sigma_);
+    }
+
+    virtual void clear_cache()
+    {
+        predictions_cache_.clear();
     }
 
 public:
@@ -210,6 +259,10 @@ protected:
     std::vector<float> depth_rendering_;
     StateInternal state_internal_;
     size_t state_dimension_;
+
+    std::unordered_map<Eigen::MatrixXd,
+                       StateInternal,
+                       VectorHash<Eigen::MatrixXd>> predictions_cache_;
 };
 
 }
@@ -443,6 +496,8 @@ public:
 
         filter_->predict(0.033, zero_input_, state_distr_, state_distr_);
         filter_->update(y, state_distr_, state_distr_);
+
+        obsrv_model_->clear_cache();
     }
 
 public:
