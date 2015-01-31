@@ -1,15 +1,18 @@
 
+# general
 depth_image_topic: /XTION/depth/image
 camera_info_topic: /XTION/depth/camera_info
 
+downsampling: 5.0 # wrt VGA resolution
+
+
+# VirtualObject 
 object_package: pose_tracking
 object_model: /object/calib_obj.obj
 
-downsampling: 32.0 # wrt VGA resolution
-
 pose_x: 0.0
 pose_y: 0.065
-pose_z: 0.5
+pose_z: 0.7
 pose_alpha: 0.325
 pose_beta: -0.5
 pose_gamma: 0.125
@@ -19,4 +22,14 @@ pose_beta_v: 0.0
 pose_gamma_v: 0.085
 
 
-camera_sigma: 1.0
+# process model
+linear_acceleration_sigma:   0.1 #0.1  0.2  1.0 2.0
+angular_acceleration_sigma: 1.5 #1.5  3.0  15.0 30.0
+damping: 5.0 #5.0  20.0  1000.0 1000.0
+
+# observation model
+camera_sigma: 0.0005
+model_sigma: 0.0005
+
+inv_sigma: 1000000000000.0
+threshold: 0.15
