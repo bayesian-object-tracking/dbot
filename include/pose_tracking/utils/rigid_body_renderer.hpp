@@ -56,7 +56,7 @@ public:
                       const boost::shared_ptr<State>& state_ptr,
                       Matrix camera_matrix,
                       int n_rows,
-                      int n_cols);
+                      int n_cols);        
 
     virtual ~RigidBodyRenderer();
 
@@ -69,9 +69,9 @@ public:
     void Render(Matrix camera_matrix,
                 int n_rows,
                 int n_cols,
-                std::vector<float> &depth_image) const;
+                std::vector<float>& depth_image) const;
 
-    void Render(std::vector<float> &depth_image) const;
+    void Render(std::vector<float>& depth_image) const;
 
     // get functions
     std::vector<std::vector<Vector> > vertices() const;
@@ -85,6 +85,24 @@ public:
                     int n_rows,
                     int n_cols);
 
+private:
+    /**
+     * Because c++0x on gcc.4.6 do not implement delegating constructors
+     *
+     *
+     *
+     *
+     *
+     *                            (-_-)
+     *
+     *
+     *
+     *
+     */
+    void init(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
+              const std::vector<std::vector<std::vector<int> > >& indices,
+              const boost::shared_ptr<State>& state_ptr);
+
 protected:
     // triangles
     std::vector<std::vector<Vector> >               vertices_;
@@ -92,7 +110,7 @@ protected:
     std::vector<std::vector<std::vector<int> > >    indices_;
 
     // state
-    const boost::shared_ptr<State>  state_;
+    boost::shared_ptr<State> state_;
     std::vector<Matrix>             R_;
     std::vector<Vector>             t_;
 
