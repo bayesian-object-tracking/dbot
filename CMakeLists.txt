@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pose_tracking)
 
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
-add_definitions(-std=c++0x -O0 )
-#add_definitions(-DPROFILING_ON=1) #print profiling output
+set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+add_definitions(-std=c++0x -O3)
+add_definitions(-DPROFILING_ON=1) #print profiling output
 set(USE_CUDA True)
 
 find_package(catkin REQUIRED
@@ -39,8 +39,6 @@ find_package(Boost REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.3 REQUIRED)
-
-
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -290,7 +288,12 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
     ## dev_test_tracker
     add_executable(dev_test_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp)
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/virtual_object.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/depth_observation_model.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/vector_hashing.hpp
+    )
+
     target_link_libraries(dev_test_tracker
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
