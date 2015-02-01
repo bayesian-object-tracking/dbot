@@ -290,8 +290,10 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     add_executable(dev_test_tracker
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/virtual_object.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/linear_depth_observation_model.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/depth_observation_model.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/vector_hashing.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/dual_process_model.hpp
     )
 
     target_link_libraries(dev_test_tracker

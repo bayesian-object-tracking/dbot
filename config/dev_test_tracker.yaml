@@ -6,7 +6,7 @@ camera_info_topic: /XTION/depth/camera_info
 # 100 is more or less the limit to track
 # with threshold: 0.75 and sigmas at 0.0005
 
-downsampling: 32.0 # wrt VGA resolution
+downsampling: 64.0 # wrt VGA resolution
 
 
 # VirtualObject 
@@ -25,7 +25,7 @@ pose_beta_v: 0.0
 pose_gamma_v: 0.085
 
 # unscented transform
-ut_alpha: 0.01
+ut_alpha: 0.5
 ut_beta: 2.
 ut_kappa: 0.
 
@@ -36,7 +36,7 @@ damping: 5.0 #5.0  20.0  1000.0 1000.0
 
 # observation model
 camera_sigma: 0.0005
-model_sigma: 0.00005
+model_sigma: 0.0005
 
 inv_sigma: 1000000.05
 threshold: 0.15
