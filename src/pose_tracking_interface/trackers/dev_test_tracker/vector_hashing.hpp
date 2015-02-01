@@ -21,6 +21,9 @@
 #include <cstdlib>
 #include <Eigen/Dense>
 
+#ifndef POSE_TRACKING_INTERFACE__VECTOR_HASH_
+#define POSE_TRACKING_INTERFACE__VECTOR_HASH_
+
 template <typename Vector> class VectorHash;
 
 template<> class VectorHash<Eigen::MatrixXd>
@@ -50,3 +53,5 @@ public:
                  (int(s(5, 0)*c) * p6) % n);
     }
 };
+
+#endif
