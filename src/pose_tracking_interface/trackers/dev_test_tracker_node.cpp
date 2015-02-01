@@ -28,6 +28,7 @@
 
 #include <fl/util/meta.hpp>
 #include <fl/filter/gaussian/unscented_transform.hpp>
+#include <fl/filter/gaussian/random_transform.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
@@ -38,6 +39,7 @@
 #include <fl/util/profiling.hpp>
 
 #include "dev_test_tracker/virtual_object.hpp"
+#include "dev_test_tracker/linear_depth_observation_model.hpp"
 #include "dev_test_tracker/depth_observation_model.hpp"
 
 class DevTestTracker
@@ -91,7 +93,7 @@ public:
           y(filter_->observation_model()->observation_dimension(), 1)
     {
         state_distr_.mean(object.state);
-        state_distr_.covariance(state_distr_.covariance() * 0.0000001);
+        state_distr_.covariance(state_distr_.covariance() * 0.0000000000001);
 
         ri::ReadParameter("inv_sigma", filter_->inv_sigma, nh);
         ri::ReadParameter("threshold", filter_->threshold, nh);
@@ -104,8 +106,9 @@ public:
         Scalar y_i;
         for (int i = 0; i < y_vec_size; ++i)
         {
-            y_i = y_vec[i];
-            y(i, 0) = (std::isinf(y_i) ? 7 : y_i);
+            y_i = (std::isinf(y_vec[i]) ? 7 : y_vec[i]);
+            y(2*i, 0) = y_i * y_i;
+            y(2*i+1, 0) = y_i;
         }
 
         filter_->predict(0.033, zero_input_, state_distr_, state_distr_);
@@ -193,6 +196,7 @@ public:
                     process_model,
                     obsrv_model,
                     std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
+                    //std::make_shared<fl::RandomTransform>());
     }
 
 public:
@@ -229,6 +233,14 @@ int main (int argc, char **argv)
 
     std::cout << ">> initial state " << std::endl;
     std::cout << tracker.state_distr_.mean().transpose() << std::endl;
+
+    std::cout << ">> setup: " << std::endl;
+    std::cout << ">> state dimension: " << tracker.process_model_->state_dimension() << std::endl;
+    std::cout << ">> noise dimension: " << tracker.process_model_->noise_dimension() << std::endl;
+    std::cout << ">> obsrv dimension: " << tracker.obsrv_model_->observation_dimension() << std::endl;
+    std::cout << ">> obsrv noise dimension: " << tracker.obsrv_model_->noise_dimension() << std::endl;
+    std::cout << ">> obsrv state dimension: " << tracker.obsrv_model_->state_dimension() << std::endl;
+
     while(ros::ok())
     {
         std::cout <<  "==========================================" << std::endl;

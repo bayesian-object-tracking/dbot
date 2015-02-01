@@ -32,6 +32,92 @@
 namespace fl
 {
 
+template <typename Scalar> class PixelObservationModel;
+
+template <typename Scalar_>
+struct Traits<
+           PixelObservationModel<Scalar_>>
+{
+    enum
+    {
+        ObsrvDim = 2,
+        NoiseDim = 1,
+        StateDim = 1
+    };
+
+    typedef Scalar_ Scalar;
+
+    // [y  y^2] kernel space?
+    typedef Eigen::Matrix<Scalar, ObsrvDim, 1> Observation;
+
+    typedef Eigen::Matrix<Scalar, NoiseDim, 1> Noise;
+
+    // [h_i(x) h_i(x)^2] rendered pixel
+    typedef Eigen::Matrix<Scalar, StateDim, 1> State;
+
+    typedef Gaussian<Noise> GaussianBase;
+    typedef typename Traits<GaussianBase>::SecondMoment SecondMoment;
+
+    typedef ObservationModelInterface<
+                Observation,
+                State,
+                Noise
+            > ObservationModelBase;
+};
+
+template <typename Scalar>
+class PixelObservationModel
+    : public Traits<PixelObservationModel<Scalar>>::GaussianBase,
+      public Traits<PixelObservationModel<Scalar>>::ObservationModelBase
+{
+public:
+    typedef PixelObservationModel<Scalar> This;
+
+    typedef typename Traits<This>::Observation Observation;
+    typedef typename Traits<This>::State State;
+    typedef typename Traits<This>::Noise Noise;
+    typedef typename Traits<This>::SecondMoment SecondMoment;
+
+    using Traits<This>::GaussianBase::mean;
+    using Traits<This>::GaussianBase::covariance;
+    using Traits<This>::GaussianBase::dimension;
+
+public:
+    PixelObservationModel(const SecondMoment& noise_covariance)
+    {
+        covariance(noise_covariance);
+    }
+
+    virtual Observation predict_observation(const State& state,
+                                            const Noise& noise,
+                                            double delta_time)
+    {
+        Observation y;
+        auto y_1 = state + Traits<This>::GaussianBase::map_standard_normal(noise);
+
+        y(0, 0) = y_1(0, 0) * y_1(0, 0);
+        y(1, 0) = y_1(0, 0);
+
+        return y;
+//        return state + Traits<This>::GaussianBase::map_standard_normal(noise);
+    }
+
+    virtual size_t observation_dimension() const
+    {
+        return Traits<This>::ObsrvDim;
+    }
+
+    virtual size_t noise_dimension() const
+    {
+        return Traits<This>::NoiseDim;
+    }
+
+    virtual size_t state_dimension() const
+    {
+        return Traits<This>::StateDim;
+    }
+};
+
 
 template <
     typename State,
@@ -47,26 +133,10 @@ template <
     int ResCols>
 struct Traits<DepthObservationModel<State_, Scalar, ResRows, ResCols>>
 {
-    enum
-    {
-        PixelObsrvDim = 1,
-        PixelStateDim = 1
-    };
 
-    // [y  y^2] kernel space?
-    typedef Eigen::Matrix<Scalar, PixelObsrvDim, 1> PixelObsrv;
-
-    // [h_i(x) h_i(x)^2] rendered pixel
-    typedef Eigen::Matrix<Scalar, PixelStateDim, 1> PixelState;
-
-    // local linear gaussian observation model
-    typedef LinearGaussianObservationModel<
-                PixelObsrv,
-                PixelState
-            > PixelObsrvModel;
-
+    // local/pixel observation model
+    typedef PixelObservationModel<Scalar> PixelObsrvModel;
     typedef typename Traits<PixelObsrvModel>::SecondMoment PixelCov;
-    typedef typename Traits<PixelObsrvModel>::SensorMatrix PixelSensorMatrix;
 
     // Holistic observation model
     typedef FactorizedIIDObservationModel<
@@ -78,12 +148,6 @@ struct Traits<DepthObservationModel<State_, Scalar, ResRows, ResCols>>
     typedef typename Traits<CameraObservationModel>::State StateInternal;
     typedef typename Traits<CameraObservationModel>::Observation Observation;
     typedef typename Traits<CameraObservationModel>::Noise Noise;
-
-    typedef ANObservationModelInterface<
-                Observation,
-                State_,
-                Noise
-            > ANObservationModelBase;
 
     typedef ObservationModelInterface<
                 Observation,
@@ -101,9 +165,6 @@ template <
 class DepthObservationModel
     : public Traits<
                  DepthObservationModel<State, Scalar, ResRows, ResCols>
-             >::ANObservationModelBase,
-      public Traits<
-                 DepthObservationModel<State, Scalar, ResRows, ResCols>
              >::ObservationModelBase
 {
 public:
@@ -112,14 +173,8 @@ public:
     typedef typename Traits<This>::Observation Observation;
     typedef typename Traits<This>::Noise Noise;
 
-    enum
-    {
-        PixelObsrvDim =  Traits<This>::PixelObsrvDim,
-        PixelStateDim =  Traits<This>::PixelStateDim
-    };
     typedef typename Traits<This>::PixelObsrvModel PixelObsrvModel;
     typedef typename Traits<This>::PixelCov PixelCov;
-    typedef typename Traits<This>::PixelSensorMatrix PixelSensorMatrix;
 
     typedef typename Traits<This>::StateInternal StateInternal;
     typedef typename Traits<This>::CameraObservationModel CameraObservationModel;
@@ -133,7 +188,7 @@ public:
                           int res_cols = ResCols)
         : camera_obsrv_model_(
               std::make_shared<PixelObsrvModel>(
-                  PixelCov::Identity(PixelObsrvDim, PixelObsrvDim)
+                  PixelCov::Identity()
                   * ((camera_sigma*camera_sigma) + (model_sigma*model_sigma))),
               (res_rows*res_cols)),
           model_sigma_(model_sigma),
@@ -150,22 +205,6 @@ public:
 
 
     ~DepthObservationModel() { }
-
-    /**
-     * \return Prediction assuming additive noise
-     */
-    virtual Observation predict_observation(const State& state,
-                                            double delta_time)
-    {
-        Eigen::MatrixXd pose = state.topRows(6);
-
-        if (predictions_cache_.find(pose) == predictions_cache_.end())
-        {
-            map(state, predictions_cache_[pose]);
-        }
-
-        return predictions_cache_[pose];
-    }
 
     /**
      * \return Prediction assuming non-additive noise
@@ -185,13 +224,6 @@ public:
                     predictions_cache_[pose],
                     noise,
                     delta_time);
-
-//        map(state, s_i_);
-
-//        return camera_obsrv_model_.predict_observation(
-//                    s_i_,
-//                    noise,
-//                    delta_time);
     }
 
     virtual size_t observation_dimension() const
@@ -207,12 +239,6 @@ public:
     virtual size_t noise_dimension() const
     {
         return camera_obsrv_model_.noise_dimension();
-    }
-
-    virtual Noise noise_covariance_vector() const
-    {
-        return Noise::Ones(noise_dimension(), 1) *
-               (model_sigma_ * model_sigma_ + camera_sigma_ * camera_sigma_);
     }
 
     virtual void clear_cache()
@@ -251,7 +277,6 @@ protected:
     std::shared_ptr<fl::RigidBodyRenderer> renderer_;
     std::vector<float> depth_rendering_;
     size_t state_dimension_;
-    StateInternal s_i_;
 
     std::unordered_map<Eigen::MatrixXd,
                        StateInternal,
