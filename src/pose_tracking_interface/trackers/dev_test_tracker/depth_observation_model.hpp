@@ -42,7 +42,7 @@ struct Traits<
     {
         ObsrvDim = 2,
         NoiseDim = 1,
-        StateDim = 1
+        StateDim = 2
     };
 
     typedef Scalar_ Scalar;
@@ -93,13 +93,12 @@ public:
                                             double delta_time)
     {
         Observation y;
-        auto y_1 = state + Traits<This>::GaussianBase::map_standard_normal(noise);
 
-        y(0, 0) = y_1(0, 0) * y_1(0, 0);
-        y(1, 0) = y_1(0, 0);
+        y(0, 0) = state(0, 0)
+                  + std::exp(state(1, 0)) * covariance()(0,0)  * noise(0,0);
+        y(1, 0) = y(0, 0) * y(0, 0);
 
         return y;
-//        return state + Traits<This>::GaussianBase::map_standard_normal(noise);
     }
 
     virtual size_t observation_dimension() const
@@ -183,7 +182,8 @@ public:
     DepthObservationModel(std::shared_ptr<fl::RigidBodyRenderer> renderer,
                           Scalar camera_sigma,
                           Scalar model_sigma,
-                          size_t state_dimension = DimensionOf<State>(),
+                          size_t pose_state_dimension,
+                          size_t state_dimension = DimensionOf<State>(),                          
                           int res_rows = ResRows,
                           int res_cols = ResCols)
         : camera_obsrv_model_(
@@ -194,6 +194,7 @@ public:
           model_sigma_(model_sigma),
           camera_sigma_(camera_sigma),
           renderer_(renderer),
+          pose_state_dimension_(pose_state_dimension),
           state_dimension_(state_dimension)
     {
         assert(res_rows > 0);
@@ -250,21 +251,23 @@ public:
     /** \cond INTERNAL */
     void map(const State& state, StateInternal& state_internal)
     {
-        renderer_->state(state);
+        renderer_->state(state.topRows(pose_state_dimension_));
         renderer_->Render(depth_rendering_);
 
-        convert(depth_rendering_, state_internal);
+        convert(depth_rendering_, state, state_internal);
     }
 
     void convert(const std::vector<float>& depth,
+                 const State& state,
                  StateInternal& state_internal)
     {
         const int pixel_count = depth.size();
-        state_internal.resize(pixel_count, 1);
+        state_internal.resize(2 * pixel_count, 1);
 
         for (int i = 0; i < pixel_count; ++i)
         {
-            state_internal(i, 0) = (std::isinf(depth[i]) ? 7 : depth[i]);
+            state_internal(2*i, 0) = (std::isinf(depth[i]) ? 7 : depth[i]);
+            state_internal(2*i + 1, 0) = state(pose_state_dimension_ + i, 0);
         }
     }
 
@@ -277,6 +280,7 @@ protected:
     std::shared_ptr<fl::RigidBodyRenderer> renderer_;
     std::vector<float> depth_rendering_;
     size_t state_dimension_;
+    size_t pose_state_dimension_;
 
     std::unordered_map<Eigen::MatrixXd,
                        StateInternal,

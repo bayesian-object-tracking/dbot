@@ -41,6 +41,7 @@
 #include "dev_test_tracker/virtual_object.hpp"
 #include "dev_test_tracker/linear_depth_observation_model.hpp"
 #include "dev_test_tracker/depth_observation_model.hpp"
+#include "dev_test_tracker/dual_process_model.hpp"
 
 class DevTestTracker
 {
@@ -48,8 +49,17 @@ public:
     /* ############################## */
     /* # Process Model              # */
     /* ############################## */
-    typedef fl::BrownianObjectMotionModel<
-                fl::FreeFloatingRigidBodiesState<>
+//    typedef fl::BrownianObjectMotionModel<
+//                fl::FreeFloatingRigidBodiesState<>
+//            >  ProcessModel;
+
+    typedef fl::FreeFloatingRigidBodiesState<> ObjectState;
+    typedef Eigen::Matrix<double, 1, 1> ParameterState;
+
+    typedef fl::DualProcessModel<
+                ObjectState,
+                ParameterState,
+                Eigen::Dynamic
             >  ProcessModel;
 
     /* ############################## */
@@ -69,7 +79,8 @@ public:
     typedef fl::GaussianFilter<
                 ProcessModel,
                 ObsrvModel,
-                fl::UnscentedTransform
+                //fl::UnscentedTransform
+                fl::RandomTransform
             > FilterAlgo;
 
     typedef fl::FilterInterface<FilterAlgo> Filter;
@@ -83,7 +94,7 @@ public:
     typedef typename Obsrv::Scalar Scalar;
     typedef typename Filter::StateDistribution StateDistribution;
 
-    DevTestTracker(ros::NodeHandle& nh, VirtualObject<State>& object)
+    DevTestTracker(ros::NodeHandle& nh, VirtualObject<ObjectState>& object)
         : object(object),
           process_model_(create_process_model(nh)),
           obsrv_model_(create_obsrv_model(nh, process_model_)),
@@ -92,8 +103,11 @@ public:
           zero_input_(Input::Zero(filter_->process_model()->input_dimension(), 1)),
           y(filter_->observation_model()->observation_dimension(), 1)
     {
-        state_distr_.mean(object.state);
-        state_distr_.covariance(state_distr_.covariance() * 0.0000000000001);
+        State initial_state = State::Zero(filter_->process_model()->state_dimension(), 1);
+        initial_state.topRows(object.state.rows()) = object.state;
+
+        state_distr_.mean(initial_state);
+        state_distr_.covariance(state_distr_.covariance() * 0.000000000000);
 
         ri::ReadParameter("inv_sigma", filter_->inv_sigma, nh);
         ri::ReadParameter("threshold", filter_->threshold, nh);
@@ -107,8 +121,8 @@ public:
         for (int i = 0; i < y_vec_size; ++i)
         {
             y_i = (std::isinf(y_vec[i]) ? 7 : y_vec[i]);
-            y(2*i, 0) = y_i * y_i;
-            y(2*i+1, 0) = y_i;
+            y(2 * i, 0) = y_i;
+            y(2 * i + 1, 0) =  y_i * y_i;
         }
 
         filter_->predict(0.033, zero_input_, state_distr_, state_distr_);
@@ -137,24 +151,48 @@ public:
                           angular_acceleration_sigma, nh);
         ri::ReadParameter("damping",
                           damping, nh);
+        double b_sigma;
+        ri::ReadParameter("b_sigma",
+                          b_sigma, nh);
 
-        auto model = std::make_shared<ProcessModel>(1 /* one object */);
+        typedef typename
+        fl::Traits<ProcessModel>::PoseProcessModel PoseProcessModel;
+
+        typedef typename
+        fl::Traits<ProcessModel>::ParametersProcessModel ParametersProcessModel;
+
+        typedef typename
+        fl::Traits<ProcessModel>::ParameterProcessModel LocalProcessModel;
+
+        auto pose_model = std::make_shared<PoseProcessModel>(1 /* one object */);
 
         Eigen::MatrixXd linear_acceleration_covariance =
-                Eigen::MatrixXd::Identity(3, 3)
-                * std::pow(double(linear_acceleration_sigma), 2);
+            Eigen::MatrixXd::Identity(3, 3)
+            * std::pow(double(linear_acceleration_sigma), 2);
 
         Eigen::MatrixXd angular_acceleration_covariance =
-                Eigen::MatrixXd::Identity(3, 3)
-                * std::pow(double(angular_acceleration_sigma), 2);
+            Eigen::MatrixXd::Identity(3, 3)
+            * std::pow(double(angular_acceleration_sigma), 2);
 
-        model->parameters(0,
-                          object.renderer->object_center(0).cast<double>(),
-                          damping,
-                          linear_acceleration_covariance,
-                          angular_acceleration_covariance);
+        pose_model->parameters(
+            0,
+            object.renderer->object_center(0).cast<double>(),
+            damping,
+            linear_acceleration_covariance,
+            angular_acceleration_covariance);
 
-        return model;
+        typedef typename fl::Traits<LocalProcessModel>::SecondMoment ParamCov;
+
+        auto parameter_model =
+            std::make_shared<fl::LinearGaussianProcessModel<ParameterState>>(
+                ParamCov::Identity() * (b_sigma * b_sigma));
+        //parameter_model->A(parameter_model->A() * 0.9);
+
+        auto parameters_model = std::make_shared<ParametersProcessModel>(
+                    parameter_model,
+                    object.res_rows * object.res_cols);
+
+        return std::make_shared<ProcessModel>(pose_model, parameters_model);
     }
 
     /**
@@ -169,12 +207,14 @@ public:
         ri::ReadParameter("model_sigma", model_sigma, nh);
         ri::ReadParameter("camera_sigma", camera_sigma, nh);
 
-        return std::make_shared<ObsrvModel>(object.renderer,
-                                            camera_sigma,
-                                            model_sigma,
-                                            process_model->state_dimension(),
-                                            object.res_rows,
-                                            object.res_cols);
+        return std::make_shared<ObsrvModel>(
+            object.renderer,
+            camera_sigma,
+            model_sigma,
+            process_model->pose_process_model()->state_dimension(),
+            process_model->state_dimension(),
+            object.res_rows,
+            object.res_cols);
     }
 
     /**
@@ -195,12 +235,12 @@ public:
         return std::make_shared<FilterAlgo>(
                     process_model,
                     obsrv_model,
-                    std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
-                    //std::make_shared<fl::RandomTransform>());
+                    //std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
+                    std::make_shared<fl::RandomTransform>());
     }
 
 public:
-    VirtualObject<State>& object;
+    VirtualObject<ObjectState>& object;
     std::shared_ptr<ProcessModel> process_model_;
     std::shared_ptr<ObsrvModel> obsrv_model_;
     Filter::Ptr filter_;
@@ -221,7 +261,7 @@ int main (int argc, char **argv)
     /* ############################## */
     /* # Setup object and tracker   # */
     /* ############################## */
-    VirtualObject<DevTestTracker::State> object(nh);
+    VirtualObject<DevTestTracker::ObjectState> object(nh);
     DevTestTracker tracker(nh, object);
 
     /* ############################## */
@@ -243,10 +283,10 @@ int main (int argc, char **argv)
 
     while(ros::ok())
     {
-        std::cout <<  "==========================================" << std::endl;
+//        std::cout <<  "==========================================" << std::endl;
         std::cout << tracker.state_distr_.mean().transpose() << std::endl;
-        std::cout <<  "--------------------" << std::endl;
-        std::cout << tracker.state_distr_.covariance() << std::endl;
+        //std::cout <<  "--------------------" << std::endl;
+//        std::cout << tracker.state_distr_.covariance() << std::endl;
 
         /* ############################## */
         /* # Animate & Render           # */

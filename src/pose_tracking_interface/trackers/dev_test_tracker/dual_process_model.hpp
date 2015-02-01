@@ -142,6 +142,7 @@ public:
         return prediction;
     }
 
+
     virtual size_t state_dimension() const
     {
         return pose_process_model_->state_dimension()
@@ -158,6 +159,16 @@ public:
     {
         return pose_process_model_->input_dimension()
                + parameters_process_model_->input_dimension();
+    }
+
+    const std::shared_ptr<PoseProcessModel>& pose_process_model()
+    {
+        return pose_process_model_;
+    }
+
+    const std::shared_ptr<ParametersProcessModel>& parameters_process_model()
+    {
+        return parameters_process_model_;
     }
 
 protected:
