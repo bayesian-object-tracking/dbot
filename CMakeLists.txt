@@ -291,6 +291,7 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/virtual_object.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/linear_depth_observation_model.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/pixel_observation_model.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/depth_observation_model.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/vector_hashing.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/dual_process_model.hpp

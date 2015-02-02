@@ -30,32 +30,19 @@ namespace fl
 {
 
 template <
-    typename ObjectState,
-    typename Parameter,
-    int ParameterCount>
+    typename PoseProcessModel,
+    typename ParametersProcessModel>
 class DualProcessModel;
 
 template <
-    typename ObjectState_,
-    typename Parameter_,
-    int ParameterCount_>
+    typename PoseProcessModel,
+    typename ParametersProcessModel>
 struct Traits<
-           DualProcessModel<ObjectState_, Parameter_, ParameterCount_>>
-{
-    static constexpr int ParameterCount = ParameterCount_;
-
-    typedef ObjectState_ ObjectState;
+           DualProcessModel<PoseProcessModel, ParametersProcessModel>>
+{    
+    typedef typename Traits<PoseProcessModel>::State ObjectState;
+    typedef typename Traits<ParametersProcessModel>::State ParametersState;
     typedef typename ObjectState::Scalar Scalar;
-
-    typedef BrownianObjectMotionModel<ObjectState> PoseProcessModel;
-
-    typedef LinearGaussianProcessModel<Parameter_> ParameterProcessModel;
-    typedef FactorizedIIDProcessModel<
-                ParameterProcessModel,
-                ParameterCount
-            > ParametersProcessModel;
-
-    typedef typename ParametersProcessModel::State ParametersState;
 
     typedef Eigen::Matrix<
                 Scalar,
@@ -88,24 +75,20 @@ struct Traits<
 };
 
 template <
-    typename ObjectState,
-    typename Parameter,
-    int ParameterCount>
+    typename PoseProcessModel,
+    typename ParametersProcessModel>
 class DualProcessModel
     : public Traits<
-                 DualProcessModel<ObjectState, Parameter, ParameterCount>
+                 DualProcessModel<PoseProcessModel, ParametersProcessModel>
              >::ProcessModelBase
 {
 public:
-    typedef DualProcessModel<ObjectState, Parameter, ParameterCount> This;
+    typedef DualProcessModel<PoseProcessModel, ParametersProcessModel> This;
 
     typedef typename Traits<This>::State State;
     typedef typename Traits<This>::Noise Noise;
     typedef typename Traits<This>::Input Input;
     typedef typename Traits<This>::Scalar Scalar;
-
-    typedef typename Traits<This>::PoseProcessModel PoseProcessModel;
-    typedef typename Traits<This>::ParametersProcessModel ParametersProcessModel;
 
 public:
     DualProcessModel(

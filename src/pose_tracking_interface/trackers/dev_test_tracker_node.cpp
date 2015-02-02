@@ -40,6 +40,7 @@
 
 #include "dev_test_tracker/virtual_object.hpp"
 #include "dev_test_tracker/linear_depth_observation_model.hpp"
+#include "dev_test_tracker/pixel_observation_model.hpp"
 #include "dev_test_tracker/depth_observation_model.hpp"
 #include "dev_test_tracker/dual_process_model.hpp"
 
@@ -47,30 +48,44 @@ class DevTestTracker
 {
 public:
     /* ############################## */
+    /* # Basic types                # */
+    /* ############################## */
+    typedef double Scalar;
+    typedef Eigen::Matrix<Scalar, 1, 1> ParameterState;
+    typedef fl::FreeFloatingRigidBodiesState<> ObjectState;
+
+    /* ############################## */
     /* # Process Model              # */
     /* ############################## */
-//    typedef fl::BrownianObjectMotionModel<
-//                fl::FreeFloatingRigidBodiesState<>
-//            >  ProcessModel;
+    typedef fl::BrownianObjectMotionModel<ObjectState> PoseProcessModel;
 
-    typedef fl::FreeFloatingRigidBodiesState<> ObjectState;
-    typedef Eigen::Matrix<double, 1, 1> ParameterState;
+    typedef fl::LinearGaussianProcessModel<ParameterState> ParameterProcessModel;
+    typedef fl::FactorizedIIDProcessModel<
+                ParameterProcessModel
+            > ParametersProcessModel;
 
     typedef fl::DualProcessModel<
-                ObjectState,
-                ParameterState,
-                Eigen::Dynamic
-            >  ProcessModel;
+                PoseProcessModel,
+                ParametersProcessModel
+            > ProcessModel;
 
     /* ############################## */
     /* # Observation Model          # */
     /* ############################## */
-    // Holistic observation model
+    /* Pixel Model */
+    typedef fl::PixelObservationModel<
+                Scalar
+            > PixelObsrvModel;
+
+    /* Camera Model(Pixel Model) */
+    typedef fl::FactorizedIIDObservationModel<
+                PixelObsrvModel
+            > CameraObservationModel;
+
+    /* Depth Model(Camera Model(Pixel Model)) */
     typedef fl::DepthObservationModel<
-                typename fl::Traits<ProcessModel>::State,
-                typename fl::Traits<ProcessModel>::Scalar,
-                Eigen::Dynamic,
-                Eigen::Dynamic
+                CameraObservationModel,
+                typename fl::Traits<ProcessModel>::State
             > ObsrvModel;
 
     /* ############################## */
@@ -91,14 +106,15 @@ public:
     typedef typename Filter::State State;
     typedef typename Filter::Input Input;
     typedef typename Filter::Observation Obsrv;
-    typedef typename Obsrv::Scalar Scalar;
     typedef typename Filter::StateDistribution StateDistribution;
 
     DevTestTracker(ros::NodeHandle& nh, VirtualObject<ObjectState>& object)
         : object(object),
+
           process_model_(create_process_model(nh)),
           obsrv_model_(create_obsrv_model(nh, process_model_)),
           filter_(create_filter(nh, process_model_, obsrv_model_)),
+
           state_distr_(filter_->process_model()->state_dimension()),
           zero_input_(Input::Zero(filter_->process_model()->input_dimension(), 1)),
           y(filter_->observation_model()->observation_dimension(), 1)
@@ -107,23 +123,38 @@ public:
         initial_state.topRows(object.state.rows()) = object.state;
 
         state_distr_.mean(initial_state);
-        state_distr_.covariance(state_distr_.covariance() * 0.000000000000);
+        state_distr_.covariance(state_distr_.covariance() * 1.e-12);
 
         ri::ReadParameter("inv_sigma", filter_->inv_sigma, nh);
         ri::ReadParameter("threshold", filter_->threshold, nh);
+        ri::ReadParameter("print_ukf_details", filter_->print_details, nh);
+
+        ri::ReadParameter("error_pixel", error_pixel, nh);
+        ri::ReadParameter("error_pixel_depth", error_pixel_depth, nh);
     }
 
-    void filter(std::vector<float> y_vec)
+    void filter(std::vector<float>& y_vec)
     {
         const int y_vec_size = y_vec.size();
+
+
+        if (error_pixel >= 0 && error_pixel < y_vec_size)
+        {
+            y_vec[error_pixel] = error_pixel_depth;
+        }
+        else if (error_pixel >= y_vec_size)
+        {
+            std::cout << "error pixel index overflow at " << error_pixel
+                      << ", max: " << y_vec_size << std::endl;
+        }
 
         Scalar y_i;
         for (int i = 0; i < y_vec_size; ++i)
         {
             y_i = (std::isinf(y_vec[i]) ? 7 : y_vec[i]);
-            y(2 * i, 0) = y_i;
-            y(2 * i + 1, 0) =  y_i * y_i;
-        }
+            y(2 * i) = y_i;
+            y(2 * i + 1) = y_i * y_i;
+        }                
 
         filter_->predict(0.033, zero_input_, state_distr_, state_distr_);
         filter_->update(y, state_distr_, state_distr_);
@@ -131,7 +162,7 @@ public:
         obsrv_model_->clear_cache();
     }
 
-public:
+private:
     /* ############################## */
     /* # Factory Functions          # */
     /* ############################## */
@@ -141,38 +172,27 @@ public:
      */
     std::shared_ptr<ProcessModel> create_process_model(ros::NodeHandle& nh)
     {
-        double linear_acceleration_sigma;
-        double angular_acceleration_sigma;
+        double linear_accel_sigma;
+        double angular_accel_sigma;
         double damping;
-
-        ri::ReadParameter("linear_acceleration_sigma",
-                          linear_acceleration_sigma, nh);
-        ri::ReadParameter("angular_acceleration_sigma",
-                          angular_acceleration_sigma, nh);
-        ri::ReadParameter("damping",
-                          damping, nh);
         double b_sigma;
-        ri::ReadParameter("b_sigma",
-                          b_sigma, nh);
+        double sigma_decay;
 
-        typedef typename
-        fl::Traits<ProcessModel>::PoseProcessModel PoseProcessModel;
+        ri::ReadParameter("linear_acceleration_sigma", linear_accel_sigma, nh);
+        ri::ReadParameter("angular_acceleration_sigma", angular_accel_sigma, nh);
+        ri::ReadParameter("damping", damping, nh);
+        ri::ReadParameter("b_sigma", b_sigma, nh);
+        ri::ReadParameter("sigma_decay", sigma_decay, nh);
 
-        typedef typename
-        fl::Traits<ProcessModel>::ParametersProcessModel ParametersProcessModel;
-
-        typedef typename
-        fl::Traits<ProcessModel>::ParameterProcessModel LocalProcessModel;
-
-        auto pose_model = std::make_shared<PoseProcessModel>(1 /* one object */);
+        auto pose_model = std::make_shared<PoseProcessModel>(1 /* 1 object */);
 
         Eigen::MatrixXd linear_acceleration_covariance =
             Eigen::MatrixXd::Identity(3, 3)
-            * std::pow(double(linear_acceleration_sigma), 2);
+            * std::pow(double(linear_accel_sigma), 2);
 
         Eigen::MatrixXd angular_acceleration_covariance =
             Eigen::MatrixXd::Identity(3, 3)
-            * std::pow(double(angular_acceleration_sigma), 2);
+            * std::pow(double(angular_accel_sigma), 2);
 
         pose_model->parameters(
             0,
@@ -181,12 +201,13 @@ public:
             linear_acceleration_covariance,
             angular_acceleration_covariance);
 
-        typedef typename fl::Traits<LocalProcessModel>::SecondMoment ParamCov;
+        typedef typename fl::Traits<ParameterProcessModel>::SecondMoment ParamCov;
 
         auto parameter_model =
-            std::make_shared<fl::LinearGaussianProcessModel<ParameterState>>(
+            std::make_shared<ParameterProcessModel>(
                 ParamCov::Identity() * (b_sigma * b_sigma));
-        //parameter_model->A(parameter_model->A() * 0.9);
+
+        parameter_model->A(parameter_model->A() * sigma_decay);
 
         auto parameters_model = std::make_shared<ParametersProcessModel>(
                     parameter_model,
@@ -207,14 +228,20 @@ public:
         ri::ReadParameter("model_sigma", model_sigma, nh);
         ri::ReadParameter("camera_sigma", camera_sigma, nh);
 
-        return std::make_shared<ObsrvModel>(
+        double pixel_variance =
+            (camera_sigma * camera_sigma) + (model_sigma * model_sigma);
+
+        return std::make_shared<ObsrvModel>
+        (
+            std::make_shared<CameraObservationModel>
+            (
+                std::make_shared<PixelObsrvModel>(pixel_variance),
+                (object.res_rows * object.res_cols)
+            ),
             object.renderer,
-            camera_sigma,
-            model_sigma,
             process_model->pose_process_model()->state_dimension(),
-            process_model->state_dimension(),
-            object.res_rows,
-            object.res_cols);
+            process_model->state_dimension()
+        );
     }
 
     /**
@@ -232,11 +259,13 @@ public:
         ri::ReadParameter("ut_beta", ut_beta, nh);
         ri::ReadParameter("ut_kappa", ut_kappa, nh);
 
-        return std::make_shared<FilterAlgo>(
-                    process_model,
-                    obsrv_model,
-                    //std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
-                    std::make_shared<fl::RandomTransform>());
+        return std::make_shared<FilterAlgo>
+        (
+            process_model,
+            obsrv_model,
+            //std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
+            std::make_shared<fl::RandomTransform>()
+        );
     }
 
 public:
@@ -247,6 +276,10 @@ public:
     StateDistribution state_distr_;
     Input zero_input_;
     Obsrv y;
+
+
+    int error_pixel;
+    double error_pixel_depth;
 };
 
 
@@ -274,19 +307,36 @@ int main (int argc, char **argv)
     std::cout << ">> initial state " << std::endl;
     std::cout << tracker.state_distr_.mean().transpose() << std::endl;
 
-    std::cout << ">> setup: " << std::endl;
+    std::cout << ">> setup: " << std::endl;    
     std::cout << ">> state dimension: " << tracker.process_model_->state_dimension() << std::endl;
     std::cout << ">> noise dimension: " << tracker.process_model_->noise_dimension() << std::endl;
     std::cout << ">> obsrv dimension: " << tracker.obsrv_model_->observation_dimension() << std::endl;
     std::cout << ">> obsrv noise dimension: " << tracker.obsrv_model_->noise_dimension() << std::endl;
     std::cout << ">> obsrv state dimension: " << tracker.obsrv_model_->state_dimension() << std::endl;
 
+    std::cout << ">> sigma point number: " <<
+        tracker.process_model_->state_dimension() +
+        tracker.process_model_->noise_dimension() +
+        tracker.obsrv_model_->noise_dimension() << std::endl;
+
+    Eigen::MatrixXd b;
+
+
+
+    int max_cycles;
+    int cycle = 0;
+    ri::ReadParameter("max_cycles", max_cycles, nh);
+
     while(ros::ok())
     {
 //        std::cout <<  "==========================================" << std::endl;
-        std::cout << tracker.state_distr_.mean().transpose() << std::endl;
-        //std::cout <<  "--------------------" << std::endl;
-//        std::cout << tracker.state_distr_.covariance() << std::endl;
+//        std::cout << tracker.state_distr_.mean().transpose() << std::endl;
+//        std::cout <<  "--------------------" << std::endl;
+//       std::cout << tracker.state_distr_.covariance() << std::endl;
+
+
+        b = tracker.state_distr_.mean().bottomRows(
+                tracker.process_model_->parameters_process_model()->state_dimension());
 
         /* ############################## */
         /* # Animate & Render           # */
@@ -316,20 +366,57 @@ int main (int argc, char **argv)
                    object.res_rows,
                    object.res_cols);
 
-        ip.publish(tracker.filter_->innovation, "/dev_test_tracker/innovation",
+        /* ############################## */
+
+        for (size_t i = 0; i < depth.size(); ++i)
+        {
+            image_vector(i, 0) = tracker.filter_->innovation(2 * i, 0);
+        }
+        ip.publish(image_vector, "/dev_test_tracker/innovation",
                    object.res_rows,
                    object.res_cols);
 
-        ip.publish(tracker.filter_->prediction, "/dev_test_tracker/prediction",
+        for (size_t i = 0; i < depth.size(); ++i)
+        {
+            image_vector(i, 0) = tracker.filter_->innovation(2 * i + 1, 0);
+        }
+        ip.publish(image_vector, "/dev_test_tracker/innovation_pow2",
                    object.res_rows,
                    object.res_cols);
 
-//        ip.publish(tracker.filter_->invR, "/dev_test_tracker/inv_covariance",
-//                   object.res_rows,
-//                   object.res_cols);
+        /* ############################## */
+
+        for (size_t i = 0; i < depth.size(); ++i)
+        {
+            image_vector(i, 0) = tracker.filter_->prediction(2*i, 0);
+        }
+        ip.publish(image_vector, "/dev_test_tracker/prediction",
+                   object.res_rows,
+                   object.res_cols);
+
+
+        for (size_t i = 0; i < depth.size(); ++i)
+        {
+            image_vector(i, 0) = tracker.filter_->prediction(2 * i + 1, 0);
+        }
+        ip.publish(image_vector, "/dev_test_tracker/prediction_pow2",
+                   object.res_rows,
+                   object.res_cols);
+
+        /* ############################## */
+
+        ip.publish(b, "/dev_test_tracker/b",
+                   object.res_rows,
+                   object.res_cols);
 
         ros::spinOnce();
 
+
+        if (max_cycles > 0 && cycle > max_cycles)
+        {
+            break;
+        }
+        cycle++;
     }
 
     return 0;

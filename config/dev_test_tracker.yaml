@@ -25,7 +25,7 @@ pose_beta_v: 0.0
 pose_gamma_v: 0.085
 
 # unscented transform
-ut_alpha: 0.5
+ut_alpha: 1.0
 ut_beta: 2.
 ut_kappa: 0.
 
@@ -35,8 +35,18 @@ angular_acceleration_sigma: 1.5 #1.5  3.0  15.0 30.0
 damping: 5.0 #5.0  20.0  1000.0 1000.0
 
 # observation model
-camera_sigma: 0.0005
-model_sigma: 0.0005
+camera_sigma: 0.001
+model_sigma: 0.0
 
-inv_sigma: 1000000.05
-threshold: 0.15
+# parameter process model
+b_sigma: 0.01
+sigma_decay: 1.0
+
+inv_sigma: 0000000.0
+threshold: 1000000.15
+
+error_pixel: 0
+error_pixel_depth: 6.99
+
+print_ukf_details: false
+max_cycles: -1
