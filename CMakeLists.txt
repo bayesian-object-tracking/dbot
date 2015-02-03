@@ -308,6 +308,23 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
         ${CUDA_LIBRARIES}
         yaml-cpp)
 
+
+    ## test_example
+    add_executable(dev_test_example
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_example_node.cpp
+    )
+
+    target_link_libraries(dev_test_example
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        ${CUDA_LIBRARIES}
+        yaml-cpp)
+
 else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message(" Not building GPU filtering")
 

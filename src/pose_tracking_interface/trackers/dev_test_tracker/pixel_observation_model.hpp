@@ -91,7 +91,7 @@ public:
         Observation y;
 
         y(0) = state(0)
-                  + std::exp(state(1)) * std::sqrt(covariance()(0,0))  * noise(0);
+               + std::exp(state(1)) * std::sqrt(covariance()(0,0)) * noise(0);
         y(1) = y(0) * y(0);
 
         return y;

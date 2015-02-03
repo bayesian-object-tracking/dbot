@@ -1,0 +1,17 @@
+
+
+# curve parameters
+a: 0.6
+step: 0.2
+
+
+A_factor: 1.5
+v_sigma: 0.5
+
+w_sigma: 0.5
+
+# error_pixel: 0
+# error_pixel_depth: 6.99
+# 
+# print_ukf_details: false 
+max_cycles: 200
