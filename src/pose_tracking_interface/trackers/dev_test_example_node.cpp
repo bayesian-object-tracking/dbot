@@ -41,25 +41,20 @@
 
 #include "dev_test_tracker/pixel_observation_model.hpp"
 
+
+static constexpr int StateDimension = 1;
+static constexpr int ObsrvDimension = -1;
+
 class DevTestExample
 {
 public:
-    static constexpr int StateDimension = 1;
-    static constexpr int ObsrvDimension = 1;
-    static constexpr int ParamDimension = ObsrvDimension;
-
     /* ############################## */
     /* # Basic types                # */
     /* ############################## */
     typedef double Scalar;
-    typedef Eigen::Matrix<
-                Scalar,
-                //fl::JoinSizes<StateDimension, ParamDimension>::Size,
-                1,
-                1
-            > State;
+    typedef Eigen::Matrix<Scalar, StateDimension, 1 > State;
 
-    typedef Eigen::Matrix<double, ObsrvDimension, 1> Obsrv;
+    typedef Eigen::Matrix<double, ObsrvDimension, 1> Observation;
 
     /* ############################## */
     /* # Process Model              # */
@@ -70,19 +65,17 @@ public:
     /* # Observation Model          # */
     /* ############################## */
     /* Pixel Model */
-    //typedef fl::PixelObservationModel<Scalar> PixelObsrvModel;
-    typedef fl::LinearGaussianObservationModel<Obsrv, State> PixelObsrvModel;
-
-    /* Camera Model(Pixel Model) */
-    typedef fl::FactorizedIIDObservationModel<PixelObsrvModel> ObsrvModel;
+    typedef fl::LinearGaussianObservationModel<Observation, State> ObservationModel;
+    typedef typename fl::Traits<ObservationModel>::SecondMoment Cov;
 
     /* ############################## */
     /* # Filter                     # */
     /* ############################## */
     typedef fl::GaussianFilter<
                 ProcessModel,
-                ObsrvModel,
-                fl::RandomTransform
+                ObservationModel,
+                fl::UnscentedTransform
+                //fl::RandomTransform
             > FilterAlgo;
 
     typedef fl::FilterInterface<FilterAlgo> Filter;
@@ -91,7 +84,6 @@ public:
     /* # Deduce filter types        # */
     /* ############################## */
     typedef typename Filter::Input Input;
-    //typedef typename Filter::Observation Obsrv;
     typedef typename Filter::StateDistribution StateDistribution;
 
     DevTestExample(ros::NodeHandle& nh)
@@ -110,9 +102,11 @@ public:
 
         state_distr_.mean(initial_state);
         state_distr_.covariance(state_distr_.covariance() * 1.e-12);
+
+        ri::ReadParameter("print_ukf_details", filter_->print_details, nh);
     }
 
-    void filter(const Obsrv& y)
+    void filter(const Observation& y)
     {
         filter_->predict(1.0, zero_input_, state_distr_, state_distr_);
         filter_->update(y, state_distr_, state_distr_);
@@ -145,22 +139,17 @@ private:
     /**
      * \return Observation model instance
      */
-    std::shared_ptr<ObsrvModel> create_obsrv_model(ros::NodeHandle& nh)
+    std::shared_ptr<ObservationModel> create_obsrv_model(ros::NodeHandle& nh)
     {
         double w_sigma;
         ri::ReadParameter("w_sigma", w_sigma, nh);
-        //ri::ReadParameter("pixels", pixels, nh);
-        pixels = ParamDimension;
+        ri::ReadParameter("pixels", pixels, nh);
 
-        typedef typename fl::Traits<PixelObsrvModel>::SecondMoment Cov;
-
-        return std::make_shared<ObsrvModel>
+        return std::make_shared<ObservationModel>
         (
-            std::make_shared<PixelObsrvModel>(
-                Cov::Identity() * w_sigma * w_sigma,
-                ObsrvDimension,
-                StateDimension),
-            pixels
+            Cov::Identity(pixels, pixels) * w_sigma * w_sigma,
+            pixels,
+            StateDimension
         );
     }
 
@@ -170,23 +159,24 @@ private:
     Filter::Ptr create_filter(
             ros::NodeHandle& nh,
             const std::shared_ptr<ProcessModel>& process_model,
-            const std::shared_ptr<ObsrvModel>& obsrv_model)
+            const std::shared_ptr<ObservationModel>& obsrv_model)
     {
         return std::make_shared<FilterAlgo>
         (
             process_model,
             obsrv_model,
-            std::make_shared<fl::RandomTransform>()
+            //std::make_shared<fl::RandomTransform>()
+            std::make_shared<fl::UnscentedTransform>(0.01)
         );
     }
 
 public:
     std::shared_ptr<ProcessModel> process_model_;
-    std::shared_ptr<ObsrvModel> obsrv_model_;
+    std::shared_ptr<ObservationModel> obsrv_model_;
     Filter::Ptr filter_;
     StateDistribution state_distr_;
     Input zero_input_;
-    Obsrv y;
+    Observation y;
 
     int pixels;
     int error_pixel;
@@ -206,7 +196,7 @@ int main (int argc, char **argv)
     /* # Setup object and tracker   # */
     /* ############################## */
     DevTestExample tracker(nh);
-    DevTestExample::Obsrv y(DevTestExample::ObsrvDimension,1);
+    DevTestExample::Observation y(tracker.pixels, 1);
 
     /* ############################## */
     /* # Images                     # */
@@ -230,11 +220,6 @@ int main (int argc, char **argv)
     std::cout << ">> obsrv state dimension: "
               << tracker.obsrv_model_->state_dimension() << std::endl;
 
-    std::cout << ">> sigma point number: " <<
-        tracker.process_model_->state_dimension() +
-        tracker.process_model_->noise_dimension() +
-        tracker.obsrv_model_->noise_dimension() << std::endl;
-
     Eigen::MatrixXd b;
 
     int max_cycles;
@@ -249,40 +234,78 @@ int main (int argc, char **argv)
 
     std::cout << ">> ready to run ..." << std::endl;
 
-    std::ofstream groundtruth;
-    groundtruth.open ("/home/issac_local/groundtruth.txt", std::ios::out);
-    std_msgs::Float32 y_msg;
-    std_msgs::Float32 y_e_msg;
-    ros::Publisher pub_y = nh.advertise<std_msgs::Float32>("/dev_test_example/y", 10000000);
-    ros::Publisher pub_y_e = nh.advertise<std_msgs::Float32>("/dev_test_example/y_e", 10000000);
+    std_msgs::Float32 x_msg;
+    ros::Publisher pub_x_gt
+        = nh.advertise<std_msgs::Float32>("/dev_test_example/x_gt", 10000);
+    ros::Publisher pub_x_e
+        = nh.advertise<std_msgs::Float32>("/dev_test_example/x_e", 10000);
+    ros::Publisher pub_x_avrg
+        = nh.advertise<std_msgs::Float32>("/dev_test_example/x_avrg", 10000);
 
-    fl::StandardGaussian<double> g;
+    double sim_w_sigma;
+    ri::ReadParameter("sim_w_sigma", sim_w_sigma, nh);
+    fl::Gaussian<DevTestExample::Observation> g(tracker.pixels);
+    g.covariance(g.covariance() * sim_w_sigma * sim_w_sigma);
+
+    double ground_truth;
+
+
+    int cycle_of_error;
+    int error_duration;
+    double error_value;
+    ri::ReadParameter("cycle_of_error", cycle_of_error, nh);
+    ri::ReadParameter("error_duration", error_duration, nh);
+    ri::ReadParameter("error_value", error_value, nh);
+
+
+    std::vector<std::pair<std_msgs::Float32, ros::Publisher>> pubs;
+    for (int i = 0; i < tracker.pixels; ++i)
+    {
+        pubs.push_back(
+            std::make_pair<std_msgs::Float32, ros::Publisher>(
+                std_msgs::Float32(),
+                nh.advertise<std_msgs::Float32>(
+                    std::string("/dev_test_example/y") + std::to_string(i),
+                    10000)));
+    }
 
     while(ros::ok())
     {
-        //        groundtruth << t << " "
-        //                    << y(0) << " "
-        //                    << tracker.state_distr_.mean() << std::endl;
+        ground_truth = std::sin(a * t);
 
-        t += step;
-        y(0) = std::sin(a * t);
+        t += step;        
+        y.setOnes();
+        y = y * ground_truth + g.sample();
+
+        if (cycle_of_error < cycle && cycle_of_error + error_duration > cycle)
+        {
+            y(0) = error_value;
+        }
+
+        for (int i = 0; i < tracker.pixels; ++i)
+        {
+            pubs[i].first.data = y(i);
+            pubs[i].second.publish(pubs[i].first);
+        }
 
         tracker.filter(y);
+        x_msg.data = tracker.state_distr_.mean()(0);
+        pub_x_e.publish(x_msg);
 
-        y_msg.data = y(0);
-        y_e_msg.data = tracker.state_distr_.mean()(0, 0);
+        x_msg.data = y.mean();
+        pub_x_avrg.publish(x_msg);
 
-        pub_y.publish(y_msg);
-        pub_y_e.publish(y_e_msg);
+        x_msg.data = ground_truth;
+        pub_x_gt.publish(x_msg);
+
+
+        ip.publish(y, "/dev_test_tracker/observation", 1, y.rows());
 
         if (max_cycles > 0 && cycle++ > max_cycles) break;
 
-        ros::Duration(0.005).sleep();
-
+        ros::Duration(0.01).sleep();
         ros::spinOnce();
     }
-
-    groundtruth.close();
 
     return 0;
 }
