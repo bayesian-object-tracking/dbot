@@ -43,27 +43,9 @@ int main (int argc, char **argv)
     /* ############################## */
     fl::ImagePublisher ip(nh);
 
-    Eigen::MatrixXd image_vector(tracker.obsrv_model_->observation_dimension(), 1);
-
-    std::cout << ">> initial state " << std::endl;
-    std::cout << tracker.state_distr_.mean().transpose() << std::endl;
-
-    std::cout << ">> setup: " << std::endl;    
-    std::cout << ">> state dimension: "
-              << tracker.process_model_->state_dimension() << std::endl;
-    std::cout << ">> noise dimension: "
-              << tracker.process_model_->noise_dimension() << std::endl;
-    std::cout << ">> obsrv dimension: "
-              << tracker.obsrv_model_->observation_dimension() << std::endl;
-    std::cout << ">> obsrv noise dimension: "
-              << tracker.obsrv_model_->noise_dimension() << std::endl;
-    std::cout << ">> obsrv state dimension: "
-              << tracker.obsrv_model_->state_dimension() << std::endl;
-
     int max_cycles;
     int cycle = 0;
     ri::ReadParameter("max_cycles", max_cycles, nh);
-
 
     std_msgs::Float32 x_msg;
     ros::Publisher pub_x_gt
@@ -80,7 +62,6 @@ int main (int argc, char **argv)
         = nh.advertise<std_msgs::Float32>("/dev_test_example/x_avrg", 10000);
 
     double ground_truth;
-
 
     int error_pixels;
     int cycle_of_error;
@@ -99,7 +80,7 @@ int main (int argc, char **argv)
 
     std::vector<std::pair<std_msgs::Float32, ros::Publisher>> pubs_y;
     std::vector<std::pair<std_msgs::Float32, ros::Publisher>> pubs_b;
-    for (int i = 0; i < std::min(tracker.pixels, 10); ++i)
+    for (int i = 0; i < std::min(tracker.pixels, 100); ++i)
     {
         pubs_y.push_back(
             std::make_pair<std_msgs::Float32, ros::Publisher>(
@@ -122,16 +103,25 @@ int main (int argc, char **argv)
 
     double w_sigma;
     double sim_w_sigma;
+    double k;
+
     ri::ReadParameter("w_sigma", w_sigma, nh);
     ri::ReadParameter("sim_w_sigma", sim_w_sigma, nh);
-    ri::ReadParameter("k", tracker.obsrv_model_->pixel_observation_model()->k_, nh);
-    fl::Gaussian<DevTestExample::Observation> g(tracker.obsrv_model_->observation_dimension());
+    ri::ReadParameter("k", k, nh);
+
+    tracker.obsrv_model_->pixel_observation_model()->k_ = k;
+    fl::Gaussian<DevTestExample::Observation> g(
+        tracker.obsrv_model_->observation_dimension());
     g.covariance(g.covariance() * sim_w_sigma * sim_w_sigma);
 
     std::cout << ">> ready to run ..." << std::endl;
 
     while(ros::ok())
     {
+        /* ############################ */
+        /* # create measurements      # */
+        /* ############################ */
+
         ground_truth = std::sin(t);
 
         t += step;
@@ -142,32 +132,52 @@ int main (int argc, char **argv)
             y(2 * i + 1) = y(2 * i) * y(2 * i);
         }
 
+        /* ############################ */
+        /* # introduce errors         # */
+        /* ############################ */
+
         if (cycle_of_error < cycle && cycle_of_error + error_duration > cycle)
         {
+            /* compute the number of error pixels */
             if (!gradual_error)
             {
                 current_error_pixels = error_pixels;
             }
             else
             {
-                current_error_pixels = (cycle - cycle_of_error) / gradual_delay + 1;
-                current_error_pixels = std::min(current_error_pixels, error_pixels);
+                current_error_pixels =
+                    std::min((cycle - cycle_of_error) / gradual_delay + 1,
+                             error_pixels);
+
+                std::cout << "current_error_pixels = "
+                          << current_error_pixels << std::endl;
             }
 
+            /* set errors */
             for (int i = 0; i < current_error_pixels && i < tracker.pixels; ++i)
             {
                 y(2 * i) = error_value;
                 y(2 * i + 1) = y(2 * i) * y(2 * i);
             }
-        }
+        }        
 
-        for (int i = 0; i < std::min(tracker.pixels, 10); ++i)
+        /* ############################ */
+        /* # Filter                   # */
+        /* ############################ */
+
+
+        tracker.filter(y);
+
+
+        /* ############################ */
+        /* # Visualize                # */
+        /* ############################ */
+        // y
+        for (int i = 0; i < std::min(tracker.pixels, 100); ++i)
         {
             pubs_y[i].first.data = y(2 * i);
             pubs_y[i].second.publish(pubs_y[i].first);
         }
-
-        tracker.filter(y);
 
         // a
         x_msg.data = tracker.state_distr_.mean()(0);
@@ -183,12 +193,12 @@ int main (int argc, char **argv)
                      - std::sqrt(tracker.state_distr_.covariance()(0,0));
         pub_sigma_x_n.publish(x_msg);
 
-
         // b
-        for (int i = 0; i < std::min(tracker.pixels, 10); ++i)
+        for (int i = 0; i < std::min(tracker.pixels, 100); ++i)
         {
             double b = tracker.state_distr_.mean()(1 + i);
-            pubs_b[i].first.data = tracker.obsrv_model_->pixel_observation_model()->sigma(b);
+            pubs_b[i].first.data =
+                    tracker.obsrv_model_->pixel_observation_model()->sigma(b);
             pubs_b[i].second.publish(pubs_b[i].first);
         }
 
@@ -199,7 +209,6 @@ int main (int argc, char **argv)
         // ground truth
         x_msg.data = ground_truth;
         pub_x_gt.publish(x_msg);                        
-
 
         ip.publish(y, "/dev_test_tracker/observation", 1, y.rows());
 

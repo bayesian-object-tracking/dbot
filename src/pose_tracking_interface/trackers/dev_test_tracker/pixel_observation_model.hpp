@@ -107,38 +107,36 @@ public:
 
     double sigma(double b, int sigma_function = -1)
     {
-        if (sigma_function < 0) sigma_function = sigma_function_;
+        return std::exp(b);
+//        if (sigma_function < 0) sigma_function = sigma_function_;
 
-        switch(sigma_function)
-        {
-        case 0:
-            return std::exp(b);
-            break;
-        case 1:
-            if (b < 0)
-            {
-                return std::exp(b);
-            }
-            else
-            {
-                return (1 + b);
-            }
+//        switch(sigma_function)
+//        {
+//        case 0:
+//            return std::exp(b);
+//            break;
+//        case 1:
+//            if (b < 0)
+//            {
+//                return std::exp(b);
+//            }
+//            else
+//            {
+//                return (1 + b);
+//            }
 
-            break;
-        case 2:
-            return max_std_ * fl::sigmoid((shift_ + b));
-            break;
-        case 3:
-            return max_std_ * fl::sigmoid((b - std::log(max_std_-1.)));
-            break;
-        case 4:
-            return max_std_ * fl::sigmoid((b - std::log(max_std_-1.)));
-            break;
-        default:
-            std::cout << "Invalid sigma function id " << sigma_function_ << std::endl;
-            return 0;
-            break;
-        }
+//            break;
+//        case 2:
+//            return max_std_ * fl::sigmoid((shift_ + b));
+//            break;
+//        case 3:
+//            return max_std_ * fl::sigmoid((b - std::log(max_std_-1.)));
+//            break;
+//        default:
+//            std::cout << "Invalid sigma function id " << sigma_function_ << std::endl;
+//            return 0;
+//            break;
+//        }
     }
 
     virtual size_t observation_dimension() const

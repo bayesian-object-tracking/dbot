@@ -3,7 +3,7 @@
 pixels: 100
 
 A_b: 0.5
-v_b_sigma: 0.3
+v_b_sigma: 0.4
 v_a_sigma: 0.3
 
 ########################################################
@@ -17,7 +17,7 @@ v_a_sigma: 0.3
 sigma_function: 0
 
 k: 0.6
-max_w_sigma: 5.0
+max_w_sigma: 0.0
 sim_w_sigma: 0.02
 w_sigma: 0.02
 
@@ -25,11 +25,11 @@ w_sigma: 0.02
 max_cycles: 200
 
 cycle_of_error: 20
-error_pixels: 40
-error_duration: 110
+error_pixels: 20
+error_duration: 150
 error_value: 3.0
-gradual_error: true
-gradual_delay: 5
+gradual_error: false
+gradual_delay: 2
 
 # KalmanFilter Posterior
 factorize: false
