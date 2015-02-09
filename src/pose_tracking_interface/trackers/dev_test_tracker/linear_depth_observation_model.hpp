@@ -71,7 +71,7 @@ struct Traits<LinearDepthObservationModel<State_, Scalar, ResRows, ResCols>>
     // Holistic observation model
     typedef FactorizedIIDObservationModel<
                 PixelObsrvModel,
-                FactorSize<ResRows, ResCols>::Size
+                FactorSizes<ResRows, ResCols>::Size
             > CameraObservationModel;
 
     typedef State_ State;

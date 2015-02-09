@@ -77,11 +77,20 @@ public:
     using Traits<This>::GaussianBase::mean;
     using Traits<This>::GaussianBase::covariance;
     using Traits<This>::GaussianBase::dimension;
+    using Traits<This>::GaussianBase::square_root;
 
 public:
-    PixelObservationModel(double variance)
+    PixelObservationModel(double variance,
+                          double max_std,
+                          int sigma_function = 0,
+                          double k = 1.)
+        : max_std_(max_std),
+          sigma_function_(sigma_function),
+          k_(k)
     {
         covariance(SecondMoment::Identity() * variance);
+
+        shift_ = fl::logit(square_root()(0, 0)/ max_std);
     }
 
     virtual Observation predict_observation(const State& state,
@@ -90,11 +99,46 @@ public:
     {
         Observation y;
 
-        y(0) = state(0)
-               + std::exp(state(1)) * std::sqrt(covariance()(0,0)) * noise(0);
+        y(0) = state(0) + ((sigma(state(1)) - 1.) * k_ + square_root()(0, 0)) * noise(0);
         y(1) = y(0) * y(0);
 
         return y;
+    }
+
+    double sigma(double b, int sigma_function = -1)
+    {
+        if (sigma_function < 0) sigma_function = sigma_function_;
+
+        switch(sigma_function)
+        {
+        case 0:
+            return std::exp(b);
+            break;
+        case 1:
+            if (b < 0)
+            {
+                return std::exp(b);
+            }
+            else
+            {
+                return (1 + b);
+            }
+
+            break;
+        case 2:
+            return max_std_ * fl::sigmoid((shift_ + b));
+            break;
+        case 3:
+            return max_std_ * fl::sigmoid((b - std::log(max_std_-1.)));
+            break;
+        case 4:
+            return max_std_ * fl::sigmoid((b - std::log(max_std_-1.)));
+            break;
+        default:
+            std::cout << "Invalid sigma function id " << sigma_function_ << std::endl;
+            return 0;
+            break;
+        }
     }
 
     virtual size_t observation_dimension() const
@@ -111,6 +155,12 @@ public:
     {
         return Traits<This>::StateDim;
     }
+
+public:
+    double max_std_;
+    double shift_;
+    int sigma_function_;
+    double k_;
 };
 
 }

@@ -287,7 +287,7 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
                                                              assimp)
 
     ## dev_test_tracker
-    add_executable(dev_test_tracker
+    add_executable(dev_test_tracker        
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker_node.cpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/virtual_object.hpp
         src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_tracker/linear_depth_observation_model.hpp
@@ -311,10 +311,28 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
     ## test_example
     add_executable(dev_test_example
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_example_node.cpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_example.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_example_node.cpp        
     )
 
     target_link_libraries(dev_test_example
+        ${PROJECT_NAME_TRACKING}
+        ${PROJECT_NAME_TRACKING_INTERFACE}
+        ${PROJECT_NAME_TRACKING}_gpu
+        ${PROJECT_NAME_TRACKING}_cuda
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+        ${CUDA_LIBRARIES}
+        yaml-cpp)
+
+    ## test_example plots
+    add_executable(dev_test_plots
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_example.hpp
+        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/dev_test_plots_node.cpp
+    )
+
+    target_link_libraries(dev_test_plots
         ${PROJECT_NAME_TRACKING}
         ${PROJECT_NAME_TRACKING_INTERFACE}
         ${PROJECT_NAME_TRACKING}_gpu

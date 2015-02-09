@@ -1,25 +1,41 @@
 
-
-# curve parameters
-a: 1.0
-step: 0.15
-
-
 # observation 
-pixels: 10
+pixels: 100
+
+A_b: 0.5
+v_b_sigma: 0.3
+v_a_sigma: 0.3
+
+########################################################
+# Sigma functions
+# 0: exp(x) * w_sigma
+# 1: (I(b<0)*exp(b) + I(b>=0)*(1 + b)) * w_sigma
+# 2: max_w_sigma * s(shift + b)
+# 3: max_w_sigma * s(b - log(max_w_sigma -1))
+# 4: max_w_sigma * s(b - log(max_w_sigma -1)) * w_sigma
+########################################################
+sigma_function: 0
+
+k: 0.6
+max_w_sigma: 5.0
+sim_w_sigma: 0.02
+w_sigma: 0.02
 
 
-A_factor: 1.0
-v_sigma: 1.0
-
-sim_w_sigma: 0.3
-w_sigma: 0.3
-
-
-print_ukf_details: false
 max_cycles: 200
 
+cycle_of_error: 20
+error_pixels: 40
+error_duration: 110
+error_value: 3.0
+gradual_error: true
+gradual_delay: 5
 
-cycle_of_error: 150
-error_duration: 10
-error_value: 10.
+# KalmanFilter Posterior
+factorize: false
+
+
+# range_step: 0.01
+# plot_range_x_min: 0.
+# plot_range_x_max: 10.
+print_ukf_details: false

@@ -24,6 +24,7 @@
 
 #include <Eigen/Dense>
 
+#include <fl/util/meta.hpp>
 #include <fl/util/traits.hpp>
 #include <fl/model/observation/observation_model_interface.hpp>
 
@@ -188,5 +189,147 @@ protected:
                        StateInternal,
                        VectorHash<Eigen::MatrixXd>> predictions_cache_;
 };
+
+
+
+
+// Forward declarations
+template <
+    typename PixelObservationModel,
+    typename State,
+    int Pixels
+>
+class ExperimentalObservationModel;
+
+/**
+ * Traits of ExperimentalObservationModel
+ */
+template <
+    typename PixelObservationModel,
+    typename State,
+    int Pixels
+>
+struct Traits<
+           ExperimentalObservationModel<PixelObservationModel, State, Pixels>
+        >
+{
+    static constexpr int IIDPixels = Pixels;
+
+    typedef typename Traits<PixelObservationModel>::Scalar Scalar;
+    typedef typename Traits<PixelObservationModel>::State LocalState;
+    typedef typename Traits<PixelObservationModel>::Observation LocalObservation;
+    typedef typename Traits<PixelObservationModel>::Noise LocalNoise;
+
+    typedef Eigen::Matrix<
+                Scalar,
+                FactorSizes<LocalObservation::RowsAtCompileTime, Pixels>::Size,
+                1
+            > Observation;
+
+    typedef Eigen::Matrix<
+                Scalar,
+                FactorSizes<LocalNoise::RowsAtCompileTime, Pixels>::Size,
+                1
+            > Noise;
+
+    typedef ObservationModelInterface<
+                Observation,
+                State,
+                Noise
+            > ObservationModelBase;
+};
+
+/**
+ * \ingroup observation_models
+ */
+template <
+    typename PixelObservationModel,
+    typename State,
+    int Pixels = Eigen::Dynamic>
+class ExperimentalObservationModel
+    : public Traits<
+                 ExperimentalObservationModel<
+                     PixelObservationModel,
+                     State,
+                     Pixels
+                 >
+             >::ObservationModelBase
+{
+public:
+    typedef ExperimentalObservationModel<
+                PixelObservationModel,
+                State,
+                Pixels
+            > This;
+
+    typedef typename Traits<This>::LocalState LocalState;
+    typedef typename Traits<This>::Observation Observation;
+    typedef typename Traits<This>::Noise Noise;
+
+public:
+    ExperimentalObservationModel(
+            const std::shared_ptr<PixelObservationModel>& pixel_obsrv_model,
+            size_t state_dimension,
+            int pixels = Pixels)
+        : pixel_obsrv_model_(pixel_obsrv_model),
+          state_dimension_(state_dimension),
+          pixels_(pixels)
+    { }
+
+    ~ExperimentalObservationModel() { }
+
+    virtual Observation predict_observation(const State& state,
+                                            const Noise& noise,
+                                            double delta_time)
+    {
+        Observation y = Observation::Zero(observation_dimension(), 1);
+
+        int obsrv_dim = pixel_obsrv_model_->observation_dimension();
+        int noise_dim = pixel_obsrv_model_->noise_dimension();
+        int state_dim = pixel_obsrv_model_->state_dimension();
+
+        LocalState local_state(state_dim, 1);
+        local_state(0) = state(0);
+
+        for (int i = 0; i < pixels_; ++i)
+        {
+            local_state(1) = state(1 + i);
+
+            y.middleRows(i * obsrv_dim, obsrv_dim) =
+                pixel_obsrv_model_->predict_observation(
+                    local_state,
+                    noise.middleRows(i * noise_dim, noise_dim),
+                    delta_time);
+        }
+
+        return y;
+    }
+
+    virtual size_t observation_dimension() const
+    {
+        return pixel_obsrv_model_->observation_dimension() * pixels_;
+    }
+
+    virtual size_t state_dimension() const
+    {
+        return state_dimension_;
+    }
+
+    virtual size_t noise_dimension() const
+    {
+        return pixel_obsrv_model_->noise_dimension() * pixels_;
+    }
+
+    const std::shared_ptr<PixelObservationModel>& pixel_observation_model()
+    {
+        return pixel_obsrv_model_;
+    }
+
+protected:
+    std::shared_ptr<PixelObservationModel> pixel_obsrv_model_;
+    size_t state_dimension_;
+    size_t pixels_;
+};
+
 
 }

@@ -28,7 +28,7 @@
 
 #include <fl/util/meta.hpp>
 #include <fl/filter/gaussian/unscented_transform.hpp>
-#include <fl/filter/gaussian/random_transform.hpp>
+#include <fl/filter/gaussian/monte_carlo_transform.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
@@ -95,7 +95,7 @@ public:
                 ProcessModel,
                 ObsrvModel,
                 //fl::UnscentedTransform
-                fl::RandomTransform
+                fl::MonteCarloTransform<>
             > FilterAlgo;
 
     typedef fl::FilterInterface<FilterAlgo> Filter;
@@ -235,7 +235,7 @@ private:
         (
             std::make_shared<CameraObservationModel>
             (
-                std::make_shared<PixelObsrvModel>(pixel_variance),
+                std::make_shared<PixelObsrvModel>(pixel_variance, 10.), // TODO FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 (object.res_rows * object.res_cols)
             ),
             object.renderer,
@@ -264,7 +264,7 @@ private:
             process_model,
             obsrv_model,
             //std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
-            std::make_shared<fl::RandomTransform>()
+            std::make_shared<fl::MonteCarloTransform<>>()
         );
     }
 

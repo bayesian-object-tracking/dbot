@@ -1,0 +1,10 @@
+<launch>
+  <arg name="config_file" default="$(find pose_tracking)/config/dev_test_example.yaml"/>
+
+  <!-- Pose Estimation Node-->
+  <node name="dev_test_plots" type="dev_test_plots"
+        pkg="pose_tracking" output="screen" respawn="false"> <!-- launch-prefix="valgrind" -->      
+        <rosparam command="load" file="$(arg config_file)" />
+        <param name="config_file"  type="string"  value="$(arg config_file)" />              
+  </node>
+</launch>

@@ -30,23 +30,23 @@ ut_beta: 2.
 ut_kappa: 0.
 
 # process model
-linear_acceleration_sigma:   0.1 #0.1  0.2  1.0 2.0
-angular_acceleration_sigma: 1.5 #1.5  3.0  15.0 30.0
+linear_acceleration_sigma:   0.01 #0.1  0.2  1.0 2.0
+angular_acceleration_sigma: 0.015 #1.5  3.0  15.0 30.0
 damping: 5.0 #5.0  20.0  1000.0 1000.0
 
 # observation model
-camera_sigma: 0.001
+camera_sigma: 0.5
 model_sigma: 0.0
 
 # parameter process model
-b_sigma: 0.01
-sigma_decay: 1.0
+b_sigma: 0.5
+sigma_decay: 0.1
 
 inv_sigma: 0000000.0
-threshold: 1000000.15
+threshold: 1000000.015
 
-error_pixel: 0
-error_pixel_depth: 6.99
+error_pixel: 44
+error_pixel_depth: 10.
 
 print_ukf_details: false
 max_cycles: -1
