@@ -29,6 +29,7 @@
 #include <fl/util/meta.hpp>
 #include <fl/filter/gaussian/unscented_transform.hpp>
 #include <fl/filter/gaussian/monte_carlo_transform.hpp>
+#include <fl/model/process/joint_process_model.hpp>
 
 #include <pose_tracking/utils/rigid_body_renderer.hpp>
 #include <pose_tracking/states/free_floating_rigid_bodies_state.hpp>
@@ -60,8 +61,8 @@ public:
     typedef fl::BrownianObjectMotionModel<ObjectState> PoseProcessModel;
 
     typedef fl::LinearGaussianProcessModel<ParameterState> ParameterProcessModel;
-    typedef fl::FactorizedIIDProcessModel<
-                ParameterProcessModel
+    typedef fl::JointProcessModel<
+                fl::MultipleOf<ParameterProcessModel, Eigen::Dynamic>
             > ParametersProcessModel;
 
     typedef fl::DualProcessModel<
@@ -91,11 +92,14 @@ public:
     /* ############################## */
     /* # Filter                     # */
     /* ############################## */
+    typedef fl::MonteCarloTransform<
+                fl::LinearPointCountPolicy<2, 50>
+            > PointSetTransform;
+
     typedef fl::GaussianFilter<
                 ProcessModel,
                 ObsrvModel,
-                //fl::UnscentedTransform
-                fl::MonteCarloTransform<>
+                PointSetTransform
             > FilterAlgo;
 
     typedef fl::FilterInterface<FilterAlgo> Filter;
@@ -117,7 +121,7 @@ public:
 
           state_distr_(filter_->process_model()->state_dimension()),
           zero_input_(Input::Zero(filter_->process_model()->input_dimension(), 1)),
-          y(filter_->observation_model()->observation_dimension(), 1)
+          y(filter_->observation_model()->obsrv_dimension(), 1)
     {
         State initial_state = State::Zero(filter_->process_model()->state_dimension(), 1);
         initial_state.topRows(object.state.rows()) = object.state;
@@ -264,7 +268,7 @@ private:
             process_model,
             obsrv_model,
             //std::make_shared<fl::UnscentedTransform>(ut_alpha, ut_beta, ut_kappa));
-            std::make_shared<fl::MonteCarloTransform<>>()
+            std::make_shared<PointSetTransform>()
         );
     }
 
@@ -310,7 +314,7 @@ int main (int argc, char **argv)
     std::cout << ">> setup: " << std::endl;    
     std::cout << ">> state dimension: " << tracker.process_model_->state_dimension() << std::endl;
     std::cout << ">> noise dimension: " << tracker.process_model_->noise_dimension() << std::endl;
-    std::cout << ">> obsrv dimension: " << tracker.obsrv_model_->observation_dimension() << std::endl;
+    std::cout << ">> obsrv dimension: " << tracker.obsrv_model_->obsrv_dimension() << std::endl;
     std::cout << ">> obsrv noise dimension: " << tracker.obsrv_model_->noise_dimension() << std::endl;
     std::cout << ">> obsrv state dimension: " << tracker.obsrv_model_->state_dimension() << std::endl;
 
@@ -357,57 +361,57 @@ int main (int argc, char **argv)
         object.publish_marker(object.state, 1, 1, 0, 0);
         object.publish_marker(tracker.state_distr_.mean(), 2, 0, 1, 0);
 
-        image_vector.setZero();
-        for (size_t i = 0; i < depth.size(); ++i)
-        {
-            image_vector(i, 0) = (std::isinf(depth[i]) ? 0 : depth[i]);
-        }
-        ip.publish(image_vector, "/dev_test_tracker/observation",
-                   object.res_rows,
-                   object.res_cols);
+//        image_vector.setZero();
+//        for (size_t i = 0; i < depth.size(); ++i)
+//        {
+//            image_vector(i, 0) = (std::isinf(depth[i]) ? 0 : depth[i]);
+//        }
+//        ip.publish(image_vector, "/dev_test_tracker/observation",
+//                   object.res_rows,
+//                   object.res_cols);
 
-        /* ############################## */
+//        /* ############################## */
 
-        for (size_t i = 0; i < depth.size(); ++i)
-        {
-            image_vector(i, 0) = tracker.filter_->innovation(2 * i, 0);
-        }
-        ip.publish(image_vector, "/dev_test_tracker/innovation",
-                   object.res_rows,
-                   object.res_cols);
+//        for (size_t i = 0; i < depth.size(); ++i)
+//        {
+//            image_vector(i, 0) = tracker.filter_->innovation(2 * i, 0);
+//        }
+//        ip.publish(image_vector, "/dev_test_tracker/innovation",
+//                   object.res_rows,
+//                   object.res_cols);
 
-        for (size_t i = 0; i < depth.size(); ++i)
-        {
-            image_vector(i, 0) = tracker.filter_->innovation(2 * i + 1, 0);
-        }
-        ip.publish(image_vector, "/dev_test_tracker/innovation_pow2",
-                   object.res_rows,
-                   object.res_cols);
+//        for (size_t i = 0; i < depth.size(); ++i)
+//        {
+//            image_vector(i, 0) = tracker.filter_->innovation(2 * i + 1, 0);
+//        }
+//        ip.publish(image_vector, "/dev_test_tracker/innovation_pow2",
+//                   object.res_rows,
+//                   object.res_cols);
 
-        /* ############################## */
+//        /* ############################## */
 
-        for (size_t i = 0; i < depth.size(); ++i)
-        {
-            image_vector(i, 0) = tracker.filter_->prediction(2*i, 0);
-        }
-        ip.publish(image_vector, "/dev_test_tracker/prediction",
-                   object.res_rows,
-                   object.res_cols);
+//        for (size_t i = 0; i < depth.size(); ++i)
+//        {
+//            image_vector(i, 0) = tracker.filter_->prediction(2*i, 0);
+//        }
+//        ip.publish(image_vector, "/dev_test_tracker/prediction",
+//                   object.res_rows,
+//                   object.res_cols);
 
 
-        for (size_t i = 0; i < depth.size(); ++i)
-        {
-            image_vector(i, 0) = tracker.filter_->prediction(2 * i + 1, 0);
-        }
-        ip.publish(image_vector, "/dev_test_tracker/prediction_pow2",
-                   object.res_rows,
-                   object.res_cols);
+//        for (size_t i = 0; i < depth.size(); ++i)
+//        {
+//            image_vector(i, 0) = tracker.filter_->prediction(2 * i + 1, 0);
+//        }
+//        ip.publish(image_vector, "/dev_test_tracker/prediction_pow2",
+//                   object.res_rows,
+//                   object.res_cols);
 
-        /* ############################## */
+//        /* ############################## */
 
-        ip.publish(b, "/dev_test_tracker/b",
-                   object.res_rows,
-                   object.res_cols);
+//        ip.publish(b, "/dev_test_tracker/b",
+//                   object.res_rows,
+//                   object.res_cols);
 
         ros::spinOnce();
 

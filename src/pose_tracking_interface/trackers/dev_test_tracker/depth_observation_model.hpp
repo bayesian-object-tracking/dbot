@@ -108,13 +108,12 @@ public:
         assert(parameters_dimension_ > 0);
     }
 
-
     ~DepthObservationModel() { }
 
     /**
      * \return Prediction assuming non-additive noise
      */
-    virtual Observation predict_observation(const State& state,
+    virtual Observation predict_obsrv(const State& state,
                                             const Noise& noise,
                                             double delta_time)
     {
@@ -125,15 +124,15 @@ public:
             map(state, predictions_cache_[pose]);
         }
 
-        return camera_obsrv_model_->predict_observation(
+        return camera_obsrv_model_->predict_obsrv(
                     predictions_cache_[pose],
                     noise,
                     delta_time);
     }
 
-    virtual size_t observation_dimension() const
+    virtual size_t obsrv_dimension() const
     {
-        return camera_obsrv_model_->observation_dimension();
+        return camera_obsrv_model_->obsrv_dimension();
     }
 
     virtual size_t state_dimension() const
@@ -222,13 +221,13 @@ struct Traits<
 
     typedef Eigen::Matrix<
                 Scalar,
-                FactorSizes<LocalObservation::RowsAtCompileTime, Pixels>::Size,
+                ExpandSizes<LocalObservation::RowsAtCompileTime, Pixels>::Size,
                 1
             > Observation;
 
     typedef Eigen::Matrix<
                 Scalar,
-                FactorSizes<LocalNoise::RowsAtCompileTime, Pixels>::Size,
+                ExpandSizes<LocalNoise::RowsAtCompileTime, Pixels>::Size,
                 1
             > Noise;
 
@@ -278,13 +277,13 @@ public:
 
     ~ExperimentalObservationModel() { }
 
-    virtual Observation predict_observation(const State& state,
+    virtual Observation predict_obsrv(const State& state,
                                             const Noise& noise,
                                             double delta_time)
     {
-        Observation y = Observation::Zero(observation_dimension(), 1);
+        Observation y = Observation::Zero(obsrv_dimension(), 1);
 
-        int obsrv_dim = pixel_obsrv_model_->observation_dimension();
+        int obsrv_dim = pixel_obsrv_model_->obsrv_dimension();
         int noise_dim = pixel_obsrv_model_->noise_dimension();
         int state_dim = pixel_obsrv_model_->state_dimension();
 
@@ -296,7 +295,7 @@ public:
             local_state(1) = state(1 + i);
 
             y.middleRows(i * obsrv_dim, obsrv_dim) =
-                pixel_obsrv_model_->predict_observation(
+                pixel_obsrv_model_->predict_obsrv(
                     local_state,
                     noise.middleRows(i * noise_dim, noise_dim),
                     delta_time);
@@ -305,9 +304,9 @@ public:
         return y;
     }
 
-    virtual size_t observation_dimension() const
+    virtual size_t obsrv_dimension() const
     {
-        return pixel_obsrv_model_->observation_dimension() * pixels_;
+        return pixel_obsrv_model_->obsrv_dimension() * pixels_;
     }
 
     virtual size_t state_dimension() const

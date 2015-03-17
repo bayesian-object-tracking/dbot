@@ -39,14 +39,51 @@ camera_sigma: 0.5
 model_sigma: 0.0
 
 # parameter process model
-b_sigma: 0.5
+b_sigma: 0.98
 sigma_decay: 0.1
 
 inv_sigma: 0000000.0
 threshold: 1000000.015
 
-error_pixel: 44
+error_pixel: -1
 error_pixel_depth: 10.
 
 print_ukf_details: false
 max_cycles: -1
+
+A_b: 0.98
+v_b_sigma: 0.03
+v_a_sigma: 0.3
+
+########################################################
+# Sigma functions
+# 0: exp(x) * w_sigma
+# 1: (I(b<0)*exp(b) + I(b>=0)*(1 + b)) * w_sigma
+# 2: max_w_sigma * s(shift + b)
+# 3: max_w_sigma * s(b - log(max_w_sigma -1))
+# 4: max_w_sigma * s(b - log(max_w_sigma -1)) * w_sigma
+########################################################
+
+k: 0.6
+max_w_sigma: 0.0
+sim_w_sigma: 0.05
+w_sigma: 0.05
+
+
+# max_cycles: 200
+# 
+# cycle_of_error: 20
+# error_pixels: 9
+# error_duration: 150
+# error_value: 2.0
+# gradual_error: true
+# gradual_delay: 3
+
+# KalmanFilter Posterior
+factorize: false
+
+
+# range_step: 0.01
+# plot_range_x_min: 0.
+# plot_range_x_max: 10.
+print_ukf_details: false

@@ -71,7 +71,7 @@ struct Traits<LinearDepthObservationModel<State_, Scalar, ResRows, ResCols>>
     // Holistic observation model
     typedef FactorizedIIDObservationModel<
                 PixelObsrvModel,
-                FactorSizes<ResRows, ResCols>::Size
+                ExpandSizes<ResRows, ResCols>::Size
             > CameraObservationModel;
 
     typedef State_ State;
@@ -154,7 +154,7 @@ public:
     /**
      * \return Prediction assuming additive noise
      */
-    virtual Observation predict_observation(const State& state,
+    virtual Observation predict_obsrv(const State& state,
                                             double delta_time)
     {
         Eigen::MatrixXd pose = state.topRows(6);
@@ -170,7 +170,7 @@ public:
     /**
      * \return Prediction assuming non-additive noise
      */
-    virtual Observation predict_observation(const State& state,
+    virtual Observation predict_obsrv(const State& state,
                                             const Noise& noise,
                                             double delta_time)
     {
@@ -181,15 +181,15 @@ public:
             map(state, predictions_cache_[pose]);
         }
 
-        return camera_obsrv_model_.predict_observation(
+        return camera_obsrv_model_.predict_obsrv(
                     predictions_cache_[pose],
                     noise,
                     delta_time);
     }
 
-    virtual size_t observation_dimension() const
+    virtual size_t obsrv_dimension() const
     {
-        return camera_obsrv_model_.observation_dimension();
+        return camera_obsrv_model_.obsrv_dimension();
     }
 
     virtual size_t state_dimension() const

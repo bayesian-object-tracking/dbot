@@ -1,9 +1,9 @@
 
 # observation 
-pixels: 100
+pixels: 10
 
 A_b: 0.5
-v_b_sigma: 0.4
+v_b_sigma: 0.03
 v_a_sigma: 0.3
 
 ########################################################
@@ -16,20 +16,24 @@ v_a_sigma: 0.3
 ########################################################
 sigma_function: 0
 
+sigma_min: 0.02
+sigma_0: 0.4
+s: 1.0
+
 k: 0.6
 max_w_sigma: 0.0
-sim_w_sigma: 0.02
-w_sigma: 0.02
+sim_w_sigma: 0.05
+w_sigma: 0.05
 
 
 max_cycles: 200
 
 cycle_of_error: 20
-error_pixels: 20
+error_pixels: 9
 error_duration: 150
-error_value: 3.0
-gradual_error: false
-gradual_delay: 2
+error_value: 2.0
+gradual_error: true
+gradual_delay: 3
 
 # KalmanFilter Posterior
 factorize: false

@@ -35,6 +35,9 @@
 #include <fl/model/process/linear_process_model.hpp>
 #include <fl/model/observation/linear_observation_model.hpp>
 
+#include <fl/model/observation/joint_observation_model.hpp>
+#include <fl/model/process/joint_process_model.hpp>
+
 #include <pose_tracking_interface/utils/ros_interface.hpp>
 #include <pose_tracking_interface/utils/image_publisher.hpp>
 
@@ -46,6 +49,8 @@ static constexpr int StateDimension = 1;
 static constexpr int ObsrvDimension = -1;
 static constexpr int ParametersDimension = ObsrvDimension;
 
+using namespace fl;
+
 class DevTestExample
 {
 public:
@@ -55,46 +60,48 @@ public:
     typedef double Scalar;
     typedef Eigen::Matrix<
                 Scalar,
-                fl::JoinSizes<StateDimension, ParametersDimension>::Size,
+                JoinSizes<StateDimension, ParametersDimension>::Size,
                 1
             > State;
 
     /* ############################## */
     /* # Process Model              # */
     /* ############################## */
-    typedef fl::LinearGaussianProcessModel<State> ProcessModel;
+    typedef LinearGaussianProcessModel<State> ProcessModel;
+    typedef LinearGaussianProcessModel<State> StateProcessModel;
+    typedef LinearGaussianProcessModel<State> ParamProcessModel;
 
     /* ############################## */
     /* # Observation Model          # */
     /* ############################## */
     /* Pixel Model */
 //    typedef Eigen::Matrix<double, ObsrvDimension, 1> Observation;
-//    typedef fl::LinearGaussianObservationModel<Observation, State> ObservationModel;
-//    typedef typename fl::Traits<ObservationModel>::SecondMoment Cov;
-    typedef fl::PixelObservationModel<Scalar> PixelObsrvModel;
-    typedef fl::ExperimentalObservationModel<
+//    typedef LinearGaussianObservationModel<Observation, State> ObservationModel;
+//    typedef typename Traits<ObservationModel>::SecondMoment Cov;
+    typedef PixelObservationModel<Scalar> PixelObsrvModel;
+    typedef ExperimentalObservationModel<
                     PixelObsrvModel,
                     State,
                     ObsrvDimension
                 > ObservationModel;
-    typedef typename fl::Traits<ObservationModel>::Observation Observation;
+    typedef typename Traits<ObservationModel>::Observation Observation;
 
     /* ############################## */
     /* # Filter                     # */
     /* ############################## */
-    typedef fl::MonteCarloTransform<
-                //fl::LinearPointCountPolicy<2>
-                fl::ConstantPointCountPolicy<2000>
-                //fl::MonomialPointCountPolicy<1>
+    typedef MonteCarloTransform<
+                //LinearPointCountPolicy<2>
+                ConstantPointCountPolicy<2000>
+                //MonomialPointCountPolicy<1>
             > PointTransform;
 
-    typedef fl::GaussianFilter<
+    typedef GaussianFilter<
                 ProcessModel,
                 ObservationModel,
                 PointTransform
             > FilterAlgo;
 
-    typedef fl::FilterInterface<FilterAlgo> Filter;
+    typedef FilterInterface<FilterAlgo> Filter;
 
     /* ############################## */
     /* # Deduce filter types        # */
@@ -109,7 +116,7 @@ public:
 
           state_distr_(filter_->process_model()->state_dimension()),
           zero_input_(filter_->process_model()->input_dimension(), 1),
-          y(filter_->observation_model()->observation_dimension(), 1)
+          y(filter_->observation_model()->obsrv_dimension(), 1)
     {
         State initial_state(filter_->process_model()->state_dimension(), 1);
 
@@ -159,7 +166,7 @@ private:
         ri::ReadParameter("pixels", pixels, nh);
         state_dim = 1 + pixels;
 
-        typedef typename fl::Traits<ProcessModel>::SecondMoment Cov;
+        typedef typename Traits<ProcessModel>::SecondMoment Cov;
 
         auto model = std::make_shared<ProcessModel>(
                         Cov::Identity(state_dim, state_dim),
@@ -205,10 +212,16 @@ private:
 //            StateDimension
 //        );
 
+        auto pixel_model = std::make_shared<PixelObsrvModel>(
+                               w_sigma * w_sigma, max_w_sigma, sigma_function);
+
+        ri::ReadParameter("sigma_min", pixel_model->sigma_min, nh);
+        ri::ReadParameter("sigma_0", pixel_model->sigma_0, nh);
+        ri::ReadParameter("s", pixel_model->s, nh);
+
         return std::make_shared<ObservationModel>
         (
-            std::make_shared<PixelObsrvModel>(
-                        w_sigma * w_sigma, max_w_sigma, sigma_function),
+            pixel_model,
             pixels + 1,
             pixels
         );

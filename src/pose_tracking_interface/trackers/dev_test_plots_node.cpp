@@ -36,7 +36,7 @@ int main (int argc, char **argv)
     /* ############################## */
     DevTestExample tracker(nh);
 
-    const int dim_y = tracker.obsrv_model_->observation_dimension();
+    const int dim_y = tracker.obsrv_model_->obsrv_dimension();
     const int pixels = tracker.pixels;
 
     DevTestExample::Observation y(dim_y, 1);

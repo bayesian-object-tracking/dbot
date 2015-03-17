@@ -23,10 +23,18 @@
 
 #include <Eigen/Dense>
 
-#include <fl/model/observation/factorized_iid_observation_model.hpp>
+#include <fl/model/observation/observation_model_interface.hpp>
 
 namespace fl
 {
+
+double feature_function(double y)
+{
+    //return 10. * fl::sigmoid(y);
+    //return 100. * fl::sigmoid(y - std::log(100. - 1.));
+    return y*y;
+    //return std::exp(-y*y);
+}
 
 template <typename Scalar> class PixelObservationModel;
 
@@ -80,6 +88,10 @@ public:
     using Traits<This>::GaussianBase::square_root;
 
 public:
+    double sigma_min;
+    double sigma_0;
+    double s;
+
     PixelObservationModel(double variance,
                           double max_std,
                           int sigma_function = 0,
@@ -93,21 +105,25 @@ public:
         shift_ = fl::logit(square_root()(0, 0)/ max_std);
     }
 
-    virtual Observation predict_observation(const State& state,
+    virtual Observation predict_obsrv(const State& state,
                                             const Noise& noise,
                                             double delta_time)
     {
         Observation y;
 
-        y(0) = state(0) + ((sigma(state(1)) - 1.) * k_ + square_root()(0, 0)) * noise(0);
-        y(1) = y(0) * y(0);
+        y(0) = state(0) + (sigma(state(1)) * k_ + square_root()(0, 0)) * noise(0);
+        //y(0) = state(0) + sigma(state(1)) * noise(0);
+        y(1) = fl::feature_function(y(0));
 
         return y;
     }
 
     double sigma(double b, int sigma_function = -1)
     {
-        return std::exp(b);
+        //return (sigma_0 - sigma_min) * std::exp((s * b)/(sigma_0 - sigma_min)) + sigma_min;
+        //return b*b;
+        return std::exp(b) - 1.;
+        //return (b > max_std_) ? 2 : 1.;
 //        if (sigma_function < 0) sigma_function = sigma_function_;
 
 //        switch(sigma_function)
@@ -139,7 +155,7 @@ public:
 //        }
     }
 
-    virtual size_t observation_dimension() const
+    virtual size_t obsrv_dimension() const
     {
         return Traits<This>::ObsrvDim;
     }

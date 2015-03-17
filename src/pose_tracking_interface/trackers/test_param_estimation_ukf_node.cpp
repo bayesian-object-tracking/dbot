@@ -18,7 +18,7 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include "dev_test_example.hpp"
+#include "test_param_estimation_ukf.hpp"
 
 
 #include <std_msgs/Float32.h>
@@ -36,7 +36,8 @@ int main (int argc, char **argv)
     /* # Setup object and tracker   # */
     /* ############################## */
     DevTestExample tracker(nh);
-    DevTestExample::Observation y(tracker.obsrv_model_->observation_dimension(), 1);
+    DevTestExample::Observation y(
+        tracker.obsrv_model_->obsrv_dimension(), 1);
 
     /* ############################## */
     /* # Images                     # */
@@ -98,7 +99,7 @@ int main (int argc, char **argv)
     }
 
     double t = 0.;
-    double step = 2. * M_PI / double(max_cycles);
+    double step =  8. * 2. * M_PI / double(max_cycles);
 
 
     double w_sigma;
@@ -111,7 +112,7 @@ int main (int argc, char **argv)
 
     tracker.obsrv_model_->pixel_observation_model()->k_ = k;
     fl::Gaussian<DevTestExample::Observation> g(
-        tracker.obsrv_model_->observation_dimension());
+        tracker.obsrv_model_->obsrv_dimension());
     g.covariance(g.covariance() * sim_w_sigma * sim_w_sigma);
 
     std::cout << ">> ready to run ..." << std::endl;
@@ -121,15 +122,14 @@ int main (int argc, char **argv)
         /* ############################ */
         /* # create measurements      # */
         /* ############################ */
-
-        ground_truth = std::sin(t);
+        ground_truth = 0.5 * std::sin(t) + 0.3 * std::sin(0.5 * t) + 0.2 * std::sin(1.5 * t) - 0.2 * std::cos(2 * t) + 0.3 * std::sin(1. + 2 * t) ;
 
         t += step;
         y.setOnes();
         y = y * ground_truth + g.sample();
         for (int i = 0; i < tracker.pixels; ++i)
         {
-            y(2 * i + 1) = y(2 * i) * y(2 * i);
+            y(2 * i + 1) = fl::feature_function(y(2 * i));
         }
 
         /* ############################ */
@@ -157,7 +157,7 @@ int main (int argc, char **argv)
             for (int i = 0; i < current_error_pixels && i < tracker.pixels; ++i)
             {
                 y(2 * i) = error_value;
-                y(2 * i + 1) = y(2 * i) * y(2 * i);
+                y(2 * i + 1) = fl::feature_function(y(2 * i));
             }
         }        
 
@@ -197,7 +197,7 @@ int main (int argc, char **argv)
         for (int i = 0; i < std::min(tracker.pixels, 100); ++i)
         {
             double b = tracker.state_distr_.mean()(1 + i);
-            pubs_b[i].first.data =
+            pubs_b[i].first.data = //b;
                     tracker.obsrv_model_->pixel_observation_model()->sigma(b);
             pubs_b[i].second.publish(pubs_b[i].first);
         }

@@ -23,7 +23,7 @@
 #include <fl/util/meta.hpp>
 
 #include <fl/model/process/linear_process_model.hpp>
-#include <fl/model/process/factorized_iid_process_model.hpp>
+#include <fl/model/process/joint_process_model.hpp>
 #include <pose_tracking/models/process_models/brownian_object_motion_model.hpp>
 
 namespace fl
@@ -124,7 +124,6 @@ public:
 
         return prediction;
     }
-
 
     virtual size_t state_dimension() const
     {
