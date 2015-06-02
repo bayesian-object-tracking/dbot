@@ -45,12 +45,12 @@ public:
         /* precision */
         static constexpr int c = 1000000;
 
-        return  ((int(s(0, 0)*c) * p1) ^
-                 (int(s(1, 0)*c) * p2) ^
-                 (int(s(2, 0)*c) * p3) ^
-                 (int(s(3, 0)*c) * p4) ^
-                 (int(s(4, 0)*c) * p5) ^
-                 (int(s(5, 0)*c) * p6) % n);
+        return  ((int(s(0, 0) * c) * p1) ^
+                 (int(s(1, 0) * c) * p2) ^
+                 (int(s(2, 0) * c) * p3) ^
+                 (int(s(3, 0) * c) * p4) ^
+                 (int(s(4, 0) * c) * p5) ^
+                 (int(s(5, 0) * c) * p6) % n);
     }
 };
 

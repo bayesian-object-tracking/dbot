@@ -36,7 +36,7 @@ int main (int argc, char **argv)
     /* ############################## */
 
     typedef GfContext<Options<NoOptions>, 1000> JGfContext;
-    typedef GfContext<Options<FactorizeParams>, 100> FpfContext;
+    typedef GfContext<Options<FactorizeParams>, 200> FpfContext;
 
     FpfContext context_fpf(nh);
     FpfContext::Obsrv y(context_fpf.algo().obsrv_model().obsrv_dimension(), 1);
@@ -48,7 +48,7 @@ int main (int argc, char **argv)
     /* ############################## */
     fl::ImagePublisher ip(nh);
 
-    int max_pub = 10;
+    int max_pub = 20;
     int max_cycles;
     int cycle = 0;
     ri::ReadParameter("max_cycles", max_cycles, nh);
@@ -118,7 +118,7 @@ int main (int argc, char **argv)
 
     double t = 0.;
     //double step =  8. * 2. * M_PI / double(max_cycles);
-    double step =  8 * 2. * M_PI / double(max_cycles);
+    double step =  2. * M_PI / double(max_cycles);
 
 
     fl::Gaussian<FpfContext::Obsrv> g(
@@ -156,23 +156,28 @@ int main (int argc, char **argv)
 
     context_jgf.state_distr_.covariance(jgf_cov);
 
+    PV(std::get<1>(context_fpf.state_distr_.distributions()).mean().transpose());
+
     while(ros::ok())
     {
         /* ############################ */
         /* # create measurements      # */
         /* ############################ */
 
-        ground_truth = 0.5 * std::sin(t) +
-                       0.3 * std::sin(0.5 * t) +
-                       0.2 * std::sin(1.5 * t) -
-                       0.2 * std::cos(2 * t) +
-                       0.3 * std::sin(1. + 2 * t);
+//        ground_truth = 0.5 * std::sin(t) +
+//                       0.3 * std::sin(0.5 * t) +
+//                       0.2 * std::sin(1.5 * t) -
+//                       0.2 * std::cos(2 * t) +
+//                       0.3 * std::sin(1. + 2 * t);
 
-//        ground_truth = std::sin(t);
+        //ground_truth = std::sin(t);
+        ground_truth = 0.;
 
         t += step;
         y.setOnes();
         y = y * ground_truth + g.sample();
+
+        PV(y);
 
         /* ############################ */
         /* # introduce errors         # */
@@ -209,6 +214,37 @@ int main (int argc, char **argv)
             }
         }
 
+
+        auto&& fpf_distr_a = std::get<0>(
+                    context_fpf.state_distr_.distributions());
+
+        auto&& jgf_state = context_jgf.state_distr_.mean();
+
+        // b
+        auto&& distr_b = std::get<1>(context_fpf.state_distr_.distributions());
+        for (int i = 0; i < std::min(pixel_count, max_pub); ++i)
+        {
+            // publish fpf b
+            double b = distr_b.distribution(i).mean()(0);
+
+            PV(b);
+            PV(context_fpf.algo().obsrv_model().local_obsrv_model().sigma(b));
+
+
+            pubs_fpf_b[i].first.data = context_fpf.algo()
+                                       .obsrv_model()
+                                       .local_obsrv_model()
+                                       .sigma(b);
+            pubs_fpf_b[i].second.publish(pubs_fpf_b[i].first);
+
+            // publish jgf b
+            pubs_jgf_b[i].first.data = context_jgf.algo()
+                                           .obsrv_model()
+                                           .local_obsrv_model()
+                                           .sigma(jgf_state(1 + i));
+            pubs_jgf_b[i].second.publish(pubs_jgf_b[i].first);
+        }
+
         /* ############################ */
         /* # Filter                   # */
         /* ############################ */
@@ -240,14 +276,9 @@ int main (int argc, char **argv)
         // y
         for (int i = 0; i < std::min(pixel_count, max_pub); ++i)
         {
-            pubs_y[i].first.data = y(2 * i);
+            pubs_y[i].first.data = y(i);
             pubs_y[i].second.publish(pubs_y[i].first);
         }
-
-        auto&& fpf_distr_a = std::get<0>(
-                    context_fpf.state_distr_.distributions());
-
-        auto&& jgf_state = context_jgf.state_distr_.mean();
 
         // a
         x_msg.data = fpf_distr_a.mean()(0);
@@ -256,25 +287,6 @@ int main (int argc, char **argv)
         x_msg.data = jgf_state(0);
         pub_jgf_x_e.publish(x_msg);
 
-        // b
-        auto&& distr_b = std::get<1>(context_fpf.state_distr_.distributions());
-        for (int i = 0; i < std::min(pixel_count, max_pub); ++i)
-        {
-            // publish fpf b
-            double b = distr_b.distribution(i).mean()(0);
-            pubs_fpf_b[i].first.data = context_fpf.algo()
-                                       .obsrv_model()
-                                       .local_obsrv_model()
-                                       .sigma(b);
-            pubs_fpf_b[i].second.publish(pubs_fpf_b[i].first);
-
-            // publish jgf b
-            pubs_jgf_b[i].first.data = context_jgf.algo()
-                                           .obsrv_model()
-                                           .local_obsrv_model()
-                                           .sigma(jgf_state(1 + i));
-            pubs_jgf_b[i].second.publish(pubs_jgf_b[i].first);
-        }
 
 //        // y
 //        x_msg.data = y.mean();

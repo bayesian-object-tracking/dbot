@@ -201,7 +201,7 @@ public:
         return this->standard_variate_dimension();
     }
 
-    virtual size_t dimension()
+    virtual int dimension()
     {
         return state_.rows();
     }
@@ -217,17 +217,17 @@ public:
         return map_standard_normal(noise);
     }
 
-    virtual size_t state_dimension() const
+    virtual int state_dimension() const
     {
         return state_.rows();
     }
 
-    virtual size_t noise_dimension() const
+    virtual int noise_dimension() const
     {
         return this->standard_variate_dimension();
     }
 
-    virtual size_t input_dimension() const
+    virtual int input_dimension() const
     {
         return this->standard_variate_dimension();
     }

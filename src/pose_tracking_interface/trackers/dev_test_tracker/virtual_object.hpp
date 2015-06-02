@@ -18,6 +18,9 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
+#ifndef VIRTUAL_OBJECT_HPP
+#define VIRTUAL_OBJECT_HPP
+
 #include <memory>
 
 #include <Eigen/Dense>
@@ -185,3 +188,6 @@ protected:
     double pose_beta_v;
     double pose_gamma_v;
 };
+
+#endif
+

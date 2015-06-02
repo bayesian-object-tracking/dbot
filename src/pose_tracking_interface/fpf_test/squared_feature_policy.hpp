@@ -24,6 +24,7 @@
 
 #include <fl/util/traits.hpp>
 #include <fl/util/meta.hpp>
+#include <fl/util/math.hpp>
 #include <fl/filter/gaussian/feature_policy.hpp>
 
 namespace fl
@@ -52,7 +53,6 @@ struct Traits<SquaredFeaturePolicy<Obsrv>>
 };
 
 
-
 template <typename Obsrv>
 class SquaredFeaturePolicy<Obsrv>
     : public Traits<SquaredFeaturePolicy<Obsrv>>::FeaturePolicyBase
@@ -67,7 +67,8 @@ public:
      * \return Feature of the given observation
      */
     virtual ObsrvFeature extract(const Obsrv& obsrv,
-                                 const Obsrv& expected_obsrv)
+                                 const Obsrv& expected_obsrv,
+                                 const Obsrv& var_obsrv)
     {
         const int obsrv_dim = obsrv.rows();
 
@@ -75,9 +76,78 @@ public:
 
         for (int i = 0; i < obsrv_dim; ++i)
         {
-            feature(SizeFactor * i) = obsrv(i); // - expected_obsrv(i);
-            feature(SizeFactor * i + 1) =
-                feature(SizeFactor * i) * feature(SizeFactor * i);
+            double d = obsrv(i); // - expected_obsrv(i);
+            feature(SizeFactor * i) = d;
+            feature(SizeFactor * i + 1) = d * d;
+        }
+
+        return feature;
+    }
+
+    static constexpr int feature_dimension(int obsrv_dimension)
+    {
+        return obsrv_dimension * SizeFactor;
+    }
+};
+
+
+
+
+
+template <typename ...> class SigmoidFeaturePolicy;
+
+template <typename Obsrv>
+struct Traits<SigmoidFeaturePolicy<Obsrv>>
+{
+    enum : signed int
+    {
+        SizeFactor = 2,
+        FeatureDim = ExpandSizes<Obsrv::RowsAtCompileTime, SizeFactor>::Size
+    };
+
+    /**
+     * Observation feature vector type
+     */
+    typedef Eigen::Matrix<typename Obsrv::Scalar, FeatureDim, 1> ObsrvFeature;
+
+    /**
+     * FeaturePolicy interface
+     */
+    typedef FeaturePolicyInterface<Obsrv, ObsrvFeature> FeaturePolicyBase;
+};
+
+
+template <typename Obsrv>
+class SigmoidFeaturePolicy<Obsrv>
+    : public Traits<SigmoidFeaturePolicy<Obsrv>>::FeaturePolicyBase
+{
+public:
+    typedef SigmoidFeaturePolicy This;
+    typedef from_traits(ObsrvFeature);
+
+    enum : signed int { SizeFactor = Traits<This>::SizeFactor };
+
+    /**
+     * \return Feature of the given observation
+     */
+    virtual ObsrvFeature extract(const Obsrv& obsrv,
+                                 const Obsrv& expected_obsrv,
+                                 const Obsrv& var_obsrv)
+    {
+        const int obsrv_dim = obsrv.rows();
+
+        ObsrvFeature feature(feature_dimension(obsrv_dim), 1);
+
+        for (int i = 0; i < obsrv_dim; ++i)
+        {
+            double d =
+                fl::sigmoid(
+
+                        (obsrv(i) - expected_obsrv(i)) / std::sqrt(var_obsrv(i))
+
+                );
+            feature(SizeFactor * i) = d;
+            feature(SizeFactor * i + 1) = d * d;
         }
 
         return feature;

@@ -6,84 +6,43 @@ camera_info_topic: /XTION/depth/camera_info
 # 100 is more or less the limit to track
 # with threshold: 0.75 and sigmas at 0.0005
 
-downsampling: 64.0 # wrt VGA resolution
-
+downsampling: 32.0 # wrt VGA resolution
 
 # VirtualObject 
 object_package: pose_tracking
 object_model: /object/calib_obj.obj
-
+#object_package: arm_object_models
+#object_model: /objects/impact_battery/impact_battery.obj
 pose_x: 0.0
-pose_y: 0.065
-pose_z: 0.7
+pose_y: 0.09
+pose_z: 0.4
 pose_alpha: 0.325
-pose_beta: -0.5
+pose_beta: 0.5
 pose_gamma: 0.125
-
 pose_alpha_v: 0.0
 pose_beta_v: 0.0
 pose_gamma_v: 0.085
 
-# unscented transform
-ut_alpha: 1.0
-ut_beta: 2.
-ut_kappa: 0.
-
 # process model
-linear_acceleration_sigma:   0.01 #0.1  0.2  1.0 2.0
-angular_acceleration_sigma: 0.015 #1.5  3.0  15.0 30.0
+linear_acceleration_sigma:  0.1 #0.1  0.2  1.0 2.0
+angular_acceleration_sigma: 1.5 #1.5  3.0  15.0 30.0
 damping: 5.0 #5.0  20.0  1000.0 1000.0
 
+bg_depth_sim: 7.0
+bg_depth: 3.5
+bg_sigma: 1.5
+
 # observation model
-camera_sigma: 0.5
-model_sigma: 0.0
+w_sigma:     0.0005          # UKF 0.005
+w_sigma_sim: 0.0005
 
 # parameter process model
-b_sigma: 0.98
-sigma_decay: 0.1
+A_b: 0.9 # 0.9
+v_sigma_b: 0.5 #0.5
 
-inv_sigma: 0000000.0
-threshold: 1000000.015
+error_delay: 10
+error_pixels: 1
+error_pixel_depth: 0.5
+step_through: false
 
-error_pixel: -1
-error_pixel_depth: 10.
-
-print_ukf_details: false
 max_cycles: -1
-
-A_b: 0.98
-v_b_sigma: 0.03
-v_a_sigma: 0.3
-
-########################################################
-# Sigma functions
-# 0: exp(x) * w_sigma
-# 1: (I(b<0)*exp(b) + I(b>=0)*(1 + b)) * w_sigma
-# 2: max_w_sigma * s(shift + b)
-# 3: max_w_sigma * s(b - log(max_w_sigma -1))
-# 4: max_w_sigma * s(b - log(max_w_sigma -1)) * w_sigma
-########################################################
-
-k: 0.6
-max_w_sigma: 0.0
-sim_w_sigma: 0.05
-w_sigma: 0.05
-
-
-# max_cycles: 200
-# 
-# cycle_of_error: 20
-# error_pixels: 9
-# error_duration: 150
-# error_value: 2.0
-# gradual_error: true
-# gradual_delay: 3
-
-# KalmanFilter Posterior
-factorize: false
-
-
-# range_step: 0.01
-# plot_range_x_min: 0.
-# plot_range_x_max: 10.
-print_ukf_details: false

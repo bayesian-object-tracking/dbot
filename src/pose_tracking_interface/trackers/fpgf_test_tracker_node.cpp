@@ -57,13 +57,24 @@ class FilterContext
 public:
     enum : signed int { PixelCount = Eigen::Dynamic };
 
+    struct Arguments
+    {
+        double linear_accel_sigma;
+        double angular_accel_sigma;
+        double damping;
+        double A_b;
+        double v_sigma_b;
+        double w_sigma;
+        double bg_depth;
+        double bg_sigma;
+        double downsampling;
+    };
 
 public:
     /* ############################## */
     /* # Basic types                # */
     /* ############################## */
     typedef double Scalar;
-
     typedef FreeFloatingRigidBodiesState<> ObjectState;
 
 
@@ -90,26 +101,19 @@ public:
     /* # Filter                     # */
     /* ############################## */
     typedef MonteCarloTransform<
-                LinearPointCountPolicy<8>
+                LinearPointCountPolicy<10>
             > PointTransform;
-
-
-//   typedef UnscentedTransform PointTransform;
-
-//    typedef IdentityFeaturePolicy<> FeaturePolicy;
-    //typedef SquaredFeaturePolicy<> FeaturePolicy;
-    typedef SigmoidFeaturePolicy<> FeaturePolicy;
 
     typedef GaussianFilter<
                 ProcessModel,
                 Join<MultipleOf<Adaptive<DPixelModel, ParamModel>, PixelCount>>,
                 PointTransform,
-                FeaturePolicy,
+                SigmoidFeaturePolicy<>,
                 Options<FactorizeParams>
-//                Options<NoOptions>
             > FilterAlgo;
 
     typedef FilterInterface<FilterAlgo> Filter;
+
 
     /* ############################## */
     /* # Deduce filter types        # */
@@ -120,24 +124,19 @@ public:
     typedef typename Filter::StateDistribution StateDistribution;
     typedef typename Traits<FilterAlgo>::FeatureMapping FeatureMapping;
 
-    FilterContext(ros::NodeHandle& nh, VirtualObject<ObjectState>& object)
+
+    FilterContext(Arguments& args, VirtualObject<ObjectState>& object)
         : object_(object),
           filter_(
-              create_filter(nh,
-                  create_process_model(nh),
-                  create_param_model(nh),
-                  create_pixel_model(nh))),
+              create_filter(
+                  create_process_model(args),
+                  create_param_model(args),
+                  create_pixel_model(args))),
           state_distr_(filter_.create_state_distribution()),
           zero_input_(filter_.process_model().input_dimension(), 1),
           y(filter_.obsrv_model().obsrv_dimension(), 1)
     {
         zero_input_.setZero();
-
-        ri::ReadParameter("bg_depth_sim", bg_depth, nh);
-        ri::ReadParameter("w_sigma_sim", w_sigma_sim, nh);
-        ri::ReadParameter("error_delay", error_delay, nh);
-        ri::ReadParameter("error_pixels", error_pixels, nh);
-        ri::ReadParameter("error_pixel_depth", error_pixel_depth, nh);
     }
 
 
@@ -145,25 +144,11 @@ public:
     {
         const int y_vec_size = y_vec.size();
 
-        assert(y.rows() == y_vec_size);
-
-        int error_pixels = this->error_pixels;
-
+        y.resize(y_vec_size, 1);
         for (int i = 0; i < y_vec_size; ++i)
         {
-            y(i, 0) = (std::isinf(y_vec[i]) ? bg_depth : y_vec[i]);
-            y(i, 0) += g_noise.sample() * w_sigma_sim;
-
-            if (!error_delay &&
-                !std::isinf(y_vec[i]) &&
-                error_pixels-- > 0)
-            {
-                std::cout << "errors in da house" << std::endl;
-                y(i, 0) += error_pixel_depth;
-            }
+            y(i, 0) = y_vec[i];
         }
-
-        if (error_delay > 0) error_delay--;
 
         filter_.predict(0.033, zero_input_, state_distr_, state_distr_);
         filter_.update(y, state_distr_, state_distr_);
@@ -176,69 +161,51 @@ private:
     /* # Factory Functions          # */
     /* ############################## */
 
-    ProcessModel create_process_model(ros::NodeHandle& nh)
+    ProcessModel create_process_model(Arguments& args)
     {
-        double linear_accel_sigma;
-        double angular_accel_sigma;
-        double damping;
-
-        ri::ReadParameter("linear_acceleration_sigma", linear_accel_sigma, nh);
-        ri::ReadParameter("angular_acceleration_sigma", angular_accel_sigma, nh);
-        ri::ReadParameter("damping", damping, nh);
-
         auto model = ProcessModel(1);
 
         Eigen::MatrixXd linear_acceleration_covariance =
             Eigen::MatrixXd::Identity(3, 3)
-            * std::pow(double(linear_accel_sigma), 2);
+            * std::pow(double(args.linear_accel_sigma), 2);
 
         Eigen::MatrixXd angular_acceleration_covariance =
             Eigen::MatrixXd::Identity(3, 3)
-            * std::pow(double(angular_accel_sigma), 2);
+            * std::pow(double(args.angular_accel_sigma), 2);
 
         model.parameters(0,
                          object_.renderer->object_center(0).cast<double>(),
-                         damping,
+                         args.damping,
                          linear_acceleration_covariance,
                          angular_acceleration_covariance);
 
         return model;
     }
 
-    ParamModel create_param_model(ros::NodeHandle& nh)
+    ParamModel create_param_model(Arguments& args)
     {
-        double A_b;
-        double v_sigma_b;
-        ri::ReadParameter("A_b", A_b, nh);
-        ri::ReadParameter("v_sigma_b", v_sigma_b, nh);
-
         auto model = ParamModel();
 
         // set dynamics matrix and noise covariance
-        model.A(model.A() * A_b);
-        model.covariance(model.covariance() * std::pow(v_sigma_b, 2));
+        model.A(model.A() * args.A_b);
+        model.covariance(model.covariance() * std::pow(args.v_sigma_b, 2));
 
         return model;
     }
 
-    DPixelModel create_pixel_model(ros::NodeHandle& nh)
+    DPixelModel create_pixel_model(Arguments& args)
     {
-        double w_sigma;
-        ri::ReadParameter("w_sigma", w_sigma, nh);
-
         auto model = DPixelModel(object_.renderer, ObjectState::BODY_SIZE);
 
         // set param initial value and noise covariance
-        model.covariance(model.covariance() * std::pow(w_sigma, 2));
-
-        ri::ReadParameter("bg_depth", model.bg_depth_, nh);
-        ri::ReadParameter("bg_sigma", model.bg_sigma_, nh);
+        model.covariance(model.covariance() * std::pow(args.w_sigma, 2));
+        model.bg_depth_ = args.bg_depth;
+        model.bg_sigma_ = args.bg_sigma;
 
         return model;
     }
 
-    FilterAlgo create_filter(ros::NodeHandle& nh,
-                             ProcessModel process_model,
+    FilterAlgo create_filter(ProcessModel process_model,
                              ParamModel param_model,
                              DPixelModel pixel_model)
     {
@@ -261,14 +228,8 @@ public:
     StateDistribution state_distr_;
     Input zero_input_;
     Obsrv y;
-    StandardGaussian<double> g_noise;
-    double w_sigma_sim;
 
     int pixel_count;
-    int error_delay;
-    int error_pixels;
-    double error_pixel_depth;
-    double bg_depth;
 };
 
 
@@ -288,13 +249,49 @@ int main (int argc, char **argv)
     typedef FilterContext::Filter::Obsrv Obsrv;
     typedef FilterContext::Filter::StateDistribution StateDistribution;
 
+    // read parameters
+    std::string depth_image_topic;
+    std::string point_cloud_topic;
+    std::string camera_info_topic;
+
+    std::cout << "reading parameters" << std::endl;
+    ri::ReadParameter("camera_info_topic", camera_info_topic, nh);
+    ri::ReadParameter("depth_image_topic", depth_image_topic, nh);
+
+    point_cloud_topic = "/XTION/depth/points";
+    camera_info_topic = "/XTION/depth/camera_info";
+
+    FilterContext::Arguments args;
+    ri::ReadParameter("downsampling", args.downsampling, nh);
+    ri::ReadParameter("A_b", args.A_b, nh);
+    ri::ReadParameter("v_sigma_b", args.v_sigma_b, nh);
+    ri::ReadParameter("w_sigma", args.w_sigma, nh);
+    ri::ReadParameter("linear_acceleration_sigma", args.linear_accel_sigma, nh);
+    ri::ReadParameter("angular_acceleration_sigma", args.angular_accel_sigma, nh);
+    ri::ReadParameter("damping", args.damping, nh);
+    ri::ReadParameter("bg_depth", args.bg_depth, nh);
+    ri::ReadParameter("bg_sigma", args.bg_sigma, nh);
+
+    Eigen::Matrix3d camera_matrix =
+            ri::GetCameraMatrix<double>(camera_info_topic, nh, 2.0);
+    camera_matrix.topLeftCorner(2, 3) /= args.downsampling;
+
+    // get observations from camera
+    sensor_msgs::Image::ConstPtr ros_image =
+            ros::topic::waitForMessage<sensor_msgs::Image>(depth_image_topic,
+                                                           nh,
+                                                           ros::Duration(10.0));
+
+    Obsrv obsrv = ri::Ros2Eigen<double>(*ros_image, args.downsampling);
+
+
     /* ############################## */
     /* # Setup object and tracker   # */
     /* ############################## */
     VirtualObject<FilterContext::ObjectState> object(nh);
     int pixel_count = object.res_rows * object.res_cols;
 
-    FilterContext context(nh, object);
+    FilterContext context(args, object);
 
     // init state distribution (FPF)
     auto& distr_a = std::get<0>(context.state_distr_.distributions());
@@ -314,35 +311,6 @@ int main (int argc, char **argv)
     fl::ImagePublisher ip(nh);
     std::vector<float> depth;
 
-//    Eigen::MatrixXd b;
-
-    int max_cycles;
-    int cycle = 0;
-    bool step_through;
-    ri::ReadParameter("max_cycles", max_cycles, nh);
-    ri::ReadParameter("step_through", step_through, nh);
-
-    std::vector<std::pair<std_msgs::Float32, ros::Publisher>> pubs_fpf_a;
-    std::vector<std::pair<std_msgs::Float32, ros::Publisher>> pubs_fpf_b;
-    for (int i = 0; i < std::min(pixel_count, 50); ++i)
-    {
-        pubs_fpf_b.push_back(
-            std::make_pair<std_msgs::Float32, ros::Publisher>(
-                std_msgs::Float32(),
-                nh.advertise<std_msgs::Float32>(
-                    std::string("/fpf/b") + std::to_string(i),
-                    10000)));
-    }
-
-    for (int i = 0; i < distr_a.dimension(); ++i)
-    {
-        pubs_fpf_a.push_back(
-            std::make_pair<std_msgs::Float32, ros::Publisher>(
-                std_msgs::Float32(),
-                nh.advertise<std_msgs::Float32>(
-                    std::string("/fpf/a") + std::to_string(i),
-                    10000)));
-    }
 
     Eigen::MatrixXd cov_bb = Eigen::MatrixXd::Zero(pixel_count, pixel_count);
 
@@ -353,12 +321,13 @@ int main (int argc, char **argv)
         /* ############################## */
         object.animate();
         object.render(depth);
+
         /* ############################## */
         /* # Filter                     # */
         /* ############################## */
 
         INIT_PROFILING
-        context.filter(depth);
+        context.filter(depth);        
         MEASURE("filtering")
 
         /* ############################## */
@@ -368,8 +337,7 @@ int main (int argc, char **argv)
 
         // publish pose (FPF)
         auto& distr_a = std::get<0>(context.state_distr_.distributions());
-        object.publish_marker(distr_a.mean(), 2, 0, 1, 0);
-
+        object.publish_marker(distr_a.mean(), 2, 0, 1, 0);        
         PV(distr_a.covariance());
 
         for (int i = 0; i < pixel_count; ++i)
@@ -379,72 +347,39 @@ int main (int argc, char **argv)
                 context.y(i) = 7;
             }
         }
-        ip.publish(context.y,
-                   "/dev_test_tracker/observation",
-                   object.res_rows, object.res_cols);
 
-        ip.publish(context.filter_.predicted_obsrv,
-                   "/dev_test_tracker/prediction",
-                   object.res_rows, object.res_cols);
+        ip.publish(
+            context.y,
+            "/fpgf/observation",
+            object.res_rows, object.res_cols);
+
+        ip.publish(
+            context.filter_.predicted_obsrv,
+            "/fpgf/prediction",
+            object.res_rows, object.res_cols);
 
         auto& distr_b = std::get<1>(context.state_distr_.distributions());
-
         auto exp_b = distr_b.mean();
-        for (int i = 0; i < std::min(pixel_count, 50); ++i)
-        {
-            exp_b(i) =
-                context.algo().obsrv_model().local_obsrv_model().sigma(exp_b(i));
-            pubs_fpf_b[i].first.data = exp_b(i);
-            pubs_fpf_b[i].second.publish(pubs_fpf_b[i].first);
-        }
-
-        for (int i = 0; i < distr_a.dimension(); ++i)
-        {
-            pubs_fpf_a[i].first.data = distr_a.mean()(i);
-            pubs_fpf_a[i].second.publish(pubs_fpf_a[i].first);
-        }
-
-        exp_b = distr_b.mean();
         for (int i = 0; i < pixel_count; ++i)
         {
-            exp_b(i) = context.algo().obsrv_model().local_obsrv_model().sigma(exp_b(i));
+            exp_b(i) = context.algo()
+                           .obsrv_model()
+                           .local_obsrv_model()
+                           .sigma(exp_b(i));
         }
-        ip.publish(exp_b,
-                   "/dev_test_tracker/b",
-                   object.res_rows, object.res_cols);
+        ip.publish(exp_b, "/fpgf/b", object.res_rows, object.res_cols);
 
 
-//        std::cout  << "cov_bb \n";
         for (int i = 0; i < pixel_count; ++i)
         {
             cov_bb(i, i) = distr_b.distribution(i).covariance()(0);
-//            std::cout << cov_bb(i, i) << "  ";
         }
-//        std::cout  << "\n";
-        ip.publish(cov_bb,
-                   "/dev_test_tracker/cov_bb",
-                   pixel_count, pixel_count);
-
-        ip.publish(distr_a.covariance(),
-                   "/dev_test_tracker/cov_aa",
-                   12, 12);
+        ip.publish(cov_bb, "/fpgf/cov_bb", pixel_count, pixel_count);
 
         ros::spinOnce();
-
-        if (step_through)
-        {
-            ros::Duration(0.2).sleep();
-            ros::spinOnce();
-
-            std::cin.get();
-        }
-
-        if (max_cycles > 0 && cycle > max_cycles)
-        {
-            break;
-        }
-        cycle++;
     }
+
+    ros::spin();
 
     return 0;
 }

@@ -69,7 +69,7 @@ public:
     /* ############################## */
     /* # Observation Model          # */
     /* ############################## */
-    typedef DepthPixelModel<CurveState> PixelModel;
+    typedef PixelModel<CurveState> SinglePixelModel;
 
     /* ############################## */
     /* # Process Model              # */
@@ -79,7 +79,7 @@ public:
     /* ############################## */
     /* # Observation Param Model    # */
     /* ############################## */
-    typedef typename Traits<PixelModel>::Param Param;
+    typedef typename Traits<SinglePixelModel>::Param Param;
     typedef LinearGaussianProcessModel<Param> ParamModel;
 
     /* ############################## */
@@ -90,11 +90,12 @@ public:
             > PointTransform;
 
     //typedef IdentityFeaturePolicy<> FeaturePolicy;
-    typedef SquaredFeaturePolicy<> FeaturePolicy;
+//    typedef SquaredFeaturePolicy<> FeaturePolicy;
+    typedef SigmoidFeaturePolicy<> FeaturePolicy;
 
     typedef GaussianFilter<
                 ProcessModel,
-                Join<MultipleOf<Adaptive<PixelModel, ParamModel>, PixelCount>>,
+                Join<MultipleOf<Adaptive<SinglePixelModel, ParamModel>, PixelCount>>,
                 PointTransform,
                 FeaturePolicy,
                 Option
@@ -169,18 +170,16 @@ public:
         return model;
     }
 
-    PixelModel create_pixel_model(ros::NodeHandle& nh)
+    SinglePixelModel create_pixel_model(ros::NodeHandle& nh)
     {
         double w_sigma;
         double w_sigma_b;
         ri::ReadParameter("w_sigma", w_sigma, nh);
-        ri::ReadParameter("w_sigma_b", w_sigma_b, nh);
 
-        auto model = PixelModel();
+        auto model = SinglePixelModel();
 
         // set param initial value and noise covariance
         model.covariance(model.covariance() * std::pow(w_sigma, 2));
-        model.sigma_b = w_sigma_b;
 
         return model;
     }
@@ -188,7 +187,7 @@ public:
     FilterAlgo create_filter(ros::NodeHandle& nh,
                              ProcessModel process_model,
                              ParamModel param_model,
-                             PixelModel pixel_model)
+                             SinglePixelModel pixel_model)
     {
         int pixel_count;
         ri::ReadParameter("pixel_count", pixel_count, nh);
