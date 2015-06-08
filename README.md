@@ -1,4 +1,1 @@
-state_filtering
-===============
-
-Object State Filtering
+Depth-Based Object Tracking Library
