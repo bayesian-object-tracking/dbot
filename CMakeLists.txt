@@ -84,8 +84,8 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
-set(PROJECT_NAME_TRACKING "pose_tracking")
-set(PROJECT_NAME_TRACKING_INTERFACE "pose_tracking_interface")
+set(PROJECT_NAME_TRACKING "dbot")
+set(PROJECT_NAME_TRACKING_INTERFACE "dbot_ros_pkg")
 
 file(GLOB_RECURSE tracking_headers include/${PROJECT_NAME_TRACKING}/*.hpp include/${PROJECT_NAME_TRACKING}/*.h)
 file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INTERFACE}/*.hpp include/${PROJECT_NAME_TRACKING_INTERFACE}/*.h)
@@ -217,13 +217,13 @@ target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${catkin_LIBRARIES}
 #        yaml-cpp)
 
     ## object_tracker
-    add_executable(object_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
-    target_link_libraries(object_tracker
-        ${PROJECT_NAME_TRACKING}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
+    #add_executable(dbo_tracker
+        #src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
+    #target_link_libraries(dbo_tracker
+        #${PROJECT_NAME_TRACKING}
+        #${PROJECT_NAME_TRACKING_INTERFACE}
+        #${catkin_LIBRARIES}
+        #${OpenCV_LIBS}
+        #${PCL_LIBRARIES}
+        #yaml-cpp)
 
