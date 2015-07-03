@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <dbot/states/rigid_bodies_state.hpp>
 
 
-namespace fl
+namespace ff
 {
 
 template<int BodyCount>

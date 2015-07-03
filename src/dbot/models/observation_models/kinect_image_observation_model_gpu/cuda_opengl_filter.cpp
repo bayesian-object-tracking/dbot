@@ -8,8 +8,6 @@
 
 #include <boost/timer.hpp>
 
-#include <fl/util/discrete_distribution.hpp>
-
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.hpp>
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
@@ -290,10 +288,10 @@ void CudaOpenglFilter::Evaluate(
 vector<int> CudaOpenglFilter::Resample()
 {
     vector<int> resampling_indices;
-    fl::hf::DiscreteDistribution sampler(log_likelihoods_);
+    ff::hf::DiscreteSampler sampler(log_likelihoods_);
 
     for (int i = 0; i < n_poses_; i++) {
-        resampling_indices.push_back(sampler.sample());
+        resampling_indices.push_back(sampler.Sample());
     }
 
     if (initialized_ && states_set_) {

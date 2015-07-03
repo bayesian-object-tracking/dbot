@@ -32,23 +32,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-
-#include <fl/util/traits.hpp>
-
 #include <fl/util/assertions.hpp>
+#include <dbot/utils/traits.hpp>
 #include <dbot/states/free_floating_rigid_bodies_state.hpp>
-#include <ff/models/observation_models/interfaces/rao_blackwell_observation_model.hpp>
+#include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
 
 #include <dbot/utils/rigid_body_renderer.hpp>
 #include <dbot/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <dbot/models/process_models/occlusion_process_model.hpp>
 
-namespace fl
+namespace ff
 {
 
 // Forward declarations
 template <typename Scalar, typename State, int OBJECTS> class KinectImageObservationModelCPU;
 
+namespace internal
+{
 /**
  * ImageObservationModelCPU distribution traits specialization
  * \internal
@@ -60,10 +60,11 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 
     typedef RaoBlackwellObservationModel<State, Observation> ObservationModelBase;
 
-    typedef boost::shared_ptr<fl::RigidBodyRenderer> ObjectRendererPtr;
-    typedef boost::shared_ptr<fl::KinectPixelObservationModel> PixelObservationModelPtr;
-    typedef boost::shared_ptr<fl::OcclusionProcessModel> OcclusionProcessModelPtr;
+    typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
+    typedef boost::shared_ptr<ff::KinectPixelObservationModel> PixelObservationModelPtr;
+    typedef boost::shared_ptr<ff::OcclusionProcessModel> OcclusionProcessModelPtr;
 };
+}
 
 /**
  * \class ImageObservationModelCPU
@@ -73,16 +74,16 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
  */
 template <typename Scalar, typename State, int OBJECTS = -1>
 class KinectImageObservationModelCPU:
-        public Traits<KinectImageObservationModelCPU<Scalar, State> >::ObservationModelBase
+        public internal::Traits<KinectImageObservationModelCPU<Scalar, State> >::ObservationModelBase
 {
 public:
-    typedef KinectImageObservationModelCPU<Scalar, State> This;
+    typedef internal::Traits<KinectImageObservationModelCPU<Scalar, State> > Traits;
 
-    typedef typename Traits<This>::ObservationModelBase     Base;
-    typedef typename Traits<This>::Observation              Observation;
-    typedef typename Traits<This>::ObjectRendererPtr        ObjectRendererPtr;
-    typedef typename Traits<This>::PixelObservationModelPtr PixelObservationModelPtr;
-    typedef typename Traits<This>::OcclusionProcessModelPtr OcclusionProcessModelPtr;
+    typedef typename Traits::ObservationModelBase     Base;
+    typedef typename Traits::Observation              Observation;
+    typedef typename Traits::ObjectRendererPtr        ObjectRendererPtr;
+    typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
+    typedef typename Traits::OcclusionProcessModelPtr OcclusionProcessModelPtr;
 
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
     KinectImageObservationModelCPU(
@@ -93,7 +94,8 @@ public:
             const ObjectRendererPtr object_renderer,
             const PixelObservationModelPtr observation_model,
             const OcclusionProcessModelPtr occlusion_process_model,
-            const float& initial_occlusion):
+            const float& initial_occlusion,
+            const double& delta_time):
         camera_matrix_(camera_matrix),
         n_rows_(n_rows),
         n_cols_(n_cols),
@@ -102,7 +104,8 @@ public:
         object_model_(object_renderer),
         observation_model_(observation_model),
         occlusion_process_model_(occlusion_process_model),
-        observation_time_(0)
+        observation_time_(0),
+        Base(delta_time)
     {
         static_assert_base(State, RigidBodiesState<OBJECTS>);
 
@@ -145,22 +148,22 @@ public:
                             observation_time_ -
                             occlusion_times_[indices[state_index]][intersect_indices[i]];
 
-                    occlusion_process_model_->condition(delta_time,
+                    occlusion_process_model_->Condition(delta_time,
                        occlusions_[indices[state_index]][intersect_indices[i]]);
 
 
-                    float occlusion = occlusion_process_model_->sample();
+                    float occlusion = occlusion_process_model_->MapStandardGaussian();
 
-                    observation_model_->condition(predictions[i], false);
+                    observation_model_->Condition(predictions[i], false);
                     float p_obsIpred_vis =
-                            observation_model_->probability(observations_[intersect_indices[i]]) * (1.0 - occlusion);
+                            observation_model_->Probability(observations_[intersect_indices[i]]) * (1.0 - occlusion);
 
-                    observation_model_->condition(predictions[i], true);
+                    observation_model_->Condition(predictions[i], true);
                     float p_obsIpred_occl =
-                            observation_model_->probability(observations_[intersect_indices[i]]) * occlusion;
+                            observation_model_->Probability(observations_[intersect_indices[i]]) * occlusion;
 
-                    observation_model_->condition(std::numeric_limits<float>::infinity(), true);
-                    float p_obsIinf = observation_model_->probability(observations_[intersect_indices[i]]);
+                    observation_model_->Condition(std::numeric_limits<float>::infinity(), true);
+                    float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
 
                     loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
@@ -184,7 +187,7 @@ public:
         return loglikes;
     }
 
-    void SetObservation(const Observation& image, const double& delta_time)
+    void SetObservation(const Observation& image)
     {
         std::vector<float> std_measurement(image.size());
 
@@ -192,7 +195,7 @@ public:
             for(size_t col = 0; col < image.cols(); col++)
                 std_measurement[row*image.cols() + col] = image(row, col);
 
-        SetObservation(std_measurement, delta_time);
+        SetObservation(std_measurement, this->delta_time_);
     }
 
     virtual void Reset()

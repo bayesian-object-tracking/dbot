@@ -31,22 +31,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 #include <Eigen/Dense>
 
-#include <fl/distribution/interface/evaluation.hpp>
-
-#include <fl/distribution/exponential_distribution.hpp>
-#include <fl/distribution/uniform_distribution.hpp>
-#include <fl/distribution/truncated_gaussian.hpp>
+//#include <fast_filtering/distributions/interfaces/evaluation.hpp>
+//#include <fast_filtering/distributions/exponential_distribution.hpp>
+//#include <fast_filtering/distributions/uniform_distribution.hpp>
+//#include <fast_filtering/distributions/truncated_gaussian.hpp>
 
 //TODO: THESE INCLUDES ARE JUST TEMPORARY
-#include <dbot/utils/distribution_test.hpp>
+//#include <dbot/utils/distribution_test.hpp>
 #include <iostream>
 
-namespace fl
+namespace ff
 {
 
 // Forward declarations
 class KinectPixelObservationModel;
 
+namespace internal
+{
 /**
  * KinectObservationModel distribution traits specialization
  * \internal
@@ -56,8 +57,9 @@ struct Traits<KinectPixelObservationModel>
 {
     typedef double Scalar;
     typedef double Observation;
-    typedef Evaluation<Observation, Scalar>   EvaluationBase;
+//    typedef Evaluation<Observation, Scalar>   EvaluationBase;
 };
+}
 
 
 /**
@@ -66,12 +68,12 @@ struct Traits<KinectPixelObservationModel>
  * \ingroup distributions
  * \ingroup observation_models
  */
-class KinectPixelObservationModel:
-        public Traits<KinectPixelObservationModel>::EvaluationBase
+class KinectPixelObservationModel
+//        :public internal::Traits<KinectPixelObservationModel>::EvaluationBase
 {
 public:
-    typedef typename Traits<KinectPixelObservationModel>::Scalar Scalar;
-    typedef typename Traits<KinectPixelObservationModel>::Observation Observation;
+    typedef typename internal::Traits<KinectPixelObservationModel>::Scalar Scalar;
+    typedef typename internal::Traits<KinectPixelObservationModel>::Observation Observation;
 
     KinectPixelObservationModel(Scalar tail_weight = 0.01,
                                 Scalar model_sigma = 0.003,
@@ -85,22 +87,11 @@ public:
           max_depth_(max_depth)
     {
 
-//        UniformDistribution uniform(3.3, 10.5);
-//        ExponentialDistribution exponential(2.5);
-//        TruncatedGaussian gaussian(3.0, 1.0, 4.0, 5.0);
-
-//        std::cout << "testing distribution " << std::endl;
-//        TestDistribution(gaussian);
-//        std::cout << "done testing " << std::endl;
-
-//        exit(-1);
-
-
     }
 
     virtual ~KinectPixelObservationModel() {}
 
-    virtual Scalar probability(const Observation& observation) const
+    virtual Scalar Probability(const Observation& observation) const
     {
         // todo: if the prediction is infinite, the prob should not depend on visibility. it does not matter
         // for the algorithm right now, but it should be changed
@@ -133,12 +124,12 @@ public:
         return probability;
     }
 
-    virtual Scalar log_probability(const Observation& observation) const
+    virtual Scalar LogProbability(const Observation& observation) const
     {
-        return std::log(probability(observation));
+        return std::log(Probability(observation));
     }
 
-    virtual void condition(const Scalar& prediction, const bool& occlusion)
+    virtual void Condition(const Scalar& prediction, const bool& occlusion)
     {
         prediction_ = prediction;
         occlusion_ = occlusion;

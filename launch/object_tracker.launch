@@ -1,0 +1,11 @@
+<launch>
+  <arg name="config_file" default="$(find state_filtering)/config/object_config.yaml"/>
+
+  <!-- Pose Estimation Node-->
+  <node name="object_tracker" type="object_tracker"
+        pkg="state_filtering" output="screen" respawn="false"> <!-- launch-prefix="valgrind" -->      
+        <rosparam command="load" file="$(arg config_file)" />
+        <param name="config_file"  type="string"  value="$(arg config_file)" />              
+  </node>
+
+</launch>

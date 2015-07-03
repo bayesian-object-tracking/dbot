@@ -48,19 +48,22 @@
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
 
-#include <fl/util/math.hpp>
 #include <fl/util/assertions.hpp>
-#include <fl/model/process/integrated_damped_wiener_process_model.hpp>
 
+#include <dbot/utils/helper_functions.hpp>
 #include <dbot/states/free_floating_rigid_bodies_state.hpp>
-#include <fl/model/process/damped_wiener_process_model.hpp>
+#include <dbot/models/process_models/damped_wiener_process_model.hpp>
+#include <dbot/models/process_models/integrated_damped_wiener_process_model.hpp>
 
-namespace fl
+namespace ff
 {
 
 // Forward declarations
+//TODO: THIS IS REDUNDANT!!
 template <typename State, int OBJECTS> class BrownianObjectMotionModel;
 
+namespace internal
+{
 /**
  * BrownianObjectMotion distribution traits specialization
  * \internal
@@ -82,10 +85,8 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
     typedef Eigen::Quaternion<Scalar>                      Quaternion;
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
     typedef IntegratedDampedWienerProcessModel<ObjectState>     Process;
-
-    typedef StandardGaussianMapping<State, Noise>          GaussianMappingBase;
-    typedef ProcessModelInterface<State, Noise, Input> ProcessInterfaceBase;
 };
+}
 
 /**
  * \class BrownianObjectMotion
@@ -95,50 +96,55 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
  */
 template <typename State_, int OBJECTS = -1>
 class BrownianObjectMotionModel
-        : public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::GaussianMappingBase,
-          public Traits<BrownianObjectMotionModel<State_, OBJECTS>>::ProcessInterfaceBase
 {
 public:
+    typedef internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> > Traits;
 
-    typedef BrownianObjectMotionModel<State_, OBJECTS> This;
-
-    typedef typename Traits<This>::Scalar     Scalar;
-    typedef typename Traits<This>::State      State;
-    typedef typename Traits<This>::Input      Input;
-    typedef typename Traits<This>::Noise      Noise;
-    typedef typename Traits<This>::Quaternion Quaternion;
-    typedef typename Traits<This>::Process    Process;
+    typedef typename Traits::Scalar     Scalar;
+    typedef typename Traits::State      State;
+    typedef typename Traits::Input      Input;
+    typedef typename Traits::Noise      Noise;
+    typedef typename Traits::Quaternion Quaternion;
+    typedef typename Traits::Process    Process;
 
     enum
     {
-        DIMENSION_PER_OBJECT = Traits<This>::DIMENSION_PER_OBJECT
+        DIMENSION_PER_OBJECT = Traits::DIMENSION_PER_OBJECT
     };
 
 public:
-    BrownianObjectMotionModel(const unsigned& count_objects = OBJECTS):
-        Traits<This>::GaussianMappingBase(
-            count_objects == Eigen::Dynamic ? Eigen::Dynamic : count_objects * DIMENSION_PER_OBJECT),
-        state_(count_objects)
+    BrownianObjectMotionModel(const double& delta_time,
+                              const unsigned& count_objects = OBJECTS):
+        state_(count_objects),
+        delta_time_(delta_time)
     {
         static_assert_base(State, FreeFloatingRigidBodiesState<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);
-        linear_process_.resize(count_objects);
-        angular_process_.resize(count_objects);
+
+        for(size_t i = 0; i < count_objects; i++)
+        {
+            /// \todo check dimensions, not entirely sure about this
+            linear_process_.push_back(Process(delta_time, DIMENSION_PER_OBJECT/2));
+            angular_process_.push_back(Process(delta_time, DIMENSION_PER_OBJECT/2));
+        }
+
+//        linear_process_.resize(count_objects);
+//        angular_process_.resize(count_objects);
     }
 
     virtual ~BrownianObjectMotionModel() { }
 
-    virtual State map_standard_normal(const Noise& sample) const
+    virtual State MapStandardGaussian(const Noise& sample) const
     {
         State new_state(state_.body_count());
         for(size_t i = 0; i < new_state.body_count(); i++)
         {
             Eigen::Matrix<Scalar, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
             Eigen::Matrix<Scalar, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
-            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].map_standard_normal(position_noise);
-            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].map_standard_normal(orientation_noise);
+            Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapStandardGaussian(position_noise);
+            Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapStandardGaussian(orientation_noise);
 
             new_state.position(i) = state_.position(i) + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.quaternion(i).coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
@@ -154,14 +160,65 @@ public:
         return new_state;
     }
 
-    virtual void condition(const Scalar& delta_time,
-                           const State&  state,
+    virtual void set_delta_time(const double& delta_time)
+    {
+        delta_time_ = delta_time;
+    }
+
+
+    virtual State state(const State& prev_state,
+                        const Noise& noise,
+                        const Input& input) const
+    {
+
+    }
+
+
+
+
+
+
+//    virtual void Condition(const Scalar& delta_time,
+//                           const State&  state,
+//                           const Input&  control)
+//    {
+//        state_ = state;
+//        for(size_t i = 0; i < state_.body_count(); i++)
+//        {
+//            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.quaternion(i).coeffs());
+
+//            // transform the state, which is the pose and velocity with respect to to the origin,
+//            // into internal representation, which is the position and velocity of the center
+//            // and the orientation and angular velocity around the center
+//            state_.position(i)        += state_.rotation_matrix(i)*rotation_center_[i];
+//            state_.linear_velocity(i) += state_.angular_velocity(i).cross(state_.position(i));
+
+//            Eigen::Matrix<Scalar, 6, 1> linear_state;
+//            linear_state.topRows(3) = Eigen::Vector3d::Zero();
+//            linear_state.bottomRows(3) = state_.linear_velocity(i);
+//            linear_process_[i].Condition(delta_time,
+//                                         linear_state,
+//                                         control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
+
+//            Eigen::Matrix<Scalar, 6, 1> angular_state;
+//            angular_state.topRows(3) = Eigen::Vector3d::Zero();
+//            angular_state.bottomRows(3) = state_.angular_velocity(i);
+//            angular_process_[i].Condition(delta_time,
+//                                          angular_state,
+//                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
+//        }
+//    }
+
+
+
+
+    virtual void Condition(const State&  state,
                            const Input&  control)
     {
         state_ = state;
         for(size_t i = 0; i < state_.body_count(); i++)
         {
-            quaternion_map_[i] = fl::quaternion_matrix(state_.quaternion(i).coeffs());
+            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.quaternion(i).coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center
@@ -172,65 +229,44 @@ public:
             Eigen::Matrix<Scalar, 6, 1> linear_state;
             linear_state.topRows(3) = Eigen::Vector3d::Zero();
             linear_state.bottomRows(3) = state_.linear_velocity(i);
-            linear_process_[i].condition(delta_time,
-                                         linear_state,
+            linear_process_[i].Condition(linear_state,
                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
 
             Eigen::Matrix<Scalar, 6, 1> angular_state;
             angular_state.topRows(3) = Eigen::Vector3d::Zero();
             angular_state.bottomRows(3) = state_.angular_velocity(i);
-            angular_process_[i].condition(delta_time,
-                                          angular_state,
+            angular_process_[i].Condition(angular_state,
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
     }
 
-    virtual void parameters(const size_t&                           object_index,
+    virtual void Parameters(const size_t&                       object_index,
                             const Eigen::Matrix<Scalar, 3, 1>&  rotation_center,
                             const Scalar&                       damping,
-                            const typename Traits<Process>::SecondMoment&   linear_acceleration_covariance,
-                            const typename Traits<Process>::SecondMoment&   angular_acceleration_covariance)
+                            const typename Process::Operator&   linear_acceleration_covariance,
+                            const typename Process::Operator&   angular_acceleration_covariance)
     {
         rotation_center_[object_index] = rotation_center;
-        linear_process_[object_index].parameters(damping, linear_acceleration_covariance);
-        angular_process_[object_index].parameters(damping, angular_acceleration_covariance);
+        linear_process_[object_index].Parameters(damping, linear_acceleration_covariance);
+        angular_process_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
 
     virtual unsigned InputDimension() const
     {
-        return this->standard_variate_dimension();
+        return this->NoiseDimension();
     }
 
-    virtual int dimension()
+
+    virtual unsigned NoiseDimension() const
+    {
+        return state_.body_count() * DIMENSION_PER_OBJECT;
+    }
+
+    virtual size_t Dimension()
     {
         return state_.rows();
     }
 
-    /* interface API */
-    virtual State predict_state(double delta_time,
-                                const State& state,
-                                const Noise& noise,
-                                const Input& input)
-    {
-        condition(delta_time, state, input);
-
-        return map_standard_normal(noise);
-    }
-
-    virtual int state_dimension() const
-    {
-        return state_.rows();
-    }
-
-    virtual int noise_dimension() const
-    {
-        return this->standard_variate_dimension();
-    }
-
-    virtual int input_dimension() const
-    {
-        return this->standard_variate_dimension();
-    }
 
 private:
     // conditionals
@@ -243,6 +279,8 @@ private:
     // processes
     std::vector<Process>   linear_process_;
     std::vector<Process>   angular_process_;
+
+    double delta_time_;
 };
 
 }

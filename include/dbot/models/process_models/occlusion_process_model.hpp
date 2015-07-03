@@ -28,14 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 #define POSE_TRACKING_MODELS_PROCESS_MODELS_OCCLUSION_PROCESS_MODEL_HPP
 
-
-
-#include <fl/distribution/interface/sampling.hpp>
-#include <fl/model/process/process_model_interface.hpp>
-#include <fl/distribution/interface/standard_gaussian_mapping.hpp>
+//#include <dbot/models/process_models/stationary_process_model.hpp>
+//#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
 
 // TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, SHOULD DISAPPEAR
-namespace fl
+namespace ff
 {
 
 /**
@@ -44,9 +41,9 @@ namespace fl
  * \ingroup distributions
  * \ingroup process_models
  */
-class OcclusionProcessModel:
-        public ProcessModelInterface<double, double, double>,
-        public Sampling<double>
+class OcclusionProcessModel
+//        : public StationaryProcessModel<double>
+//        ,public GaussianMap<double>
 {
 public:
 	// the prob of source being object given source was object one sec ago,
@@ -60,7 +57,7 @@ public:
 
     virtual ~OcclusionProcessModel() {}
 
-    virtual void condition(const double& delta_time,
+    virtual void Condition(const double& delta_time,
                            const double& occlusion_probability,
                            const double& input = 0)
     {
@@ -68,17 +65,7 @@ public:
         occlusion_probability_ = occlusion_probability;
     }
 
-    virtual double predict_state(double delta_time,
-                                 const double& state,
-                                 const double& noise = 0,
-                                 const double& input = 0)
-    {
-        condition(delta_time, state, input);
-
-        return sample();
-    }
-
-    virtual double sample() const
+    virtual double MapStandardGaussian() const
     {
         double pow_c_time = std::exp(delta_time_*log_c_);
 
@@ -102,14 +89,9 @@ public:
         return new_occlusion_probability;
     }
 
-    virtual size_t state_dimension() const { return 1; }
-    virtual size_t noise_dimension() const { return 1; }
-    virtual size_t input_dimension() const { return 0; }
-
 private:
     // conditionals
     double occlusion_probability_, delta_time_;
-
     // parameters
     double p_occluded_visible_, p_occluded_occluded_, c_, log_c_;
 };

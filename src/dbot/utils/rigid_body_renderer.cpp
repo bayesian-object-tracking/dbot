@@ -36,79 +36,55 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace Eigen;
 
-using namespace fl;
-
-RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
-                                     const std::vector<std::vector<std::vector<int> > >& indices,
-                                     const boost::shared_ptr<State>&                     state_ptr,
-                                     Matrix camera_matrix,
-                                     int n_rows,
-                                     int n_cols)
-    : camera_matrix_(camera_matrix),
-      n_rows_(n_rows),
-      n_cols_(n_cols)
-{
-    init(vertices, indices, state_ptr);
-}
+using namespace ff;
 
 RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
                                      const std::vector<std::vector<std::vector<int> > >& indices,
                                      const boost::shared_ptr<State>&                     state_ptr)
+:vertices_(vertices), indices_(indices), state_(state_ptr)
 {
-    init(vertices, indices, state_ptr);
-}
-
-void RigidBodyRenderer::init(
-        const std::vector<std::vector<Vector3d> > &vertices,
-        const std::vector<std::vector<std::vector<int> > > &indices,
-        const boost::shared_ptr<RigidBodyRenderer::State> &state_ptr)
-{
-    vertices_ = vertices;
-    indices_ = indices;
-    state_ = state_ptr;
-
     state(*state_ptr);
 
-    float total_weight = 0;
+	float total_weight = 0;
     coms_.resize(vertices.size());
     com_weights_.resize(vertices.size());
     for(size_t part_index = 0; part_index < indices_.size(); part_index++)
-    {
+	{
         com_weights_[part_index] = vertices[part_index].size();
         total_weight += com_weights_[part_index];
 
         coms_[part_index] = Vector3d::Zero();
-        for(size_t vertex_index = 0; vertex_index < vertices[part_index].size(); vertex_index++)
+		for(size_t vertex_index = 0; vertex_index < vertices[part_index].size(); vertex_index++)
             coms_[part_index] += vertices[part_index][vertex_index];
         coms_[part_index] /= float(vertices[part_index].size());
-    }
+	}
     for(size_t i = 0; i < com_weights_.size(); i++)
         com_weights_[i] /= total_weight;
 
     normals_.clear();
     for(size_t part_index = 0; part_index < indices_.size(); part_index++)
-    {
+	{
         vector<Vector3d> part_normals(indices_[part_index].size());
         for(int triangle_index = 0; triangle_index < int(part_normals.size()); triangle_index++)
-        {
-            //compute the three cross products and make sure that they yield the same normal
-            vector<Vector3d> temp_normals(3);
-            for(int vertex_index = 0; vertex_index < 3; vertex_index++)
+		{
+			//compute the three cross products and make sure that they yield the same normal
+			vector<Vector3d> temp_normals(3);
+			for(int vertex_index = 0; vertex_index < 3; vertex_index++)
                 temp_normals[vertex_index] = ((vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+1)%3] ]-vertices_[part_index][ indices_[part_index][triangle_index][vertex_index] ]).cross(
                         vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+2)%3] ]-vertices_[part_index][ indices_[part_index][triangle_index][(vertex_index+1)%3] ])).normalized();
 
-            for(int vertex_index = 0; vertex_index < 3; vertex_index++)
-                if(!temp_normals[vertex_index].isApprox(temp_normals[(vertex_index+1)%3]))
-                {
+			for(int vertex_index = 0; vertex_index < 3; vertex_index++)
+				if(!temp_normals[vertex_index].isApprox(temp_normals[(vertex_index+1)%3]))
+				{
                     cout << "error, part_normals are not equal, probably the triangle is degenerate."<< endl;
-                    cout << "normal 1 " << endl << temp_normals[vertex_index] << endl;
-                    cout << "normal 2 " << endl << temp_normals[(vertex_index+1)%3] << endl;
-                    exit(-1);
-                }
+					cout << "normal 1 " << endl << temp_normals[vertex_index] << endl;
+					cout << "normal 2 " << endl << temp_normals[(vertex_index+1)%3] << endl;
+					exit(-1);
+				}
             part_normals[triangle_index] = temp_normals[0];
-        }
+		}
         normals_.push_back(part_normals);
-    }
+	}
 }
 
 RigidBodyRenderer::~RigidBodyRenderer() {}
@@ -237,13 +213,9 @@ void RigidBodyRenderer::Render( Matrix camera_matrix,
                     }
 			}
 		}
-    }
+	}
 }
 
-void RigidBodyRenderer::Render(std::vector<float>& depth_image) const
-{
-    Render(camera_matrix_, n_rows_, n_cols_, depth_image);
-}
 
 // todo: does not handle the case properly when the depth is around zero or negative
 void RigidBodyRenderer::Render(Matrix camera_matrix,
@@ -321,15 +293,6 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
         t_[part_index] = state_->position(part_index);
     }
 }
-
-void RigidBodyRenderer::parameters(Matrix camera_matrix, int n_rows, int n_cols)
-{
-    camera_matrix_ = camera_matrix;
-    n_rows_ = n_rows;
-                    n_cols_ = n_cols;
-}
-
-
 
 
 // test the enchilada

@@ -37,29 +37,35 @@
  */
 
 /**
- * @date 2014
+ * @date 05/25/2014
  * @author Jan Issac (jan.issac@gmail.com)
  * Max-Planck-Institute for Intelligent Systems,
- * University of Southern California
+ *  University of Southern California
  */
 
-#include <boost/unordered_map.hpp>
+#ifndef FAST_FILTERING_UTILS_TRAITS_HPP
+#define FAST_FILTERING_UTILS_TRAITS_HPP
 
-#include <dbot/utils/xxhash.h>
-#include <dbot/utils/hash_mapping.hpp>
+#include <Eigen/Dense>
 
-//std::size_t Eigen::hash_value(Eigen::MatrixXd const& matrix)
-//{
-//    size_t seed = 0;
-//    for (size_t i = 0; i < matrix.rows(); ++i)
-//    {
-//        boost::hash_combine(seed, matrix(i, 0));
-//    }
-
-//    return seed;
-//}
-
-std::size_t Eigen::hash_value(Eigen::MatrixXd const& matrix)
+namespace ff
 {
-    return XXH32(matrix.data(), sizeof(double)*6, 0);
+
+namespace internal
+{
+/**
+ * \internal
+ * Generic distribution trait template
+ */
+template <typename T> struct Traits { };
+
+//struct Empty { };
+typedef Eigen::Matrix<double, 0, 0> Empty;
 }
+
+using internal::Traits;
+
+}
+
+#endif
+
