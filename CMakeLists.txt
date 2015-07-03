@@ -22,15 +22,6 @@ find_package(catkin REQUIRED
     fl
 )
 
-find_package(Doxygen)
-
-if(DOXYGEN_FOUND)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-    add_custom_target(doc
-        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen" VERBATIM)
-endif(DOXYGEN_FOUND)
 
 set(PROJECT_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${PROJECT_MODULE_PATH})
@@ -147,7 +138,6 @@ catkin_package(
         dbot_cuda
         dbot_gpu
         dbot
-        pose_tracking_interface
     CATKIN_DEPENDS
         roscpp
         roslib
@@ -160,9 +150,7 @@ catkin_package(
         image_transport
         fl
     DEPENDS
-        OpenCV
         eigen
-        assimp
 )
 
 ###########
@@ -219,133 +207,6 @@ endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 
 
-
-
-
-
-set(PROJECT_NAME_TRACKING_INTERFACE "pose_tracking_interface")
-
-file(GLOB_RECURSE tracking_interface_headers include/${PROJECT_NAME_TRACKING_INTERFACE}/*.hpp include/${PROJECT_NAME_TRACKING_INTERFACE}/*.h)
-
-set(tracking_interface_sources
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker.cpp
-
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/image_visualizer.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/cloud_visualizer.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/object_file_reader.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/kinematics_from_urdf.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/tracking_dataset.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/robot_tracking_dataset.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/pcl_interface.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/ros_interface.cpp
-    src/${PROJECT_NAME_TRACKING_INTERFACE}/utils/image_publisher.cpp
-)
-
-
-add_library(${PROJECT_NAME_TRACKING_INTERFACE} ${dbot_headers}
-                                               ${tracking_interface_headers}
-                                               ${tracking_interface_sources})
-
-
-
-
-
-
-if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-    add_definitions( -DBUILD_GPU=1 )
-    message("building cuda implementation")
-    ## object_tracker
-    add_executable(object_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
-    target_link_libraries(object_tracker
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${PROJECT_NAME_DBOT}_gpu
-        ${PROJECT_NAME_DBOT}_cuda
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-    ${CUDA_LIBRARIES}
-        yaml-cpp)
-
-    ## robot_tracker
-    add_executable(robot_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${PROJECT_NAME_DBOT}_gpu
-        ${PROJECT_NAME_DBOT}_cuda
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        ${CUDA_LIBRARIES}
-        yaml-cpp)
-
-    ## robot_tracker
-    add_executable(robot_tracker_evaluation
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_evaluation_node.cpp)
-    target_link_libraries(robot_tracker_evaluation
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${PROJECT_NAME_DBOT}_gpu
-        ${PROJECT_NAME_DBOT}_cuda
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        ${CUDA_LIBRARIES}
-        yaml-cpp)
-
-    target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_DBOT}
-                                                             ${PROJECT_NAME_DBOT}_gpu
-                                                             ${PCL_LIBRARIES}
-                                                             ${catkin_LIBRARIES}
-                                                             ${OpenCV_LIBRARIES}
-                                                             assimp)
-else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-    message(" Not building GPU filtering")
-
-    ## object_tracker
-    add_executable(object_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/object_tracker_node.cpp)
-    target_link_libraries(object_tracker
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
-
-    ## robot_tracker
-    add_executable(robot_tracker
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_node.cpp)
-    target_link_libraries(robot_tracker
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
-
-
-    ## robot_tracker
-    add_executable(robot_tracker_evaluation
-        src/${PROJECT_NAME_TRACKING_INTERFACE}/trackers/robot_tracker_evaluation_node.cpp)
-    target_link_libraries(robot_tracker_evaluation
-        ${PROJECT_NAME_DBOT}
-        ${PROJECT_NAME_TRACKING_INTERFACE}
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBS}
-        ${PCL_LIBRARIES}
-        yaml-cpp)
-
-    target_link_libraries(${PROJECT_NAME_TRACKING_INTERFACE} ${PROJECT_NAME_DBOT}
-                                                             ${PCL_LIBRARIES}
-                                                             ${catkin_LIBRARIES}
-                                                             ${OpenCV_LIBRARIES}
-                                                             assimp)
-endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 
 
 
