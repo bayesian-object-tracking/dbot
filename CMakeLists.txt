@@ -134,6 +134,10 @@ endif()
 catkin_package(
     INCLUDE_DIRS
         include
+        ${GLEW_INCLUDE_DIRS}
+        ${OpenGL_INCLUDE_DIRS}
+        ${CUDA_CUT_INCLUDE_DIRS}
+        ${CUDA_INCLUDE_DIRS}
     LIBRARIES
         dbot_cuda
         dbot_gpu
