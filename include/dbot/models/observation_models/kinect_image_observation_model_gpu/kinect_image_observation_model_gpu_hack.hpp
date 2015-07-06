@@ -12,7 +12,7 @@
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
 
-#include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
+//#include <pose_tracking_interface/utils/kinematics_from_urdf.hpp>
 
 
 #include <omp.h>

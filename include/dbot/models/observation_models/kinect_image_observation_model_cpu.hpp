@@ -44,6 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ff
 {
 
+
+/// \todo get rid of traits
 // Forward declarations
 template <typename Scalar, typename State, int OBJECTS> class KinectImageObservationModelCPU;
 
