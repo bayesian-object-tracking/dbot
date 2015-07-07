@@ -17,7 +17,6 @@ find_package(catkin REQUIRED
     kdl_parser
     rosbag
     message_filters
-    robot_state_pub
     image_transport
     fl
 )
@@ -98,39 +97,11 @@ endif(NOT GLEW_FOUND)
 # use --ptxas-options=-v to see number of registers, local, shared and constant memory used in kernels
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
-##########################################
-# Dealing with different assimp versions #
-##########################################
-set(ASSIMP_PREFIX_PATH ${ASSIMP_HOME} ${ENV_ASSIMP_HOME} /usr/local /usr/local/include /usr/local/lib /usr/include /usr/lib /usr/local/include/assimp /usr/include/assimp /usr/lib/assimp /usr/local/lib/assimp)
-
-# a header only used in Version 3
-set(FileToCheckV3 "cimport.h")
-find_path(ASSIMP_INCLUDE_DIR_V3
-  NAMES ${FileToCheckV3}
-  PATHS ${ASSIMP_PREFIX_PATH}
-)
-
-# a header only used in Version 2
-set(FileToCheckV2 "assimp.h")
-find_path(ASSIMP_INCLUDE_DIR_V2
-  NAMES ${FileToCheckV2}
-  PATHS ${ASSIMP_PREFIX_PATH}
-)
-
-IF(EXISTS "${ASSIMP_INCLUDE_DIR_V3}/${FileToCheckV3}")
-  message("-- ${FileToCheckV3} exists. Therefore Assimp V3 must be installed and will be used.")
-  # add flag for ros distro
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_V3")
-ELSEIF(EXISTS "${ASSIMP_INCLUDE_DIR_V2}/${FileToCheckV2}" )
-  message("-- ${FileToCheckV2} exists. Therefore Assimp V2 must be installed and will be used.")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_V2")
-ELSE()
-   message(FATAL_ERROR "-- Neither ${FileToCheckV2} nor ${FileToCheckV3} exists. Assimp doesn't seem to be installed.")
-endif()
-
 ###################################
 ## catkin specific configuration ##
 ###################################
+
+if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 catkin_package(
     INCLUDE_DIRS
         include
@@ -150,13 +121,29 @@ catkin_package(
         orocos_kdl
         kdl_parser
         message_filters
-        robot_state_pub
         image_transport
         fl
     DEPENDS
-        eigen
-)
-
+        eigen)
+else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
+catkin_package(
+    INCLUDE_DIRS
+        include
+    LIBRARIES
+        dbot
+    CATKIN_DEPENDS
+        roscpp
+        roslib
+        sensor_msgs
+        urdf
+        orocos_kdl
+        kdl_parser
+        message_filters
+        image_transport
+        fl
+    DEPENDS
+        eigen)
+endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
 ###########
 ## Build ##
 ###########
