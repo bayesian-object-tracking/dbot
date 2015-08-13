@@ -134,7 +134,24 @@ public:
             std::vector<int> intersect_indices;
             std::vector<float> predictions;
             //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
-            object_model_->state(states[state_index]);
+
+            int body_count = states[state_index].body_count();
+            std::vector<Eigen::Matrix3d> rotations(body_count);
+            std::vector<Eigen::Vector3d> translations(body_count);
+            for(size_t part_index = 0; part_index < body_count; part_index++)
+            {
+                rotations[part_index] = states[state_index].rotation_matrix(part_index);
+                translations[part_index] = states[state_index].position(part_index);
+            }
+
+
+
+            object_model_->set_poses(rotations, translations);
+//            object_model_->state(states[state_index]);
+
+
+
+
             object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
 
             // we loop through all the pixels which intersect the object model

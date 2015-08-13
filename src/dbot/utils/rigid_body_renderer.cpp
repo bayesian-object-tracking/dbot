@@ -266,16 +266,16 @@ std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices
 	}
 	return trans_vertices;
 }
-RigidBodyRenderer::Vector RigidBodyRenderer::system_center() const
-{
-	Eigen::Vector3d com = Eigen::Vector3d::Zero();
-    for(size_t i = 0; i < coms_.size(); i++)
-        com += com_weights_[i] * (R_[i]*coms_[i] + t_[i]);
+//RigidBodyRenderer::Vector RigidBodyRenderer::system_center() const
+//{
+//	Eigen::Vector3d com = Eigen::Vector3d::Zero();
+//    for(size_t i = 0; i < coms_.size(); i++)
+//        com += com_weights_[i] * (R_[i]*coms_[i] + t_[i]);
 
-    com = R_[0].inverse() * (com - t_[0]);
+//    com = R_[0].inverse() * (com - t_[0]);
 
-	return com;
-}
+//	return com;
+//}
 RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) const
 {
     return R_[index]*coms_[index] + t_[index];
@@ -292,6 +292,15 @@ void RigidBodyRenderer::state(const Eigen::VectorXd& state)
         R_[part_index] = state_->rotation_matrix(part_index);
         t_[part_index] = state_->position(part_index);
     }
+}
+
+
+// set state
+void RigidBodyRenderer::set_poses(const std::vector<Matrix>& rotations,
+                                  const std::vector<Vector>& translations)
+{
+    R_ = rotations;
+    t_ = translations;
 }
 
 
