@@ -44,7 +44,7 @@ RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector
 :vertices_(vertices), indices_(indices), state_(state_ptr)
 {
 //    state(*state_ptr);
-
+    /// \todo this does not belong here
 	float total_weight = 0;
     coms_.resize(vertices.size());
     com_weights_.resize(vertices.size());
@@ -60,6 +60,20 @@ RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector
 	}
     for(size_t i = 0; i < com_weights_.size(); i++)
         com_weights_[i] /= total_weight;
+
+
+    // initialize poses
+    R_.resize(vertices_.size());
+    t_.resize(vertices_.size());
+
+    for(size_t i = 0; i < R_.size(); i++)
+    {
+        R_[i] = Matrix::Identity();
+        t_[i] = Vector::Zero();
+    }
+
+
+
 
     normals_.clear();
     for(size_t part_index = 0; part_index < indices_.size(); part_index++)
