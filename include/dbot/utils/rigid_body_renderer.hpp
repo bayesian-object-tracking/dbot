@@ -46,6 +46,8 @@ public:
     typedef ff::RigidBodiesState<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
+    typedef typename Eigen::Transform<double, 3, Eigen::Affine> Affine;
+
 
     RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
                       const std::vector<std::vector<std::vector<int> > >& indices,
@@ -72,10 +74,13 @@ public:
     Vector object_center(const size_t& index) const;
 
     // set function
-    virtual void state(const Eigen::VectorXd& state);
+//    virtual void state(const Eigen::VectorXd& state);
 
     virtual void set_poses(const std::vector<Matrix>& rotations,
                            const std::vector<Vector>& translations);
+
+    virtual void set_poses(const std::vector<Affine>& poses);
+
 
 
 protected:

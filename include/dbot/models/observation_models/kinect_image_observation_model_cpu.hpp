@@ -136,6 +136,7 @@ public:
             //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
 
             int body_count = states[state_index].body_count();
+
             std::vector<Eigen::Matrix3d> rotations(body_count);
             std::vector<Eigen::Vector3d> translations(body_count);
             for(size_t part_index = 0; part_index < body_count; part_index++)
@@ -143,6 +144,13 @@ public:
                 rotations[part_index] = states[state_index].rotation_matrix(part_index);
                 translations[part_index] = states[state_index].position(part_index);
             }
+
+
+//            std::vector<RigidBodyRenderer::Affine> poses(body_count);
+//            for(size_t part_index = 0; part_index < body_count; part_index++)
+//            {
+//                poses[part_index] = states[state_index].affine(part_index);
+//            }
 
 
 

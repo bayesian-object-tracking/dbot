@@ -43,7 +43,7 @@ RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector
                                      const boost::shared_ptr<State>&                     state_ptr)
 :vertices_(vertices), indices_(indices), state_(state_ptr)
 {
-    state(*state_ptr);
+//    state(*state_ptr);
 
 	float total_weight = 0;
     coms_.resize(vertices.size());
@@ -281,18 +281,18 @@ RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) 
     return R_[index]*coms_[index] + t_[index];
 }
 
-// set state
-void RigidBodyRenderer::state(const Eigen::VectorXd& state)
-{
-    *state_ = state;
-    R_.resize(state_->body_count());
-    t_.resize(state_->body_count());
-    for(size_t part_index = 0; part_index < state_->body_count(); part_index++)
-    {
-        R_[part_index] = state_->rotation_matrix(part_index);
-        t_[part_index] = state_->position(part_index);
-    }
-}
+//// set state
+//void RigidBodyRenderer::state(const Eigen::VectorXd& state)
+//{
+//    *state_ = state;
+//    R_.resize(state_->body_count());
+//    t_.resize(state_->body_count());
+//    for(size_t part_index = 0; part_index < state_->body_count(); part_index++)
+//    {
+//        R_[part_index] = state_->rotation_matrix(part_index);
+//        t_[part_index] = state_->position(part_index);
+//    }
+//}
 
 
 // set state
@@ -301,6 +301,18 @@ void RigidBodyRenderer::set_poses(const std::vector<Matrix>& rotations,
 {
     R_ = rotations;
     t_ = translations;
+}
+
+/// \todo: th
+void RigidBodyRenderer::set_poses(const std::vector<Affine>& poses)
+{
+     R_.resize(poses.size());
+     t_.resize(poses.size());
+     for(size_t i = 0; i < poses.size(); i++)
+     {
+         R_[i] = poses[i].rotation();
+         t_[i] = poses[i].translation();
+     }
 }
 
 
