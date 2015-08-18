@@ -38,12 +38,11 @@ using namespace Eigen;
 
 using namespace ff;
 
-RigidBodyRenderer::RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
-                                     const std::vector<std::vector<std::vector<int> > >& indices,
-                                     const boost::shared_ptr<State>&                     state_ptr)
-:vertices_(vertices), indices_(indices), state_(state_ptr)
+RigidBodyRenderer::RigidBodyRenderer(
+                const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
+                const std::vector<std::vector<std::vector<int> > >& indices)
+:vertices_(vertices), indices_(indices)
 {
-//    state(*state_ptr);
     /// \todo this does not belong here
 	float total_weight = 0;
     coms_.resize(vertices.size());
@@ -294,19 +293,6 @@ RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) 
 {
     return R_[index]*coms_[index] + t_[index];
 }
-
-//// set state
-//void RigidBodyRenderer::state(const Eigen::VectorXd& state)
-//{
-//    *state_ = state;
-//    R_.resize(state_->body_count());
-//    t_.resize(state_->body_count());
-//    for(size_t part_index = 0; part_index < state_->body_count(); part_index++)
-//    {
-//        R_[part_index] = state_->rotation_matrix(part_index);
-//        t_[part_index] = state_->position(part_index);
-//    }
-//}
 
 
 // set state

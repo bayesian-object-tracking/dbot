@@ -49,9 +49,9 @@ public:
     typedef typename Eigen::Transform<double, 3, Eigen::Affine> Affine;
 
 
-    RigidBodyRenderer(const std::vector<std::vector<Eigen::Vector3d> >& vertices,
-                      const std::vector<std::vector<std::vector<int> > >& indices,
-                      const boost::shared_ptr<State>& state_ptr);
+    RigidBodyRenderer(
+            const std::vector<std::vector<Eigen::Vector3d> >& vertices,
+            const std::vector<std::vector<std::vector<int> > >& indices);
 
     virtual ~RigidBodyRenderer();
 
@@ -90,7 +90,6 @@ protected:
     std::vector<std::vector<std::vector<int> > >    indices_;
 
     // state
-    const boost::shared_ptr<State>  state_;
     std::vector<Matrix>             R_;
     std::vector<Vector>             t_;
 
