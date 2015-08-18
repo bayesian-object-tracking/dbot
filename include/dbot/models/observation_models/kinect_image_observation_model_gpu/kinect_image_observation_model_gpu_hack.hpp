@@ -242,7 +242,7 @@ public:
         // convert to internal state format
         std::vector<std::vector<std::vector<float> > > states_internal_format(
                     n_poses_,
-                    std::vector<std::vector<float> >(states[0].body_count(),
+                    std::vector<std::vector<float> >(states[0].count(),
                     std::vector<float>(7, 0)));
 
         MEASURE("gpu: creating state vectors");
@@ -257,7 +257,7 @@ public:
 
             kinematics_[tid].InitKDLData(states[state_index]);
 
-            for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
+            for(size_t body_index = 0; body_index < states[state_index].count(); body_index++)
             {
                 const Eigen::Quaternion<Scalar>& quaternion = kinematics_[tid].GetLinkOrientation(body_index);
                 states_internal_format[state_index][body_index][0] = quaternion.w();

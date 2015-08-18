@@ -183,7 +183,7 @@ public:
 //                           const Input&  control)
 //    {
 //        state_ = state;
-//        for(size_t i = 0; i < state_.body_count(); i++)
+//        for(size_t i = 0; i < state_.count(); i++)
 //        {
 //            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).euler_vector().quaternion().coeffs());
 

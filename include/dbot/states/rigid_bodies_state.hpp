@@ -95,7 +95,7 @@ public:
 //        return homogeneous_matrix;
 //    }
 
-//    virtual unsigned body_count() const = 0;
+//    virtual unsigned count() const = 0;
 
 
     virtual fl::PoseVelocityVector component(int index) const = 0;
