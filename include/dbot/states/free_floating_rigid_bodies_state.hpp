@@ -107,7 +107,7 @@ public:
 
 
 
-    using Base::quaternion;
+//    using Base::quaternion;
   
     // read
     virtual Vector position(const size_t& body_index = 0) const
