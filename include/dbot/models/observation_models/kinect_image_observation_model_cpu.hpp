@@ -143,7 +143,8 @@ public:
             {
                 rotations[part_index] =
                     states[state_index].component(part_index).euler_vector().rotation_matrix();
-                translations[part_index] = states[state_index].position(part_index);
+                translations[part_index] =
+                        states[state_index].component(part_index).position();
             }
 
 

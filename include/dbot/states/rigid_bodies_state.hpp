@@ -66,9 +66,9 @@ public:
         *((State*)(this)) = state_vector;
     }
   
-    // read
-    virtual Vector position(const size_t& object_index = 0) const = 0;
-    virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
+//    // read
+//    virtual Vector position(const size_t& object_index = 0) const = 0;
+//    virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
 
     // other representations
 //    virtual Quaternion quaternion(const size_t& object_index = 0) const
@@ -95,7 +95,7 @@ public:
 //        return homogeneous_matrix;
 //    }
 
-    virtual unsigned body_count() const = 0;
+//    virtual unsigned body_count() const = 0;
 
 
     virtual fl::PoseVelocityVector component(int index) const = 0;

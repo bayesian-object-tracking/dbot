@@ -110,23 +110,23 @@ public:
 //    using Base::quaternion;
   
     // read
-    virtual Vector position(const size_t& body_index = 0) const
-    {
-        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + POSITION_INDEX);
-    }
-    virtual Vector euler_vector(const size_t& body_index = 0) const
-    {
-        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
-    }
+//    virtual Vector position(const size_t& body_index = 0) const
+//    {
+//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + POSITION_INDEX);
+//    }
+//    virtual Vector euler_vector(const size_t& body_index = 0) const
+//    {
+//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
+//    }
 
-    Block position(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
-    }
-    Block euler_vector(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
-    }
+//    Block position(const size_t& body_index = 0)
+//    {
+//      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
+//    }
+//    Block euler_vector(const size_t& body_index = 0)
+//    {
+//      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
+//    }
 
 
 
