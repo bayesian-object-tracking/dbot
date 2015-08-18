@@ -225,12 +225,14 @@ public:
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
             for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
             {
-                const Eigen::Quaternion<Scalar>& quaternion = states[state_index].quaternion(body_index);
+                const Eigen::Quaternion<Scalar>& quaternion
+                        = states[state_index].component(body_index).euler_vector().quaternion();
                 states_internal_format[state_index][body_index][0] = quaternion.w();
                 states_internal_format[state_index][body_index][1] = quaternion.x();
                 states_internal_format[state_index][body_index][2] = quaternion.y();
                 states_internal_format[state_index][body_index][3] = quaternion.z();
-                const Eigen::Matrix<Scalar, 3, 1>& position =  states[state_index].position(body_index);
+                const Eigen::Matrix<Scalar, 3, 1>& position =
+                        states[state_index].component(body_index).position();
                 states_internal_format[state_index][body_index][4] = position[0];
                 states_internal_format[state_index][body_index][5] = position[1];
                 states_internal_format[state_index][body_index][6] = position[2];

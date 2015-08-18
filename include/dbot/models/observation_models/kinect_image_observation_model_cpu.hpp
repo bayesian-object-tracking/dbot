@@ -141,7 +141,8 @@ public:
             std::vector<Eigen::Vector3d> translations(body_count);
             for(size_t part_index = 0; part_index < body_count; part_index++)
             {
-                rotations[part_index] = states[state_index].rotation_matrix(part_index);
+                rotations[part_index] =
+                    states[state_index].component(part_index).euler_vector().rotation_matrix();
                 translations[part_index] = states[state_index].position(part_index);
             }
 

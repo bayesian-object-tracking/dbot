@@ -71,29 +71,29 @@ public:
     virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
 
     // other representations
-    virtual Quaternion quaternion(const size_t& object_index = 0) const
-    {
-        Scalar angle = euler_vector(object_index).norm();
-        Vector axis = euler_vector(object_index).normalized();
+//    virtual Quaternion quaternion(const size_t& object_index = 0) const
+//    {
+//        Scalar angle = euler_vector(object_index).norm();
+//        Vector axis = euler_vector(object_index).normalized();
 
-        if(std::isfinite(axis.norm()))
-        {
-            return Quaternion(AngleAxis(angle, axis));
-        }
-        return Quaternion::Identity();
-    }
-    virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
-    {
-        return RotationMatrix(quaternion(object_index));
-    }
-    virtual HomogeneousMatrix homogeneous_matrix(const size_t& object_index = 0) const
-    {
-        HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
-        homogeneous_matrix.topLeftCorner(3, 3) = rotation_matrix(object_index);
-        homogeneous_matrix.topRightCorner(3, 1) = position(object_index);
+//        if(std::isfinite(axis.norm()))
+//        {
+//            return Quaternion(AngleAxis(angle, axis));
+//        }
+//        return Quaternion::Identity();
+//    }
+//    virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
+//    {
+//        return RotationMatrix(quaternion(object_index));
+//    }
+//    virtual HomogeneousMatrix homogeneous_matrix(const size_t& object_index = 0) const
+//    {
+//        HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
+//        homogeneous_matrix.topLeftCorner(3, 3) = rotation_matrix(object_index);
+//        homogeneous_matrix.topRightCorner(3, 1) = position(object_index);
 
-        return homogeneous_matrix;
-    }
+//        return homogeneous_matrix;
+//    }
 
     virtual unsigned body_count() const = 0;
 
