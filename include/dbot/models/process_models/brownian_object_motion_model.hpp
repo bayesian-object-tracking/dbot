@@ -146,15 +146,15 @@ public:
             Eigen::Matrix<Scalar, 6, 1> linear_delta      = linear_process_[i].MapStandardGaussian(position_noise);
             Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapStandardGaussian(orientation_noise);
 
-            new_state.position(i) = state_.component(i).position() + linear_delta.topRows(3);
+            new_state.component(i).position() = state_.component(i).position() + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.component(i).euler_vector().quaternion().coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
             new_state.quaternion(updated_quaternion.normalized(), i);
-            new_state.linear_velocity(i)  = linear_delta.bottomRows(3);
-            new_state.angular_velocity(i) = angular_delta.bottomRows(3);
+            new_state.component(i).linear_velocity()  = linear_delta.bottomRows(3);
+            new_state.component(i).angular_velocity() = angular_delta.bottomRows(3);
 
             // transform to external coordinate system
-            new_state.linear_velocity(i) -= new_state.angular_velocity(i).cross(state_.component(i).position());
-            new_state.position(i)        -= new_state.rotation_matrix(i)*rotation_center_[i];
+            new_state.component(i).linear_velocity() -= new_state.component(i).angular_velocity().cross(state_.component(i).position());
+            new_state.component(i).position()        -= new_state.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
         }
 
         return new_state;
@@ -190,8 +190,8 @@ public:
 //            // transform the state, which is the pose and velocity with respect to to the origin,
 //            // into internal representation, which is the position and velocity of the center
 //            // and the orientation and angular velocity around the center
-//            state_.component(i).position()        += state_.rotation_matrix(i)*rotation_center_[i];
-//            state_.component(i).linear_velocity() += state_.angular_velocity(i).cross(state_.component(i).position());
+//            state_.component(i).position()        += state_.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
+//            state_.component(i).linear_velocity() += state_.component(i).angular_velocity().cross(state_.component(i).position());
 
 //            Eigen::Matrix<Scalar, 6, 1> linear_state;
 //            linear_state.topRows(3) = Eigen::Vector3d::Zero();
@@ -202,7 +202,7 @@ public:
 
 //            Eigen::Matrix<Scalar, 6, 1> angular_state;
 //            angular_state.topRows(3) = Eigen::Vector3d::Zero();
-//            angular_state.bottomRows(3) = state_.angular_velocity(i);
+//            angular_state.bottomRows(3) = state_.component(i).angular_velocity();
 //            angular_process_[i].Condition(delta_time,
 //                                          angular_state,
 //                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
@@ -224,8 +224,8 @@ public:
             // into internal representation, which is the position and velocity of the center
             // and the orientation and angular velocity around the center
             state_.component(i).position()
-                    += state_.rotation_matrix(i)*rotation_center_[i];
-            state_.component(i).linear_velocity() += state_.angular_velocity(i).cross(state_.component(i).position());
+                    += state_.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
+            state_.component(i).linear_velocity() += state_.component(i).angular_velocity().cross(state_.component(i).position());
 
             Eigen::Matrix<Scalar, 6, 1> linear_state;
             linear_state.topRows(3) = Eigen::Vector3d::Zero();
@@ -235,7 +235,7 @@ public:
 
             Eigen::Matrix<Scalar, 6, 1> angular_state;
             angular_state.topRows(3) = Eigen::Vector3d::Zero();
-            angular_state.bottomRows(3) = state_.angular_velocity(i);
+            angular_state.bottomRows(3) = state_.component(i).angular_velocity();
             angular_process_[i].Condition(angular_state,
                                           control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
         }
