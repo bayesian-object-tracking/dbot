@@ -118,18 +118,18 @@ public:
     {
         return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
     }
-    virtual Vector linear_velocity(const size_t& body_index = 0) const
-    {
-        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
-    }
-    virtual Vector angular_velocity(const size_t& body_index = 0) const
-    {
-        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
-    }
-    virtual Pose pose(const size_t& body_index = 0) const
-    {
-        return this->template middleRows<POSE_SIZE>(body_index * BODY_SIZE + POSE_INDEX);
-    }
+//    virtual Vector linear_velocity(const size_t& body_index = 0) const
+//    {
+//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
+//    }
+//    virtual Vector angular_velocity(const size_t& body_index = 0) const
+//    {
+//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
+//    }
+//    virtual Pose pose(const size_t& body_index = 0) const
+//    {
+//        return this->template middleRows<POSE_SIZE>(body_index * BODY_SIZE + POSE_INDEX);
+//    }
     virtual Poses poses() const
     {
         Poses poses_(body_count()*POSE_SIZE);
@@ -158,25 +158,25 @@ public:
     {
       return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
     }
-    Block linear_velocity(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
-    }
-    Block angular_velocity(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
-    }
-    PoseBlock pose(const size_t& body_index = 0)
-    {
-      return PoseBlock(this->derived(), body_index * BODY_SIZE + POSE_INDEX);
-    }
-    BodyBlock operator [](const size_t& body_index)
-    {
-      std::cout << "operator shizzle is being used" << std::endl;
+//    Block linear_velocity(const size_t& body_index = 0)
+//    {
+//      return Block(this->derived(), body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
+//    }
+//    Block angular_velocity(const size_t& body_index = 0)
+//    {
+//      return Block(this->derived(), body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
+//    }
+//    PoseBlock pose(const size_t& body_index = 0)
+//    {
+//      return PoseBlock(this->derived(), body_index * BODY_SIZE + POSE_INDEX);
+//    }
+//    BodyBlock operator [](const size_t& body_index)
+//    {
+//      std::cout << "operator shizzle is being used" << std::endl;
 
-      exit(-1);
-      return BodyBlock(this->derived(), body_index * BODY_SIZE);
-    }
+//      exit(-1);
+//      return BodyBlock(this->derived(), body_index * BODY_SIZE);
+//    }
 
     // other representations
     virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
