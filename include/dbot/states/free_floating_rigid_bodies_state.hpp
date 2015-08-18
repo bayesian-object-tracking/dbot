@@ -88,6 +88,8 @@ public:
     typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
     typedef typename Eigen::Transform<Scalar, 3, Eigen::Affine> Affine;
 
+    typedef typename Base::PoseVelocityBlock PoseVelocityBlock;
+
     typedef Eigen::VectorBlock<State, BLOCK_SIZE>      Block;
     typedef Eigen::VectorBlock<State, POSE_SIZE>       PoseBlock;
     typedef Eigen::VectorBlock<State, BODY_SIZE>   BodyBlock;
@@ -184,6 +186,17 @@ public:
     virtual unsigned body_count() const
     {
         return ((State*)(this))->rows()/BODY_SIZE;
+    }
+
+
+    // accessors ***************************************************************
+    virtual fl::PoseVelocityVector component(int index) const
+    {
+        return PoseVelocityBlock(*((State*)(this)), index * PoseVelocityBlock::SizeAtCompileTime);
+    }
+    int count() const
+    {
+        return this->size() / PoseVelocityBlock::SizeAtCompileTime;
     }
 };
 

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Dense>
 #include <vector>
+#include <fl/util/math/pose_velocity_vector.hpp>
 
 namespace ff
 {
@@ -47,6 +48,8 @@ public:
     typedef Eigen::Quaternion<Scalar>   Quaternion;
     typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
     typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
+
+    typedef fl::PoseVelocityBlock<State> PoseVelocityBlock;
 
     // constructor and destructor
     RigidBodiesState() { }
@@ -73,7 +76,7 @@ public:
         Scalar angle = euler_vector(object_index).norm();
         Vector axis = euler_vector(object_index).normalized();
 
-        if(std::isfinite(axis.norm())) 
+        if(std::isfinite(axis.norm()))
         {
             return Quaternion(AngleAxis(angle, axis));
         }
@@ -93,6 +96,11 @@ public:
     }
 
     virtual unsigned body_count() const = 0;
+
+
+    virtual fl::PoseVelocityVector component(int index) const = 0;
+
+    virtual int count() const = 0;
 };
 
 }
