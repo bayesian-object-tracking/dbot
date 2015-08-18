@@ -148,7 +148,7 @@ public:
 
             new_state.component(i).position() = state_.component(i).position() + linear_delta.topRows(3);
             Quaternion updated_quaternion(state_.component(i).euler_vector().quaternion().coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
-            new_state.quaternion(updated_quaternion.normalized(), i);
+            new_state.component(i).euler_vector().quaternion(updated_quaternion.normalized());
             new_state.component(i).linear_velocity()  = linear_delta.bottomRows(3);
             new_state.component(i).angular_velocity() = angular_delta.bottomRows(3);
 

@@ -118,6 +118,19 @@ public:
     {
         return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
     }
+
+    Block position(const size_t& body_index = 0)
+    {
+      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
+    }
+    Block euler_vector(const size_t& body_index = 0)
+    {
+      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
+    }
+
+
+
+
 //    virtual Vector linear_velocity(const size_t& body_index = 0) const
 //    {
 //        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
@@ -150,14 +163,7 @@ public:
                 = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
         }
     }
-    Block position(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
-    }
-    Block euler_vector(const size_t& body_index = 0)
-    {
-      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
-    }
+
 //    Block linear_velocity(const size_t& body_index = 0)
 //    {
 //      return Block(this->derived(), body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
@@ -179,16 +185,16 @@ public:
 //    }
 
     // other representations
-    virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
-    {
-        AngleAxis angle_axis(quaternion.normalized());
-        euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
-    }
-    virtual void pose(const Affine& affine, const size_t& body_index = 0)
-    {
-       quaternion(Quaternion(affine.rotation()), body_index);
-       position(body_index) = affine.translation();
-    }
+//    virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
+//    {
+//        AngleAxis angle_axis(quaternion.normalized());
+//        euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
+//    }
+//    virtual void pose(const Affine& affine, const size_t& body_index = 0)
+//    {
+//       quaternion(Quaternion(affine.rotation()), body_index);
+//       position(body_index) = affine.translation();
+//    }
 
 
     virtual unsigned body_count() const
