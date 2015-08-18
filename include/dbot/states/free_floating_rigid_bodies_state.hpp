@@ -95,7 +95,6 @@ public:
     typedef Eigen::VectorBlock<State, BODY_SIZE>   BodyBlock;
 
     // give access to base member functions (otherwise it is shadowed)
-    using Base::quaternion;
 
     FreeFloatingRigidBodiesState() { }
     FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * BODY_SIZE)) { }
@@ -105,6 +104,10 @@ public:
         Base(state_vector) { }
 
     virtual ~FreeFloatingRigidBodiesState() {}
+
+
+
+    using Base::quaternion;
   
     // read
     virtual Vector position(const size_t& body_index = 0) const
@@ -132,7 +135,8 @@ public:
         Poses poses_(body_count()*POSE_SIZE);
         for(size_t body_index = 0; body_index < body_count(); body_index++)
         {
-             poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE) = pose(body_index);
+             poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE)
+                                = component(body_index).pose();
         }
         return poses_;
     }
@@ -142,7 +146,8 @@ public:
     {
         for(size_t body_index = 0; body_index < body_count(); body_index++)
         {
-             pose(body_index) = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
+             component(body_index).pose()
+                = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
         }
     }
     Block position(const size_t& body_index = 0)
@@ -167,6 +172,9 @@ public:
     }
     BodyBlock operator [](const size_t& body_index)
     {
+      std::cout << "operator shizzle is being used" << std::endl;
+
+      exit(-1);
       return BodyBlock(this->derived(), body_index * BODY_SIZE);
     }
 
@@ -197,6 +205,16 @@ public:
     int count() const
     {
         return this->size() / PoseVelocityBlock::SizeAtCompileTime;
+    }
+
+    // mutators ****************************************************************
+    PoseVelocityBlock component(int index)
+    {
+        return PoseVelocityBlock(*((State*)(this)), index * PoseVelocityBlock::SizeAtCompileTime);
+    }
+    void recount(int new_count)
+    {
+        return this->resize(new_count * PoseVelocityBlock::SizeAtCompileTime);
     }
 };
 
