@@ -138,8 +138,8 @@ public:
 
     virtual State MapStandardGaussian(const Noise& sample) const
     {
-        State new_state(state_.body_count());
-        for(size_t i = 0; i < new_state.body_count(); i++)
+        State new_state(state_.count());
+        for(size_t i = 0; i < new_state.count(); i++)
         {
             Eigen::Matrix<Scalar, 3, 1> position_noise    = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT);
             Eigen::Matrix<Scalar, 3, 1> orientation_noise = sample.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3);
@@ -216,7 +216,7 @@ public:
                            const Input&  control)
     {
         state_ = state;
-        for(size_t i = 0; i < state_.body_count(); i++)
+        for(size_t i = 0; i < state_.count(); i++)
         {
             quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).euler_vector().quaternion().coeffs());
 
@@ -260,7 +260,7 @@ public:
 
     virtual unsigned NoiseDimension() const
     {
-        return state_.body_count() * DIMENSION_PER_OBJECT;
+        return state_.count() * DIMENSION_PER_OBJECT;
     }
 
     virtual size_t Dimension()

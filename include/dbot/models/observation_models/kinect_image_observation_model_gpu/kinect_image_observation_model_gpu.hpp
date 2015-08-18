@@ -216,14 +216,14 @@ public:
         // convert to internal state format
         std::vector<std::vector<std::vector<float> > > states_internal_format(
                     n_poses_,
-                    std::vector<std::vector<float> >(states[0].body_count(),
+                    std::vector<std::vector<float> >(states[0].count(),
                     std::vector<float>(7, 0)));
 
         MEASURE("gpu: creating state vectors");
 
 
         for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
-            for(size_t body_index = 0; body_index < states[state_index].body_count(); body_index++)
+            for(size_t body_index = 0; body_index < states[state_index].count(); body_index++)
             {
                 const Eigen::Quaternion<Scalar>& quaternion
                         = states[state_index].component(body_index).euler_vector().quaternion();

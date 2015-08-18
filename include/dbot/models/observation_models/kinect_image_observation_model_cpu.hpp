@@ -135,7 +135,7 @@ public:
             std::vector<float> predictions;
             //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
 
-            int body_count = states[state_index].body_count();
+            int body_count = states[state_index].count();
 
             std::vector<Eigen::Matrix3d> rotations(body_count);
             std::vector<Eigen::Vector3d> translations(body_count);

@@ -94,7 +94,6 @@ public:
     typedef Eigen::VectorBlock<State, POSE_SIZE>       PoseBlock;
     typedef Eigen::VectorBlock<State, BODY_SIZE>   BodyBlock;
 
-    // give access to base member functions (otherwise it is shadowed)
 
     FreeFloatingRigidBodiesState() { }
     FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * BODY_SIZE)) { }
@@ -107,46 +106,11 @@ public:
 
 
 
-//    using Base::quaternion;
-  
-    // read
-//    virtual Vector position(const size_t& body_index = 0) const
-//    {
-//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + POSITION_INDEX);
-//    }
-//    virtual Vector euler_vector(const size_t& body_index = 0) const
-//    {
-//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ORIENTATION_INDEX);
-//    }
 
-//    Block position(const size_t& body_index = 0)
-//    {
-//      return Block(this->derived(), body_index * BODY_SIZE + POSITION_INDEX);
-//    }
-//    Block euler_vector(const size_t& body_index = 0)
-//    {
-//      return Block(this->derived(), body_index * BODY_SIZE + ORIENTATION_INDEX);
-//    }
-
-
-
-
-//    virtual Vector linear_velocity(const size_t& body_index = 0) const
-//    {
-//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
-//    }
-//    virtual Vector angular_velocity(const size_t& body_index = 0) const
-//    {
-//        return this->template middleRows<BLOCK_SIZE>(body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
-//    }
-//    virtual Pose pose(const size_t& body_index = 0) const
-//    {
-//        return this->template middleRows<POSE_SIZE>(body_index * BODY_SIZE + POSE_INDEX);
-//    }
     virtual Poses poses() const
     {
-        Poses poses_(body_count()*POSE_SIZE);
-        for(size_t body_index = 0; body_index < body_count(); body_index++)
+        Poses poses_(count()*POSE_SIZE);
+        for(size_t body_index = 0; body_index < count(); body_index++)
         {
              poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE)
                                 = component(body_index).pose();
@@ -157,49 +121,11 @@ public:
     // write
     virtual void poses(const Poses& poses_)
     {
-        for(size_t body_index = 0; body_index < body_count(); body_index++)
+        for(size_t body_index = 0; body_index < count(); body_index++)
         {
              component(body_index).pose()
                 = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
         }
-    }
-
-//    Block linear_velocity(const size_t& body_index = 0)
-//    {
-//      return Block(this->derived(), body_index * BODY_SIZE + LINEAR_VELOCITY_INDEX);
-//    }
-//    Block angular_velocity(const size_t& body_index = 0)
-//    {
-//      return Block(this->derived(), body_index * BODY_SIZE + ANGULAR_VELOCITY_INDEX);
-//    }
-//    PoseBlock pose(const size_t& body_index = 0)
-//    {
-//      return PoseBlock(this->derived(), body_index * BODY_SIZE + POSE_INDEX);
-//    }
-//    BodyBlock operator [](const size_t& body_index)
-//    {
-//      std::cout << "operator shizzle is being used" << std::endl;
-
-//      exit(-1);
-//      return BodyBlock(this->derived(), body_index * BODY_SIZE);
-//    }
-
-    // other representations
-//    virtual void quaternion(const Quaternion& quaternion, const size_t& body_index = 0)
-//    {
-//        AngleAxis angle_axis(quaternion.normalized());
-//        euler_vector(body_index) = angle_axis.angle()*angle_axis.axis();
-//    }
-//    virtual void pose(const Affine& affine, const size_t& body_index = 0)
-//    {
-//       quaternion(Quaternion(affine.rotation()), body_index);
-//       position(body_index) = affine.translation();
-//    }
-
-
-    virtual unsigned body_count() const
-    {
-        return ((State*)(this))->rows()/BODY_SIZE;
     }
 
 
