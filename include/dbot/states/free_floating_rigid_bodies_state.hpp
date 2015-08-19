@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 #include <vector>
 
+#include <fl/util/types.hpp>
+
 #include <dbot/states/rigid_bodies_state.hpp>
 
 
@@ -45,12 +47,6 @@ struct FreeFloatingRigidBodiesStateTypes
     {
         BODY_SIZE = 12,
         POSE_SIZE = 6,
-        BLOCK_SIZE = 3,
-        POSITION_INDEX = 0,
-        POSE_INDEX = 0,
-        ORIENTATION_INDEX = 3,
-        LINEAR_VELOCITY_INDEX = 6,
-        ANGULAR_VELOCITY_INDEX = 9
     };
 
     typedef RigidBodiesState<BodyCount == -1 ? -1 : BodyCount * BODY_SIZE> Base;
@@ -58,7 +54,8 @@ struct FreeFloatingRigidBodiesStateTypes
 
 
 template<int BodyCount = -1>
-class FreeFloatingRigidBodiesState: public FreeFloatingRigidBodiesStateTypes<BodyCount>::Base
+class FreeFloatingRigidBodiesState:
+                public FreeFloatingRigidBodiesStateTypes<BodyCount>::Base
 {
 public:
     typedef FreeFloatingRigidBodiesStateTypes<BodyCount> Types;
@@ -67,42 +64,30 @@ public:
     {
         BODY_SIZE = Types::BODY_SIZE,
         POSE_SIZE = Types::POSE_SIZE,
-        BLOCK_SIZE = Types::BLOCK_SIZE,
-        POSITION_INDEX = Types::POSITION_INDEX,
-        POSE_INDEX = Types::POSE_INDEX,
-        ORIENTATION_INDEX = Types::ORIENTATION_INDEX,
-        LINEAR_VELOCITY_INDEX = Types::LINEAR_VELOCITY_INDEX,
-        ANGULAR_VELOCITY_INDEX = Types::ANGULAR_VELOCITY_INDEX
     };
 
-    typedef typename Base::Scalar   Scalar;
     typedef typename Base::State    State;
-    typedef typename Base::Vector   Vector;
-    typedef typename Eigen::Matrix<Scalar, POSE_SIZE, 1> Pose;
-
-    typedef Eigen::Matrix<Scalar, BodyCount == -1 ? -1 : BodyCount * POSE_SIZE, 1> Poses;
-
-    typedef typename Eigen::Transform<Scalar, 3, Eigen::Affine> Affine;
-
+    typedef Eigen::Matrix<fl::Real,
+                        BodyCount == -1 ? -1 : BodyCount * POSE_SIZE, 1> Poses;
     typedef typename Base::PoseVelocityBlock PoseVelocityBlock;
 
-    typedef Eigen::VectorBlock<State, BLOCK_SIZE>      Block;
-    typedef Eigen::VectorBlock<State, POSE_SIZE>       PoseBlock;
-    typedef Eigen::VectorBlock<State, BODY_SIZE>   BodyBlock;
 
-
+    // constructor and destructor **********************************************
     FreeFloatingRigidBodiesState() { }
-    FreeFloatingRigidBodiesState(unsigned count_bodies): Base(State::Zero(count_bodies * BODY_SIZE)) { }
+    FreeFloatingRigidBodiesState(unsigned count_bodies):
+                            Base(State::Zero(count_bodies * BODY_SIZE)) { }
 
-    // constructor with initial value
-    template <typename T> FreeFloatingRigidBodiesState(const Eigen::MatrixBase<T>& state_vector):
-        Base(state_vector) { }
-
+    template <typename T>
+    FreeFloatingRigidBodiesState(const Eigen::MatrixBase<T>& state_vector):
+                                                          Base(state_vector) { }
     virtual ~FreeFloatingRigidBodiesState() {}
 
-
-
-
+    // accessors ***************************************************************
+    virtual fl::PoseVelocityVector component(int index) const
+    {
+        return PoseVelocityBlock(*((State*)(this)),
+                                 index * PoseVelocityBlock::SizeAtCompileTime);
+    }
     virtual Poses poses() const
     {
         Poses poses_(count()*POSE_SIZE);
@@ -113,23 +98,6 @@ public:
         }
         return poses_;
     }
-
-    // write
-    virtual void poses(const Poses& poses_)
-    {
-        for(size_t body_index = 0; body_index < count(); body_index++)
-        {
-             component(body_index).pose()
-                = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
-        }
-    }
-
-
-    // accessors ***************************************************************
-    virtual fl::PoseVelocityVector component(int index) const
-    {
-        return PoseVelocityBlock(*((State*)(this)), index * PoseVelocityBlock::SizeAtCompileTime);
-    }
     int count() const
     {
         return this->size() / PoseVelocityBlock::SizeAtCompileTime;
@@ -138,7 +106,16 @@ public:
     // mutators ****************************************************************
     PoseVelocityBlock component(int index)
     {
-        return PoseVelocityBlock(*((State*)(this)), index * PoseVelocityBlock::SizeAtCompileTime);
+        return PoseVelocityBlock(*((State*)(this)),
+                                 index * PoseVelocityBlock::SizeAtCompileTime);
+    }
+    virtual void poses(const Poses& poses_)
+    {
+        for(size_t body_index = 0; body_index < count(); body_index++)
+        {
+             component(body_index).pose()
+                = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);
+        }
     }
     void recount(int new_count)
     {

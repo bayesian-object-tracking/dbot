@@ -47,7 +47,8 @@ public:
 
     // constructor and destructor
     RigidBodiesState() { }
-    template <typename T> RigidBodiesState(const Eigen::MatrixBase<T>& state_vector)
+    template <typename T>
+    RigidBodiesState(const Eigen::MatrixBase<T>& state_vector)
     {
         *this = state_vector;
     }
