@@ -66,15 +66,7 @@ public:
                 int n_cols,
                 std::vector<float> &depth_image) const;
 
-    // get functions
     std::vector<std::vector<Vector> > vertices() const;
-//    Vector system_center() const;
-
-    /// \todo: this function should not be in this class
-    Vector object_center(const size_t& index) const;
-
-    // set function
-//    virtual void state(const Eigen::VectorXd& state);
 
     virtual void set_poses(const std::vector<Matrix>& rotations,
                            const std::vector<Vector>& translations);
@@ -92,10 +84,6 @@ protected:
     // state
     std::vector<Matrix>             R_;
     std::vector<Vector>             t_;
-
-    // cached center of mass
-    std::vector<Vector> coms_;
-    std::vector<float>  com_weights_;
 };
 
 }

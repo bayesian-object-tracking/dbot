@@ -41,27 +41,9 @@ using namespace ff;
 RigidBodyRenderer::RigidBodyRenderer(
                 const std::vector<std::vector<Eigen::Vector3d> >&   vertices,
                 const std::vector<std::vector<std::vector<int> > >& indices)
-:vertices_(vertices), indices_(indices)
+                                        :vertices_(vertices), indices_(indices)
 {
-    /// \todo this does not belong here
-	float total_weight = 0;
-    coms_.resize(vertices.size());
-    com_weights_.resize(vertices.size());
-    for(size_t part_index = 0; part_index < indices_.size(); part_index++)
-	{
-        com_weights_[part_index] = vertices[part_index].size();
-        total_weight += com_weights_[part_index];
-
-        coms_[part_index] = Vector3d::Zero();
-		for(size_t vertex_index = 0; vertex_index < vertices[part_index].size(); vertex_index++)
-            coms_[part_index] += vertices[part_index][vertex_index];
-        coms_[part_index] /= float(vertices[part_index].size());
-	}
-    for(size_t i = 0; i < com_weights_.size(); i++)
-        com_weights_[i] /= total_weight;
-
-
-    // initialize poses
+    /// initialize poses *******************************************************
     R_.resize(vertices_.size());
     t_.resize(vertices_.size());
 
@@ -71,9 +53,7 @@ RigidBodyRenderer::RigidBodyRenderer(
         t_[i] = Vector::Zero();
     }
 
-
-
-
+    /// compute normals ********************************************************
     normals_.clear();
     for(size_t part_index = 0; part_index < indices_.size(); part_index++)
 	{
@@ -264,46 +244,29 @@ void RigidBodyRenderer::Render(Matrix camera_matrix,
 
 }
 
-
-// get functions
-std::vector<std::vector<RigidBodyRenderer::Vector> > RigidBodyRenderer::vertices() const
+std::vector<std::vector<RigidBodyRenderer::Vector> >
+                                        RigidBodyRenderer::vertices() const
 {
     vector<vector<Vector3d> > trans_vertices(vertices_.size());
 
-    for(int part_index = 0; part_index < int(vertices_.size()); part_index++)
+    for(int o = 0; o < int(vertices_.size()); o++)
 	{
-
-        trans_vertices[part_index].resize(vertices_[part_index].size());
-        for(int point_index = 0; point_index < int(vertices_[part_index].size()); point_index++)
-      trans_vertices[part_index][point_index] = R_[part_index] * vertices_[part_index][point_index] + t_[part_index];
+        trans_vertices[o].resize(vertices_[o].size());
+        for(int p = 0; p < int(vertices_[o].size()); p++)
+        {
+            trans_vertices[o][p] = R_[o] * vertices_[o][p] + t_[o];
+        }
 	}
 	return trans_vertices;
 }
-//RigidBodyRenderer::Vector RigidBodyRenderer::system_center() const
-//{
-//	Eigen::Vector3d com = Eigen::Vector3d::Zero();
-//    for(size_t i = 0; i < coms_.size(); i++)
-//        com += com_weights_[i] * (R_[i]*coms_[i] + t_[i]);
-
-//    com = R_[0].inverse() * (com - t_[0]);
-
-//	return com;
-//}
-RigidBodyRenderer::Vector RigidBodyRenderer::object_center(const size_t& index) const
-{
-    return R_[index]*coms_[index] + t_[index];
-}
 
 
-// set state
 void RigidBodyRenderer::set_poses(const std::vector<Matrix>& rotations,
                                   const std::vector<Vector>& translations)
 {
     R_ = rotations;
     t_ = translations;
 }
-
-/// \todo: th
 void RigidBodyRenderer::set_poses(const std::vector<Affine>& poses)
 {
      R_.resize(poses.size());
