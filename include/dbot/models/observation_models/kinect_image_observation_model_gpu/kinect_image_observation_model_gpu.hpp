@@ -226,7 +226,7 @@ public:
             for(size_t body_index = 0; body_index < states[state_index].count(); body_index++)
             {
                 const Eigen::Quaternion<Scalar>& quaternion
-                        = states[state_index].component(body_index).euler_vector().quaternion();
+                        = states[state_index].component(body_index).orientation().quaternion();
                 states_internal_format[state_index][body_index][0] = quaternion.w();
                 states_internal_format[state_index][body_index][1] = quaternion.x();
                 states_internal_format[state_index][body_index][2] = quaternion.y();

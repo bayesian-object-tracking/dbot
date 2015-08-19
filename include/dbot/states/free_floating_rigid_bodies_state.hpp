@@ -82,10 +82,6 @@ public:
 
     typedef Eigen::Matrix<Scalar, BodyCount == -1 ? -1 : BodyCount * POSE_SIZE, 1> Poses;
 
-    typedef typename Base::AngleAxis            AngleAxis;
-    typedef typename Base::Quaternion           Quaternion;
-    typedef typename Base::RotationMatrix       RotationMatrix;
-    typedef typename Base::HomogeneousMatrix    HomogeneousMatrix;
     typedef typename Eigen::Transform<Scalar, 3, Eigen::Affine> Affine;
 
     typedef typename Base::PoseVelocityBlock PoseVelocityBlock;

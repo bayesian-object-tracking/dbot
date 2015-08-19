@@ -43,12 +43,6 @@ public:
     typedef Eigen::Matrix<Scalar, Dimension, 1>       State;
     typedef Eigen::Matrix<Scalar, 3, 1>               Vector;
 
-    // rotation types
-    typedef Eigen::AngleAxis<Scalar>    AngleAxis;
-    typedef Eigen::Quaternion<Scalar>   Quaternion;
-    typedef Eigen::Matrix<Scalar, 3, 3> RotationMatrix;
-    typedef Eigen::Matrix<Scalar, 4, 4> HomogeneousMatrix;
-
     typedef fl::PoseVelocityBlock<State> PoseVelocityBlock;
 
     // constructor and destructor
@@ -65,37 +59,6 @@ public:
     {
         *((State*)(this)) = state_vector;
     }
-  
-//    // read
-//    virtual Vector position(const size_t& object_index = 0) const = 0;
-//    virtual Vector euler_vector(const size_t& object_index = 0) const = 0;
-
-    // other representations
-//    virtual Quaternion quaternion(const size_t& object_index = 0) const
-//    {
-//        Scalar angle = euler_vector(object_index).norm();
-//        Vector axis = euler_vector(object_index).normalized();
-
-//        if(std::isfinite(axis.norm()))
-//        {
-//            return Quaternion(AngleAxis(angle, axis));
-//        }
-//        return Quaternion::Identity();
-//    }
-//    virtual RotationMatrix rotation_matrix(const size_t& object_index = 0) const
-//    {
-//        return RotationMatrix(quaternion(object_index));
-//    }
-//    virtual HomogeneousMatrix homogeneous_matrix(const size_t& object_index = 0) const
-//    {
-//        HomogeneousMatrix homogeneous_matrix(HomogeneousMatrix::Identity());
-//        homogeneous_matrix.topLeftCorner(3, 3) = rotation_matrix(object_index);
-//        homogeneous_matrix.topRightCorner(3, 1) = position(object_index);
-
-//        return homogeneous_matrix;
-//    }
-
-//    virtual unsigned count() const = 0;
 
 
     virtual fl::PoseVelocityVector component(int index) const = 0;

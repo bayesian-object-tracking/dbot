@@ -147,14 +147,14 @@ public:
             Eigen::Matrix<Scalar, 6, 1> angular_delta     = angular_process_[i].MapStandardGaussian(orientation_noise);
 
             new_state.component(i).position() = state_.component(i).position() + linear_delta.topRows(3);
-            Quaternion updated_quaternion(state_.component(i).euler_vector().quaternion().coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
-            new_state.component(i).euler_vector().quaternion(updated_quaternion.normalized());
+            Quaternion updated_quaternion(state_.component(i).orientation().quaternion().coeffs() + quaternion_map_[i] * angular_delta.topRows(3));
+            new_state.component(i).orientation().quaternion(updated_quaternion.normalized());
             new_state.component(i).linear_velocity()  = linear_delta.bottomRows(3);
             new_state.component(i).angular_velocity() = angular_delta.bottomRows(3);
 
             // transform to external coordinate system
             new_state.component(i).linear_velocity() -= new_state.component(i).angular_velocity().cross(state_.component(i).position());
-            new_state.component(i).position()        -= new_state.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
+            new_state.component(i).position()        -= new_state.component(i).orientation().rotation_matrix()*rotation_center_[i];
         }
 
         return new_state;
@@ -185,12 +185,12 @@ public:
 //        state_ = state;
 //        for(size_t i = 0; i < state_.count(); i++)
 //        {
-//            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).euler_vector().quaternion().coeffs());
+//            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).orientation().quaternion().coeffs());
 
 //            // transform the state, which is the pose and velocity with respect to to the origin,
 //            // into internal representation, which is the position and velocity of the center
 //            // and the orientation and angular velocity around the center
-//            state_.component(i).position()        += state_.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
+//            state_.component(i).position()        += state_.component(i).orientation().rotation_matrix()*rotation_center_[i];
 //            state_.component(i).linear_velocity() += state_.component(i).angular_velocity().cross(state_.component(i).position());
 
 //            Eigen::Matrix<Scalar, 6, 1> linear_state;
@@ -218,13 +218,13 @@ public:
         state_ = state;
         for(size_t i = 0; i < state_.count(); i++)
         {
-            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).euler_vector().quaternion().coeffs());
+            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).orientation().quaternion().coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center
             // and the orientation and angular velocity around the center
             state_.component(i).position()
-                    += state_.component(i).euler_vector().rotation_matrix()*rotation_center_[i];
+                    += state_.component(i).orientation().rotation_matrix()*rotation_center_[i];
             state_.component(i).linear_velocity() += state_.component(i).angular_velocity().cross(state_.component(i).position());
 
             Eigen::Matrix<Scalar, 6, 1> linear_state;

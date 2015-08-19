@@ -142,7 +142,7 @@ public:
             for(size_t part_index = 0; part_index < body_count; part_index++)
             {
                 rotations[part_index] =
-                    states[state_index].component(part_index).euler_vector().rotation_matrix();
+                    states[state_index].component(part_index).orientation().rotation_matrix();
                 translations[part_index] =
                         states[state_index].component(part_index).position();
             }
