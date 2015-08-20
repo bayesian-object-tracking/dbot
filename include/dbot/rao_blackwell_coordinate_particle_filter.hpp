@@ -84,16 +84,19 @@ public:
     {
         observation_model_->SetObservation(observation);
 
-        loglikes_ = std::vector<Scalar>(samples_.size(), 0);
-        noises_ = std::vector<Noise>(samples_.size(),
+        loglikes_ = std::vector<Scalar>(belief_.size(), 0);
+        noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
-        next_samples_ = samples_;
+
+        next_samples_.resize(belief_.size());
+        for(int i = 0; i < belief_.size(); i++)
+            next_samples_[i] = belief_.location(i);
 
         for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
             INIT_PROFILING;
             // add noise of this block -----------------------------------------
-            for(size_t i_sampl = 0; i_sampl < samples_.size(); i_sampl++)
+            for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
                 for(size_t i = 0; i < sampling_blocks_[i_block].size(); i++)
                 {
@@ -104,9 +107,9 @@ public:
             MEASURE("sampling");
 
             // propagate using partial noise -----------------------------------
-            for(size_t i_sampl = 0; i_sampl < samples_.size(); i_sampl++)
+            for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                process_model_->Condition(samples_[i_sampl], input);
+                process_model_->Condition(belief_.location(i_sampl), input);
                 next_samples_[i_sampl] =
                         process_model_->MapStandardGaussian(noises_[i_sampl]);
             }
@@ -131,11 +134,10 @@ public:
 
         }
 
-        samples_ = next_samples_;
-
-        belief_.set_uniform(samples_.size());
+        /// \todo this is temporary
+        belief_.set_uniform(next_samples_.size());
         for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples_[i];
+            belief_.location(i) = next_samples_[i];
 
 //        belief_.SetDeltas(samples_); // not sure whether this is the right place
 
@@ -155,26 +157,25 @@ public:
         {
             size_t index = sampler.Sample();
 
-            samples[i]      = samples_[index];
+            samples[i]      = belief_.location(index);
             indices[i]      = indices_[index];
             noises[i]       = noises_[index];
             next_samples[i] = next_samples_[index];
             loglikes[i]     = loglikes_[index];
         }
-        samples_        = samples;
         indices_        = indices;
         noises_         = noises;
         next_samples_   = next_samples;
         loglikes_       = loglikes;
 
-        log_weights_        = std::vector<Scalar>(samples_.size(), 0.);
+        log_weights_        = std::vector<Scalar>(sample_count, 0.);
 
 
 
 
-        belief_.set_uniform(samples_.size());
+        belief_.set_uniform(samples.size());
         for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples_[i];
+            belief_.location(i) = samples[i];
 
 
 //        belief_.SetDeltas(samples_); // not sure whether this is the right place
@@ -208,16 +209,21 @@ private:
         }
 
         if(kl_divergence > max_kl_divergence_)
-            Resample(samples_.size());
+            Resample(belief_.size());
     }
 
 public:
     // set
     void Samples(const std::vector<State >& samples)
     {
-        samples_ = samples;
-        indices_ = std::vector<size_t>(samples_.size(), 0); observation_model_->Reset();
-        log_weights_ = std::vector<Scalar>(samples_.size(), 0);
+        belief_.set_uniform(samples.size());
+        for(int i = 0; i < belief_.size(); i++)
+            belief_.location(i) = samples[i];
+
+        log_weights_ = std::vector<Scalar>(samples.size(), 0);
+
+        indices_ = std::vector<size_t>(samples.size(), 0);
+        observation_model_->Reset();
     }
     void SamplingBlocks(const std::vector<std::vector<size_t> >& sampling_blocks)
     {
@@ -238,11 +244,11 @@ public:
         }
     }
 
-    // get
-    const std::vector<State>& Samples() const
-    {
-        return samples_;
-    }
+//    // get
+//    const std::vector<State>& Samples() const
+//    {
+//        return samples_;
+//    }
 
     Belief& StateDistribution()
     {
@@ -253,7 +259,6 @@ private:
     // internal state TODO: THIS COULD BE MADE MORE COMPACT!!
     Belief belief_;
 
-    std::vector<State > samples_;
     std::vector<size_t> indices_;
     std::vector<Scalar>  log_weights_;
     std::vector<Noise> noises_;
