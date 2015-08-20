@@ -37,19 +37,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Core>
 
 #include <fl/util/assertions.hpp>
+#include <fl/distribution/gaussian.hpp>
+#include <fl/distribution/discrete_distribution.hpp>
+
 #include <dbot/utils/profiling.hpp>
 #include <dbot/utils/traits.hpp>
 #include <dbot/utils/helper_functions.hpp>
-//#include <fast_filtering/distributions/gaussian.hpp>
-//#include <fast_filtering/distributions/sum_of_deltas.hpp>
-//#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
-//#include <dbot/models/process_models/stationary_process_model.hpp>
-
-#include <fl/distribution/gaussian.hpp>
 
 
-#include <fl/distribution/discrete_distribution.hpp>
 
 namespace ff
 {
@@ -64,9 +60,6 @@ public:
     typedef typename internal::Traits<ProcessModel>::Noise  Noise;
 
     typedef typename ObservationModel::Observation Observation;
-
-    // state distribution
-//    typedef SumOfDeltas<State> StateDistributionType;
 
     typedef fl::DiscreteDistribution<State> Belief;
 
@@ -92,34 +85,46 @@ public:
         observation_model_->SetObservation(observation);
 
         loglikes_ = std::vector<Scalar>(samples_.size(), 0);
-        noises_ = std::vector<Noise>(samples_.size(), Noise::Zero(process_model_->NoiseDimension()));
+        noises_ = std::vector<Noise>(samples_.size(),
+                                 Noise::Zero(process_model_->NoiseDimension()));
         next_samples_ = samples_;
 
-        for(size_t block_index = 0; block_index < sampling_blocks_.size(); block_index++)
+        for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
             INIT_PROFILING;
-            for(size_t particle_index = 0; particle_index < samples_.size(); particle_index++)
+            // add noise of this block -----------------------------------------
+            for(size_t i_sampl = 0; i_sampl < samples_.size(); i_sampl++)
             {
-                for(size_t i = 0; i < sampling_blocks_[block_index].size(); i++)
-                    noises_[particle_index](sampling_blocks_[block_index][i]) = unit_gaussian_.sample()(0);
+                for(size_t i = 0; i < sampling_blocks_[i_block].size(); i++)
+                {
+                    noises_[i_sampl](sampling_blocks_[i_block][i]) =
+                                                    unit_gaussian_.sample()(0);
+                }
             }
             MEASURE("sampling");
-            for(size_t particle_index = 0; particle_index < samples_.size(); particle_index++)
+
+            // propagate using partial noise -----------------------------------
+            for(size_t i_sampl = 0; i_sampl < samples_.size(); i_sampl++)
             {
-                process_model_->Condition(samples_[particle_index],
-                                          input);
-                next_samples_[particle_index] = process_model_->MapStandardGaussian(noises_[particle_index]);
+                process_model_->Condition(samples_[i_sampl], input);
+                next_samples_[i_sampl] =
+                        process_model_->MapStandardGaussian(noises_[i_sampl]);
             }
             MEASURE("propagation");
 
-            bool update_occlusions = (block_index == sampling_blocks_.size()-1);
-            std::vector<Scalar> new_loglikes = observation_model_->Loglikes(next_samples_,
-                                                                           indices_,
-                                                                           update_occlusions);
+            // compute likelihood ----------------------------------------------
+            bool update_occlusions = (i_block == sampling_blocks_.size()-1);
+            std::vector<Scalar> new_loglikes =
+                    observation_model_->Loglikes(next_samples_,
+                                                 indices_, update_occlusions);
             MEASURE("evaluation");
+
+            // update the weights and resample if necessary --------------------
             std::vector<Scalar> delta_loglikes(new_loglikes.size());
             for(size_t i = 0; i < delta_loglikes.size(); i++)
+            {
                 delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
+            }
             loglikes_ = new_loglikes;
             UpdateWeights(delta_loglikes);
             MEASURE("updating weights");
@@ -127,8 +132,6 @@ public:
         }
 
         samples_ = next_samples_;
-
-
 
         belief_.set_uniform(samples_.size());
         for(int i = 0; i < belief_.size(); i++)
@@ -177,7 +180,9 @@ public:
 //        belief_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
+
 private:
+
     void UpdateWeights(std::vector<Scalar> log_weight_diffs)
     {
         for(size_t i = 0; i < log_weight_diffs.size(); i++)
@@ -253,13 +258,12 @@ private:
     std::vector<Scalar>  log_weights_;
     std::vector<Noise> noises_;
     std::vector<State> next_samples_;
+
     std::vector<Scalar> loglikes_;
 
-    // observation model
+    // models
     boost::shared_ptr<ObservationModel> observation_model_;
-
-    // process model
-    boost::shared_ptr<ProcessModel> process_model_;
+    boost::shared_ptr<ProcessModel>     process_model_;
 
     // parameters
     std::vector<std::vector<size_t> > sampling_blocks_;
