@@ -134,51 +134,34 @@ public:
 
         }
 
-        /// \todo this is temporary
-        belief_.set_uniform(next_samples_.size());
         for(int i = 0; i < belief_.size(); i++)
             belief_.location(i) = next_samples_[i];
-
-//        belief_.SetDeltas(samples_); // not sure whether this is the right place
-
     }
 
     void Resample(const size_t& sample_count)
     {
-        std::vector<State> samples(sample_count);
         std::vector<size_t> indices(sample_count);
         std::vector<Noise> noises(sample_count);
         std::vector<State> next_samples(sample_count);
         std::vector<Scalar> loglikes(sample_count);
 
-        ff::hf::DiscreteSampler sampler(log_weights_);
+        Belief belief(sample_count);
 
         for(size_t i = 0; i < sample_count; i++)
         {
-            size_t index = sampler.Sample();
+            int index;
+            belief.location(i) = belief_.sample(index);
 
-            samples[i]      = belief_.location(index);
             indices[i]      = indices_[index];
             noises[i]       = noises_[index];
             next_samples[i] = next_samples_[index];
             loglikes[i]     = loglikes_[index];
         }
+        belief_         = belief;
         indices_        = indices;
         noises_         = noises;
         next_samples_   = next_samples;
         loglikes_       = loglikes;
-
-        log_weights_        = std::vector<Scalar>(sample_count, 0.);
-
-
-
-
-        belief_.set_uniform(samples.size());
-        for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples[i];
-
-
-//        belief_.SetDeltas(samples_); // not sure whether this is the right place
     }
 
 
@@ -186,30 +169,16 @@ private:
 
     void UpdateWeights(std::vector<Scalar> log_weight_diffs)
     {
-        for(size_t i = 0; i < log_weight_diffs.size(); i++)
-            log_weights_[i] += log_weight_diffs[i];
+        typename Belief::Function delta_weights(log_weight_diffs.size());
+        for(size_t i = 0; i < delta_weights.size(); i++)
+            delta_weights[i] = log_weight_diffs[i];
 
-        std::vector<Scalar> weights = log_weights_;
-        ff::hf::Sort(weights, 1);
+        belief_.delta_log_prob_mass(delta_weights);
 
-        for(int i = weights.size() - 1; i >= 0; i--)
-            weights[i] -= weights[0];
-
-        weights = ff::hf::Apply<Scalar, Scalar>(weights, std::exp);
-        weights = ff::hf::SetSum(weights, Scalar(1));
-
-        // compute KL divergence to uniform distribution KL(p|u)
-        Scalar kl_divergence = std::log(Scalar(weights.size()));
-        for(size_t i = 0; i < weights.size(); i++)
+        if(belief_.kl_given_uniform() > max_kl_divergence_)
         {
-            Scalar information = - std::log(weights[i]) * weights[i];
-            if(!std::isfinite(information))
-                information = 0; // the limit for weight -> 0 is equal to 0
-            kl_divergence -= information;
-        }
-
-        if(kl_divergence > max_kl_divergence_)
             Resample(belief_.size());
+        }
     }
 
 public:
@@ -219,8 +188,6 @@ public:
         belief_.set_uniform(samples.size());
         for(int i = 0; i < belief_.size(); i++)
             belief_.location(i) = samples[i];
-
-        log_weights_ = std::vector<Scalar>(samples.size(), 0);
 
         indices_ = std::vector<size_t>(samples.size(), 0);
         observation_model_->Reset();
@@ -244,23 +211,15 @@ public:
         }
     }
 
-//    // get
-//    const std::vector<State>& Samples() const
-//    {
-//        return samples_;
-//    }
-
     Belief& StateDistribution()
     {
         return belief_;
     }
 
 private:
-    // internal state TODO: THIS COULD BE MADE MORE COMPACT!!
     Belief belief_;
 
     std::vector<size_t> indices_;
-    std::vector<Scalar>  log_weights_;
     std::vector<Noise> noises_;
     std::vector<State> next_samples_;
 
