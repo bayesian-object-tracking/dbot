@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Eigen/Core>
 
-#include <fl/util/assertions.hpp>
+#include <fl/util/types.hpp>
 #include <fl/distribution/gaussian.hpp>
 #include <fl/distribution/discrete_distribution.hpp>
 
@@ -54,7 +54,6 @@ template<typename ProcessModel, typename ObservationModel>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
-    typedef typename internal::Traits<ProcessModel>::Scalar Scalar;
     typedef typename internal::Traits<ProcessModel>::State  State;
     typedef typename internal::Traits<ProcessModel>::Input  Input;
     typedef typename internal::Traits<ProcessModel>::Noise  Noise;
@@ -65,10 +64,10 @@ public:
 
 public:
     RaoBlackwellCoordinateParticleFilter(
-            const boost::shared_ptr<ProcessModel> process_model,
-            const boost::shared_ptr<ObservationModel>  observation_model,
-            const std::vector<std::vector<size_t> >& sampling_blocks,
-            const Scalar& max_kl_divergence = 0):
+            const boost::shared_ptr<ProcessModel>       process_model,
+            const boost::shared_ptr<ObservationModel>   observation_model,
+            const std::vector<std::vector<size_t> >&    sampling_blocks,
+            const fl::Real&                             max_kl_divergence = 0):
         observation_model_(observation_model),
         process_model_(process_model),
         max_kl_divergence_(max_kl_divergence)
@@ -84,7 +83,7 @@ public:
     {
         observation_model_->SetObservation(observation);
 
-        loglikes_ = std::vector<Scalar>(belief_.size(), 0);
+        loglikes_ = std::vector<fl::Real>(belief_.size(), 0);
         noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
 
@@ -117,13 +116,13 @@ public:
 
             // compute likelihood ----------------------------------------------
             bool update_occlusions = (i_block == sampling_blocks_.size()-1);
-            std::vector<Scalar> new_loglikes =
+            std::vector<fl::Real> new_loglikes =
                     observation_model_->Loglikes(next_samples_,
                                                  indices_, update_occlusions);
             MEASURE("evaluation");
 
             // update the weights and resample if necessary --------------------
-            std::vector<Scalar> delta_loglikes(new_loglikes.size());
+            std::vector<fl::Real> delta_loglikes(new_loglikes.size());
             for(size_t i = 0; i < delta_loglikes.size(); i++)
             {
                 delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
@@ -131,33 +130,40 @@ public:
             loglikes_ = new_loglikes;
             UpdateWeights(delta_loglikes);
             MEASURE("updating weights");
-
         }
 
         for(int i = 0; i < belief_.size(); i++)
+        {
             belief_.location(i) = next_samples_[i];
+        }
     }
+
+    Belief& belief()
+    {
+        return belief_;
+    }
+
 
     void Resample(const size_t& sample_count)
     {
         std::vector<size_t> indices(sample_count);
         std::vector<Noise> noises(sample_count);
         std::vector<State> next_samples(sample_count);
-        std::vector<Scalar> loglikes(sample_count);
+        std::vector<fl::Real> loglikes(sample_count);
 
-        Belief belief(sample_count);
+        Belief new_belief(sample_count);
 
         for(size_t i = 0; i < sample_count; i++)
         {
             int index;
-            belief.location(i) = belief_.sample(index);
+            new_belief.location(i) = belief_.sample(index);
 
             indices[i]      = indices_[index];
             noises[i]       = noises_[index];
             next_samples[i] = next_samples_[index];
             loglikes[i]     = loglikes_[index];
         }
-        belief_         = belief;
+        belief_         = new_belief;
         indices_        = indices;
         noises_         = noises;
         next_samples_   = next_samples;
@@ -167,7 +173,7 @@ public:
 
 private:
 
-    void UpdateWeights(std::vector<Scalar> log_weight_diffs)
+    void UpdateWeights(std::vector<fl::Real> log_weight_diffs)
     {
         typename Belief::Function delta_weights(log_weight_diffs.size());
         for(size_t i = 0; i < delta_weights.size(); i++)
@@ -181,17 +187,6 @@ private:
         }
     }
 
-public:
-    // set
-    void Samples(const std::vector<State >& samples)
-    {
-        belief_.set_uniform(samples.size());
-        for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples[i];
-
-        indices_ = std::vector<size_t>(samples.size(), 0);
-        observation_model_->Reset();
-    }
     void SamplingBlocks(const std::vector<std::vector<size_t> >& sampling_blocks)
     {
         sampling_blocks_ = sampling_blocks;
@@ -211,10 +206,20 @@ public:
         }
     }
 
-    Belief& StateDistribution()
+public:
+    // set
+    void Samples(const std::vector<State >& samples)
     {
-        return belief_;
+        belief_.set_uniform(samples.size());
+        for(int i = 0; i < belief_.size(); i++)
+            belief_.location(i) = samples[i];
+
+        indices_ = std::vector<size_t>(samples.size(), 0);
+        observation_model_->Reset();
     }
+
+
+
 
 private:
     Belief belief_;
@@ -223,7 +228,7 @@ private:
     std::vector<Noise> noises_;
     std::vector<State> next_samples_;
 
-    std::vector<Scalar> loglikes_;
+    std::vector<fl::Real> loglikes_;
 
     // models
     boost::shared_ptr<ObservationModel> observation_model_;
@@ -231,10 +236,10 @@ private:
 
     // parameters
     std::vector<std::vector<size_t> > sampling_blocks_;
-    Scalar max_kl_divergence_;
+    fl::Real max_kl_divergence_;
 
     // distribution for sampling
-    fl::Gaussian<Eigen::Matrix<Scalar,1,1> > unit_gaussian_;
+    fl::Gaussian<Eigen::Matrix<fl::Real,1,1> > unit_gaussian_;
 };
 
 }
