@@ -51,19 +51,23 @@ namespace ff
 {
 
 template<typename ProcessModel, typename ObservationModel>
-class RaoBlackwellCoordinateParticleFilter
+class RBCoordinateParticleFilter
 {
 public:
     typedef typename internal::Traits<ProcessModel>::State  State;
     typedef typename internal::Traits<ProcessModel>::Input  Input;
     typedef typename internal::Traits<ProcessModel>::Noise  Noise;
 
+
     typedef typename ObservationModel::Observation Observation;
 
     typedef fl::DiscreteDistribution<State> Belief;
 
+    typedef typename Belief::Function List;
+
 public:
-    RaoBlackwellCoordinateParticleFilter(
+    /// constructor and destructor *********************************************
+    RBCoordinateParticleFilter(
             const boost::shared_ptr<ProcessModel>       process_model,
             const boost::shared_ptr<ObservationModel>   observation_model,
             const std::vector<std::vector<size_t> >&    sampling_blocks,
@@ -88,15 +92,15 @@ public:
             exit(-1);
         }
     }
-    virtual ~RaoBlackwellCoordinateParticleFilter() {}
+    virtual ~RBCoordinateParticleFilter() {}
 
-public:
+    /// the filter functions ***************************************************
     void filter(const Observation&  observation,
                 const Input&        input)
     {
         observation_model_->SetObservation(observation);
 
-        loglikes_ = std::vector<fl::Real>(belief_.size(), 0);
+        loglikes_ = List::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
 
@@ -129,29 +133,25 @@ public:
 
             // compute likelihood ----------------------------------------------
             bool update_occlusions = (i_block == sampling_blocks_.size()-1);
-            std::vector<fl::Real> new_loglikes =
+            std::vector<fl::Real> new_loglikes_std =
                     observation_model_->Loglikes(next_samples_,
                                                  indices_, update_occlusions);
+
+            List new_loglikes(new_loglikes_std.size());
+            for(size_t i = 0; i < new_loglikes.size(); i++)
+            {
+                new_loglikes[i] = new_loglikes_std[i];
+            }
             MEASURE("evaluation");
 
             // update the weights and resample if necessary --------------------
-            std::vector<fl::Real> delta_loglikes(new_loglikes.size());
-            for(size_t i = 0; i < delta_loglikes.size(); i++)
-            {
-                delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
-            }
-            loglikes_ = new_loglikes;
-
-            typename Belief::Function delta_weights(delta_loglikes.size());
-            for(size_t i = 0; i < delta_weights.size(); i++)
-                delta_weights[i] = delta_loglikes[i];
-
-            belief_.delta_log_prob_mass(delta_weights);
+            belief_.delta_log_prob_mass(new_loglikes - loglikes_);
 
             if(belief_.kl_given_uniform() > max_kl_divergence_)
             {
                 resample(belief_.size());
             }
+            loglikes_ = new_loglikes;
             MEASURE("updating weights");
         }
 
@@ -161,27 +161,12 @@ public:
         }
     }
 
-    Belief& belief()
-    {
-        return belief_;
-    }
-
-    void set_particles(const std::vector<State >& samples)
-    {
-        belief_.set_uniform(samples.size());
-        for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples[i];
-
-        indices_ = std::vector<size_t>(samples.size(), 0);
-        observation_model_->Reset();
-    }
-
     void resample(const size_t& sample_count)
     {
         std::vector<size_t> indices(sample_count);
         std::vector<Noise> noises(sample_count);
         std::vector<State> next_samples(sample_count);
-        std::vector<fl::Real> loglikes(sample_count);
+        List loglikes(sample_count);
 
         Belief new_belief(sample_count);
 
@@ -203,14 +188,30 @@ public:
     }
 
 
+    /// mutators ***************************************************************
+    Belief& belief()
+    {
+        return belief_;
+    }
+
+    void set_particles(const std::vector<State >& samples)
+    {
+        belief_.set_uniform(samples.size());
+        for(int i = 0; i < belief_.size(); i++)
+            belief_.location(i) = samples[i];
+
+        indices_ = std::vector<size_t>(samples.size(), 0);
+        observation_model_->Reset();
+    }
+
+
 private:
     Belief belief_;
-
     std::vector<size_t> indices_;
+
     std::vector<Noise> noises_;
     std::vector<State> next_samples_;
-
-    std::vector<fl::Real> loglikes_;
+    List loglikes_;
 
     // models
     boost::shared_ptr<ObservationModel> observation_model_;
