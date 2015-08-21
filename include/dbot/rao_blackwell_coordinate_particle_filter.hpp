@@ -72,13 +72,26 @@ public:
         process_model_(process_model),
         max_kl_divergence_(max_kl_divergence)
     {
-        SamplingBlocks(sampling_blocks);
-    }
+        sampling_blocks_ = sampling_blocks;
 
+        // make sure sizes are consistent
+        size_t dimension = 0;
+        for(size_t i = 0; i < sampling_blocks_.size(); i++)
+            for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
+                dimension++;
+
+        if(dimension != process_model_->NoiseDimension())
+        {
+            std::cout << "the dimension of the sampling blocks is " << dimension
+                      << " while the dimension of the noise is "
+                      << process_model_->NoiseDimension() << std::endl;
+            exit(-1);
+        }
+    }
     virtual ~RaoBlackwellCoordinateParticleFilter() {}
 
 public:
-    void Filter(const Observation&  observation,
+    void filter(const Observation&  observation,
                 const Input&        input)
     {
         observation_model_->SetObservation(observation);
@@ -128,7 +141,17 @@ public:
                 delta_loglikes[i] = new_loglikes[i] - loglikes_[i];
             }
             loglikes_ = new_loglikes;
-            UpdateWeights(delta_loglikes);
+
+            typename Belief::Function delta_weights(delta_loglikes.size());
+            for(size_t i = 0; i < delta_weights.size(); i++)
+                delta_weights[i] = delta_loglikes[i];
+
+            belief_.delta_log_prob_mass(delta_weights);
+
+            if(belief_.kl_given_uniform() > max_kl_divergence_)
+            {
+                resample(belief_.size());
+            }
             MEASURE("updating weights");
         }
 
@@ -143,8 +166,17 @@ public:
         return belief_;
     }
 
+    void set_particles(const std::vector<State >& samples)
+    {
+        belief_.set_uniform(samples.size());
+        for(int i = 0; i < belief_.size(); i++)
+            belief_.location(i) = samples[i];
 
-    void Resample(const size_t& sample_count)
+        indices_ = std::vector<size_t>(samples.size(), 0);
+        observation_model_->Reset();
+    }
+
+    void resample(const size_t& sample_count)
     {
         std::vector<size_t> indices(sample_count);
         std::vector<Noise> noises(sample_count);
@@ -169,56 +201,6 @@ public:
         next_samples_   = next_samples;
         loglikes_       = loglikes;
     }
-
-
-private:
-
-    void UpdateWeights(std::vector<fl::Real> log_weight_diffs)
-    {
-        typename Belief::Function delta_weights(log_weight_diffs.size());
-        for(size_t i = 0; i < delta_weights.size(); i++)
-            delta_weights[i] = log_weight_diffs[i];
-
-        belief_.delta_log_prob_mass(delta_weights);
-
-        if(belief_.kl_given_uniform() > max_kl_divergence_)
-        {
-            Resample(belief_.size());
-        }
-    }
-
-    void SamplingBlocks(const std::vector<std::vector<size_t> >& sampling_blocks)
-    {
-        sampling_blocks_ = sampling_blocks;
-
-        // make sure sizes are consistent
-        size_t dimension = 0;
-        for(size_t i = 0; i < sampling_blocks_.size(); i++)
-            for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
-                dimension++;
-
-        if(dimension != process_model_->NoiseDimension())
-        {
-            std::cout << "the dimension of the sampling blocks is " << dimension
-                      << " while the dimension of the noise is "
-                      << process_model_->NoiseDimension() << std::endl;
-            exit(-1);
-        }
-    }
-
-public:
-    // set
-    void Samples(const std::vector<State >& samples)
-    {
-        belief_.set_uniform(samples.size());
-        for(int i = 0; i < belief_.size(); i++)
-            belief_.location(i) = samples[i];
-
-        indices_ = std::vector<size_t>(samples.size(), 0);
-        observation_model_->Reset();
-    }
-
-
 
 
 private:
