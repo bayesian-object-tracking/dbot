@@ -105,14 +105,10 @@ public:
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
-
         next_samples_.resize(belief_.size());
-        for(int i = 0; i < belief_.size(); i++)
-            next_samples_[i] = belief_.location(i);
 
         for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
-            INIT_PROFILING;
             // add noise of this block -----------------------------------------
             for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
@@ -122,7 +118,6 @@ public:
                                                     unit_gaussian_.sample()(0);
                 }
             }
-            MEASURE("sampling");
 
             // propagate using partial noise -----------------------------------
             for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
@@ -131,20 +126,11 @@ public:
                 next_samples_[i_sampl] =
                         process_model_->MapStandardGaussian(noises_[i_sampl]);
             }
-            MEASURE("propagation");
 
             // compute likelihood ----------------------------------------------
-            bool update_occlusions = (i_block == sampling_blocks_.size()-1);
-            RealArray new_loglikes_std =
-                    observation_model_->loglikes(next_samples_,
-                                                 indices_, update_occlusions);
-
-            RealArray new_loglikes(new_loglikes_std.size());
-            for(size_t i = 0; i < new_loglikes.size(); i++)
-            {
-                new_loglikes[i] = new_loglikes_std[i];
-            }
-            MEASURE("evaluation");
+            bool update = (i_block == sampling_blocks_.size()-1);
+            RealArray new_loglikes =
+                  observation_model_->loglikes(next_samples_, indices_, update);
 
             // update the weights and resample if necessary --------------------
             belief_.delta_log_prob_mass(new_loglikes - loglikes_);
@@ -154,7 +140,6 @@ public:
             {
                 resample(belief_.size());
             }
-            MEASURE("updating weights");
         }
 
         for(int i = 0; i < belief_.size(); i++)
