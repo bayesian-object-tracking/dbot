@@ -148,12 +148,12 @@ public:
 
             // update the weights and resample if necessary --------------------
             belief_.delta_log_prob_mass(new_loglikes - loglikes_);
+            loglikes_ = new_loglikes;
 
             if(belief_.kl_given_uniform() > max_kl_divergence_)
             {
                 resample(belief_.size());
             }
-            loglikes_ = new_loglikes;
             MEASURE("updating weights");
         }
 
