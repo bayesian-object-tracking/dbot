@@ -100,7 +100,7 @@ public:
     void filter(const Observation&  observation,
                 const Input&        input)
     {
-        observation_model_->SetObservation(observation);
+        observation_model_->set_observation(observation);
 
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
@@ -136,7 +136,7 @@ public:
             // compute likelihood ----------------------------------------------
             bool update_occlusions = (i_block == sampling_blocks_.size()-1);
             RealArray new_loglikes_std =
-                    observation_model_->Loglikes(next_samples_,
+                    observation_model_->loglikes(next_samples_,
                                                  indices_, update_occlusions);
 
             RealArray new_loglikes(new_loglikes_std.size());
@@ -203,7 +203,7 @@ public:
             belief_.location(i) = samples[i];
 
         indices_ = IntArray::Zero(samples.size());
-        observation_model_->Reset();
+        observation_model_->reset();
     }
 
 

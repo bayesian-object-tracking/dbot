@@ -60,7 +60,7 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 {
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModel<State, Observation> ObservationModelBase;
+    typedef RBObservationModel<State, Observation> ObservationModelBase;
 
     typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
     typedef boost::shared_ptr<ff::KinectPixelObservationModel> PixelObservationModelPtr;
@@ -117,19 +117,19 @@ public:
     {
         static_assert_base(State, RigidBodiesState<OBJECTS>);
 
-        Reset();
+        reset();
     }
 
     ~KinectImageObservationModelCPU() { }
 
-    RealArray Loglikes(const StateArray& states,
+    RealArray loglikes(const StateArray& states,
                                  IntArray& indices,
                                  const bool& update = false)
     {
         std::vector<std::vector<float> > new_occlusions(states.size());
         std::vector<std::vector<double> > new_occlusion_times(states.size());
 
-        RealArray loglikes = RealArray::Zero(states.size());
+        RealArray log_likes = RealArray::Zero(states.size());
 //        std::vector<Scalar> loglikes(states.size(),0);
         for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
         {
@@ -177,7 +177,7 @@ public:
             {
                 if(isnan(observations_[intersect_indices[i]]))
                 {
-                    loglikes[state_index] += log(1.);
+                    log_likes[state_index] += log(1.);
                 }
                 else
                 {
@@ -202,7 +202,7 @@ public:
                     observation_model_->Condition(std::numeric_limits<float>::infinity(), true);
                     float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
 
-                    loglikes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
+                    log_likes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
                     // we update the occlusion with the observations
                     if(update)
@@ -221,10 +221,10 @@ public:
             for(size_t state_index = 0; state_index < indices.size(); state_index++)
                 indices[state_index] = state_index;
         }
-        return loglikes;
+        return log_likes;
     }
 
-    void SetObservation(const Observation& image)
+    void set_observation(const Observation& image)
     {
         std::vector<float> std_measurement(image.size());
 
@@ -232,10 +232,10 @@ public:
             for(size_t col = 0; col < image.cols(); col++)
                 std_measurement[row*image.cols() + col] = image(row, col);
 
-        SetObservation(std_measurement, this->delta_time_);
+        set_observation(std_measurement, this->delta_time_);
     }
 
-    virtual void Reset()
+    virtual void reset()
     {
         occlusions_.resize(1);
         occlusions_[0] =  std::vector<float>(n_rows_*n_cols_, initial_occlusion_);
@@ -251,7 +251,7 @@ public:
     }
 
 private:
-    void SetObservation(const std::vector<float>& observations, const Scalar& delta_time)
+    void set_observation(const std::vector<float>& observations, const Scalar& delta_time)
     {
         observations_ = observations;
         observation_time_ += delta_time;

@@ -42,7 +42,7 @@ namespace ff
 {
 
 template<typename State_, typename Observation_>
-class RaoBlackwellObservationModel
+class RBObservationModel
 {
 public:
     typedef State_       State;
@@ -54,18 +54,17 @@ public:
 
 public:
     /// constructor and destructor *********************************************
-    RaoBlackwellObservationModel(const fl::Real& delta_time):
-                                                delta_time_(delta_time) { }
-    virtual ~RaoBlackwellObservationModel() { }
+    RBObservationModel(const fl::Real& delta_time): delta_time_(delta_time) { }
+    virtual ~RBObservationModel() { }
 
     /// likelihood computation *************************************************
-    virtual RealArray Loglikes(const StateArray& states,
+    virtual RealArray loglikes(const StateArray& states,
                                IntArray& indices,
                                const bool& update = false) = 0;
 
     /// accessors **************************************************************
-    virtual void SetObservation(const Observation& image) = 0;
-    virtual void Reset() = 0;
+    virtual void set_observation(const Observation& image) = 0;
+    virtual void reset() = 0;
 
 protected:
     fl::Real delta_time_;

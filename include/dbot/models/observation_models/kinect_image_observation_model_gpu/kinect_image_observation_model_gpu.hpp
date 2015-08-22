@@ -38,7 +38,7 @@ struct Traits<KinectImageObservationModelGPU<State> >
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModel<State, Observation> Base;
+    typedef RBObservationModel<State, Observation> Base;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
@@ -127,7 +127,7 @@ public:
             std:: cout << "set occlusions..." << std::endl;
 
     //        set_occlusions();
-            Reset();
+            reset();
 
             float c = p_visible_visible_ - p_visible_occluded_;
             float log_c = log(c);
@@ -186,7 +186,7 @@ public:
         constants_set_ = true;
     }
 
-    RealArray Loglikes(const StateArray& states,
+    RealArray loglikes(const StateArray& states,
                                   IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
@@ -281,17 +281,17 @@ public:
     }
 
 
-    void SetObservation(const Observation& image){
+    void set_observation(const Observation& image){
         std::vector<float> std_measurement(image.size());
 
         for(size_t row = 0; row < image.rows(); row++)
             for(size_t col = 0; col < image.cols(); col++)
                 std_measurement[row*image.cols() + col] = image(row, col);
 
-        SetObservation(std_measurement, this->delta_time_);
+        set_observation(std_measurement, this->delta_time_);
     }
 
-    virtual void Reset()
+    virtual void reset()
     {
         Occlusions();
         observation_time_ = 0;
@@ -313,7 +313,7 @@ public:
 
 private:
     // TODO: this function should disappear, BOTH OF THEM
-    void SetObservation(const std::vector<float>& observations, const Scalar& delta_time)
+    void set_observation(const std::vector<float>& observations, const Scalar& delta_time)
     {
         observation_time_ += delta_time;
         if (initialized_)
