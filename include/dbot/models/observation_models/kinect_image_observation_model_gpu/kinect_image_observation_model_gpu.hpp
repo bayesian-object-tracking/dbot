@@ -5,7 +5,7 @@
 #include "boost/shared_ptr.hpp"
 #include "Eigen/Core"
 
-
+#include <fl/util/math/pose_vector.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
 #include <dbot/states/free_floating_rigid_bodies_state.hpp>
 
@@ -89,10 +89,18 @@ public:
             observation_time_(0),
             Traits::Base(delta_time)
     {
+        default_exists_ = false;
+
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
 
     ~KinectImageObservationModelGPU() { }
+
+    void default_state(const State& state)
+    {
+        default_state_ = state;
+        default_exists_ = true;
+    }
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
     void Initialize()
@@ -431,6 +439,8 @@ private:
     enum time_measurement {SEND_OBSERVATIONS, RENDER, MAP_RESOURCE, GET_MAPPED_ARRAY, SET_TEXTURE_ARRAY,
                            MAP_TEXTURE, COMPUTE_LIKELIHOODS, UNMAP_RESOURCE};
 
+    State default_state_;
+    bool default_exists_;
 };
 
 }

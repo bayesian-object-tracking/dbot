@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
+#include <fl/util/math/pose_vector.hpp>
 #include <fl/util/assertions.hpp>
 #include <dbot/utils/traits.hpp>
 #include <dbot/states/free_floating_rigid_bodies_state.hpp>
@@ -117,10 +118,17 @@ public:
     {
         static_assert_base(State, RigidBodiesState<OBJECTS>);
 
+        default_exists_ = false;
         reset();
     }
 
     ~KinectImageObservationModelCPU() { }
+
+    void default_state(const State& state)
+    {
+        default_state_ = state;
+        default_exists_ = true;
+    }
 
     RealArray loglikes(const StateArray& states,
                                  IntArray& indices,
@@ -266,6 +274,7 @@ private:
     const size_t max_sample_count_;
     const boost::shared_ptr<RigidBodiesState<-1> > rigid_bodies_state_;
 
+
     // models
     ObjectRendererPtr object_model_;
     PixelObservationModelPtr observation_model_;
@@ -278,6 +287,9 @@ private:
     // observed data
 	std::vector<float> observations_;
 	double observation_time_;
+
+    State default_state_;
+    bool default_exists_;
 };
 
 }

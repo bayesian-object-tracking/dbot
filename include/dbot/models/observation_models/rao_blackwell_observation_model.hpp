@@ -58,12 +58,13 @@ public:
     virtual ~RBObservationModel() { }
 
     /// likelihood computation *************************************************
-    virtual RealArray loglikes(const StateArray& states,
+    virtual RealArray loglikes(const StateArray& deviations,
                                IntArray& indices,
                                const bool& update = false) = 0;
 
     /// accessors **************************************************************
     virtual void set_observation(const Observation& image) = 0;
+    virtual void default_state(const State& state) = 0;
     virtual void reset() = 0;
 
 protected:
