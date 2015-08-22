@@ -58,12 +58,14 @@ public:
     typedef typename internal::Traits<ProcessModel>::Input  Input;
     typedef typename internal::Traits<ProcessModel>::Noise  Noise;
 
+    typedef Eigen::Array<State, -1, 1>       StateArray;
+    typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
+    typedef Eigen::Array<int, -1, 1>         IntArray;
+
 
     typedef typename ObservationModel::Observation Observation;
 
     typedef fl::DiscreteDistribution<State> Belief;
-
-    typedef typename Belief::Function List;
 
 public:
     /// constructor and destructor *********************************************
@@ -100,7 +102,7 @@ public:
     {
         observation_model_->SetObservation(observation);
 
-        loglikes_ = List::Zero(belief_.size());
+        loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
 
@@ -133,11 +135,11 @@ public:
 
             // compute likelihood ----------------------------------------------
             bool update_occlusions = (i_block == sampling_blocks_.size()-1);
-            std::vector<fl::Real> new_loglikes_std =
+            RealArray new_loglikes_std =
                     observation_model_->Loglikes(next_samples_,
                                                  indices_, update_occlusions);
 
-            List new_loglikes(new_loglikes_std.size());
+            RealArray new_loglikes(new_loglikes_std.size());
             for(size_t i = 0; i < new_loglikes.size(); i++)
             {
                 new_loglikes[i] = new_loglikes_std[i];
@@ -163,10 +165,10 @@ public:
 
     void resample(const size_t& sample_count)
     {
-        std::vector<size_t> indices(sample_count);
+        IntArray indices(sample_count);
         std::vector<Noise> noises(sample_count);
-        std::vector<State> next_samples(sample_count);
-        List loglikes(sample_count);
+        StateArray next_samples(sample_count);
+        RealArray loglikes(sample_count);
 
         Belief new_belief(sample_count);
 
@@ -200,18 +202,18 @@ public:
         for(int i = 0; i < belief_.size(); i++)
             belief_.location(i) = samples[i];
 
-        indices_ = std::vector<size_t>(samples.size(), 0);
+        indices_ = IntArray::Zero(samples.size());
         observation_model_->Reset();
     }
 
 
 private:
     Belief belief_;
-    std::vector<size_t> indices_;
+    IntArray indices_;
 
     std::vector<Noise> noises_;
-    std::vector<State> next_samples_;
-    List loglikes_;
+    StateArray next_samples_;
+    RealArray loglikes_;
 
     // models
     boost::shared_ptr<ObservationModel> observation_model_;

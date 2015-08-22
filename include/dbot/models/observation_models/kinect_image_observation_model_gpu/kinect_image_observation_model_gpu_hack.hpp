@@ -41,7 +41,7 @@ struct Traits<KinectImageObservationModelGPUHack<State> >
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RaoBlackwellObservationModel<State, Observation> ObservationModelBase;
+    typedef RaoBlackwellObservationModel<State, Observation> Base;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 
@@ -57,7 +57,7 @@ struct Traits<KinectImageObservationModelGPUHack<State> >
  */
 template <typename State>
 class KinectImageObservationModelGPUHack:
-        public internal::Traits<KinectImageObservationModelGPUHack<State> >::ObservationModelBase
+        public internal::Traits<KinectImageObservationModelGPUHack<State> >::Base
 {
 public:
     typedef internal::Traits<KinectImageObservationModelGPUHack<State> > Traits;
@@ -65,6 +65,10 @@ public:
     typedef typename Traits::Scalar         Scalar;
     typedef typename Traits::Observation    Observation;
     typedef typename Traits::CameraMatrix   CameraMatrix;
+
+    typedef typename Traits::Base::StateArray StateArray;
+    typedef typename Traits::Base::RealArray RealArray;
+    typedef typename Traits::Base::IntArray IntArray;
 
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION
@@ -86,7 +90,7 @@ public:
             resource_registered_(false),
             nr_calls_set_observation_(0),
             observation_time_(0),
-            Traits::ObservationModelBase(delta_time)
+            Traits::Base(delta_time)
     {
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
@@ -208,8 +212,8 @@ public:
         constants_set_ = true;
     }
 
-    std::vector<Scalar> Loglikes(const std::vector<State>& states,
-                                  std::vector<size_t>& occlusion_indices,
+    RealArray Loglikes(const StateArray& states,
+                                  IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
         if (!initialized_)
@@ -302,7 +306,7 @@ public:
 
 
         // convert
-        std::vector<Scalar> log_likelihoods(flog_likelihoods.size());
+        RealArray log_likelihoods(flog_likelihoods.size());
         for(size_t i = 0; i < flog_likelihoods.size(); i++)
             log_likelihoods[i] = flog_likelihoods[i];
 

@@ -87,6 +87,12 @@ public:
     typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
     typedef typename Traits::OcclusionProcessModelPtr OcclusionProcessModelPtr;
 
+    typedef typename Base::StateArray StateArray;
+    typedef typename Base::RealArray RealArray;
+    typedef typename Base::IntArray IntArray;
+
+
+
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
     KinectImageObservationModelCPU(
 			const Eigen::Matrix3d& camera_matrix,
@@ -116,13 +122,15 @@ public:
 
     ~KinectImageObservationModelCPU() { }
 
-    std::vector<Scalar> Loglikes(const std::vector<State>& states,
-                                 std::vector<size_t>& indices,
+    RealArray Loglikes(const StateArray& states,
+                                 IntArray& indices,
                                  const bool& update = false)
     {
         std::vector<std::vector<float> > new_occlusions(states.size());
         std::vector<std::vector<double> > new_occlusion_times(states.size());
-        std::vector<Scalar> loglikes(states.size(),0);
+
+        RealArray loglikes = RealArray::Zero(states.size());
+//        std::vector<Scalar> loglikes(states.size(),0);
         for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
         {
             if(update)

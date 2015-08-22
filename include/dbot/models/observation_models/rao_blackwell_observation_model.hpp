@@ -29,18 +29,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FAST_FILTERING_MODELS_OBSERVATION_MODELS_INTERFACES_RAO_BLACKWELL_OBSERVATION_MODEL_HPP
 #define FAST_FILTERING_MODELS_OBSERVATION_MODELS_INTERFACES_RAO_BLACKWELL_OBSERVATION_MODEL_HPP
 
-#include <vector>
-#include <dbot/utils/traits.hpp>
+//#include <vector>
+#include <Eigen/Core>
+
+#include <fl/util/types.hpp>
+//#include <dbot/utils/traits.hpp>
+
+
 
 
 namespace ff
 {
 
-/**
- * Rao-Blackwellized particle filter observation model interface
- *
- * \ingroup observation_models
- */
 template<typename State_, typename Observation_>
 class RaoBlackwellObservationModel
 {
@@ -48,25 +48,27 @@ public:
     typedef State_       State;
     typedef Observation_ Observation;
 
-public:
-    RaoBlackwellObservationModel(const double& delta_time):
-    delta_time_(delta_time)
-    {}
+    typedef Eigen::Array<State, -1, 1>       StateArray;
+    typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
+    typedef Eigen::Array<int, -1, 1>         IntArray;
 
+public:
+    /// constructor and destructor *********************************************
+    RaoBlackwellObservationModel(const fl::Real& delta_time):
+                                                delta_time_(delta_time) { }
     virtual ~RaoBlackwellObservationModel() { }
 
-    virtual std::vector<double> Loglikes(const std::vector<State>& states,
-                                         std::vector<size_t>& indices,
-                                         const bool& update = false) = 0;
+    /// likelihood computation *************************************************
+    virtual RealArray Loglikes(const StateArray& states,
+                               IntArray& indices,
+                               const bool& update = false) = 0;
 
+    /// accessors **************************************************************
     virtual void SetObservation(const Observation& image) = 0;
-
-    // reset the latent variables
     virtual void Reset() = 0;
 
-
 protected:
-    double delta_time_;
+    fl::Real delta_time_;
 };
 
 }
