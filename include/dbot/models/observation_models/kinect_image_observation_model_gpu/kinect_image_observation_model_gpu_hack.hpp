@@ -70,6 +70,9 @@ public:
     typedef typename Traits::Base::RealArray RealArray;
     typedef typename Traits::Base::IntArray IntArray;
 
+    typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
+
+
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION
     KinectImageObservationModelGPUHack(const CameraMatrix& camera_matrix,
@@ -92,8 +95,6 @@ public:
             observation_time_(0),
             Traits::Base(delta_time)
     {
-        default_exists_ = false;
-
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
 
@@ -101,8 +102,10 @@ public:
 
     void default_state(const State& state)
     {
-        default_state_ = state;
-        default_exists_ = true;
+        for(size_t i = 0; i < state.count(); i++)
+        {
+            default_poses_[i] = state.component(i).affine();
+        }
     }
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
@@ -192,6 +195,8 @@ public:
                    const std::string vertex_shader,
                    const std::string fragment_shader)
     {
+        default_poses_ = std::vector<Affine>(vertices_double.size(),
+                                             Affine::Identity());
 
         vertex_shader_ = vertex_shader;
         fragment_shader_ = fragment_shader;
@@ -474,8 +479,7 @@ private:
     enum time_measurement {SEND_OBSERVATIONS, RENDER, MAP_RESOURCE, GET_MAPPED_ARRAY, SET_TEXTURE_ARRAY,
                            MAP_TEXTURE, COMPUTE_LIKELIHOODS, UNMAP_RESOURCE};
 
-    State default_state_;
-    bool default_exists_;
+    std::vector<Affine> default_poses_;
 };
 
 }

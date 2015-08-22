@@ -119,7 +119,8 @@ public:
     {
         static_assert_base(State, RigidBodiesState<OBJECTS>);
 
-        default_exists_ = false;
+        default_poses_ = std::vector<Affine>(object_model_->vertices().size(),
+                                             Affine::Identity());
         reset();
     }
 
@@ -127,8 +128,10 @@ public:
 
     void default_state(const State& state)
     {
-        default_state_ = state;
-        default_exists_ = true;
+        for(size_t i = 0; i < state.count(); i++)
+        {
+            default_poses_[i] = state.component(i).affine();
+        }
     }
 
     RealArray loglikes(const StateArray& deviations,
@@ -269,8 +272,7 @@ private:
 	std::vector<float> observations_;
 	double observation_time_;
 
-    State default_state_;
-    bool default_exists_;
+    std::vector<Affine> default_poses_;
 };
 
 }
