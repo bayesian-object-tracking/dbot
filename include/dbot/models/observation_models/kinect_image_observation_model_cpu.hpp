@@ -156,7 +156,8 @@ public:
             for(size_t i_object = 0; i_object < body_count; i_object++)
             {
                  poses[i_object] =
-                            deviations[i_state].component(i_object).affine();
+                         deviations[i_state].component(i_object).affine()
+                         * default_poses_[i_object];
             }
             object_model_->set_poses(poses);
             std::vector<int> intersect_indices;

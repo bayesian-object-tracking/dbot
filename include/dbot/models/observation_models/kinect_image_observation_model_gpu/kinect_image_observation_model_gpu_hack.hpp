@@ -225,7 +225,7 @@ public:
         constants_set_ = true;
     }
 
-    RealArray loglikes(const StateArray& states,
+    RealArray loglikes(const StateArray& deviations,
                                   IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
@@ -241,7 +241,7 @@ public:
             exit(-1);
         }
 
-        n_poses_ = states.size();
+        n_poses_ = deviations.size();
         std::vector<float> flog_likelihoods (n_poses_, 0);
         set_number_of_poses(n_poses_);
 
@@ -257,9 +257,9 @@ public:
         cuda_->set_prev_sample_indices(occlusion_indices_transformed.data());
         MEASURE("gpu: setting occlusion indices");
         // convert to internal state format
-        std::vector<std::vector<std::vector<float> > > states_internal_format(
+        std::vector<std::vector<std::vector<float> > > poses(
                     n_poses_,
-                    std::vector<std::vector<float> >(states[0].count(),
+                    std::vector<std::vector<float> >(deviations[0].count(),
                     std::vector<float>(7, 0)));
 
         MEASURE("gpu: creating state vectors");
@@ -267,24 +267,24 @@ public:
 
 // TODO: this is a hack!!!
 #pragma omp parallel for
-        for(size_t state_index = 0; state_index < size_t(n_poses_); state_index++)
+        for(size_t i_state = 0; i_state < size_t(n_poses_); i_state++)
         {
 
             int tid = omp_get_thread_num();
 
-            kinematics_[tid].InitKDLData(states[state_index]);
+            kinematics_[tid].InitKDLData(deviations[i_state]);
 
-            for(size_t body_index = 0; body_index < states[state_index].count(); body_index++)
+            for(size_t i_object = 0; i_object < deviations[i_state].count(); i_object++)
             {
-                const Eigen::Quaternion<Scalar>& quaternion = kinematics_[tid].GetLinkOrientation(body_index);
-                states_internal_format[state_index][body_index][0] = quaternion.w();
-                states_internal_format[state_index][body_index][1] = quaternion.x();
-                states_internal_format[state_index][body_index][2] = quaternion.y();
-                states_internal_format[state_index][body_index][3] = quaternion.z();
-                const Eigen::Matrix<Scalar, 3, 1>& position =  kinematics_[tid].GetLinkPosition(body_index);
-                states_internal_format[state_index][body_index][4] = position[0];
-                states_internal_format[state_index][body_index][5] = position[1];
-                states_internal_format[state_index][body_index][6] = position[2];
+                const Eigen::Quaternion<Scalar>& quaternion = kinematics_[tid].GetLinkOrientation(i_object);
+                poses[i_state][i_object][0] = quaternion.w();
+                poses[i_state][i_object][1] = quaternion.x();
+                poses[i_state][i_object][2] = quaternion.y();
+                poses[i_state][i_object][3] = quaternion.z();
+                const Eigen::Matrix<Scalar, 3, 1>& position =  kinematics_[tid].GetLinkPosition(i_object);
+                poses[i_state][i_object][4] = position[0];
+                poses[i_state][i_object][5] = position[1];
+                poses[i_state][i_object][6] = position[2];
             }
         }
 
@@ -292,7 +292,7 @@ public:
 
 
 
-        opengl_->Render(states_internal_format);
+        opengl_->Render(poses);
 
         MEASURE("gpu: rendering");
 
@@ -311,8 +311,8 @@ public:
 
         if(update_occlusions)
         {
-            for(size_t state_index = 0; state_index < occlusion_indices.size(); state_index++)
-                occlusion_indices[state_index] = state_index;
+            for(size_t i_state = 0; i_state < occlusion_indices.size(); i_state++)
+                occlusion_indices[i_state] = i_state;
 
             MEASURE("gpu: updating occlusions");
         }
