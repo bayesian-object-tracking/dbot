@@ -92,6 +92,7 @@ public:
     typedef typename Base::RealArray RealArray;
     typedef typename Base::IntArray IntArray;
 
+    typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
 
 
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
@@ -130,71 +131,51 @@ public:
         default_exists_ = true;
     }
 
-    RealArray loglikes(const StateArray& states,
+    RealArray loglikes(const StateArray& deviations,
                                  IntArray& indices,
                                  const bool& update = false)
     {
-        std::vector<std::vector<float> > new_occlusions(states.size());
-        std::vector<std::vector<double> > new_occlusion_times(states.size());
+        std::vector<std::vector<float> > new_occlusions(deviations.size());
+        std::vector<std::vector<double> > new_occlusion_times(deviations.size());
 
-        RealArray log_likes = RealArray::Zero(states.size());
-//        std::vector<Scalar> loglikes(states.size(),0);
-        for(size_t state_index = 0; state_index < size_t(states.size()); state_index++)
+        RealArray log_likes = RealArray::Zero(deviations.size());
+        for(size_t i_state = 0; i_state < size_t(deviations.size()); i_state++)
         {
             if(update)
             {
-                new_occlusions[state_index] = occlusions_[indices[state_index]];
-                new_occlusion_times[state_index] = occlusion_times_[indices[state_index]];
+                new_occlusions[i_state] = occlusions_[indices[i_state]];
+                new_occlusion_times[i_state] = occlusion_times_[indices[i_state]];
             }
-            // we predict observations_
+
+            // render the object model -----------------------------------------
+            int body_count = deviations[i_state].count();
+            std::vector<Affine> poses(body_count);
+            for(size_t i_object = 0; i_object < body_count; i_object++)
+            {
+                 poses[i_object] =
+                            deviations[i_state].component(i_object).affine();
+            }
+            object_model_->set_poses(poses);
             std::vector<int> intersect_indices;
             std::vector<float> predictions;
-            //TODO: DOES THIS MAKE SENSE? THE OBJECT MODEL SHOULD KNOW ABOUT THE STATE...
+            object_model_->Render(camera_matrix_, n_rows_, n_cols_,
+                                  intersect_indices, predictions);
 
-            int body_count = states[state_index].count();
-
-            std::vector<Eigen::Matrix3d> rotations(body_count);
-            std::vector<Eigen::Vector3d> translations(body_count);
-            for(size_t part_index = 0; part_index < body_count; part_index++)
-            {
-                rotations[part_index] =
-                    states[state_index].component(part_index).orientation().rotation_matrix();
-                translations[part_index] =
-                        states[state_index].component(part_index).position();
-            }
-
-
-//            std::vector<RigidBodyRenderer::Affine> poses(body_count);
-//            for(size_t part_index = 0; part_index < body_count; part_index++)
-//            {
-//                poses[part_index] = states[state_index].affine(part_index);
-//            }
-
-
-
-            object_model_->set_poses(rotations, translations);
-//            object_model_->state(states[state_index]);
-
-
-
-
-            object_model_->Render(camera_matrix_, n_rows_, n_cols_, intersect_indices, predictions);
-
-            // we loop through all the pixels which intersect the object model
+            // compute likelihoods ---------------------------------------------
             for(size_t i = 0; i < size_t(predictions.size()); i++)
             {
                 if(isnan(observations_[intersect_indices[i]]))
                 {
-                    log_likes[state_index] += log(1.);
+                    log_likes[i_state] += log(1.);
                 }
                 else
                 {
                     double delta_time =
                             observation_time_ -
-                            occlusion_times_[indices[state_index]][intersect_indices[i]];
+                            occlusion_times_[indices[i_state]][intersect_indices[i]];
 
                     occlusion_process_model_->Condition(delta_time,
-                       occlusions_[indices[state_index]][intersect_indices[i]]);
+                       occlusions_[indices[i_state]][intersect_indices[i]]);
 
 
                     float occlusion = occlusion_process_model_->MapStandardGaussian();
@@ -210,14 +191,14 @@ public:
                     observation_model_->Condition(std::numeric_limits<float>::infinity(), true);
                     float p_obsIinf = observation_model_->Probability(observations_[intersect_indices[i]]);
 
-                    log_likes[state_index] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
+                    log_likes[i_state] += log((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
                     // we update the occlusion with the observations
                     if(update)
                     {
-                        new_occlusions[state_index][intersect_indices[i]] =
+                        new_occlusions[i_state][intersect_indices[i]] =
                                                         p_obsIpred_occl/(p_obsIpred_vis + p_obsIpred_occl);
-                        new_occlusion_times[state_index][intersect_indices[i]] = observation_time_;
+                        new_occlusion_times[i_state][intersect_indices[i]] = observation_time_;
                     }
                 }
             }
@@ -226,8 +207,8 @@ public:
         {
             occlusions_ = new_occlusions;
             occlusion_times_ = new_occlusion_times;
-            for(size_t state_index = 0; state_index < indices.size(); state_index++)
-                indices[state_index] = state_index;
+            for(size_t i_state = 0; i_state < indices.size(); i_state++)
+                indices[i_state] = i_state;
         }
         return log_likes;
     }
