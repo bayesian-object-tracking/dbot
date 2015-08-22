@@ -25,8 +25,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef FAST_FILTERING_FILTERS_STOCHASTIC_RAO_BLACKWELL_COORDINATE_PARTICLE_FILTER_HPP
-#define FAST_FILTERING_FILTERS_STOCHASTIC_RAO_BLACKWELL_COORDINATE_PARTICLE_FILTER_HPP
+#ifndef DBOT__RB_COORDINATE_PARTICLE_FILTER_HPP
+#define DBOT__RB_COORDINATE_PARTICLE_FILTER_HPP
 
 #include <vector>
 #include <limits>
@@ -80,12 +80,12 @@ public:
     {
         sampling_blocks_ = sampling_blocks;
 
-        // make sure sizes are consistent
+        // make sure sizes are consistent --------------------------------------
         size_t dimension = 0;
         for(size_t i = 0; i < sampling_blocks_.size(); i++)
-            for(size_t j = 0; j < sampling_blocks_[i].size(); j++)
-                dimension++;
-
+        {
+           dimension +=  sampling_blocks_[i].size();
+        }
         if(dimension != process_model_->NoiseDimension())
         {
             std::cout << "the dimension of the sampling blocks is " << dimension
@@ -105,7 +105,7 @@ public:
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
                                  Noise::Zero(process_model_->NoiseDimension()));
-        next_samples_.resize(belief_.size());
+        old_particles_ = belief_.locations();
 
         for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
@@ -122,15 +122,15 @@ public:
             // propagate using partial noise -----------------------------------
             for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                process_model_->Condition(belief_.location(i_sampl), input);
-                next_samples_[i_sampl] =
+                process_model_->Condition(old_particles_[i_sampl], input);
+                belief_.location(i_sampl) =
                         process_model_->MapStandardGaussian(noises_[i_sampl]);
             }
 
             // compute likelihood ----------------------------------------------
             bool update = (i_block == sampling_blocks_.size()-1);
             RealArray new_loglikes =
-                  observation_model_->loglikes(next_samples_, indices_, update);
+            observation_model_->loglikes(belief_.locations(), indices_, update);
 
             // update the weights and resample if necessary --------------------
             belief_.delta_log_prob_mass(new_loglikes - loglikes_);
@@ -140,11 +140,6 @@ public:
             {
                 resample(belief_.size());
             }
-        }
-
-        for(int i = 0; i < belief_.size(); i++)
-        {
-            belief_.location(i) = next_samples_[i];
         }
     }
 
@@ -164,13 +159,13 @@ public:
 
             indices[i]      = indices_[index];
             noises[i]       = noises_[index];
-            next_samples[i] = next_samples_[index];
+            next_samples[i] = old_particles_[index];
             loglikes[i]     = loglikes_[index];
         }
         belief_         = new_belief;
         indices_        = indices;
         noises_         = noises;
-        next_samples_   = next_samples;
+        old_particles_   = next_samples;
         loglikes_       = loglikes;
     }
 
@@ -193,11 +188,12 @@ public:
 
 
 private:
+    /// member variables *******************************************************
     Belief belief_;
     IntArray indices_;
 
     std::vector<Noise> noises_;
-    StateArray next_samples_;
+    StateArray old_particles_;
     RealArray loglikes_;
 
     // models
