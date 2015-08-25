@@ -186,6 +186,16 @@ public:
         observation_model_->reset();
     }
 
+    boost::shared_ptr<ObservationModel> observation_model()
+    {
+        return observation_model_;
+    }
+
+    boost::shared_ptr<ObservationModel> process_model()
+    {
+        return process_model_;
+    }
+
 
 private:
     /// member variables *******************************************************

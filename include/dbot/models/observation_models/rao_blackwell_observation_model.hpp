@@ -41,6 +41,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ff
 {
 
+
+/// \todo this observation model is now specific to rigid body rendering,
+/// terminology should be adapted accordingly.
 template<typename State_, typename Observation_>
 class RBObservationModel
 {
