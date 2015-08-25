@@ -97,13 +97,6 @@ public:
 
     ~KinectImageObservationModelGPU() { }
 
-    void default_state(const State& state)
-    {
-        for(size_t i = 0; i < state.count(); i++)
-        {
-            default_poses_[i] = state.component(i).affine();
-        }
-    }
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
     void Initialize()
@@ -167,9 +160,9 @@ public:
                    const float exponential_rate,
                    const std::string vertex_shader_path,
                    const std::string fragment_shader_path)
-    {
-        default_poses_ = std::vector<Affine>(vertices_double.size(),
-                                             Affine::Identity());
+    {        
+        this->default_poses_.recount(vertices_double.size());
+        this->default_poses_.setZero();
 
         // since you love doubles i changed the argument type of the vertices to double and convert it here :)
         vertices_.resize(vertices_double.size());
@@ -232,7 +225,7 @@ public:
         // convert to internal state format
         std::vector<std::vector<std::vector<float> > > poses(
                     n_poses_,
-                    std::vector<std::vector<float> >(default_poses_.size(),
+                    std::vector<std::vector<float> >(vertices_.size(),
                     std::vector<float>(7, 0)));
 
         MEASURE("gpu: creating state vectors");
@@ -240,10 +233,11 @@ public:
 
         for(size_t i_state = 0; i_state < size_t(n_poses_); i_state++)
         {
-            for(size_t i_obj = 0; i_obj < default_poses_.size(); i_obj++)
+            for(size_t i_obj = 0; i_obj < vertices_.size(); i_obj++)
             {
-                Affine pose = deviations[i_state].component(i_obj).affine()
-                                                    * default_poses_[i_obj];
+                Affine pose;
+//                = deviations[i_state].component(i_obj).affine()
+//                                                    * this->default_poses_[i_obj];
                 Eigen::Quaternion<Scalar> quaternion(pose.rotation());
                 Eigen::Matrix<Scalar, 3, 1> position = pose.translation();
 
@@ -446,7 +440,6 @@ private:
     enum time_measurement {SEND_OBSERVATIONS, RENDER, MAP_RESOURCE, GET_MAPPED_ARRAY, SET_TEXTURE_ARRAY,
                            MAP_TEXTURE, COMPUTE_LIKELIHOODS, UNMAP_RESOURCE};
 
-    std::vector<Affine> default_poses_;
 };
 
 }

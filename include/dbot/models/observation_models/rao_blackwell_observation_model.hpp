@@ -33,6 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Core>
 
 #include <fl/util/types.hpp>
+#include <fl/util/math/pose_vector.hpp>
+#include <fl/util/math/composed_vector.hpp>
 //#include <dbot/utils/traits.hpp>
 
 
@@ -54,6 +56,11 @@ public:
     typedef Eigen::Array<State, -1, 1>       StateArray;
     typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
     typedef Eigen::Array<int, -1, 1>         IntArray;
+    typedef Eigen::Matrix<fl::Real, -1, 1>   RealVector;
+
+    typedef fl::ComposedVector<fl::PoseBlock<RealVector>, RealVector> PoseArray;
+
+
 
 public:
     /// constructor and destructor *********************************************
@@ -67,11 +74,15 @@ public:
 
     /// accessors **************************************************************
     virtual void set_observation(const Observation& image) = 0;
-    virtual void default_state(const State& state) = 0;
+    virtual PoseArray& default_poses()
+    {
+        return default_poses_;
+    }
     virtual void reset() = 0;
 
 protected:
     fl::Real delta_time_;
+    PoseArray default_poses_;
 };
 
 }

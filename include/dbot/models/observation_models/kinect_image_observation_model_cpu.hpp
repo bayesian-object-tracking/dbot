@@ -119,20 +119,13 @@ public:
     {
         static_assert_base(State, RigidBodiesState<OBJECTS>);
 
-        default_poses_ = std::vector<Affine>(object_model_->vertices().size(),
-                                             Affine::Identity());
+        this->default_poses_.recount(object_model_->vertices().size());
+        this->default_poses_.setZero();
+
         reset();
     }
 
     ~KinectImageObservationModelCPU() { }
-
-    void default_state(const State& state)
-    {
-        for(size_t i = 0; i < state.count(); i++)
-        {
-            default_poses_[i] = state.component(i).affine();
-        }
-    }
 
     RealArray loglikes(const StateArray& deviations,
                                  IntArray& indices,
@@ -153,11 +146,15 @@ public:
             // render the object model -----------------------------------------
             int body_count = deviations[i_state].count();
             std::vector<Affine> poses(body_count);
-            for(size_t i_object = 0; i_object < body_count; i_object++)
+            for(size_t i_obj = 0; i_obj < body_count; i_obj++)
             {
-                 poses[i_object] =
-                         deviations[i_state].component(i_object).affine()
-                         * default_poses_[i_object];
+                auto pose = this->default_poses_.component(i_obj);
+                auto deviation = deviations[i_state].component(i_obj);
+
+                pose.orientation() = deviation.orientation()*pose.orientation();
+                pose.position() = deviation.position() + pose.position();
+
+                poses[i_obj] = pose.affine();
             }
             object_model_->set_poses(poses);
             std::vector<int> intersect_indices;
@@ -273,7 +270,6 @@ private:
 	std::vector<float> observations_;
 	double observation_time_;
 
-    std::vector<Affine> default_poses_;
 };
 
 }
