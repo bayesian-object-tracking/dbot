@@ -127,15 +127,15 @@ public:
 
     ~KinectImageObservationModelCPU() { }
 
-    RealArray loglikes(const StateArray& deviations,
+    RealArray loglikes(const StateArray& deltas,
                                  IntArray& indices,
                                  const bool& update = false)
     {
-        std::vector<std::vector<float> > new_occlusions(deviations.size());
-        std::vector<std::vector<double> > new_occlusion_times(deviations.size());
+        std::vector<std::vector<float> > new_occlusions(deltas.size());
+        std::vector<std::vector<double> > new_occlusion_times(deltas.size());
 
-        RealArray log_likes = RealArray::Zero(deviations.size());
-        for(size_t i_state = 0; i_state < size_t(deviations.size()); i_state++)
+        RealArray log_likes = RealArray::Zero(deltas.size());
+        for(size_t i_state = 0; i_state < size_t(deltas.size()); i_state++)
         {
             if(update)
             {
@@ -144,17 +144,18 @@ public:
             }
 
             // render the object model -----------------------------------------
-            int body_count = deviations[i_state].count();
+            int body_count = deltas[i_state].count();
             std::vector<Affine> poses(body_count);
             for(size_t i_obj = 0; i_obj < body_count; i_obj++)
             {
-                auto pose = this->default_poses_.component(i_obj);
-                auto deviation = deviations[i_state].component(i_obj);
+                auto pose_0 = this->default_poses_.component(i_obj);
+                auto delta = deltas[i_state].component(i_obj);
 
-                pose.orientation() = deviation.orientation()*pose.orientation();
-                pose.position() = deviation.position() + pose.position();
+                fl::PoseVector pose_1;
+                pose_1.orientation()=delta.orientation() * pose_0.orientation();
+                pose_1.position() = delta.position() + pose_0.position();
 
-                poses[i_obj] = pose.affine();
+                poses[i_obj] = pose_1.affine();
             }
             object_model_->set_poses(poses);
             std::vector<int> intersect_indices;
