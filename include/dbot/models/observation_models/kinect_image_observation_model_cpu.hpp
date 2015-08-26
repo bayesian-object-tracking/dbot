@@ -151,11 +151,11 @@ public:
                 auto pose_0 = this->default_poses_.component(i_obj);
                 auto delta = deltas[i_state].component(i_obj);
 
-                fl::PoseVector pose_1;
-                pose_1.orientation()=delta.orientation() * pose_0.orientation();
-                pose_1.position() = delta.position() + pose_0.position();
+                fl::PoseVector pose;
+                pose.orientation() = delta.orientation() * pose_0.orientation();
+                pose.position() = delta.position() + pose_0.position();
 
-                poses[i_obj] = pose_1.affine();
+                poses[i_obj] = pose.affine();
             }
             object_model_->set_poses(poses);
             std::vector<int> intersect_indices;

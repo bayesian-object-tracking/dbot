@@ -191,7 +191,7 @@ public:
         constants_set_ = true;
     }
 
-    RealArray loglikes(const StateArray& deviations,
+    RealArray loglikes(const StateArray& deltas,
                                   IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
@@ -207,7 +207,7 @@ public:
             exit(-1);
         }
 
-        n_poses_ = deviations.size();
+        n_poses_ = deltas.size();
         std::vector<float> flog_likelihoods (n_poses_, 0);
         set_number_of_poses(n_poses_);
 
@@ -235,19 +235,20 @@ public:
         {
             for(size_t i_obj = 0; i_obj < vertices_.size(); i_obj++)
             {
-                Affine pose;
-//                = deviations[i_state].component(i_obj).affine()
-//                                                    * this->default_poses_[i_obj];
-                Eigen::Quaternion<Scalar> quaternion(pose.rotation());
-                Eigen::Matrix<Scalar, 3, 1> position = pose.translation();
+                auto pose_0 = this->default_poses_.component(i_obj);
+                auto delta = deltas[i_state].component(i_obj);
 
-                poses[i_state][i_obj][0] = quaternion.w();
-                poses[i_state][i_obj][1] = quaternion.x();
-                poses[i_state][i_obj][2] = quaternion.y();
-                poses[i_state][i_obj][3] = quaternion.z();
-                poses[i_state][i_obj][4] = position[0];
-                poses[i_state][i_obj][5] = position[1];
-                poses[i_state][i_obj][6] = position[2];
+                fl::PoseVector pose;
+                pose.orientation() = delta.orientation() * pose_0.orientation();
+                pose.position() = delta.position() + pose_0.position();
+
+                poses[i_state][i_obj][0] = pose.orientation().quaternion().w();
+                poses[i_state][i_obj][1] = pose.orientation().quaternion().x();
+                poses[i_state][i_obj][2] = pose.orientation().quaternion().y();
+                poses[i_state][i_obj][3] = pose.orientation().quaternion().z();
+                poses[i_state][i_obj][4] = pose.position()[0];
+                poses[i_state][i_obj][5] = pose.position()[1];
+                poses[i_state][i_obj][6] = pose.position()[2];
             }
         }
 
