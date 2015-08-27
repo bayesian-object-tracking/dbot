@@ -93,8 +93,16 @@ public:
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),
-            initial_visibility_prob_(1 - initial_occlusion_prob),
             max_sample_count_(max_sample_count),
+            indices_(indices),
+            initial_visibility_prob_(1 - initial_occlusion_prob),
+            p_visible_visible_(1.0 - p_occluded_visible),
+            p_visible_occluded_(1.0 - p_occluded_occluded),
+            tail_weight_(tail_weight),
+            model_sigma_(model_sigma),
+            sigma_factor_(sigma_factor),
+            max_depth_(max_depth),
+            exponential_rate_(exponential_rate),
             n_poses_(max_sample_count),
             observations_set_(false),
             resource_registered_(false),
@@ -116,17 +124,7 @@ public:
         }
 
 
-        indices_ = indices;
-        p_visible_visible_ = 1.0 - p_occluded_visible;
-        p_visible_occluded_ = 1.0 - p_occluded_occluded;
-        tail_weight_ = tail_weight;
-        model_sigma_ = model_sigma;
-        sigma_factor_ = sigma_factor;
-        max_depth_ = max_depth;
-        exponential_rate_ = exponential_rate;
-
-
-
+        // check for incorrect path names
         if(!boost::filesystem::exists(vertex_shader_path))
         {
             std::cout << "vertex shader does not exist at: "
@@ -149,12 +147,13 @@ public:
                 (new ObjectRasterizer(vertices_,
                                       indices_,
                                       vertex_shader_path_,
-                                      fragment_shader_path_));
+                                      fragment_shader_path_,
+                                      camera_matrix_.cast<float>()));
         cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
 
 
 
-        opengl_->PrepareRender(camera_matrix_.cast<float>());
+        //opengl_->PrepareRender(camera_matrix_.cast<float>());
 
 
         opengl_->set_number_of_max_poses(max_sample_count_);

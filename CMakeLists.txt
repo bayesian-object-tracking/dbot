@@ -171,8 +171,8 @@ if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
     message("building cuda implementation")
 
     set(dbot_gpu_sources
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_multiple_filter.cpp
+        #src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.cpp
+        #src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_multiple_filter.cpp
         src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.cpp
         src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/shader.cpp)
 

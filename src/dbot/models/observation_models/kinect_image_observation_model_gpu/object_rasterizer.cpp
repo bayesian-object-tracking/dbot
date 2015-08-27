@@ -28,7 +28,8 @@ ObjectRasterizer::ObjectRasterizer()
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,
                                    const std::string vertex_shader_path,
-                                   const std::string fragment_shader_path) :
+                                   const std::string fragment_shader_path,
+                                   const Eigen::Matrix3f camera_matrix) :
     n_rows_(WINDOW_HEIGHT),
     n_cols_(WINDOW_WIDTH),
     vertex_shader_path_(vertex_shader_path),
@@ -311,21 +312,10 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     enum_strings_.push_back("SEND_MODEL_MATRIX");
     enum_strings_.push_back("DETACH_TEXTURE");
     enum_strings_.push_back("GL_FINISH");
-}
 
-
-
-
-
-
-
-
-
-
-void ObjectRasterizer::PrepareRender(const Eigen::Matrix3f camera_matrix) {
     SetupProjectionMatrix(camera_matrix);
     glUseProgram(shader_ID_);
-    checkGLErrors("prepare RenderCombinedFast");
+    checkGLErrors("setup projection matrix");
 }
 
 

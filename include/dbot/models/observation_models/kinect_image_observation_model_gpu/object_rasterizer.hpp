@@ -23,27 +23,21 @@ public:
       * @param[in] indices [object_nr][index_nr][0 - 2] = {index}. This list should contain the indices
       * that index the vertices list and tell us which vertices to connect to a triangle (every group of 3).
       * For each object, the indices should be in the range of [0, nr_vertices - 1].
+      * @param[in] vertex_shader_path path to the vertex shader
+      * @param[in] fragment_shader_path path to the fragment shader
+      * @param[in] camera_matrix matrix of the intrinsic parameters of the camera
       */
     ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                      const std::vector<std::vector<std::vector<int> > > indices,
                      const std::string vertex_shader_path,
-                     const std::string fragment_shader_path);
+                     const std::string fragment_shader_path,
+                     const Eigen::Matrix3f camera_matrix);
 
     /// constructor with no arguments, should not be used
     ObjectRasterizer();
 
     /// destructor which deletes the buffers and programs used by openGL
     ~ObjectRasterizer();
-
-
-    /// prepare openGL for a function call to Render()
-    /** Has to be called once before calling Render() (which can then be
-      * called frequently). It sets the shaders to the correct program and computes
-      * the perspective projection matrix from the camera parameters. The near/far planes
-      * are set by the constants NEAR_PLANE and FAR_PLANE in the header.
-      * @param[in] camera_matrix matrix of the intrinsic parameters of the camera
-      */
-    void PrepareRender(const Eigen::Matrix3f camera_matrix);
 
 
 
@@ -54,7 +48,7 @@ public:
       * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
       * and the translation for each object per pose.
       * @param[in,out] intersect_indices [pose_nr][0 - nr_relevant_pixels] = {pixel_nr}. This list should be empty when passed
-      * to the function. Afterwards, it will contain the pixel number of all pixels that were rendered to, per pose.
+      * to the function. Afterwards, it will contain the pixel numbers of all pixels that were rendered to, per pose.
       * @param[in,out] depth [pose_nr][0 - nr_relevant_pixels] = {depth_value}. This list should be empty when passed to the function.
       * Afterwards, it will contain the depth value of all pixels that were rendered to, per pose.
       */
@@ -79,7 +73,7 @@ public:
     void set_objects(std::vector<int> object_numbers);
 
     /// set a new resolution
-    /** This function reallocates the framebuffer textures.
+    /** This function reallocates the framebuffer textures. This is expensive, so only do it if necessary.
       * @param[in] n_rows the height of the image
       * @param[in] n_cols the width of the image
       */
