@@ -73,98 +73,39 @@ public:
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION
     KinectImageObservationModelGPU(const CameraMatrix& camera_matrix,
-                     const size_t& n_rows,
-                     const size_t& n_cols,
-                     const size_t& max_sample_count,
-                     const Scalar& initial_occlusion_prob,
-                     const double& delta_time):
+                    const size_t& n_rows,
+                    const size_t& n_cols,
+                    const size_t& max_sample_count,
+                    const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
+                    const std::vector<std::vector<std::vector<int> > > indices,
+                    const std::string vertex_shader_path,
+                    const std::string fragment_shader_path,
+                    const Scalar& initial_occlusion_prob = 0.1d,
+                    const double& delta_time = 0.033d,
+                    const float p_occluded_visible = 0.1f,
+                    const float p_occluded_occluded = 0.7f,
+                    const float tail_weight = 0.01f,
+                    const float model_sigma = 0.003f,
+                    const float sigma_factor = 0.0014247f,
+                    const float max_depth = 6.0f,
+                    const float exponential_rate = -log(0.5f)):
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),
             initial_visibility_prob_(1 - initial_occlusion_prob),
             max_sample_count_(max_sample_count),
             n_poses_(max_sample_count),
-            constants_set_(false),
-            initialized_(false),
             observations_set_(false),
             resource_registered_(false),
             nr_calls_set_observation_(0),
             observation_time_(0),
             Traits::Base(delta_time)
     {
-        visibility_probs_.resize(n_rows_ * n_cols_);
-    }
-
-    ~KinectImageObservationModelGPU() { }
-
-
-    // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
-    void Initialize()
-    {
-        if (constants_set_)
-        {
-            opengl_ = boost::shared_ptr<ObjectRasterizer>
-                    (new ObjectRasterizer(vertices_,
-                                          indices_,
-                                          vertex_shader_path_,
-                                          fragment_shader_path_));
-            cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
-
-            initialized_ = true;
-
-
-            opengl_->PrepareRender(camera_matrix_.cast<float>());
-
-
-            opengl_->set_number_of_max_poses(max_sample_count_);
-            n_poses_x_ = opengl_->get_n_poses_x();
-            cuda_->set_number_of_max_poses(max_sample_count_, n_poses_x_);
-
-
-            std:: cout << "set resolution in cuda..." << std::endl;
-
-            opengl_->set_resolution(n_rows_, n_cols_);
-            cuda_->set_resolution(n_rows_, n_cols_);
-
-            RegisterResource();
-
-            std:: cout << "set occlusions..." << std::endl;
-
-    //        set_occlusions();
-            reset();
-
-            float c = p_visible_visible_ - p_visible_occluded_;
-            float log_c = log(c);
-
-            std::vector<std::vector<float> > dummy_com_models;
-            cuda_->Init(dummy_com_models, 0.0f, 0.0f,
-                        initial_visibility_prob_, c, log_c, p_visible_occluded_,
-                        tail_weight_, model_sigma_, sigma_factor_, max_depth_, exponential_rate_);
-
-
-            count_ = 0;
-
-        } else {
-            std:: cout << "WARNING: GPUImageObservationModel::Initialize() was not executed, because GPUImageObservationModel::set_constants() has not been called previously." << std::endl;
-        }
-    }
-
-    void Constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
-                   const std::vector<std::vector<std::vector<int> > > indices,
-                   const float p_occluded_visible,
-                   const float p_occluded_occluded,
-                   const float tail_weight,
-                   const float model_sigma,
-                   const float sigma_factor,
-                   const float max_depth,
-                   const float exponential_rate,
-                   const std::string vertex_shader_path,
-                   const std::string fragment_shader_path)
-    {        
+        // set constants
         this->default_poses_.recount(vertices_double.size());
         this->default_poses_.setZero();
 
-        // since you love doubles i changed the argument type of the vertices to double and convert it here :)
+        // convert doubles to floats
         vertices_.resize(vertices_double.size());
         for(size_t object_index = 0; object_index < vertices_.size(); object_index++)
         {
@@ -188,20 +129,60 @@ public:
         fragment_shader_path_ = fragment_shader_path;
 
 
-        constants_set_ = true;
+        // initialize opengl and cuda
+        opengl_ = boost::shared_ptr<ObjectRasterizer>
+                (new ObjectRasterizer(vertices_,
+                                      indices_,
+                                      vertex_shader_path_,
+                                      fragment_shader_path_));
+        cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
+
+
+
+        opengl_->PrepareRender(camera_matrix_.cast<float>());
+
+
+        opengl_->set_number_of_max_poses(max_sample_count_);
+        n_poses_x_ = opengl_->get_n_poses_x();
+        cuda_->set_number_of_max_poses(max_sample_count_, n_poses_x_);
+
+
+        std:: cout << "set resolution in cuda..." << std::endl;
+
+        opengl_->set_resolution(n_rows_, n_cols_);
+        cuda_->set_resolution(n_rows_, n_cols_);
+
+        RegisterResource();
+
+        std:: cout << "set occlusions..." << std::endl;
+
+//        set_occlusions();
+        reset();
+
+        float c = p_visible_visible_ - p_visible_occluded_;
+        float log_c = log(c);
+
+        std::vector<std::vector<float> > dummy_com_models;
+        cuda_->Init(dummy_com_models, 0.0f, 0.0f,
+                    initial_visibility_prob_, c, log_c, p_visible_occluded_,
+                    tail_weight_, model_sigma_, sigma_factor_, max_depth_, exponential_rate_);
+
+
+        count_ = 0;
+
+
+        visibility_probs_.resize(n_rows_ * n_cols_);
     }
+
+    ~KinectImageObservationModelGPU() { }
+
 
     RealArray loglikes(const StateArray& deltas,
                                   IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
-        if (!initialized_)
 
-        {
-            std:: cout << "GPU: not initialized" << std::endl;
-            exit(-1);
-        }
-        else if(!observations_set_)
+        if(!observations_set_)
         {
             std:: cout << "GPU: observations not set" << std::endl;
             exit(-1);
@@ -326,11 +307,10 @@ private:
     void set_observation(const std::vector<float>& observations, const Scalar& delta_time)
     {
         observation_time_ += delta_time;
-        if (initialized_)
-        {
-            cuda_->set_observations(observations.data(), observation_time_);
-            observations_set_ = true;
-        }
+
+        cuda_->set_observations(observations.data(), observation_time_);
+        observations_set_ = true;
+
     }
 
     void Occlusions(const float& visibility_prob = -1)
@@ -351,14 +331,12 @@ private:
     const size_t max_sample_count_;
 
     void set_number_of_poses(int n_poses){
-        if (initialized_) {
-            n_poses_ = n_poses;
-            opengl_->set_number_of_poses(n_poses_);
-            n_poses_x_ = opengl_->get_n_poses_x();
-            cuda_->set_number_of_poses(n_poses_, n_poses_x_);
-        } else {
-            std:: cout << "WARNING: GPUImageObservationModel::set_number_of_poses() was not executed, because GPUImageObservationModel::Initialize() has not been called previously." << std::endl;
-        }
+
+        n_poses_ = n_poses;
+        opengl_->set_number_of_poses(n_poses_);
+        n_poses_x_ = opengl_->get_n_poses_x();
+        cuda_->set_number_of_poses(n_poses_, n_poses_x_);
+
     }
 
     void checkCUDAError(const char *msg)
@@ -425,7 +403,7 @@ private:
     int count_;
 
     // booleans to ensure correct usage of function calls
-    bool constants_set_, initialized_, observations_set_, resource_registered_;
+    bool observations_set_, resource_registered_;
     int nr_calls_set_observation_;
 
     // Shared resource between OpenGL and CUDA
