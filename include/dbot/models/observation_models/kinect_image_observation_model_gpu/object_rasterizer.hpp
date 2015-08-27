@@ -52,7 +52,7 @@ public:
       * @param[in,out] depth [pose_nr][0 - nr_relevant_pixels] = {depth_value}. This list should be empty when passed to the function.
       * Afterwards, it will contain the depth value of all pixels that were rendered to, per pose.
       */
-    void Render(const std::vector<std::vector<std::vector<float> > > states,
+    void render(const std::vector<std::vector<std::vector<float> > > states,
                             std::vector<std::vector<int> > &intersect_indices,
                             std::vector<std::vector<float> > &depth);
 
@@ -63,7 +63,7 @@ public:
       * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
       * and the translation for each object per pose.
       */
-    void Render(const std::vector<std::vector<std::vector<float> > > states);
+    void render(const std::vector<std::vector<std::vector<float> > > states);
 
     /// sets the objects that should be rendered.
     /** This function only needs to be called if any objects initially passed in the constructor should be left out when rendering.
@@ -182,22 +182,22 @@ private:
     // ====================== PRIVATE FUNCTIONS ====================== //
 
 
-    std::string getTextForEnum( int enumVal );
-    void checkGLErrors(const char *label);
-    bool checkFramebufferStatus();
-    void ReadDepth(std::vector<std::vector<int> > &intersect_indices,
+    std::string get_text_for_enum( int enumVal );
+    void check_GL_errors(const char *label);
+    bool check_framebuffer_status();
+    void read_depth(std::vector<std::vector<int> > &intersect_indices,
                    std::vector<std::vector<float> > &depth,
                    GLuint pixel_buffer_object,
                    GLuint framebuffer_texture,
                    render_type calling_function);
 
-    Eigen::Matrix4f GetModelMatrix(const std::vector<float> state);
+    Eigen::Matrix4f get_model_matrix(const std::vector<float> state);
     Eigen::Matrix4f GetProjectionMatrix(float n, float f, float l, float r, float t, float b);
 
-    void DisplayTimeObservations(std::map<int, int> factors, render_type calling_function);
-    void ReallocateBuffers();
-    void SetupViewMatrix();
-    void SetupProjectionMatrix(const Eigen::Matrix3f camera_matrix);
+    void display_time_observations(std::map<int, int> factors, render_type calling_function);
+    void reallocate_buffers();
+    void setup_view_matrix();
+    void setup_projection_matrix(const Eigen::Matrix3f camera_matrix);
 
 };
 

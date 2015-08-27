@@ -7,6 +7,10 @@
 
 #include <vector>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+
 namespace fil {
 
 class CudaFilter
@@ -15,17 +19,17 @@ public:
     CudaFilter();
     ~CudaFilter();
 
-    void Init(std::vector<std::vector<float> > com_models, float angle_sigma, float trans_sigma,
+    void init(std::vector<std::vector<float> > com_models, float angle_sigma, float trans_sigma,
               float p_visible_init, float c, float log_c, float p_visible_occluded,
               float tail_weight, float model_sigma, float sigma_factor, float max_depth, float exponential_rate);
 
     // filter functions
-    void Propagate(const float &current_time, std::vector<std::vector<float> > &states);
-    void PropagateMultiple(const float &current_time, std::vector<std::vector<std::vector<float> > > &states);
-    void Compare(float observation_time, bool constant_occlusion, std::vector<float> &log_likelihoods);
-    void CompareMultiple(bool update, std::vector<float> &log_likelihoods);
-    void Resample(std::vector<int> resampling_indices);
-    void ResampleMultiple(std::vector<int> resampling_indices);
+    void propagate(const float &current_time, std::vector<std::vector<float> > &states);
+    void propagate_multiple(const float &current_time, std::vector<std::vector<std::vector<float> > > &states);
+    void compare(float observation_time, bool constant_occlusion, std::vector<float> &log_likelihoods);
+    void compare_multiple(bool update, std::vector<float> &log_likelihoods);
+    void resample(std::vector<int> resampling_indices);
+    void resample_multiple(std::vector<int> resampling_indices);
 
 
     // setters
@@ -44,7 +48,7 @@ public:
     std::vector<float> get_visibility_probabilities(int state_id);
     std::vector<std::vector<float> > get_visibility_probabilities();
 
-    void MapTexture();
+    void map_texture();
     void destroy_context();
 
 private:
@@ -114,10 +118,10 @@ private:
     void set_default_kernel_config();
 
     // helper functions
-    template <typename T> void allocate(T * &pointer, size_t size, char* name);
-    void coutArray(float* array, int size, char* name);
-    void coutArray(std::vector<float> array, char* name);
-    void checkCUDAError(const char *msg);
+    template <typename T> void allocate(T * &pointer, size_t size, std::string name);
+    void cout_array(float* array, int size, char* name);
+    void cout_array(std::vector<float> array, char* name);
+    void check_cuda_error(const char *msg);
 
 };
 

@@ -115,7 +115,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     /* try it out */
     printf("vendor: %s\n", (const char*)glGetString(GL_VENDOR));
 
-    checkGLErrors("init windowsless context");
+    check_GL_errors("init windowsless context");
 
     // Initialize GLEW
 
@@ -124,7 +124,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
         fprintf(stderr, "Failed to initialize GLEW\n");
         exit(EXIT_FAILURE);
     }
-    checkGLErrors("GLEW init");
+    check_GL_errors("GLEW init");
 
 
 
@@ -268,9 +268,9 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
        If you are looking to pass a different camera matrix for each render call, move this function
        into that render call and change it to accept the camera position and rotation as parameter
        and calculate the respective matrix. */
-    SetupViewMatrix();
+    setup_view_matrix();
 
-    checkGLErrors("OpenGL initialization");
+    check_GL_errors("OpenGL initialization");
 
 
 
@@ -313,9 +313,9 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     enum_strings_.push_back("DETACH_TEXTURE");
     enum_strings_.push_back("GL_FINISH");
 
-    SetupProjectionMatrix(camera_matrix);
+    setup_projection_matrix(camera_matrix);
     glUseProgram(shader_ID_);
-    checkGLErrors("setup projection matrix");
+    check_GL_errors("setup projection matrix");
 }
 
 
@@ -326,16 +326,16 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 
 
 
-void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> > > states,
+void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states,
                                           std::vector<std::vector<int> > &intersect_indices,
                                           std::vector<std::vector<float> > &depth) {
-    Render(states);
+    render(states);
     get_depth_values(intersect_indices, depth);
 }
 
 
 
-void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> > > states) {
+void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states) {
 
 #ifdef PROFILING_ACTIVE
     combined_fast_set_viewport_queries_.resize(n_poses_);
@@ -420,7 +420,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
             calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
         #endif
 
-                model_view_matrix = view_matrix_ * GetModelMatrix(states[n_poses_x_ * i + j][index]);
+                model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * i + j][index]);
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
         #ifdef PROFILING_ACTIVE
@@ -471,7 +471,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
     start_time_ = sf::hf::get_wall_time();
     calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
 #endif
-            model_view_matrix = view_matrix_ * GetModelMatrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
+            model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
             glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
 #ifdef PROFILING_ACTIVE
@@ -541,7 +541,7 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
 
 
 
-void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
+void ObjectRasterizer::read_depth(vector<vector<int> > &intersect_indices,
                                  vector<vector<float> > &depth,
                                  GLuint pixel_buffer_object,
                                  GLuint framebuffer_texture,
@@ -664,7 +664,7 @@ void ObjectRasterizer::set_number_of_max_poses(int n_poses) {
         n_poses_x_ = n_max_poses_x_;
         n_poses_y_ = n_max_poses_y_;
 
-        ReallocateBuffers();
+        reallocate_buffers();
 //    }
 }
 
@@ -706,7 +706,7 @@ void ObjectRasterizer::set_resolution(const int n_rows,
 //    }
 }
 
-void ObjectRasterizer::ReallocateBuffers() {
+void ObjectRasterizer::reallocate_buffers() {
 
     // ======================= REALLOCATE PBO ======================= //
 
@@ -755,7 +755,7 @@ void ObjectRasterizer::ReallocateBuffers() {
                            0);
 
 
-    checkFramebufferStatus();
+    check_framebuffer_status();
     GLenum color_buffers[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, color_buffers);
 }
@@ -765,7 +765,7 @@ void ObjectRasterizer::ReallocateBuffers() {
 
 
 
-Matrix4f ObjectRasterizer::GetModelMatrix(const vector<float> state) {
+Matrix4f ObjectRasterizer::get_model_matrix(const vector<float> state) {
     // Model matrix equals the state of the object. Position and Quaternion just have to be expressed as a matrix.
     // note: state = (q.w, q.x, q.y, q.z, v.x, v.y, v.z)
     Matrix4f model_matrix = Matrix4f::Identity();
@@ -793,7 +793,7 @@ Matrix4f ObjectRasterizer::GetProjectionMatrix(float n, float f, float l, float 
     return projection_matrix;
 }
 
-void ObjectRasterizer::SetupProjectionMatrix(const Eigen::Matrix3f camera_matrix) {
+void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matrix) {
 
     // ==================== CONFIGURE IMAGE PARAMETERS ==================== //
 
@@ -816,7 +816,7 @@ void ObjectRasterizer::SetupProjectionMatrix(const Eigen::Matrix3f camera_matrix
 
 }
 
-void ObjectRasterizer::SetupViewMatrix() {
+void ObjectRasterizer::setup_view_matrix() {
     // =========================== VIEW MATRIX =========================== //
 
     // OpenGL camera is rotated 180 degrees around the X-Axis compared to the Kinect camera
@@ -826,7 +826,7 @@ void ObjectRasterizer::SetupViewMatrix() {
     view_matrix_ = view_matrix_transform.matrix();
 }
 
-void ObjectRasterizer::DisplayTimeObservations(map<int, int> factors, render_type calling_function) {
+void ObjectRasterizer::display_time_observations(map<int, int> factors, render_type calling_function) {
 
 #ifdef PROFILING_ACTIVE
 
@@ -973,7 +973,7 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
 
     // ===================== TRANSFERS DEPTH VALUES TO CPU == SLOW!!! ================ //
 
-    ReadDepth(intersect_indices, depth, combined_result_buffer_, combined_texture_, COMBINED_FAST);
+    read_depth(intersect_indices, depth, combined_result_buffer_, combined_texture_, COMBINED_FAST);
 
 //    vector<int> intersect_indices_all;
 //    vector<float> depth_all;
@@ -1027,12 +1027,12 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
 }
 
 
-string ObjectRasterizer::getTextForEnum( int enumVal ) {
+string ObjectRasterizer::get_text_for_enum( int enumVal ) {
     return enum_strings_[enumVal];
 }
 
 
-void ObjectRasterizer::checkGLErrors(const char *label) {
+void ObjectRasterizer::check_GL_errors(const char *label) {
     GLenum errCode;
     const GLubyte *errStr;
     if ((errCode = glGetError()) != GL_NO_ERROR) {
@@ -1045,7 +1045,7 @@ void ObjectRasterizer::checkGLErrors(const char *label) {
     }
 }
 
-bool ObjectRasterizer::checkFramebufferStatus() {
+bool ObjectRasterizer::check_framebuffer_status() {
     GLenum status;
     status=(GLenum)glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
     switch(status) {

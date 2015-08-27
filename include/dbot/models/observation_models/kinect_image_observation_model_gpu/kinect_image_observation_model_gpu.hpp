@@ -176,7 +176,7 @@ public:
         float log_c = log(c);
 
         std::vector<std::vector<float> > dummy_com_models;
-        cuda_->Init(dummy_com_models, 0.0f, 0.0f,
+        cuda_->init(dummy_com_models, 0.0f, 0.0f,
                     initial_visibility_prob_, c, log_c, p_visible_occluded_,
                     tail_weight_, model_sigma_, sigma_factor_, max_depth_, exponential_rate_);
 
@@ -250,7 +250,7 @@ public:
 
 
 
-        opengl_->Render(poses);
+        opengl_->render(poses);
 
         MEASURE("gpu: rendering");
 
@@ -258,10 +258,10 @@ public:
         cudaGraphicsMapResources(1, &combined_texture_resource_, 0);
         cudaGraphicsSubResourceGetMappedArray(&texture_array_, combined_texture_resource_, 0, 0);
         cuda_->set_texture_array(texture_array_);
-        cuda_->MapTexture();
+        cuda_->map_texture();
         MEASURE("gpu: mapping texture");
 
-        cuda_->CompareMultiple(update_occlusions, flog_likelihoods);
+        cuda_->compare_multiple(update_occlusions, flog_likelihoods);
         cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
 
         MEASURE("gpu: computing likelihoods");

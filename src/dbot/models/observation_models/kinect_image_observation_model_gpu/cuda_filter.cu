@@ -70,7 +70,7 @@ texture<float, cudaTextureType2D, cudaReadModeElementType> texture_reference;
 
 // ====================== MATRIX MANIPULATION FUNCTIONS ======================= //
 
-__device__ void multiplyMatrices(float *A, float *B, float *C) {
+__device__ void multiply_matrices(float *A, float *B, float *C) {
     float sum = 0;
     for (int i = 0; i < VECTOR_DIM; i++) {        // iterate through rows
         for (int j = 0; j < VECTOR_DIM; j++) {    // iterate through cols
@@ -83,7 +83,7 @@ __device__ void multiplyMatrices(float *A, float *B, float *C) {
     }
 }
 
-__device__ float3 multiplyMatrixWithVector(float* M, float3 v) {
+__device__ float3 multiply_matrix_with_vector(float* M, float3 v) {
     float result[3];
     float v_copy[3];
     v_copy[0] = v.x; v_copy[1] = v.y; v_copy[2] = v.z;
@@ -101,7 +101,7 @@ __device__ float3 multiplyMatrixWithVector(float* M, float3 v) {
 }
 
 /* axis is defined as follows: 0 = x, 1 = y, 2 = z */
-__device__ void createRotationMatrix(const float angle, const int axis, float *R) {
+__device__ void create_rotation_matrix(const float angle, const int axis, float *R) {
     float cos_angle = cos(angle);
     float sin_angle = sin(angle);
 
@@ -120,7 +120,7 @@ __device__ void createRotationMatrix(const float angle, const int axis, float *R
     }
 }
 
-__device__ void transposeMatrix(float *A, float *T) {
+__device__ void transpose_matrix(float *A, float *T) {
     T[0] = A[0];
     T[1] = A[3];
     T[2] = A[6];
@@ -157,14 +157,14 @@ __device__ float3 negate(const float3 &a) {
 
 // ======================= QUATERNION CONVERSIONS AND MANIPULATION FUNCTIONS ======================= //
 
-__device__ void quaternionToMatrix(const float4 q_in, float *Q) {
+__device__ void quaternion_to_matrix(const float4 q_in, float *Q) {
     float4 q = normalize(q_in);
     Q[0] = 1.0f - 2.0f*q.y*q.y - 2.0f*q.z*q.z;  Q[1] = 2.0f*q.x*q.y - 2.0f*q.z*q.w;         Q[2] = 2.0f*q.x*q.z + 2.0f*q.y*q.w;
     Q[3] = 2.0f*q.x*q.y + 2.0f*q.z*q.w;         Q[4] = 1.0f - 2.0f*q.x*q.x - 2.0f*q.z*q.z;  Q[5] = 2.0f*q.y*q.z - 2.0f*q.x*q.w;
     Q[6] = 2.0f*q.x*q.z - 2.0f*q.y*q.w;         Q[7] = 2.0f*q.y*q.z + 2.0f*q.x*q.w;         Q[8] = 1.0f - 2.0f*q.x*q.x - 2.0f*q.y*q.y;
 }
 
-__device__ float4 matrixToQuaternion(float *Q) {
+__device__ float4 matrix_to_quaternion(float *Q) {
     float4 q;
 
     q.w = sqrtf( fmaxf( 0, 1 + Q[0] + Q[4] + Q[8] ) ) / 2;
@@ -184,7 +184,7 @@ __device__ float4 matrixToQuaternion(float *Q) {
     return q;
 }
 
-__device__ float4 multiplyQuaternions(float4 q1, float4 q2) {
+__device__ float4 multiply_quaternions(float4 q1, float4 q2) {
     float w = (q1.w * q2.w) - (q1.x * q2.x) - (q1.y * q2.y) - (q1.z * q2.z);
     float x = (q1.w * q2.x) + (q1.x * q2.w) + (q1.y * q2.z) - (q1.z * q2.y);
     float y = (q1.w * q2.y) - (q1.x * q2.z) + (q1.y * q2.w) + (q1.z * q2.x);
@@ -197,7 +197,7 @@ __device__ float4 multiplyQuaternions(float4 q1, float4 q2) {
 
 // ======================= helper functions for compare (observation model)  ======================= //
 
-__device__ float propagateOcclusion(float initial_p_source, float time) {
+__device__ float propagate_occlusion(float initial_p_source, float time) {
     if (isnan(time)) {
         return initial_p_source;
     }
@@ -249,7 +249,7 @@ __device__ float prob(float observation, float prediction, bool visible)
 
 
 
-__global__ void setupNumberGenerators(int current_time, curandStateMRG32k3a *mrg_state, int n_poses)
+__global__ void setup_number_generators_kernel(int current_time, curandStateMRG32k3a *mrg_state, int n_poses)
 {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n_poses) {
@@ -259,7 +259,7 @@ __global__ void setupNumberGenerators(int current_time, curandStateMRG32k3a *mrg
 }
 
 
-__global__ void propagate(float *states, int n_states, int states_size, float delta_time, curandStateMRG32k3a *mrg_state)
+__global__ void propagate_kernel(float *states, int n_states, int states_size, float delta_time, curandStateMRG32k3a *mrg_state)
 {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n_states) {
@@ -306,23 +306,23 @@ __global__ void propagate(float *states, int n_states, int states_size, float de
 
             float3 t_rand = make_float3(trans_x, trans_y, trans_z);
 
-            createRotationMatrix(angle_x, 0, rot_matrix_x);
-            createRotationMatrix(angle_y, 1, rot_matrix_y);
-            createRotationMatrix(angle_z, 2, rot_matrix_z);
+            create_rotation_matrix(angle_x, 0, rot_matrix_x);
+            create_rotation_matrix(angle_y, 1, rot_matrix_y);
+            create_rotation_matrix(angle_z, 2, rot_matrix_z);
 
-            multiplyMatrices(rot_matrix_y, rot_matrix_z, tmp_matrix);
-            multiplyMatrices(rot_matrix_x, tmp_matrix, q_rand_matrix);
+            multiply_matrices(rot_matrix_y, rot_matrix_z, tmp_matrix);
+            multiply_matrices(rot_matrix_x, tmp_matrix, q_rand_matrix);
 
-            float4 q_rand_vector = matrixToQuaternion(q_rand_matrix);
+            float4 q_rand_vector = matrix_to_quaternion(q_rand_matrix);
 
-            quaternionToMatrix(q_init_vector, q_init_matrix);
+            quaternion_to_matrix(q_init_vector, q_init_matrix);
 
-            float3 t = negate(multiplyMatrixWithVector(q_init_matrix, multiplyMatrixWithVector(q_rand_matrix, local_rot_center)))
-                   + multiplyMatrixWithVector(q_init_matrix, local_rot_center)
+            float3 t = negate(multiply_matrix_with_vector(q_init_matrix, multiply_matrix_with_vector(q_rand_matrix, local_rot_center)))
+                   + multiply_matrix_with_vector(q_init_matrix, local_rot_center)
                    + t_init
                    + t_rand;
 
-            float4 q = multiplyQuaternions(q_init_vector, q_rand_vector);
+            float4 q = multiply_quaternions(q_init_vector, q_rand_vector);
             q = normalize(q);
 
             /* write state back into global memory */
@@ -346,7 +346,7 @@ __global__ void propagate(float *states, int n_states, int states_size, float de
 
 
 
-__global__ void propagate_multiple(float *states, int n_states, int n_objects, int states_size, float delta_time, curandStateMRG32k3a *mrg_state)
+__global__ void propagate_multiple_kernel(float *states, int n_states, int n_objects, int states_size, float delta_time, curandStateMRG32k3a *mrg_state)
 {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n_states) {
@@ -394,23 +394,23 @@ __global__ void propagate_multiple(float *states, int n_states, int n_objects, i
 
             float3 t_rand = make_float3(trans_x, trans_y, trans_z);
 
-            createRotationMatrix(angle_x, 0, rot_matrix_x);
-            createRotationMatrix(angle_y, 1, rot_matrix_y);
-            createRotationMatrix(angle_z, 2, rot_matrix_z);
+            create_rotation_matrix(angle_x, 0, rot_matrix_x);
+            create_rotation_matrix(angle_y, 1, rot_matrix_y);
+            create_rotation_matrix(angle_z, 2, rot_matrix_z);
 
-            multiplyMatrices(rot_matrix_y, rot_matrix_z, tmp_matrix);
-            multiplyMatrices(rot_matrix_x, tmp_matrix, q_rand_matrix);
+            multiply_matrices(rot_matrix_y, rot_matrix_z, tmp_matrix);
+            multiply_matrices(rot_matrix_x, tmp_matrix, q_rand_matrix);
 
-            float4 q_rand_vector = matrixToQuaternion(q_rand_matrix);
+            float4 q_rand_vector = matrix_to_quaternion(q_rand_matrix);
 
-            quaternionToMatrix(q_init_vector, q_init_matrix);
+            quaternion_to_matrix(q_init_vector, q_init_matrix);
 
-            float3 t = negate(multiplyMatrixWithVector(q_init_matrix, multiplyMatrixWithVector(q_rand_matrix, local_rot_center)))
-                   + multiplyMatrixWithVector(q_init_matrix, local_rot_center)
+            float3 t = negate(multiply_matrix_with_vector(q_init_matrix, multiply_matrix_with_vector(q_rand_matrix, local_rot_center)))
+                   + multiply_matrix_with_vector(q_init_matrix, local_rot_center)
                    + t_init
                    + t_rand;
 
-            float4 q = multiplyQuaternions(q_init_vector, q_rand_vector);
+            float4 q = multiply_quaternions(q_init_vector, q_rand_vector);
             q = normalize(q);
 
             /* write state back into global memory */
@@ -440,7 +440,7 @@ __global__ void propagate_multiple(float *states, int n_states, int n_objects, i
 
 
 
-__global__ void compare(float *observations, float* visibility_probs, int n_pixels_per_pose,
+__global__ void compare_kernel(float *observations, float* visibility_probs, int n_pixels_per_pose,
                         bool constant_occlusion, float *d_log_likelihoods, float delta_time, int n_poses, int n_rows, int n_cols) {
     int block_id = blockIdx.x + blockIdx.y * gridDim.x;
     if (block_id < n_poses) {
@@ -478,7 +478,7 @@ __global__ void compare(float *observations, float* visibility_probs, int n_pixe
             // Could save some data transfer time, but will cost more execution time, since all
             // the threads in one warp will have to wait for the else-branch to finish
             if (!constant_occlusion) {
-                visibility_prob = propagateOcclusion(visibility_probs[global_index], delta_time);
+                visibility_prob = propagate_occlusion(visibility_probs[global_index], delta_time);
                 visibility_probs[global_index] = visibility_prob;
             }
 //            if (!constant_occlusion) {
@@ -536,7 +536,7 @@ __global__ void compare(float *observations, float* visibility_probs, int n_pixe
 
 
 
-__global__ void compare_multiple(float *observations, float* old_visibility_probs, float* new_visibility_probs, int* occlusion_image_indices, int nr_pixels,
+__global__ void compare_multiple_kernel(float *observations, float* old_visibility_probs, float* new_visibility_probs, int* occlusion_image_indices, int nr_pixels,
                                  float *d_log_likelihoods, float delta_time, int n_poses, int n_rows, int n_cols, bool update, float* test_array) {
     int block_id = blockIdx.x + blockIdx.y * gridDim.x;
     if (block_id < n_poses) {
@@ -596,7 +596,7 @@ __global__ void compare_multiple(float *observations, float* old_visibility_prob
             // Could save some data transfer time, but will cost more execution time, since all
             // the threads in one warp will have to wait for the else-branch to finish
 
-            visibility_prob = propagateOcclusion(visibility_probs[occlusion_pixel_index], delta_time);
+            visibility_prob = propagate_occlusion(visibility_probs[occlusion_pixel_index], delta_time);
             if (update) visibility_probs[occlusion_pixel_index] = visibility_prob;
 
 
@@ -647,7 +647,7 @@ __global__ void compare_multiple(float *observations, float* old_visibility_prob
 
 
 
-__global__ void resample(float *visibility_probs,
+__global__ void resample_kernel(float *visibility_probs,
                          float *visibility_probs_copy,
                          float *states,
                          float *states_copy,
@@ -674,7 +674,7 @@ __global__ void resample(float *visibility_probs,
 }
 
 
-__global__ void resample_multiple(float *visibility_probs,
+__global__ void resample_multiple_kernel(float *visibility_probs,
                                   float *visibility_probs_copy,
                                   int *resampling_indices,
                                   int nr_pixels) {
@@ -711,14 +711,14 @@ CudaFilter::CudaFilter() :
     props.major = 2;
     props.minor = 0;
     cudaChooseDevice( &device_number, &props );
-    checkCUDAError("choosing device");
+    check_cuda_error("choosing device");
 
     /* tell CUDA which device we will be using for graphic interop
      * requires that the CUDA device be specified by
      * cudaGLSetGLDevice() before any other runtime calls. */
 
     cudaGLSetGLDevice( device_number );
-    checkCUDAError("cudaGLsetGLDevice");
+    check_cuda_error("cudaGLsetGLDevice");
 
     cudaGetDeviceProperties(&props, device_number);     // we will run the program only on one graphics card, the first one we can find = 0
     warp_size_ = props.warpSize;            // equals 32 for all current graphics cards, but might change in the future
@@ -747,7 +747,7 @@ CudaFilter::CudaFilter() :
 
 }
 
-void CudaFilter::Init(vector<vector<float> > com_models, float angle_sigma, float trans_sigma,
+void CudaFilter::init(vector<vector<float> > com_models, float angle_sigma, float trans_sigma,
                       float p_visible_init, float c, float log_c, float p_visible_occluded,
                       float tail_weight, float model_sigma, float sigma_factor, float max_depth, float exponential_rate) {
 
@@ -768,12 +768,12 @@ void CudaFilter::Init(vector<vector<float> > com_models, float angle_sigma, floa
 
     cudaMemset(d_log_likelihoods_, 0, sizeof(float) * n_poses_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemset d_log_likelihoods");
+        check_cuda_error("cudaMemset d_log_likelihoods");
     #endif
 
     cudaMemcpyToSymbol(g_sigmas, &local_sigmas, sizeof(float2), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol local_sigmas -> sigmas");
+        check_cuda_error("cudaMemcpyToSymbol local_sigmas -> sigmas");
     #endif
 
     vector<float3> com_models_raw;
@@ -783,57 +783,57 @@ void CudaFilter::Init(vector<vector<float> > com_models, float angle_sigma, floa
 
     cudaMemcpyToSymbol(g_rot_center, com_models_raw.data(), com_models_raw.size() * sizeof(float3), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol com_model -> rot_center");
+        check_cuda_error("cudaMemcpyToSymbol com_model -> rot_center");
     #endif
 
     cudaMemcpyToSymbol(g_p_visible_init, &p_visible_init, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol p_visible_init -> g_p_visible_init");
+        check_cuda_error("cudaMemcpyToSymbol p_visible_init -> g_p_visible_init");
     #endif
 
     cudaMemcpyToSymbol(g_c, &c, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol c -> g_c");
+        check_cuda_error("cudaMemcpyToSymbol c -> g_c");
     #endif
 
     cudaMemcpyToSymbol(g_log_c, &log_c, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol log_c -> g_log_c");
+        check_cuda_error("cudaMemcpyToSymbol log_c -> g_log_c");
     #endif
 
     cudaMemcpyToSymbol(g_p_visible_occluded, &p_visible_occluded, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol p_visible_occluded -> g_p_visible_occluded");
+        check_cuda_error("cudaMemcpyToSymbol p_visible_occluded -> g_p_visible_occluded");
     #endif
 
     cudaMemcpyToSymbol(g_tail_weight, &tail_weight, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol tail_weight -> g_tail_weight");
+        check_cuda_error("cudaMemcpyToSymbol tail_weight -> g_tail_weight");
     #endif
 
     cudaMemcpyToSymbol(g_model_sigma, &model_sigma, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol model_sigma -> g_model_sigma");
+        check_cuda_error("cudaMemcpyToSymbol model_sigma -> g_model_sigma");
     #endif
 
     cudaMemcpyToSymbol(g_sigma_factor, &sigma_factor, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol sigma_factor -> g_sigma_factor");
+        check_cuda_error("cudaMemcpyToSymbol sigma_factor -> g_sigma_factor");
     #endif
 
     cudaMemcpyToSymbol(g_max_depth, &max_depth, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol max_depth -> g_max_depth");
+        check_cuda_error("cudaMemcpyToSymbol max_depth -> g_max_depth");
     #endif
 
     cudaMemcpyToSymbol(g_exponential_rate, &exponential_rate, sizeof(float), 0, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpyToSymbol exponential_rate -> g_exponential_rate");
+        check_cuda_error("cudaMemcpyToSymbol exponential_rate -> g_exponential_rate");
     #endif
 }
 
 
-void CudaFilter::Propagate(const float &current_time, vector<vector<float> > &states)
+void CudaFilter::propagate(const float &current_time, vector<vector<float> > &states)
 {
 
 
@@ -841,9 +841,9 @@ void CudaFilter::Propagate(const float &current_time, vector<vector<float> > &st
     last_propagation_time_ = current_time;
 
 
-    propagate <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_features_, delta_time, d_mrg_states_);
+    propagate_kernel <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_features_, delta_time, d_mrg_states_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("propagate kernel call");
+        check_cuda_error("propagate kernel call");
     #endif
 
 
@@ -851,7 +851,7 @@ void CudaFilter::Propagate(const float &current_time, vector<vector<float> > &st
     // TODO necessary? Remove for performance?
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize propagate");
+        check_cuda_error("cudaDeviceSynchronize propagate");
     #endif
 
 
@@ -859,7 +859,7 @@ void CudaFilter::Propagate(const float &current_time, vector<vector<float> > &st
     float *states_raw = (float*) malloc(n_poses_ * n_features_ * sizeof(float));
     cudaMemcpy(states_raw, d_states_, n_poses_ * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy d_states -> states");
+        check_cuda_error("cudaMemcpy d_states -> states");
     #endif
 
 
@@ -873,7 +873,7 @@ void CudaFilter::Propagate(const float &current_time, vector<vector<float> > &st
 
 
 
-void CudaFilter::PropagateMultiple(const float &current_time, vector<vector<vector<float> > > &states)
+void CudaFilter::propagate_multiple(const float &current_time, vector<vector<vector<float> > > &states)
 {
 
     float delta_time = current_time - last_propagation_time_;
@@ -893,13 +893,13 @@ void CudaFilter::PropagateMultiple(const float &current_time, vector<vector<vect
 
     cudaMemcpy(d_states_, states_raw, n_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy states -> d_states");
+        check_cuda_error("cudaMemcpy states -> d_states");
     #endif
 
 
-    propagate_multiple <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_objects, n_features_, delta_time, d_mrg_states_);
+    propagate_multiple_kernel <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_objects, n_features_, delta_time, d_mrg_states_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("propagate kernel call");
+        check_cuda_error("propagate kernel call");
     #endif
 
 
@@ -907,14 +907,14 @@ void CudaFilter::PropagateMultiple(const float &current_time, vector<vector<vect
     // TODO necessary? Remove for performance?
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize propagate");
+        check_cuda_error("cudaDeviceSynchronize propagate");
     #endif
 
 
 
     cudaMemcpy(states_raw, d_states_, n_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy d_states -> states");
+        check_cuda_error("cudaMemcpy d_states -> states");
     #endif
 
 
@@ -932,7 +932,7 @@ void CudaFilter::PropagateMultiple(const float &current_time, vector<vector<vect
 
 
 
-void CudaFilter::Compare(float observation_time, bool constant_occlusion, vector<float> &log_likelihoods) {
+void CudaFilter::compare(float observation_time, bool constant_occlusion, vector<float> &log_likelihoods) {
 
 #ifdef PROFILING_ACTIVE
     cudaEvent_t start, stop;
@@ -953,15 +953,15 @@ void CudaFilter::Compare(float observation_time, bool constant_occlusion, vector
     cudaEventRecord(start);
 #endif
 
-    compare <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, n_cols_ * n_rows_,
+    compare_kernel <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, n_cols_ * n_rows_,
             constant_occlusion, d_log_likelihoods_, delta_time, n_poses_, n_rows_, n_cols_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("compare kernel call");
+        check_cuda_error("compare kernel call");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize compare");
+        check_cuda_error("cudaDeviceSynchronize compare");
     #endif
 
 #ifdef PROFILING_ACTIVE
@@ -978,12 +978,12 @@ void CudaFilter::Compare(float observation_time, bool constant_occlusion, vector
 
     cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, n_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy d_log_likelihoods -> log_likelihoods");
+        check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize compare");
+        check_cuda_error("cudaDeviceSynchronize compare");
     #endif
 
 #ifdef PROFILING_ACTIVE
@@ -999,7 +999,7 @@ void CudaFilter::Compare(float observation_time, bool constant_occlusion, vector
 
 
 
-void CudaFilter::CompareMultiple(bool update, vector<float> &log_likelihoods) {
+void CudaFilter::compare_multiple(bool update, vector<float> &log_likelihoods) {
 
 #ifdef PROFILING_ACTIVE
     cudaEvent_t start, stop;
@@ -1027,20 +1027,20 @@ void CudaFilter::CompareMultiple(bool update, vector<float> &log_likelihoods) {
     allocate(d_test_array_, TEST_SIZE * sizeof(float), "test_array");
     cudaMemset(d_test_array_, 0, TEST_SIZE * sizeof(float));
 
-    compare_multiple <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, d_visibility_probs_copy_, d_prev_sample_indices_, n_cols_ * n_rows_,
+    compare_multiple_kernel <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, d_visibility_probs_copy_, d_prev_sample_indices_, n_cols_ * n_rows_,
                                            d_log_likelihoods_, delta_time, n_poses_, n_rows_, n_cols_, update, d_test_array_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("compare kernel call");
+        check_cuda_error("compare kernel call");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize compare_multiple");
+        check_cuda_error("cudaDeviceSynchronize compare_multiple");
     #endif
 
     cudaMemcpy(test_array, d_test_array_, TEST_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy d_log_likelihoods -> log_likelihoods");
+        check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
     #endif
 
 //    for (int i = 0; i < TEST_SIZE; i++) {
@@ -1072,12 +1072,12 @@ void CudaFilter::CompareMultiple(bool update, vector<float> &log_likelihoods) {
 
     cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, n_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy d_log_likelihoods -> log_likelihoods");
+        check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize compare");
+        check_cuda_error("cudaDeviceSynchronize compare");
     #endif
 
 #ifdef PROFILING_ACTIVE
@@ -1097,13 +1097,13 @@ void CudaFilter::CompareMultiple(bool update, vector<float> &log_likelihoods) {
 
 
 
-void CudaFilter::Resample(vector<int> resampling_indices) {
+void CudaFilter::resample(vector<int> resampling_indices) {
 
 //    cout << "resample <<< " << n_poses_ << ", " << 128 << " >>>" << endl;
 
     cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * n_poses_, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy resampling_indices -> d_resampling_indices_");
+        check_cuda_error("cudaMemcpy resampling_indices -> d_resampling_indices_");
     #endif
 
 //        int min = 100;
@@ -1118,16 +1118,16 @@ void CudaFilter::Resample(vector<int> resampling_indices) {
 
     int nr_pixels = n_rows_ * n_cols_;
 
-    resample <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
+    resample_kernel <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
                                     d_states_, d_states_copy_,
                                     d_resampling_indices_, nr_pixels, n_features_);
     #ifdef CHECK_ERRORS
-        checkCUDAError("resample kernel call");
+        check_cuda_error("resample kernel call");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize resample");
+        check_cuda_error("cudaDeviceSynchronize resample");
     #endif
 
 
@@ -1146,24 +1146,24 @@ void CudaFilter::Resample(vector<int> resampling_indices) {
 
 
 
-void CudaFilter::ResampleMultiple(vector<int> resampling_indices) {
+void CudaFilter::resample_multiple(vector<int> resampling_indices) {
 
     cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * n_poses_, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy resampling_indices -> d_resampling_indices_");
+        check_cuda_error("cudaMemcpy resampling_indices -> d_resampling_indices_");
     #endif
 
     int nr_pixels = n_rows_ * n_cols_;
 
-    resample_multiple <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
+    resample_multiple_kernel <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
                                              d_resampling_indices_, nr_pixels);
     #ifdef CHECK_ERRORS
-        checkCUDAError("resample kernel call");
+        check_cuda_error("resample kernel call");
     #endif
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize resample");
+        check_cuda_error("cudaDeviceSynchronize resample");
     #endif
 
 
@@ -1205,7 +1205,7 @@ void CudaFilter::set_states(std::vector<std::vector<float> > &states, int seed)
 
         cudaMemcpy(d_states_, states_raw, states_size, cudaMemcpyHostToDevice);
         #ifdef CHECK_ERRORS
-            checkCUDAError("cudaMemcpy states_raw -> d_states_");
+            check_cuda_error("cudaMemcpy states_raw -> d_states_");
         #endif
 
         free(states_raw);
@@ -1213,7 +1213,7 @@ void CudaFilter::set_states(std::vector<std::vector<float> > &states, int seed)
         // setup random number generators for each thread to be used in the propagate kernel
         allocate(d_mrg_states_, n_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
 
-        setupNumberGenerators <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
+        setup_number_generators_kernel <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
 
         cudaDeviceSynchronize();
     } else {
@@ -1239,7 +1239,7 @@ void CudaFilter::set_states_multiple(int n_objects, int n_features, int seed)
         // setup random number generators for each thread to be used in the propagate kernel
         allocate(d_mrg_states_, n_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
 
-        setupNumberGenerators <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
+        setup_number_generators_kernel <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
 
         cudaDeviceSynchronize();
     } else {
@@ -1265,7 +1265,7 @@ void CudaFilter::set_observations(const float* observations, const float observa
 void CudaFilter::set_observations(const float* observations) {
     cudaMemcpy(d_observations_, observations, n_cols_ * n_rows_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy observations -> d_observations_");
+        check_cuda_error("cudaMemcpy observations -> d_observations_");
     #endif
     cudaDeviceSynchronize();
 }
@@ -1275,7 +1275,7 @@ void CudaFilter::set_prev_sample_indices(const int* prev_sample_indices) {
     cudaMemcpy(d_prev_sample_indices_, prev_sample_indices, n_poses_ * sizeof(int), cudaMemcpyHostToDevice);
 //    cout << "when setting prev_sample_indices: n_poses: " << n_poses_ << ", max poses: " << n_max_poses_ << endl;
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy prev_sample_indices -> d_prev_sample_indices_");
+        check_cuda_error("cudaMemcpy prev_sample_indices -> d_prev_sample_indices_");
     #endif
     cudaDeviceSynchronize();
 }
@@ -1295,7 +1295,7 @@ void CudaFilter::set_resolution(int n_rows, int n_cols) {
 
     cudaMemcpy(d_visibility_probs_, &initial_visibility_probs[0], n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
+        check_cuda_error("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
     #endif
 
     cudaDeviceSynchronize();
@@ -1305,7 +1305,7 @@ void CudaFilter::set_resolution(int n_rows, int n_cols) {
 void CudaFilter::set_visibility_probabilities(const float* visibility_probabilities) {
     cudaMemcpy(d_visibility_probs_, visibility_probabilities, n_rows_ * n_cols_ * n_poses_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy visibility_probabilities -> d_visibility_probs_");
+        check_cuda_error("cudaMemcpy visibility_probabilities -> d_visibility_probs_");
     #endif
 }
 
@@ -1339,13 +1339,13 @@ void CudaFilter::set_number_of_max_poses(int n_poses, int n_poses_x) {
     vector<float> initial_visibility_probs (n_rows_ * n_cols_ * n_max_poses_, visibility_prob_default_);
     cudaMemcpy(d_visibility_probs_, &initial_visibility_probs[0], n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
+        check_cuda_error("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
     #endif
 
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        checkCUDAError("cudaDeviceSynchronize set_number_of_states");
+        check_cuda_error("cudaDeviceSynchronize set_number_of_states");
     #endif
 
 
@@ -1408,7 +1408,7 @@ vector<float> CudaFilter::get_visibility_probabilities(int state_id) {
     int offset = state_id * n_rows_ * n_cols_;
     cudaMemcpy(visibility_probabilities, d_visibility_probs_ + offset, n_rows_ * n_cols_ * sizeof(float), cudaMemcpyDeviceToHost);
 #ifdef CHECK_ERRORS
-    checkCUDAError("cudaMemcpy d_visibility_probabilities -> visibility_probabilities");
+    check_cuda_error("cudaMemcpy d_visibility_probabilities -> visibility_probabilities");
 #endif
     vector<float> visibility_probabilities_vector;
     for (int i = 0; i < n_rows_ * n_cols_; i++) {
@@ -1424,7 +1424,7 @@ vector<vector<float> > CudaFilter::get_visibility_probabilities() {
     float* visibility_probabilities = (float*) malloc(n_poses_ * n_rows_ * n_cols_ * sizeof(float));
     cudaMemcpy(visibility_probabilities, d_visibility_probs_, n_poses_ * n_rows_ * n_cols_ * sizeof(float), cudaMemcpyDeviceToHost);
 #ifdef CHECK_ERRORS
-    checkCUDAError("cudaMemcpy d_visibility_probabilities -> visibility_probabilities");
+    check_cuda_error("cudaMemcpy d_visibility_probabilities -> visibility_probabilities");
 #endif
     vector<vector<float> > visibility_probabilities_vector;
     vector<float> tmp_vector (n_rows_ * n_cols_);
@@ -1446,7 +1446,7 @@ vector<vector<float> > CudaFilter::get_visibility_probabilities() {
 
 
 
-template <typename T> void CudaFilter::allocate(T * &pointer, size_t size, char* name) {
+template <typename T> void CudaFilter::allocate(T * &pointer, size_t size, string name) {
 #ifdef CHECK_ERRORS
     size_t free_space_before, free_space_after, total_space;
     cuMemGetInfo(&free_space_before, &total_space);
@@ -1464,25 +1464,25 @@ template <typename T> void CudaFilter::allocate(T * &pointer, size_t size, char*
     } else {
 //        cout << "memory reallocated for " << name << ": " << size / 1e6 << "MB, free space left: " << free_space_after / 1e6 << " MB" << endl;
     }
-    checkCUDAError("cudaMalloc failed");
+    check_cuda_error("cudaMalloc failed");
 #endif
 }
 
 
 
-void CudaFilter::MapTexture() {
+void CudaFilter::map_texture() {
     cudaBindTextureToArray(texture_reference, d_texture_array_);
-    checkCUDAError("cudaBindTextureToArray");
+    check_cuda_error("cudaBindTextureToArray");
 }
 
 
-void CudaFilter::coutArray(float* array, int size, char* name) {
+void CudaFilter::cout_array(float* array, int size, char* name) {
     for (size_t i = 0; i < size; i++) {
         cout << name << "[" << i << "]: " << array[i] << endl;
     }
 }
 
-void CudaFilter::coutArray(vector<float> array, char* name) {
+void CudaFilter::cout_array(vector<float> array, char* name) {
     for (size_t i = 0; i < array.size(); i++) {
         cout << name << "[" << i << "]: " << array[i] << endl;
     }
@@ -1490,7 +1490,7 @@ void CudaFilter::coutArray(vector<float> array, char* name) {
 
 
 
-void CudaFilter::checkCUDAError(const char *msg)
+void CudaFilter::check_cuda_error(const char *msg)
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err)
