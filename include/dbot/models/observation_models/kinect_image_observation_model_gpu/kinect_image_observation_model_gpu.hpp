@@ -42,8 +42,6 @@ struct Traits<KinectImageObservationModelGPU<State> >
     typedef RBObservationModel<State, Observation> Base;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
-
-//  typedef sf::RigidBodySystem<-1>           State;
 };
 }
 
@@ -150,10 +148,6 @@ public:
                                       fragment_shader_path_,
                                       camera_matrix_.cast<float>()));
         cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
-
-
-
-        //opengl_->PrepareRender(camera_matrix_.cast<float>());
 
 
         opengl_->set_number_of_max_poses(max_sample_count_);

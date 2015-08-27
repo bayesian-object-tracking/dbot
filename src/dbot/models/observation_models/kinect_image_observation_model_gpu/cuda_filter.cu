@@ -1476,18 +1476,6 @@ void CudaFilter::map_texture() {
 }
 
 
-void CudaFilter::cout_array(float* array, int size, char* name) {
-    for (size_t i = 0; i < size; i++) {
-        cout << name << "[" << i << "]: " << array[i] << endl;
-    }
-}
-
-void CudaFilter::cout_array(vector<float> array, char* name) {
-    for (size_t i = 0; i < array.size(); i++) {
-        cout << name << "[" << i << "]: " << array[i] << endl;
-    }
-}
-
 
 
 void CudaFilter::check_cuda_error(const char *msg)
