@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
+#include "boost/filesystem.hpp"
 #include "Eigen/Core"
 
 #include <fl/util/math/pose_vector.hpp>
@@ -125,6 +126,20 @@ public:
         exponential_rate_ = exponential_rate;
 
 
+
+        if(!boost::filesystem::exists(vertex_shader_path))
+        {
+            std::cout << "vertex shader does not exist at: "
+                 << vertex_shader_path << std::endl;
+            exit(-1);
+        }
+        if(!boost::filesystem::exists(fragment_shader_path))
+        {
+            std::cout << "fragment_shader does not exist at: "
+                 << fragment_shader_path << std::endl;
+            exit(-1);
+        }
+
         vertex_shader_path_ =  vertex_shader_path;
         fragment_shader_path_ = fragment_shader_path;
 
@@ -152,11 +167,10 @@ public:
         opengl_->set_resolution(n_rows_, n_cols_);
         cuda_->set_resolution(n_rows_, n_cols_);
 
-        RegisterResource();
+        register_resource();
 
         std:: cout << "set occlusions..." << std::endl;
 
-//        set_occlusions();
         reset();
 
         float c = p_visible_visible_ - p_visible_occluded_;
@@ -284,19 +298,19 @@ public:
 
     virtual void reset()
     {
-        Occlusions();
+        set_occlusions();
         observation_time_ = 0;
     }
 
 
     // TODO: this image should be in a different format BOTH OF THEM!!
-    const std::vector<float> Occlusions(size_t index) const
+    const std::vector<float> get_occlusions(size_t index) const
     {
         std::vector<float> visibility_probs = cuda_->get_visibility_probabilities((int) index);
         return visibility_probs;
     }
 
-    void RangeImage(std::vector<std::vector<int> > &intersect_indices,
+    void get_range_image(std::vector<std::vector<int> > &intersect_indices,
                     std::vector<std::vector<float> > &depth)
     {
         opengl_->get_depth_values(intersect_indices, depth);
@@ -313,7 +327,7 @@ private:
 
     }
 
-    void Occlusions(const float& visibility_prob = -1)
+    void set_occlusions(const float& visibility_prob = -1)
     {
         float default_visibility_probability = visibility_prob;
         if (visibility_prob == -1) default_visibility_probability = initial_visibility_prob_;
@@ -339,7 +353,7 @@ private:
 
     }
 
-    void checkCUDAError(const char *msg)
+    void check_cuda_error(const char *msg)
     {
         cudaError_t err = cudaGetLastError();
         if( cudaSuccess != err)
@@ -350,21 +364,21 @@ private:
     }
 
 
-    void UnregisterResource()
+    void unregister_resource()
     {
         if (resource_registered_) {
             cudaGraphicsUnregisterResource(combined_texture_resource_);
-            checkCUDAError("cudaGraphicsUnregisterResource");
+            check_cuda_error("cudaGraphicsUnregisterResource");
             resource_registered_ = false;
         }
     }
 
-    void RegisterResource()
+    void register_resource()
     {
         if (!resource_registered_) {
             combined_texture_opengl_ = opengl_->get_combined_texture();
             cudaGraphicsGLRegisterImage(&combined_texture_resource_, combined_texture_opengl_, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsReadOnly);
-            checkCUDAError("cudaGraphicsGLRegisterImage)");
+            check_cuda_error("cudaGraphicsGLRegisterImage)");
             resource_registered_ = true;
         }
     }
