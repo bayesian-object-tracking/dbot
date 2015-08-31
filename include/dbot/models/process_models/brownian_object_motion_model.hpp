@@ -168,46 +168,15 @@ public:
 
     virtual State state(const State& prev_state,
                         const Noise& noise,
-                        const Input& input) const
+                        const Input& input)
     {
+        Condition(prev_state, input);
+        return MapStandardGaussian(noise);
 
     }
 
 
 
-
-
-
-//    virtual void Condition(const Scalar& delta_time,
-//                           const State&  state,
-//                           const Input&  control)
-//    {
-//        state_ = state;
-//        for(size_t i = 0; i < state_.count(); i++)
-//        {
-//            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).orientation().quaternion().coeffs());
-
-//            // transform the state, which is the pose and velocity with respect to to the origin,
-//            // into internal representation, which is the position and velocity of the center
-//            // and the orientation and angular velocity around the center
-//            state_.component(i).position()        += state_.component(i).orientation().rotation_matrix()*rotation_center_[i];
-//            state_.component(i).linear_velocity() += state_.component(i).angular_velocity().cross(state_.component(i).position());
-
-//            Eigen::Matrix<Scalar, 6, 1> linear_state;
-//            linear_state.topRows(3) = Eigen::Vector3d::Zero();
-//            linear_state.bottomRows(3) = state_.component(i).linear_velocity();
-//            linear_process_[i].Condition(delta_time,
-//                                         linear_state,
-//                                         control.template middleRows<3>(i*DIMENSION_PER_OBJECT));
-
-//            Eigen::Matrix<Scalar, 6, 1> angular_state;
-//            angular_state.topRows(3) = Eigen::Vector3d::Zero();
-//            angular_state.bottomRows(3) = state_.component(i).angular_velocity();
-//            angular_process_[i].Condition(delta_time,
-//                                          angular_state,
-//                                          control.template middleRows<3>(i*DIMENSION_PER_OBJECT + 3));
-//        }
-//    }
 
 
 
@@ -254,11 +223,11 @@ public:
 
     virtual unsigned InputDimension() const
     {
-        return this->NoiseDimension();
+        return this->noise_dimension();
     }
 
 
-    virtual unsigned NoiseDimension() const
+    virtual unsigned noise_dimension() const
     {
         return state_.count() * DIMENSION_PER_OBJECT;
     }

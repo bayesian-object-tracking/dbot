@@ -86,11 +86,11 @@ public:
         {
            dimension +=  sampling_blocks_[i].size();
         }
-        if(dimension != process_model_->NoiseDimension())
+        if(dimension != process_model_->noise_dimension())
         {
             std::cout << "the dimension of the sampling blocks is " << dimension
                       << " while the dimension of the noise is "
-                      << process_model_->NoiseDimension() << std::endl;
+                      << process_model_->noise_dimension() << std::endl;
             exit(-1);
         }
     }
@@ -104,7 +104,7 @@ public:
 
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(belief_.size(),
-                                 Noise::Zero(process_model_->NoiseDimension()));
+                                 Noise::Zero(process_model_->noise_dimension()));
         old_particles_ = belief_.locations();
 
         for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
@@ -122,9 +122,9 @@ public:
             // propagate using partial noise -----------------------------------
             for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                process_model_->Condition(old_particles_[i_sampl], input);
                 belief_.location(i_sampl) =
-                        process_model_->MapStandardGaussian(noises_[i_sampl]);
+                        process_model_->state(old_particles_[i_sampl],
+                                              noises_[i_sampl], input);
             }
 
             // compute likelihood ----------------------------------------------

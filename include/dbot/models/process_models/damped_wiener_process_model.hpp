@@ -131,6 +131,15 @@ public:
         gaussian_.diagonal_covariance(Covariance(delta_time_));
     }
 
+    virtual State state(const State& prev_state,
+                        const Noise& noise,
+                        const Input& input)
+    {
+        Condition(prev_state, input);
+        return MapStandardGaussian(noise);
+
+    }
+
 
 //    virtual void Condition(const Scalar&  delta_time,
 //                           const State&  state,
@@ -150,11 +159,11 @@ public:
 
     virtual unsigned Dimension() const
     {
-        return NoiseDimension(); // all dimensions are the same
+        return noise_dimension(); // all dimensions are the same
     }
 
 
-    virtual int NoiseDimension() const
+    virtual int noise_dimension() const
     {
         return gaussian_.dimension();
     }
