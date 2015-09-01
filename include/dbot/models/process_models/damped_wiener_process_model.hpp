@@ -88,15 +88,17 @@ struct Traits<DampedWienerProcessModel<State_> >
  * \ingroup distributions
  * \ingroup process_models
  */
-template <typename State>
+template <typename State_>
 class DampedWienerProcessModel
 //        :public internal::Traits<DampedWienerProcessModel<State> >::ProcessModelBase
 //        ,public internal::Traits<DampedWienerProcessModel<State> >::GaussianMapBase
 {
 public:
-    typedef internal::Traits<DampedWienerProcessModel<State> > Traits;
+    typedef internal::Traits<DampedWienerProcessModel<State_> > Traits;
 
     typedef typename Traits::Scalar         Scalar;
+    typedef typename Traits::State         State;
+
     typedef typename Traits::SecondMoment       SecondMoment;
     typedef typename Traits::Input          Input;
     typedef typename Traits::Noise          Noise;

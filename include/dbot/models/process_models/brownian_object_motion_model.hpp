@@ -55,6 +55,8 @@
 #include <dbot/models/process_models/damped_wiener_process_model.hpp>
 #include <dbot/models/process_models/integrated_damped_wiener_process_model.hpp>
 
+#include <fl/model/process/interface/state_transition_function.hpp>
+
 namespace ff
 {
 
@@ -80,7 +82,9 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
     typedef State_                                      State;
     typedef typename State::Scalar                      Scalar;
     typedef Eigen::Matrix<Scalar, INPUT_DIMENSION, 1>   Input;
-    typedef Input Noise;
+
+    // todo: this is a hack!!
+    typedef State_ Noise;
 
     typedef Eigen::Quaternion<Scalar>                      Quaternion;
     typedef Eigen::Matrix<Scalar, DIMENSION_PER_OBJECT, 1> ObjectState;
@@ -95,7 +99,12 @@ struct Traits<BrownianObjectMotionModel<State_, OBJECTS> >
  * \ingroup process_models
  */
 template <typename State_, int OBJECTS = -1>
-class BrownianObjectMotionModel
+class BrownianObjectMotionModel:
+        public fl::StateTransitionFunction<
+        State_,
+        typename internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::Noise,
+        typename internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> >::Input>
+
 {
 public:
     typedef internal::Traits<BrownianObjectMotionModel<State_, OBJECTS> > Traits;
@@ -168,7 +177,7 @@ public:
 
     virtual State state(const State& prev_state,
                         const Noise& noise,
-                        const Input& input)
+                        const Input& input) const
     {
         Condition(prev_state, input);
         return MapStandardGaussian(noise);
@@ -182,7 +191,7 @@ public:
 
 
     virtual void Condition(const State&  state,
-                           const Input&  control)
+                           const Input&  control) const
     {
         state_ = state;
         for(size_t i = 0; i < state_.count(); i++)
@@ -221,18 +230,18 @@ public:
         angular_process_[object_index].Parameters(damping, angular_acceleration_covariance);
     }
 
-    virtual unsigned InputDimension() const
+    virtual int input_dimension() const
     {
         return this->noise_dimension();
     }
 
 
-    virtual unsigned noise_dimension() const
+    virtual int noise_dimension() const
     {
         return state_.count() * DIMENSION_PER_OBJECT;
     }
 
-    virtual size_t Dimension()
+    virtual int state_dimension() const
     {
         return state_.rows();
     }
@@ -240,17 +249,17 @@ public:
 
 private:
     // conditionals
-    State state_;
-    std::vector<Eigen::Matrix<Scalar, 4, 3> > quaternion_map_;
+    mutable State state_;
+    mutable std::vector<Eigen::Matrix<Scalar, 4, 3> > quaternion_map_;
 
     // parameters
-    std::vector<Eigen::Matrix<Scalar, 3, 1> > rotation_center_;
+    mutable std::vector<Eigen::Matrix<Scalar, 3, 1> > rotation_center_;
 
     // processes
-    std::vector<Process>   linear_process_;
-    std::vector<Process>   angular_process_;
+    mutable std::vector<Process>   linear_process_;
+    mutable std::vector<Process>   angular_process_;
 
-    double delta_time_;
+    mutable double delta_time_;
 };
 
 }

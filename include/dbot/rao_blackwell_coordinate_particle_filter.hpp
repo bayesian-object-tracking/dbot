@@ -54,9 +54,9 @@ template<typename ProcessModel, typename ObservationModel>
 class RBCoordinateParticleFilter
 {
 public:
-    typedef typename internal::Traits<ProcessModel>::State  State;
-    typedef typename internal::Traits<ProcessModel>::Input  Input;
-    typedef typename internal::Traits<ProcessModel>::Noise  Noise;
+    typedef typename ProcessModel::State  State;
+    typedef typename ProcessModel::Input  Input;
+    typedef typename ProcessModel::Noise  Noise;
 
     typedef Eigen::Array<State, -1, 1>       StateArray;
     typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
