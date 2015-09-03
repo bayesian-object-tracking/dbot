@@ -85,7 +85,7 @@ public:
     void set_number_of_poses(int n_poses);
 
 
-    GLuint get_combined_texture();
+    GLuint get_framebuffer_texture();
     int get_n_poses_x();
     int get_n_renders();
     void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
@@ -96,23 +96,13 @@ private:
     static constexpr float FAR_PLANE = 4.0f; // Kinect does not see anything further away than 7 meters
     static const int WINDOW_WIDTH = 80;  // default values if not specified
     static const int WINDOW_HEIGHT = 60; // default values if not specified
-    static const int TIME_MEASUREMENTS_COUNT = 16;
-    static const int RENDER_TYPE_COUNT = 1;
-    enum time_measurement { SEND_MATRICES, CLEAR_SCREEN, RENDER, FILL_PBO, MAP_PBO, GET_DEPTH_VALUES,
-                       SEND_CONSTANTS, SEND_TEXTURES, SUM_LIKELIHOODS, UPDATE_TEXTURES,
-                       ATTACH_TEXTURE, ALLOCATE, SET_VIEWPORT, SEND_MODEL_MATRIX, DETACH_TEXTURE,
-                       GL_FINISH};
-    enum render_type { COMBINED_FAST };
+    static const int NR_SUBROUTINES_TO_MEASURE = 4;
+    enum subroutines_to_measure { ATTACH_TEXTURE, CLEAR_SCREEN, RENDER, DETACH_TEXTURE};
     std::vector<std::string> enum_strings_;
-    std::vector<std::vector<double> > cpu_times_aggregate_;
-    std::vector<std::vector<double> > gpu_times_aggregate_;
-    std::vector<int> poses_rendered_;
-    std::vector<std::vector<int> > calls_aggregate_;
-    std::vector<GLuint> combined_fast_set_viewport_queries_;
-    std::vector<GLuint> combined_fast_send_model_matrix_queries_;
-    std::vector<GLuint> combined_fast_render_queries_;
+    std::vector<double> gpu_times_aggregate_;
+    int nr_calls_;
 
-    bool initial_[RENDER_TYPE_COUNT];
+    bool initial_run_;
 
     // GPU constraints
 
@@ -133,13 +123,8 @@ private:
     int n_max_poses_y_;
 
     // needed for openGL time observation
-    GLuint time_query_[TIME_MEASUREMENTS_COUNT];
-    unsigned int time_elapsed_ns_;
+    GLuint time_query_[NR_SUBROUTINES_TO_MEASURE];
 
-    // needed for cpu time observation
-    double start_time_;
-    double stop_time_;
-    double cpu_times_[TIME_MEASUREMENTS_COUNT];
 
 
     // the paths to the respective shaders
@@ -170,12 +155,12 @@ private:
     GLuint index_buffer_;     //  contains the indices of the object meshes passed in the constructor
 
     // PBO for copying results to CPU
-    GLuint combined_result_buffer_;
+    GLuint result_buffer_;
 
     // custom framebuffer and its textures for color and depth
     GLuint framebuffer_;
-    GLuint combined_texture_;
-    GLuint combined_depth_texture_;
+    GLuint framebuffer_texture_for_all_poses_;
+    GLuint texture_for_z_testing;
 
 
 
@@ -188,13 +173,12 @@ private:
     void read_depth(std::vector<std::vector<int> > &intersect_indices,
                    std::vector<std::vector<float> > &depth,
                    GLuint pixel_buffer_object,
-                   GLuint framebuffer_texture,
-                   render_type calling_function);
+                   GLuint framebuffer_texture);
 
     Eigen::Matrix4f get_model_matrix(const std::vector<float> state);
     Eigen::Matrix4f GetProjectionMatrix(float n, float f, float l, float r, float t, float b);
 
-    void display_time_observations(std::map<int, int> factors, render_type calling_function);
+    void store_time_measurements();
     void reallocate_buffers();
     void setup_view_matrix();
     void setup_projection_matrix(const Eigen::Matrix3f camera_matrix);

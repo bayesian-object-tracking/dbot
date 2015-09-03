@@ -1,6 +1,8 @@
 /** @author Claudia Pfreundt */
 
-//#define PROFILING_ACTIVE
+/* Note: Profiling slows down the rendering process. Use only to display the runtimes
+ *       of the different subroutines inside the render call. */
+#define PROFILING_ACTIVE
 
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 
@@ -219,16 +221,11 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
         (void*)0            // array buffer offset
     );
 
-//    // Index buffer
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);
-
-
-
 
     // ======================= CREATE PBO ======================= //
 
     // create PBO that will be used for copying the depth values to the CPU, if requested
-    glGenBuffers(1, &combined_result_buffer_);
+    glGenBuffers(1, &result_buffer_);
 
 
     // ======================= CREATE FRAMEBUFFER OBJECT AND ITS TEXTURES ======================= //
@@ -238,8 +235,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
 
     // create color texture that will contain the depth values after the render
-    glGenTextures(1, &combined_texture_);
-    glBindTexture(GL_TEXTURE_2D, combined_texture_);
+    glGenTextures(1, &framebuffer_texture_for_all_poses_);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -247,7 +244,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // create a renderbuffer to store depth info for z-testing
-    glGenRenderbuffers(1, &combined_depth_texture_);
+    glGenRenderbuffers(1, &texture_for_z_testing);
 
 
     // ================= COMPILE SHADERS AND GET HANDLES ================= //
@@ -276,42 +273,19 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 
     // ========== INITIALIZE & SET DEFAULTS FOR MEASURING EXECUTION TIMES =========== //
 
-
     // generate query objects needed for timing OpenGL commands
-    glGenQueries(TIME_MEASUREMENTS_COUNT, time_query_);
+    glGenQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
 
-    vector<int> zero_calls (TIME_MEASUREMENTS_COUNT, 0);
-    vector<double> times (TIME_MEASUREMENTS_COUNT, 0);
-    for (int i = 0; i < RENDER_TYPE_COUNT; i++) {
-        calls_aggregate_.push_back(vector<int>(zero_calls));
-        cpu_times_aggregate_.push_back(vector<double>(times));
-        gpu_times_aggregate_.push_back(vector<double>(times));
-        poses_rendered_.push_back(0);
-    }
+    nr_calls_ = 0;
+    gpu_times_aggregate_ = vector<double> (NR_SUBROUTINES_TO_MEASURE, 0);
+    initial_run_ = true;
 
-    for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-        cpu_times_[i] = -1;
-    }
-    for (int i = 0; i < RENDER_TYPE_COUNT; i++) {
-        initial_[i] = true;
-    }
-
-    enum_strings_.push_back("SEND_MATRICES");
+    enum_strings_.push_back("ATTACH_TEXTURE");
     enum_strings_.push_back("CLEAR_SCREEN");
     enum_strings_.push_back("RENDER");
-    enum_strings_.push_back("FILL_PBO");
-    enum_strings_.push_back("MAP_PBO");
-    enum_strings_.push_back("GET_DEPTH_VALUES");
-    enum_strings_.push_back("SEND_CONSTANTS");
-    enum_strings_.push_back("SEND_TEXTURES");
-    enum_strings_.push_back("SUM_LIKELIHOODS");
-    enum_strings_.push_back("UPDATE_TEXTURES");
-    enum_strings_.push_back("ATTACH_TEXTURE");
-    enum_strings_.push_back("ALLOCATE");
-    enum_strings_.push_back("SET_VIEWPORT");
-    enum_strings_.push_back("SEND_MODEL_MATRIX");
     enum_strings_.push_back("DETACH_TEXTURE");
-    enum_strings_.push_back("GL_FINISH");
+
+    // ========== SETUP PROJECTION MATRIX AND SHADER TO USE =========== //
 
     setup_projection_matrix(camera_matrix);
     glUseProgram(shader_ID_);
@@ -338,171 +312,71 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
 void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states) {
 
 #ifdef PROFILING_ACTIVE
-    combined_fast_set_viewport_queries_.resize(n_poses_);
-    combined_fast_send_model_matrix_queries_.resize(n_poses_);
-    combined_fast_render_queries_.resize(n_poses_);
-    glGenQueries(n_poses_, &combined_fast_set_viewport_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_send_model_matrix_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_render_queries_[0]);
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][ATTACH_TEXTURE]++;
+    nr_calls_++;
 #endif
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
                            GL_COLOR_ATTACHMENT0,  // 2. attachment point
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
 
 #ifdef PROFILING_ACTIVE
-
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[ATTACH_TEXTURE] = stop_time_ - start_time_;
-
     glBeginQuery(GL_TIME_ELAPSED, time_query_[CLEAR_SCREEN]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][CLEAR_SCREEN]++;
 #endif
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 #ifdef PROFILING_ACTIVE
-
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[CLEAR_SCREEN] = stop_time_ - start_time_;
-
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MATRICES]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SEND_MATRICES]++;
+    glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
 #endif
 
     glUniformMatrix4fv(projection_matrix_ID_, 1, GL_FALSE, projection_matrix_.data());
 
     Matrix4f model_view_matrix;
 
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SEND_MATRICES] = stop_time_ - start_time_;
-#endif
-
-
     for (int i = 0; i < n_poses_y_ -1; i++) {
         for (int j = 0; j < n_poses_x_; j++) {
 
-    #ifdef PROFILING_ACTIVE
-        glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[i * n_poses_x_ + j]);
-//        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-        start_time_ = sf::hf::get_wall_time();
-        calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
-    #endif
-
             glViewport(j * n_cols_, (n_poses_y_ - 1 - i) * n_rows_, n_cols_, n_rows_);
-
-    #ifdef PROFILING_ACTIVE
-
-        glEndQuery(GL_TIME_ELAPSED);
-        stop_time_ = sf::hf::get_wall_time();
-        cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
-    #endif
 
             for (size_t k = 0; k < object_numbers_.size(); k++) {
                 int index = object_numbers_[k];
 
-        #ifdef PROFILING_ACTIVE
-            glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[i * n_poses_x_ + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-            start_time_ = sf::hf::get_wall_time();
-            calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
-        #endif
-
                 model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * i + j][index]);
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
-        #ifdef PROFILING_ACTIVE
-            glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = sf::hf::get_wall_time();
-            cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
-            glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[i * n_poses_x_ + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-            start_time_ = sf::hf::get_wall_time();
-            calls_aggregate_[COMBINED_FAST][RENDER]++;
-        #endif
-
-            glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
-
-        #ifdef PROFILING_ACTIVE
-
-            glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = sf::hf::get_wall_time();
-            cpu_times_[RENDER] = stop_time_ - start_time_;
-        #endif
+                glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
             }
         }
     }
 
+    // render last row of poses
     for (int j = 0; j < n_poses_ - (n_poses_x_ * (n_poses_y_ - 1)); j++) {
-
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
-#endif
 
         glViewport(j * n_cols_, 0, n_cols_, n_rows_);
 
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
-#endif
-
         for (size_t k = 0; k < object_numbers_.size(); k++) {
             int index = object_numbers_[k];
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
-#endif
+
             model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
             glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][RENDER]++;
-#endif
-
             glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
-
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[RENDER] = stop_time_ - start_time_;
-#endif
-
         }
     }
 
 
 
 #ifdef PROFILING_ACTIVE
+    glFinish();
+    glEndQuery(GL_TIME_ELAPSED);
     glBeginQuery(GL_TIME_ELAPSED, time_query_[DETACH_TEXTURE]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][DETACH_TEXTURE]++;
 #endif
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
@@ -512,48 +386,24 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
                            0);
 
 #ifdef PROFILING_ACTIVE
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[DETACH_TEXTURE] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[GL_FINISH]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][GL_FINISH]++;
+    store_time_measurements();
 #endif
 
     /* TODO should be unnecessary when texture is previously detached from framebuffer..
      * would like to find evidence that this detaching really introduces a synchronization though*/
     glFinish();
 
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[GL_FINISH] = stop_time_ - start_time_;
-    poses_rendered_[COMBINED_FAST] += n_poses_ * object_numbers_.size();
-    map<int, int> factors;
-    factors[SET_VIEWPORT] = n_poses_;
-    factors[SEND_MODEL_MATRIX] = n_poses_ * object_numbers_.size();
-    factors[RENDER] = n_poses_ * object_numbers_.size();
-    DisplayTimeObservations(factors, COMBINED_FAST);
-#endif
 
 }
-
-
 
 
 void ObjectRasterizer::read_depth(vector<vector<int> > &intersect_indices,
                                  vector<vector<float> > &depth,
                                  GLuint pixel_buffer_object,
-                                 GLuint framebuffer_texture,
-                                 render_type calling_function) {
+                                 GLuint framebuffer_texture) {
 
-
-
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[FILL_PBO]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[calling_function][FILL_PBO]++;
-#endif
 
     // ===================== COPY VALUES FROM GPU TO CPU ===================== //
 
@@ -562,15 +412,6 @@ void ObjectRasterizer::read_depth(vector<vector<int> > &intersect_indices,
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
 
     GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[FILL_PBO] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[GET_DEPTH_VALUES]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[calling_function][GET_DEPTH_VALUES]++;
-#endif
 
 
     if (pixel_depth != (GLfloat*) NULL) {
@@ -630,11 +471,6 @@ void ObjectRasterizer::read_depth(vector<vector<int> > &intersect_indices,
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[GET_DEPTH_VALUES] = stop_time_ - start_time_;
-#endif
 }
 
 
@@ -710,7 +546,7 @@ void ObjectRasterizer::reallocate_buffers() {
 
     // ======================= REALLOCATE PBO ======================= //
 
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, combined_result_buffer_);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, result_buffer_);
     // TODO PERFORMANCE: try GL_STREAM_READ instead of GL_DYNAMIC_READ
     // the NULL means this buffer is uninitialized, since I only want to copy values back to the CPU that will be written by the GPU
     glBufferData(GL_PIXEL_PACK_BUFFER, n_max_poses_x_* n_cols_ * n_max_poses_y_ * n_rows_ *  sizeof(GLfloat), NULL, GL_STREAM_READ);
@@ -732,13 +568,13 @@ void ObjectRasterizer::reallocate_buffers() {
 
     cout << "reallocating combined texture..." << endl;
 
-    glBindTexture(GL_TEXTURE_2D, combined_texture_);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n_max_poses_x_ * n_cols_, n_max_poses_y_ * n_rows_, 0, GL_RED, GL_FLOAT, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     cout << "reallocating combined depth texture..." << endl;
 
-    glBindRenderbuffer(GL_RENDERBUFFER, combined_depth_texture_);
+    glBindRenderbuffer(GL_RENDERBUFFER, texture_for_z_testing);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, n_max_poses_x_* n_cols_, n_max_poses_y_ * n_rows_);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -747,11 +583,11 @@ void ObjectRasterizer::reallocate_buffers() {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER,      // 1. fbo target: GL_FRAMEBUFFER
                               GL_DEPTH_ATTACHMENT, // 2. attachment point
                               GL_RENDERBUFFER,     // 3. rbo target: GL_RENDERBUFFER
-                              combined_depth_texture_);     // 4. rbo ID
+                              texture_for_z_testing);     // 4. rbo ID
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
                            GL_COLOR_ATTACHMENT0,  // 2. attachment point
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
 
 
@@ -826,132 +662,38 @@ void ObjectRasterizer::setup_view_matrix() {
     view_matrix_ = view_matrix_transform.matrix();
 }
 
-void ObjectRasterizer::display_time_observations(map<int, int> factors, render_type calling_function) {
-
+void ObjectRasterizer::store_time_measurements() {
 #ifdef PROFILING_ACTIVE
 
-    string function;
-    switch (calling_function) {
-    case COMBINED_FAST: function = "COMBINED_FAST"; break;
-    default: function = "default";
-    }
+    // retrieve times from OpenGL and store them
+    for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+        GLint available = 0;
+        double time_elapsed_s;
+        unsigned int time_elapsed_ns;
 
-
-    for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-
-        if (cpu_times_[i] != -1) {
-            GLint available = 0;
-            double time_elapsed_s;
-
-            if (calling_function == COMBINED_FAST) {
-                if (i == SET_VIEWPORT) {
-                    for (int j = 0; j < combined_fast_set_viewport_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_set_viewport_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_set_viewport_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else if (i == SEND_MODEL_MATRIX) {
-                    for (int j = 0; j < combined_fast_send_model_matrix_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_send_model_matrix_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_send_model_matrix_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else if (i == RENDER) {
-                    for (int j = 0; j < combined_fast_render_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_render_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_render_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else {
-                    available = 0;
-                    while (!available) {
-                        glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
-                    }
-                    glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns_);
-                    time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-                    gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                }
-            } else {
-                available = 0;
-                while (!available) {
-                    glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
-                }
-                glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns_);
-                time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-                gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-            }
-
-            cpu_times_aggregate_[calling_function][i] += cpu_times_[i];
-
-            cpu_times_[i] = -1;
+        while (!available) {
+            glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
         }
+        glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns);
+        time_elapsed_s = time_elapsed_ns / (double) 1e9;
+        gpu_times_aggregate_[i] += time_elapsed_s;
+
     }
 
-    if (poses_rendered_[calling_function] == n_poses_ && initial_[calling_function]) {
-        cout << "reset after initial poses" << endl;
-        initial_[calling_function] = false;
-        for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-            if (calls_aggregate_[calling_function][i] != 0) {
-                cpu_times_aggregate_[calling_function][i] = 0;
-                gpu_times_aggregate_[calling_function][i] = 0;
-            }
-            calls_aggregate_[calling_function][i] = 0;
+    // the first run should not count. Reset all the counters.
+    if (initial_run_) {
+        initial_run_ = false;
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            gpu_times_aggregate_[i] = 0;
         }
 
-        poses_rendered_[calling_function] = 0;
+        nr_calls_ = 0;
     }
-
-    const int ROUNDS = 500;
-    if (poses_rendered_[calling_function] >= n_poses_ * ROUNDS) {
-
-        cout << endl << "Time observations for " << function << " averaged over " << poses_rendered_[calling_function] << " poses:" << endl << endl;
-
-
-        double total_time = 0;
-
-        for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-            if (calls_aggregate_[calling_function][i] != 0) {
-
-                total_time += max(gpu_times_aggregate_[calling_function][i], cpu_times_aggregate_[calling_function][i]);
-
-                int n_calls = calls_aggregate_[calling_function][i];
-                cout << getTextForEnum(i) << ":    "
-                     << "\t (GPU) " << gpu_times_aggregate_[calling_function][i] / n_calls
-                     << "\t (CPU) " << cpu_times_aggregate_[calling_function][i] / n_calls
-                     << "\t (x" << n_calls /* / ROUNDS */ << ") " << max(gpu_times_aggregate_[calling_function][i], cpu_times_aggregate_[calling_function][i]) /* / ROUNDS*/
-                     << "\t TOTAL_TIME: " << total_time /* / ROUNDS*/ << ", calls_aggregate: " << n_calls << endl;
-                cpu_times_aggregate_[calling_function][i] = 0;
-                gpu_times_aggregate_[calling_function][i] = 0;
-            }
-
-            calls_aggregate_[calling_function][i] = 0;
-        }
-        cout << "TOTAL_TIME: \t" << total_time / poses_rendered_[calling_function] << "\t(x" << poses_rendered_[calling_function] << ") " << total_time / ROUNDS << endl << endl;
-
-        poses_rendered_[calling_function] = 0;
-    }
-
 #endif
-
 }
 
-GLuint ObjectRasterizer::get_combined_texture() {
-    return combined_texture_;
+GLuint ObjectRasterizer::get_framebuffer_texture() {
+    return framebuffer_texture_for_all_poses_;
 }
 
 int ObjectRasterizer::get_n_poses_x() {
@@ -968,12 +710,12 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
                            GL_COLOR_ATTACHMENT0,  // 2. attachment point
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
 
     // ===================== TRANSFERS DEPTH VALUES TO CPU == SLOW!!! ================ //
 
-    read_depth(intersect_indices, depth, combined_result_buffer_, combined_texture_, COMBINED_FAST);
+    read_depth(intersect_indices, depth, result_buffer_, framebuffer_texture_for_all_poses_);
 
 //    vector<int> intersect_indices_all;
 //    vector<float> depth_all;
@@ -988,7 +730,7 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
 ////    int n_rows_old = n_rows_;
 ////    n_cols_ = n_poses_x_ * n_cols_;
 ////    n_rows_ = n_poses_y_ * n_rows_;
-//    ReadDepth(intersect_indices_all, depth_all, combined_result_buffer_, combined_texture_, COMBINED_FAST);
+//    ReadDepth(intersect_indices_all, depth_all, combined_result_buffer_, combined_texture_);
 ////    n_cols_ = n_cols_old;
 ////    n_rows_ = n_rows_old;
 
@@ -1079,6 +821,35 @@ bool ObjectRasterizer::check_framebuffer_status() {
 
 ObjectRasterizer::~ObjectRasterizer()
 {
+
+#ifdef PROFILING_ON
+
+    if (nr_calls_ != 0) {
+        cout << endl << "Time measurements for the different steps of the rendering process averaged over " << nr_calls_ << " render calls:" << endl << endl;
+
+        double total_time_per_render = 0;
+
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            total_time_per_render += gpu_times_aggregate_[i];
+        }
+        total_time_per_render /= nr_calls_;
+
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            double time_per_subroutine = gpu_times_aggregate_[i] / nr_calls_;
+
+                cout << get_text_for_enum(i) << ":     "
+                     << "\t " << time_per_subroutine << " s \t " << setprecision(1)
+                     << time_per_subroutine * 100 / total_time_per_render << " %" << setprecision(9) << endl;
+        }
+
+        cout << "TOTAL TIME PER RENDER CALL : " << total_time_per_render << endl << endl;
+    } else {
+        cout << "The render() function was never called, so there are no time measurements of it available." << endl;
+    }
+
+    glDeleteQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
+#endif
+
     cout << "clean up OpenGL.." << endl;
 
     glDisableVertexAttribArray(0);
@@ -1086,19 +857,13 @@ ObjectRasterizer::~ObjectRasterizer()
 
     glDeleteBuffers(1, &vertex_buffer_);
     glDeleteBuffers(1, &index_buffer_);
-    glDeleteBuffers(1, &combined_result_buffer_);
+    glDeleteBuffers(1, &result_buffer_);
 
     glDeleteFramebuffers(1, &framebuffer_);
-    glDeleteTextures(1, &combined_texture_);
-    glDeleteRenderbuffers(1, &combined_depth_texture_);
+    glDeleteTextures(1, &framebuffer_texture_for_all_poses_);
+    glDeleteRenderbuffers(1, &texture_for_z_testing);
 
     glDeleteProgram(shader_ID_);
-    glDeleteQueries(21, time_query_);
-#ifdef PROFILING_ON
-    glDeleteQueries(n_poses_, &combined_fast_set_viewport_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_send_model_matrix_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_render_queries_[0]);
-#endif
 
 }
 
