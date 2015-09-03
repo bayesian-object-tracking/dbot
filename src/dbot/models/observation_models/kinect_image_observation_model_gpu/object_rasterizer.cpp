@@ -32,8 +32,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
                                    const std::string vertex_shader_path,
                                    const std::string fragment_shader_path,
                                    const Eigen::Matrix3f camera_matrix) :
-    n_rows_(WINDOW_HEIGHT),
-    n_cols_(WINDOW_WIDTH),
+    nr_rows_(WINDOW_HEIGHT),
+    nr_cols_(WINDOW_WIDTH),
     vertex_shader_path_(vertex_shader_path),
     fragment_shader_path_(fragment_shader_path)
 {
@@ -93,8 +93,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 
     /* create temporary pbuffer */
     int pbuffer_attribs[] = {
-           GLX_PBUFFER_WIDTH, n_cols_,
-           GLX_PBUFFER_HEIGHT, n_rows_,
+           GLX_PBUFFER_WIDTH, nr_cols_,
+           GLX_PBUFFER_HEIGHT, nr_rows_,
            None
     };
     pbuf = glXCreatePbuffer(dpy, fbc[0], pbuffer_attribs);
@@ -280,10 +280,10 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     gpu_times_aggregate_ = vector<double> (NR_SUBROUTINES_TO_MEASURE, 0);
     initial_run_ = true;
 
-    enum_strings_.push_back("ATTACH_TEXTURE");
-    enum_strings_.push_back("CLEAR_SCREEN");
-    enum_strings_.push_back("RENDER");
-    enum_strings_.push_back("DETACH_TEXTURE");
+    strings_for_subroutines.push_back("ATTACH_TEXTURE");
+    strings_for_subroutines.push_back("CLEAR_SCREEN");
+    strings_for_subroutines.push_back("RENDER");
+    strings_for_subroutines.push_back("DETACH_TEXTURE");
 
     // ========== SETUP PROJECTION MATRIX AND SHADER TO USE =========== //
 
@@ -340,15 +340,15 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
 
     Matrix4f model_view_matrix;
 
-    for (int i = 0; i < n_poses_y_ -1; i++) {
-        for (int j = 0; j < n_poses_x_; j++) {
+    for (int i = 0; i < nr_poses_per_column_ -1; i++) {
+        for (int j = 0; j < nr_poses_per_row_; j++) {
 
-            glViewport(j * n_cols_, (n_poses_y_ - 1 - i) * n_rows_, n_cols_, n_rows_);
+            glViewport(j * nr_cols_, (nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
 
             for (size_t k = 0; k < object_numbers_.size(); k++) {
                 int index = object_numbers_[k];
 
-                model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * i + j][index]);
+                model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * i + j][index]);
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
                 glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
@@ -357,14 +357,14 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
     }
 
     // render last row of poses
-    for (int j = 0; j < n_poses_ - (n_poses_x_ * (n_poses_y_ - 1)); j++) {
+    for (int j = 0; j < nr_poses_ - (nr_poses_per_row_ * (nr_poses_per_column_ - 1)); j++) {
 
-        glViewport(j * n_cols_, 0, n_cols_, n_rows_);
+        glViewport(j * nr_cols_, 0, nr_cols_, nr_rows_);
 
         for (size_t k = 0; k < object_numbers_.size(); k++) {
             int index = object_numbers_[k];
 
-            model_view_matrix = view_matrix_ * get_model_matrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
+            model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * (nr_poses_per_column_ - 1) + j][index]);
             glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
             glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
@@ -399,84 +399,6 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
 }
 
 
-void ObjectRasterizer::read_depth(vector<vector<int> > &intersect_indices,
-                                 vector<vector<float> > &depth,
-                                 GLuint pixel_buffer_object,
-                                 GLuint framebuffer_texture) {
-
-
-    // ===================== COPY VALUES FROM GPU TO CPU ===================== //
-
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, pixel_buffer_object);
-    glBindTexture(GL_TEXTURE_2D, framebuffer_texture);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
-
-    GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-
-
-    if (pixel_depth != (GLfloat*) NULL) {
-        vector<float> depth_image(n_rows_ * n_cols_ * n_poses_x_ * n_poses_y_, numeric_limits<float>::max());
-
-        int pixels_per_row_texture = n_max_poses_x_ * n_cols_;
-        int pixels_per_row_extracted = n_poses_x_ * n_cols_;
-        int highest_pixel_per_col = (n_poses_y_ * n_rows_) - 1;
-
-        // reading OpenGL texture into an array on the CPU (inverted rows)
-        for (int row = 0; row < n_poses_y_ * n_rows_; row++) {
-            int inverted_row = highest_pixel_per_col - row;
-
-            for (int col = 0; col < n_poses_x_ * n_cols_; col++) {
-                depth_image[row * pixels_per_row_extracted  + col] = pixel_depth[inverted_row * pixels_per_row_texture + col];
-            }
-        }
-
-
-        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-
-        // subdividing this array into an array per pose
-        vector<vector<float> > depth_image_per_pose (n_poses_, vector<float> (n_rows_ * n_cols_, 0));
-
-        for (int pose_y = 0; pose_y < n_poses_y_; pose_y++) {
-            for (int pose_x = 0; pose_x < n_poses_x_ && pose_y * n_poses_x_ + pose_x < n_poses_; pose_x++) {
-                for (int i = 0; i < n_rows_ * n_cols_; i++) {
-
-                    depth_image_per_pose[pose_y * n_poses_x_ + pose_x][i] = depth_image[(pose_y * n_rows_ + (i / n_cols_)) * pixels_per_row_extracted + pose_x * n_cols_ + (i % n_cols_)];
-                }
-            }
-        }
-
-        // filling the respective values per pose into their indices and depth vectors
-        vector<int> tmp_indices;
-        vector<float> tmp_depth;
-
-        for (int state = 0; state < n_poses_; state++) {
-            for (int i = 0; i < n_rows_ * n_cols_; i++) {
-                if (depth_image_per_pose[state][i] != 0) {
-                    tmp_indices.push_back(i);
-                    tmp_depth.push_back(depth_image_per_pose[state][i]);
-                }
-            }
-            intersect_indices.push_back(tmp_indices);
-            depth.push_back(tmp_depth);
-            tmp_indices.resize(0);
-            tmp_depth.resize(0);
-        }
-
-
-
-
-    } else {
-        cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
-    }
-
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-}
-
-
-
-
-
 void ObjectRasterizer::set_objects(vector<int> object_numbers) {
     // TODO does it copy the vector or set a reference?
     object_numbers_ = object_numbers;
@@ -484,42 +406,42 @@ void ObjectRasterizer::set_objects(vector<int> object_numbers) {
 
 void ObjectRasterizer::set_number_of_max_poses(int n_poses) {
 //    if (n_poses_ != n_poses) {
-        n_max_poses_ = n_poses;
-        n_poses_ = n_poses;
+        nr_max_poses_ = n_poses;
+        nr_poses_ = n_poses;
 
 //        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(n_poses_);
+        float sqrt_poses = sqrt(nr_poses_);
         // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != n_poses_) sqrt_poses = (int) ceil(sqrt_poses);
+        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
         // TODO max_dimension[0], [1], at the moment they are identical
-        n_max_poses_x_ = min((int) sqrt_poses, (max_dimension_ / n_cols_));
-        int y_poses = n_max_poses_ / n_max_poses_x_;
-        if (y_poses * n_max_poses_x_ < n_max_poses_) y_poses++;
-        n_max_poses_y_ = min(y_poses, (max_dimension_ / n_rows_));
+        nr_max_poses_per_row_ = min((int) sqrt_poses, (max_dimension_ / nr_cols_));
+        int y_poses = nr_max_poses_ / nr_max_poses_per_row_;
+        if (y_poses * nr_max_poses_per_row_ < nr_max_poses_) y_poses++;
+        nr_max_poses_per_column_ = min(y_poses, (max_dimension_ / nr_rows_));
 
-        n_poses_x_ = n_max_poses_x_;
-        n_poses_y_ = n_max_poses_y_;
+        nr_poses_per_row_ = nr_max_poses_per_row_;
+        nr_poses_per_column_ = nr_max_poses_per_column_;
 
         reallocate_buffers();
 //    }
 }
 
 void ObjectRasterizer::set_number_of_poses(int n_poses) {
-    if (n_poses <= n_max_poses_) {
-        n_poses_ = n_poses;
+    if (n_poses <= nr_max_poses_) {
+        nr_poses_ = n_poses;
 
 
 //        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(n_poses_);
+        float sqrt_poses = sqrt(nr_poses_);
         // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != n_poses_) sqrt_poses = (int) ceil(sqrt_poses);
+        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
         // TODO max_dimension[0], [1], at the moment they are identical
-        n_poses_x_ = min((int) sqrt_poses, (max_dimension_ / n_cols_));
-        int y_poses = n_poses_ / n_poses_x_;
-        if (y_poses * n_poses_x_ < n_poses_) y_poses++;
-        n_poses_y_ = min(y_poses, (max_dimension_ / n_rows_));
+        nr_poses_per_row_ = min((int) sqrt_poses, (max_dimension_ / nr_cols_));
+        int y_poses = nr_poses_ / nr_poses_per_row_;
+        if (y_poses * nr_poses_per_row_ < nr_poses_) y_poses++;
+        nr_poses_per_column_ = min(y_poses, (max_dimension_ / nr_rows_));
 
-        if (n_poses_x_ > n_max_poses_x_ || n_poses_y_ > n_max_poses_y_) {
+        if (nr_poses_per_row_ > nr_max_poses_per_row_ || nr_poses_per_column_ > nr_max_poses_per_column_) {
             cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
                  << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
         }
@@ -532,24 +454,130 @@ void ObjectRasterizer::set_number_of_poses(int n_poses) {
 void ObjectRasterizer::set_resolution(const int n_rows,
                                      const int n_cols) {
 //    if (n_rows_ != n_rows || n_cols_ != n_cols) {
-        n_rows_ = n_rows;
-        n_cols_ = n_cols;
+        nr_rows_ = n_rows;
+        nr_cols_ = n_cols;
 
         // recalculate n_poses_x_ and n_poses_y_ depending on the resolution
-        set_number_of_max_poses(n_max_poses_);
+        set_number_of_max_poses(nr_max_poses_);
 
 
 //    }
 }
+
+GLuint ObjectRasterizer::get_framebuffer_texture() {
+    return framebuffer_texture_for_all_poses_;
+}
+
+int ObjectRasterizer::get_nr_poses_per_row() {
+    return nr_poses_per_row_;
+}
+
+
+
+void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+                                        std::vector<std::vector<float> > &depth) {
+
+    // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
+                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
+                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
+                           0);
+
+    // ===================== TRANSFER DEPTH VALUES FROM GPU TO CPU == SLOW!!! ================ //
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, result_buffer_);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
+
+    GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+
+    if (pixel_depth != (GLfloat*) NULL) {
+        vector<float> depth_image(nr_rows_ * nr_cols_ * nr_poses_per_row_ * nr_poses_per_column_, numeric_limits<float>::max());
+
+        int pixels_per_row_texture = nr_max_poses_per_row_ * nr_cols_;
+        int pixels_per_row_extracted = nr_poses_per_row_ * nr_cols_;
+        int highest_pixel_per_col = (nr_poses_per_column_ * nr_rows_) - 1;
+
+        // reading OpenGL texture into an array on the CPU (inverted rows)
+        for (int row = 0; row < nr_poses_per_column_ * nr_rows_; row++) {
+            int inverted_row = highest_pixel_per_col - row;
+
+            for (int col = 0; col < nr_poses_per_row_ * nr_cols_; col++) {
+                depth_image[row * pixels_per_row_extracted  + col] = pixel_depth[inverted_row * pixels_per_row_texture + col];
+            }
+        }
+
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+
+        // subdividing this array into an array per pose
+        vector<vector<float> > depth_image_per_pose (nr_poses_, vector<float> (nr_rows_ * nr_cols_, 0));
+
+        for (int pose_y = 0; pose_y < nr_poses_per_column_; pose_y++) {
+            for (int pose_x = 0; pose_x < nr_poses_per_row_ && pose_y * nr_poses_per_row_ + pose_x < nr_poses_; pose_x++) {
+                for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
+
+                    depth_image_per_pose[pose_y * nr_poses_per_row_ + pose_x][i] = depth_image[(pose_y * nr_rows_ + (i / nr_cols_)) * pixels_per_row_extracted + pose_x * nr_cols_ + (i % nr_cols_)];
+                }
+            }
+        }
+
+        // filling the respective values per pose into their indices and depth vectors
+        vector<int> tmp_indices;
+        vector<float> tmp_depth;
+
+        for (int state = 0; state < nr_poses_; state++) {
+            for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
+                if (depth_image_per_pose[state][i] != 0) {
+                    tmp_indices.push_back(i);
+                    tmp_depth.push_back(depth_image_per_pose[state][i]);
+                }
+            }
+            intersect_indices.push_back(tmp_indices);
+            depth.push_back(tmp_depth);
+            tmp_indices.resize(0);
+            tmp_depth.resize(0);
+        }
+
+    } else {
+        cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
+    }
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+    // ===================== DETACH TEXTURE FROM FRAMEBUFFER ================ //
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
+                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
+                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
+                           0,     // 4. tex ID
+                           0);
+}
+
+
+
+
+
+
+
+
+// ================================================================= //
+// ================================================================= //
+// ======================= PRIVATE FUNCTIONS ======================= //
+// ================================================================= //
+// ================================================================= //
+
+
 
 void ObjectRasterizer::reallocate_buffers() {
 
     // ======================= REALLOCATE PBO ======================= //
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, result_buffer_);
-    // TODO PERFORMANCE: try GL_STREAM_READ instead of GL_DYNAMIC_READ
     // the NULL means this buffer is uninitialized, since I only want to copy values back to the CPU that will be written by the GPU
-    glBufferData(GL_PIXEL_PACK_BUFFER, n_max_poses_x_* n_cols_ * n_max_poses_y_ * n_rows_ *  sizeof(GLfloat), NULL, GL_STREAM_READ);
+    glBufferData(GL_PIXEL_PACK_BUFFER, nr_max_poses_per_row_* nr_cols_ * nr_max_poses_per_column_ * nr_rows_ *  sizeof(GLfloat), NULL, GL_STREAM_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
     // ======================= DETACH TEXTURES FROM FRAMEBUFFER ======================= //
@@ -566,16 +594,12 @@ void ObjectRasterizer::reallocate_buffers() {
 
     // ======================= REALLOCATE FRAMEBUFFER TEXTURES ======================= //
 
-    cout << "reallocating combined texture..." << endl;
-
     glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n_max_poses_x_ * n_cols_, n_max_poses_y_ * n_rows_, 0, GL_RED, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, nr_max_poses_per_row_ * nr_cols_, nr_max_poses_per_column_ * nr_rows_, 0, GL_RED, GL_FLOAT, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    cout << "reallocating combined depth texture..." << endl;
-
     glBindRenderbuffer(GL_RENDERBUFFER, texture_for_z_testing);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, n_max_poses_x_* n_cols_, n_max_poses_y_ * n_rows_);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, nr_max_poses_per_row_* nr_cols_, nr_max_poses_per_column_ * nr_rows_);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // ======================= ATTACH NEW TEXTURES TO FRAMEBUFFER ======================= //
@@ -598,9 +622,6 @@ void ObjectRasterizer::reallocate_buffers() {
 
 
 
-
-
-
 Matrix4f ObjectRasterizer::get_model_matrix(const vector<float> state) {
     // Model matrix equals the state of the object. Position and Quaternion just have to be expressed as a matrix.
     // note: state = (q.w, q.x, q.y, q.z, v.x, v.y, v.z)
@@ -616,17 +637,14 @@ Matrix4f ObjectRasterizer::get_model_matrix(const vector<float> state) {
 }
 
 
-Matrix4f ObjectRasterizer::GetProjectionMatrix(float n, float f, float l, float r, float t, float b) {
-    Matrix4f projection_matrix = Matrix4f::Zero();
-    projection_matrix(0,0) = 2 * n / (r - l);
-    projection_matrix(0,2) = (r + l) / (r - l);
-    projection_matrix(1,1) = 2 * n / (t - b);
-    projection_matrix(1,2) = (t + b) / (t - b);
-    projection_matrix(2,2) = -(f + n) / (f - n);
-    projection_matrix(2,3) = - 2 * f * n / (f - n);
-    projection_matrix(3,2) = -1;
+void ObjectRasterizer::setup_view_matrix() {
+    // =========================== VIEW MATRIX =========================== //
 
-    return projection_matrix;
+    // OpenGL camera is rotated 180 degrees around the X-Axis compared to the Kinect camera
+    view_matrix_ = Matrix4f::Identity();
+    Transform<float, 3, Affine, ColMajor> view_matrix_transform;
+    view_matrix_transform = AngleAxisf(M_PI, Vector3f::UnitX());
+    view_matrix_ = view_matrix_transform.matrix();
 }
 
 void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matrix) {
@@ -636,7 +654,7 @@ void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matr
     Eigen::Matrix3f camera_matrix_inverse = camera_matrix.inverse();
 
     Vector3f boundaries_min = camera_matrix_inverse * Vector3f(-0.5, -0.5, 1);
-    Vector3f boundaries_max = camera_matrix_inverse * Vector3f(float(n_cols_)-0.5, float(n_rows_)-0.5, 1);
+    Vector3f boundaries_max = camera_matrix_inverse * Vector3f(float(nr_cols_)-0.5, float(nr_rows_)-0.5, 1);
 
     float near = NEAR_PLANE;
     float far = FAR_PLANE;
@@ -648,18 +666,22 @@ void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matr
     // ======================== PROJECTION MATRIX ======================== //
 
     // Projection Matrix takes into account our view frustum and projects the (3D)-scene onto a 2D image
-    projection_matrix_ = GetProjectionMatrix(near, far, left, right, top, bottom);
+    projection_matrix_ = get_projection_matrix(near, far, left, right, top, bottom);
 
 }
 
-void ObjectRasterizer::setup_view_matrix() {
-    // =========================== VIEW MATRIX =========================== //
 
-    // OpenGL camera is rotated 180 degrees around the X-Axis compared to the Kinect camera
-    view_matrix_ = Matrix4f::Identity();
-    Transform<float, 3, Affine, ColMajor> view_matrix_transform;
-    view_matrix_transform = AngleAxisf(M_PI, Vector3f::UnitX());
-    view_matrix_ = view_matrix_transform.matrix();
+Matrix4f ObjectRasterizer::get_projection_matrix(float n, float f, float l, float r, float t, float b) {
+    Matrix4f projection_matrix = Matrix4f::Zero();
+    projection_matrix(0,0) = 2 * n / (r - l);
+    projection_matrix(0,2) = (r + l) / (r - l);
+    projection_matrix(1,1) = 2 * n / (t - b);
+    projection_matrix(1,2) = (t + b) / (t - b);
+    projection_matrix(2,2) = -(f + n) / (f - n);
+    projection_matrix(2,3) = - 2 * f * n / (f - n);
+    projection_matrix(3,2) = -1;
+
+    return projection_matrix;
 }
 
 void ObjectRasterizer::store_time_measurements() {
@@ -692,85 +714,9 @@ void ObjectRasterizer::store_time_measurements() {
 #endif
 }
 
-GLuint ObjectRasterizer::get_framebuffer_texture() {
-    return framebuffer_texture_for_all_poses_;
-}
-
-int ObjectRasterizer::get_n_poses_x() {
-    return n_poses_x_;
-}
-
-
-
-void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                        std::vector<std::vector<float> > &depth) {
-
-    // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
-                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
-                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           framebuffer_texture_for_all_poses_,     // 4. tex ID
-                           0);
-
-    // ===================== TRANSFERS DEPTH VALUES TO CPU == SLOW!!! ================ //
-
-    read_depth(intersect_indices, depth, result_buffer_, framebuffer_texture_for_all_poses_);
-
-//    vector<int> intersect_indices_all;
-//    vector<float> depth_all;
-
-//    int width = n_cols_ * n_poses_x_;
-//    int index, index_x, index_y, pose_x, pose_y, local_index, pose;
-
-//    vector<int> intersect_indices_tmp[n_poses_];
-//    vector<float> depth_tmp[n_poses_];
-
-////    int n_cols_old = n_cols_;
-////    int n_rows_old = n_rows_;
-////    n_cols_ = n_poses_x_ * n_cols_;
-////    n_rows_ = n_poses_y_ * n_rows_;
-//    ReadDepth(intersect_indices_all, depth_all, combined_result_buffer_, combined_texture_);
-////    n_cols_ = n_cols_old;
-////    n_rows_ = n_rows_old;
-
-//    cout << "intersect_indices_all size: " << intersect_indices_all.size() << endl;
-
-//    for (size_t i = 0; i < intersect_indices_all.size(); i++) {
-//        index = intersect_indices_all[i];
-//        index_x = index % width;
-//        index_y = index / width;
-//        pose_x = index_x / n_cols_;
-//        pose_y = index_y / n_rows_;
-
-//        local_index = (index_x % n_cols_) + (index_y % n_rows_) * n_cols_;
-//        pose = pose_y * n_poses_x_ + pose_x;
-
-//        intersect_indices_tmp[pose].push_back(local_index);
-//        depth_tmp[pose].push_back(depth_all[i]);
-
-//    }
-
-//    for (int i = 0; i < n_poses_; i++) {
-//        intersect_indices.push_back(intersect_indices_tmp[i]);
-//        depth.push_back(depth_tmp[i]);
-//        cout << "rasterizer indices: [" << i << "]: " << intersect_indices_tmp[i].size() << endl;
-//    }
-
-
-    // ===================== DETACH TEXTURE FROM FRAMEBUFFER ================ //
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
-                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
-                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           0,     // 4. tex ID
-                           0);
-
-}
-
 
 string ObjectRasterizer::get_text_for_enum( int enumVal ) {
-    return enum_strings_[enumVal];
+    return strings_for_subroutines[enumVal];
 }
 
 

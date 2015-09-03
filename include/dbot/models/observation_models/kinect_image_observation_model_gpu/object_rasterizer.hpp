@@ -86,8 +86,7 @@ public:
 
 
     GLuint get_framebuffer_texture();
-    int get_n_poses_x();
-    int get_n_renders();
+    int get_nr_poses_per_row();
     void get_depth_values(std::vector<std::vector<int> > &intersect_indices,
                           std::vector<std::vector<float> > &depth);
 
@@ -96,35 +95,32 @@ private:
     static constexpr float FAR_PLANE = 4.0f; // Kinect does not see anything further away than 7 meters
     static const int WINDOW_WIDTH = 80;  // default values if not specified
     static const int WINDOW_HEIGHT = 60; // default values if not specified
-    static const int NR_SUBROUTINES_TO_MEASURE = 4;
-    enum subroutines_to_measure { ATTACH_TEXTURE, CLEAR_SCREEN, RENDER, DETACH_TEXTURE};
-    std::vector<std::string> enum_strings_;
-    std::vector<double> gpu_times_aggregate_;
-    int nr_calls_;
-
-    bool initial_run_;
 
     // GPU constraints
-
     GLint max_dimension_;
 
     // values initialized to WINDOW_WIDTH, WINDOW_HEIGHT in constructor. May be changed by user with set_resolution().
-    int n_rows_;
-    int n_cols_;
+    int nr_rows_;
+    int nr_cols_;
 
     // number of poses to render
-    int n_poses_;
-    int n_poses_x_;
-    int n_poses_y_;
+    int nr_poses_;
+    int nr_poses_per_row_;
+    int nr_poses_per_column_;
 
     // number of maximum poses
-    int n_max_poses_;
-    int n_max_poses_x_;
-    int n_max_poses_y_;
+    int nr_max_poses_;
+    int nr_max_poses_per_row_;
+    int nr_max_poses_per_column_;
 
     // needed for openGL time observation
+    static const int NR_SUBROUTINES_TO_MEASURE = 4;
     GLuint time_query_[NR_SUBROUTINES_TO_MEASURE];
-
+    enum subroutines_to_measure { ATTACH_TEXTURE, CLEAR_SCREEN, RENDER, DETACH_TEXTURE};
+    std::vector<std::string> strings_for_subroutines;
+    std::vector<double> gpu_times_aggregate_;
+    int nr_calls_;
+    bool initial_run_;
 
 
     // the paths to the respective shaders
@@ -144,12 +140,12 @@ private:
     Eigen::Matrix4f projection_matrix_;
     Eigen::Matrix4f view_matrix_;
 
-    // shader program ID and uniform IDs to pass variables to it
+    // shader program ID and matrix uniform IDs to pass variables to them
     GLuint shader_ID_;
     GLuint model_view_matrix_ID_;    // ID to which we pass the modelview matrix
     GLuint projection_matrix_ID_;    // ID to which we pass the projection matrix
 
-    // VAO, VBO and element array are needed to store the object meshes
+    // VAO, VBO and element arrays are needed to store the object meshes
     GLuint vertex_array_;   // The vertex array contains the vertex and index buffers
     GLuint vertex_buffer_;    // contains the vertices of the object meshes passed in the constructor
     GLuint index_buffer_;     //  contains the indices of the object meshes passed in the constructor
@@ -167,21 +163,21 @@ private:
     // ====================== PRIVATE FUNCTIONS ====================== //
 
 
+    void reallocate_buffers();
+
+    // set up model-, view- and projection-matrix
+    Eigen::Matrix4f get_model_matrix(const std::vector<float> state);
+    void setup_view_matrix();
+    void setup_projection_matrix(const Eigen::Matrix3f camera_matrix);    
+    Eigen::Matrix4f get_projection_matrix(float n, float f, float l, float r, float t, float b);
+
+    // functions for time measurement
+    void store_time_measurements();
     std::string get_text_for_enum( int enumVal );
+
+    // functions for error checking
     void check_GL_errors(const char *label);
     bool check_framebuffer_status();
-    void read_depth(std::vector<std::vector<int> > &intersect_indices,
-                   std::vector<std::vector<float> > &depth,
-                   GLuint pixel_buffer_object,
-                   GLuint framebuffer_texture);
-
-    Eigen::Matrix4f get_model_matrix(const std::vector<float> state);
-    Eigen::Matrix4f GetProjectionMatrix(float n, float f, float l, float r, float t, float b);
-
-    void store_time_measurements();
-    void reallocate_buffers();
-    void setup_view_matrix();
-    void setup_projection_matrix(const Eigen::Matrix3f camera_matrix);
 
 };
 
