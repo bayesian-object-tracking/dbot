@@ -42,7 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <dbot/models/observation_models/kinect_pixel_observation_model.hpp>
 #include <dbot/models/process_models/occlusion_process_model.hpp>
 
-namespace ff
+namespace dbot
 {
 
 
@@ -63,9 +63,9 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 
     typedef RBObservationModel<State, Observation> ObservationModelBase;
 
-    typedef boost::shared_ptr<ff::RigidBodyRenderer> ObjectRendererPtr;
-    typedef boost::shared_ptr<ff::KinectPixelObservationModel> PixelObservationModelPtr;
-    typedef boost::shared_ptr<ff::OcclusionProcessModel> OcclusionProcessModelPtr;
+    typedef boost::shared_ptr<dbot::RigidBodyRenderer> ObjectRendererPtr;
+    typedef boost::shared_ptr<dbot::KinectPixelObservationModel> PixelObservationModelPtr;
+    typedef boost::shared_ptr<dbot::OcclusionProcessModel> OcclusionProcessModelPtr;
 };
 }
 
@@ -97,10 +97,10 @@ public:
 
     // TODO: DO WE NEED ALL OF THIS IN THE CONSTRUCTOR??
     KinectImageObservationModelCPU(
-			const Eigen::Matrix3d& camera_matrix,
-			const size_t& n_rows,
-			const size_t& n_cols,
-			const size_t& max_sample_count,
+            const Eigen::Matrix3d& camera_matrix,
+            const size_t& n_rows,
+            const size_t& n_cols,
+            const size_t& max_sample_count,
             const ObjectRendererPtr object_renderer,
             const PixelObservationModelPtr observation_model,
             const OcclusionProcessModelPtr occlusion_process_model,
@@ -268,8 +268,8 @@ private:
     std::vector<std::vector<double> > occlusion_times_;
 
     // observed data
-	std::vector<float> observations_;
-	double observation_time_;
+    std::vector<float> observations_;
+    double observation_time_;
 
 };
 

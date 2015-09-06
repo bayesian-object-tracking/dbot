@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // TODO: THIS HAS TO BE CLEANED, POSSIBLY SPLIT INTO SEVERAL FILES
 
-namespace ff
+namespace dbot
 {
 
 namespace hf
@@ -995,7 +995,7 @@ public:
 		fibo_.seed(RANDOM_SEED);
 
         // compute the prob and normalize them
-        sorted_indices_ = ff::hf::SortDescend(log_prob);
+        sorted_indices_ = dbot::hf::SortDescend(log_prob);
         double max = log_prob[sorted_indices_[0]];
         for(int i = 0; i < int(log_prob.size()); i++)
             log_prob[i] -= max;

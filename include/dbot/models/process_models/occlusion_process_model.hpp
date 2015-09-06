@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <fast_filtering/distributions/interfaces/gaussian_map.hpp>
 
 // TODO: THIS IS JUST A LINEAR GAUSSIAN PROCESS WITH NO NOISE, SHOULD DISAPPEAR
-namespace ff
+namespace dbot
 {
 
 /**

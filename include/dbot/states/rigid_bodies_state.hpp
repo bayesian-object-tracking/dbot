@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <fl/util/math/pose_velocity_vector.hpp>
 
-namespace ff
+namespace dbot
 {
 
 template<int Dimension = -1>

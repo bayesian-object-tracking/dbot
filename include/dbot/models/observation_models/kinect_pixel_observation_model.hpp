@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#include <dbot/utils/distribution_test.hpp>
 #include <iostream>
 
-namespace ff
+namespace dbot
 {
 
 // Forward declarations

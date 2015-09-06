@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <dbot/states/rigid_bodies_state.hpp>
 
 
-namespace ff
+namespace dbot
 {
 
 template<int BodyCount>
@@ -91,13 +91,16 @@ public:
     virtual Poses poses() const
     {
         Poses poses_(count()*POSE_SIZE);
-        for(size_t body_index = 0; body_index < count(); body_index++)
+        for(int body_index = 0; body_index < count(); body_index++)
         {
              poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE)
                                 = component(body_index).pose();
         }
         return poses_;
     }
+
+
+
     int count() const
     {
         return this->size() / PoseVelocityBlock::SizeAtCompileTime;
@@ -111,7 +114,7 @@ public:
     }
     virtual void poses(const Poses& poses_)
     {
-        for(size_t body_index = 0; body_index < count(); body_index++)
+        for(int body_index = 0; body_index < count(); body_index++)
         {
              component(body_index).pose()
                 = poses_.template middleRows<POSE_SIZE>(body_index * POSE_SIZE);

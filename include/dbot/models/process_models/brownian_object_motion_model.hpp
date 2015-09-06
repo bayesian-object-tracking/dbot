@@ -57,7 +57,7 @@
 
 #include <fl/model/process/interface/state_transition_function.hpp>
 
-namespace ff
+namespace dbot
 {
 
 // Forward declarations
@@ -196,7 +196,7 @@ public:
         state_ = state;
         for(size_t i = 0; i < state_.count(); i++)
         {
-            quaternion_map_[i] = ff::hf::QuaternionMatrix(state_.component(i).orientation().quaternion().coeffs());
+            quaternion_map_[i] = dbot::hf::QuaternionMatrix(state_.component(i).orientation().quaternion().coeffs());
 
             // transform the state, which is the pose and velocity with respect to to the origin,
             // into internal representation, which is the position and velocity of the center

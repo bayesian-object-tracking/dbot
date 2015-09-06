@@ -59,7 +59,7 @@
 //TODO: THIS IS A LINEAR GAUSSIAN PROCESS, THIS CLASS SHOULD DISAPPEAR
 
 
-namespace ff
+namespace dbot
 {
 
 // Forward declarations

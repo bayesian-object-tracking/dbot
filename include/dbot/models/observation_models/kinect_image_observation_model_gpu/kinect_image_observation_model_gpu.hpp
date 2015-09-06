@@ -20,7 +20,7 @@
 
 #include <dbot/utils/profiling.hpp>
 
-namespace ff
+namespace dbot
 {
 
 // Forward declarations

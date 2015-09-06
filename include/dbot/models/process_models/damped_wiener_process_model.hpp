@@ -54,7 +54,7 @@
 //#include <fast_filtering/distributions/gaussian.hpp>
 #include <fl/distribution/gaussian.hpp>
 
-namespace ff
+namespace dbot
 {
 
 // Forward declarations

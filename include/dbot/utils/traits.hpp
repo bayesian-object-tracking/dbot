@@ -48,7 +48,7 @@
 
 #include <Eigen/Dense>
 
-namespace ff
+namespace dbot
 {
 
 namespace internal
