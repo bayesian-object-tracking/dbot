@@ -77,12 +77,13 @@ public:
       * @param[in] n_rows the height of the image
       * @param[in] n_cols the width of the image
       */
-    void set_resolution(const int n_rows,
-                       const int n_cols);
+    void set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column);
 
-    void set_number_of_max_poses(int n_poses);
+    void allocate_textures_for_max_poses(int& allocated_poses,
+                                         int& allocated_poses_per_row,
+                                         int& allocated_poses_per_column);
 
-    void set_number_of_poses(int n_poses);
+    void set_number_of_poses(const int nr_poses, int& nr_poses_per_row, int& nr_poses_per_column);
 
 
     GLuint get_framebuffer_texture();
@@ -97,7 +98,7 @@ private:
     static const int WINDOW_HEIGHT = 60; // default values if not specified
 
     // GPU constraints
-    GLint max_dimension_;
+    GLint max_texture_size_;
 
     // values initialized to WINDOW_WIDTH, WINDOW_HEIGHT in constructor. May be changed by user with set_resolution().
     int nr_rows_;

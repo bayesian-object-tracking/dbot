@@ -2,7 +2,7 @@
 
 /* Note: Profiling slows down the rendering process. Use only to display the runtimes
  *       of the different subroutines inside the render call. */
-#define PROFILING_ACTIVE
+//#define PROFILING_ACTIVE
 
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 
@@ -149,17 +149,15 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
     // get GPU constraint values
-    GLint max_viewport_dims;
+    GLint max_texture_size;
     GLint max_renderbuffer_size;
 
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, &max_viewport_dims);
+    /* The values specify the max texture size in every dimension, i.e. 2048
+     * would mean we can have a texture of 2048 x 2048. */
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
     glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &max_renderbuffer_size);
 
-    /* TODO this only checks for the first dimension and then assumes the size will be
-     * the same for the other dimension. It is most likely to be so, but maybe this
-     * should be changed to avoid errors in the future. */
-    max_dimension_ = min(max_viewport_dims, max_renderbuffer_size);
-
+    max_texture_size_ = min(max_texture_size, max_renderbuffer_size);
 
 
 
@@ -404,31 +402,72 @@ void ObjectRasterizer::set_objects(vector<int> object_numbers) {
     object_numbers_ = object_numbers;
 }
 
-void ObjectRasterizer::set_number_of_max_poses(int n_poses) {
-//    if (n_poses_ != n_poses) {
-        nr_max_poses_ = n_poses;
-        nr_poses_ = n_poses;
+void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
+                                                       int& allocated_poses_per_row,
+                                                       int& allocated_poses_per_column) {
+    int max_poses_per_row = floor(max_texture_size_ / nr_cols_);
+    int max_poses_per_column = floor(max_texture_size_ / nr_rows_);
+
+    allocated_poses_per_row = min(max_poses_per_row, allocated_poses);
+    allocated_poses_per_column = min(max_poses_per_column, (int) ceil(allocated_poses / (float) allocated_poses_per_row));
+
+    if (allocated_poses > allocated_poses_per_row * allocated_poses_per_column) {
+        std::cout << "The space for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
+                  << "The limit is OpenGL texture size: " << max_texture_size_ << ". Current resolution is (" << nr_cols_ << ", "
+                  << nr_rows_ << ") , which means a maximum of (" << max_poses_per_row << ", " << max_poses_per_column << ") poses. "
+                  << "As a result, space for " << allocated_poses_per_row * allocated_poses_per_column << " poses will be allocated "
+                  << "in the form of (" << allocated_poses_per_row << ", " << allocated_poses_per_column << ")." << std::endl;
+    }
+
+
+    allocated_poses = allocated_poses_per_row * allocated_poses_per_column;
+
+    nr_max_poses_ = allocated_poses;
+    nr_poses_ = allocated_poses;
+    nr_max_poses_per_row_ = allocated_poses_per_row;
+    nr_poses_per_row_ = allocated_poses_per_row;
+    nr_max_poses_per_column_ = allocated_poses_per_column;
+    nr_poses_per_column_ = allocated_poses_per_column;
+
+    reallocate_buffers();
+
+
+
+    /*
+//    if (nr_max_poses_ != nr_max_poses) {
+        nr_max_poses_ = nr_max_poses;
+        nr_poses_ = nr_max_poses;
 
 //        // TODO max_dimension[0], [1], at the moment they are identical
         float sqrt_poses = sqrt(nr_poses_);
         // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
         if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
         // TODO max_dimension[0], [1], at the moment they are identical
-        nr_max_poses_per_row_ = min((int) sqrt_poses, (max_dimension_ / nr_cols_));
+        nr_max_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
         int y_poses = nr_max_poses_ / nr_max_poses_per_row_;
         if (y_poses * nr_max_poses_per_row_ < nr_max_poses_) y_poses++;
-        nr_max_poses_per_column_ = min(y_poses, (max_dimension_ / nr_rows_));
+        nr_max_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
 
         nr_poses_per_row_ = nr_max_poses_per_row_;
         nr_poses_per_column_ = nr_max_poses_per_column_;
 
         reallocate_buffers();
-//    }
+//    }*/
 }
 
-void ObjectRasterizer::set_number_of_poses(int n_poses) {
-    if (n_poses <= nr_max_poses_) {
-        nr_poses_ = n_poses;
+void ObjectRasterizer::set_number_of_poses(const int nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
+    if (nr_poses <= nr_max_poses_) {
+        nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
+        nr_poses_per_column = min(nr_max_poses_per_column_, (int) ceil(nr_poses / (float) nr_poses_per_row));
+
+        nr_poses_ = nr_poses;
+        nr_poses_per_row_ = nr_poses_per_row;
+        nr_poses_per_column_ = nr_poses_per_column;
+
+
+
+        /*
+        nr_poses_ = nr_poses;
 
 
 //        // TODO max_dimension[0], [1], at the moment they are identical
@@ -436,32 +475,28 @@ void ObjectRasterizer::set_number_of_poses(int n_poses) {
         // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
         if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
         // TODO max_dimension[0], [1], at the moment they are identical
-        nr_poses_per_row_ = min((int) sqrt_poses, (max_dimension_ / nr_cols_));
+        nr_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
         int y_poses = nr_poses_ / nr_poses_per_row_;
         if (y_poses * nr_poses_per_row_ < nr_poses_) y_poses++;
-        nr_poses_per_column_ = min(y_poses, (max_dimension_ / nr_rows_));
+        nr_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
 
         if (nr_poses_per_row_ > nr_max_poses_per_row_ || nr_poses_per_column_ > nr_max_poses_per_column_) {
             cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
                  << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
-        }
+        }*/
 
     } else {
-        cout << "WARNING: You tried to evaluate more poses than specified by max_poses" << endl;
+        cout << "ERROR (OpenGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
+        exit(-1);
     }
 }
 
-void ObjectRasterizer::set_resolution(const int n_rows,
-                                     const int n_cols) {
-//    if (n_rows_ != n_rows || n_cols_ != n_cols) {
+void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
         nr_rows_ = n_rows;
         nr_cols_ = n_cols;
 
-        // recalculate n_poses_x_ and n_poses_y_ depending on the resolution
-        set_number_of_max_poses(nr_max_poses_);
-
-
-//    }
+        // reallocate textures
+        allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column);
 }
 
 GLuint ObjectRasterizer::get_framebuffer_texture() {

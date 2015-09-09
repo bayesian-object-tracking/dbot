@@ -39,9 +39,11 @@ public:
     void set_observations(const float* observations); // not used outside, can be integrated into above
     void set_visibility_probabilities(const float* visibility_probabilities);
     void set_prev_sample_indices(const int* prev_sample_indices);
-    void set_resolution(int n_rows, int n_cols);
-    void set_number_of_max_poses(int n_poses, int n_poses_x);
-    void set_number_of_poses(int n_poses, int n_poses_x);
+    void set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column);
+    void allocate_memory_for_max_poses(int& allocated_poses,
+                                       int& allocated_poses_per_row,
+                                       int& allocated_poses_per_column);
+    void set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column);
     void set_texture_array(cudaArray_t texture_array);
 
     // getters
@@ -55,6 +57,7 @@ private:
     // resolution values if not specified
     static const int WINDOW_WIDTH = 80;
     static const int WINDOW_HEIGHT = 60;
+    static const int DEFAULT_NR_THREADS = 128;
 
     // time observation
     static const int COUNT = 500;
@@ -71,7 +74,6 @@ private:
     float *d_log_likelihoods_;
     int *d_prev_sample_indices_;
     int *d_resampling_indices_; // not needed if resampling not on GPU
-    float *d_test_array_; // debugging. can go.
     curandStateMRG32k3a *d_mrg_states_;
     
     // for OpenGL interop
@@ -82,20 +84,22 @@ private:
     int n_rows_;
 
     // maximum number of poses and their arrangement in the OpenGL texture
-    int n_max_poses_;
-    int n_max_poses_x_;
-    int n_max_poses_y_;
+    int nr_max_poses_;
+    int nr_max_poses_per_row_;
+    int nr_max_poses_per_column_;
 
     // number of poses and their arrangement in the OpenGL texture
-    int n_poses_;
-    int n_poses_x_;
-    int n_poses_y_;
+    int nr_poses_;
+    int nr_poses_per_row_;
+    int nr_poses_per_column_;
 
     // number of features in a state vector
     int n_features_;
 
     // block and grid arrangement of the CUDA kernels
-    int n_threads_, n_blocks_;
+    int nr_threads_, n_blocks_;
+    dim3 grid_dimension_;
+
 
     // system properties
     int warp_size_;
@@ -114,8 +118,12 @@ private:
     // booleans to describe the state of the cuda filter, to avoid wrong usage of the class
     bool n_poses_set_;
 
+    // CUDA device properties
+    cudaDeviceProp cuda_device_properties_;
 
-    void set_default_kernel_config();
+
+    void set_default_kernel_config(int& nr_poses_, int& nr_poses_per_row, int& nr_poses_per_column,
+                                   bool& nr_poses_changed);
 
     // helper functions
     template <typename T> void allocate(T * &pointer, size_t size, std::string name);

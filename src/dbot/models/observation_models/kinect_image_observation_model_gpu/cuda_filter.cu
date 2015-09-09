@@ -537,7 +537,7 @@ __global__ void compare_kernel(float *observations, float* visibility_probs, int
 
 
 __global__ void compare_multiple_kernel(float *observations, float* old_visibility_probs, float* new_visibility_probs, int* occlusion_image_indices, int nr_pixels,
-                                 float *d_log_likelihoods, float delta_time, int n_poses, int n_rows, int n_cols, bool update, float* test_array) {
+                                 float *d_log_likelihoods, float delta_time, int n_poses, int n_rows, int n_cols, bool update) {
     int block_id = blockIdx.x + blockIdx.y * gridDim.x;
     if (block_id < n_poses) {
 
@@ -612,7 +612,6 @@ __global__ void compare_multiple_kernel(float *observations, float* old_visibili
 
                 local_sum_of_likelihoods += logf((p_obsIpred_vis + p_obsIpred_occl)/p_obsIinf);
 
-//                test_array[pixel_nr] = depth;
 
                 if(update) {
                     // we update the visibility (occlusion) probability with the observations
@@ -711,7 +710,7 @@ CudaFilter::CudaFilter() :
     props.major = 2;
     props.minor = 0;
     cudaChooseDevice( &device_number, &props );
-    check_cuda_error("choosing device");
+    check_cuda_error("No device with compute capability > 2.0 found");
 
     /* tell CUDA which device we will be using for graphic interop
      * requires that the CUDA device be specified by
@@ -723,6 +722,8 @@ CudaFilter::CudaFilter() :
     cudaGetDeviceProperties(&props, device_number);     // we will run the program only on one graphics card, the first one we can find = 0
     warp_size_ = props.warpSize;            // equals 32 for all current graphics cards, but might change in the future
     n_mps_ = props.multiProcessorCount;
+
+    cuda_device_properties_ = props;
 
     cout << "Your device has the following properties: " << endl
          << "CUDA Version: " << props.major << "." << props.minor << endl
@@ -743,7 +744,6 @@ CudaFilter::CudaFilter() :
     d_mrg_states_ = NULL;
     d_resampling_indices_ = NULL;
     d_prev_sample_indices_ = NULL;
-    d_test_array_ = NULL;
 
 }
 
@@ -766,7 +766,7 @@ void CudaFilter::init(vector<vector<float> > com_models, float angle_sigma, floa
 //    allocate(d_prev_sample_indices_, sizeof(int) * n_poses_, "d_prev_sample_indices");
 //    allocate(d_resampling_indices_, sizeof(int) * n_poses_, "d_resampling_indices");
 
-    cudaMemset(d_log_likelihoods_, 0, sizeof(float) * n_poses_);
+    cudaMemset(d_log_likelihoods_, 0, sizeof(float) * nr_poses_);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemset d_log_likelihoods");
     #endif
@@ -841,7 +841,7 @@ void CudaFilter::propagate(const float &current_time, vector<vector<float> > &st
     last_propagation_time_ = current_time;
 
 
-    propagate_kernel <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_features_, delta_time, d_mrg_states_);
+    propagate_kernel <<< n_blocks_, nr_threads_ >>> (d_states_, nr_poses_, n_features_, delta_time, d_mrg_states_);
     #ifdef CHECK_ERRORS
         check_cuda_error("propagate kernel call");
     #endif
@@ -856,14 +856,14 @@ void CudaFilter::propagate(const float &current_time, vector<vector<float> > &st
 
 
 
-    float *states_raw = (float*) malloc(n_poses_ * n_features_ * sizeof(float));
-    cudaMemcpy(states_raw, d_states_, n_poses_ * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
+    float *states_raw = (float*) malloc(nr_poses_ * n_features_ * sizeof(float));
+    cudaMemcpy(states_raw, d_states_, nr_poses_ * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy d_states -> states");
     #endif
 
 
-    for (int i = 0; i < n_poses_; i++) {
+    for (int i = 0; i < nr_poses_; i++) {
         for (int j = 0; j < n_features_; j++) {
             states[i][j] = states_raw[i * n_features_ + j];
         }
@@ -881,8 +881,8 @@ void CudaFilter::propagate_multiple(const float &current_time, vector<vector<vec
 
     int n_objects = states[0].size();
 
-    float *states_raw = (float*) malloc(n_poses_ * n_objects * n_features_ * sizeof(float));
-    for (int i = 0; i < n_poses_; i++) {
+    float *states_raw = (float*) malloc(nr_poses_ * n_objects * n_features_ * sizeof(float));
+    for (int i = 0; i < nr_poses_; i++) {
         for (int j = 0; j < n_objects; j++) {
             for (int k = 0; k < n_features_; k++) {
                 states_raw[(i * n_objects *n_features_) + j * n_features_ + k] = states[i][j][k];
@@ -891,13 +891,13 @@ void CudaFilter::propagate_multiple(const float &current_time, vector<vector<vec
     }
 
 
-    cudaMemcpy(d_states_, states_raw, n_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_states_, states_raw, nr_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy states -> d_states");
     #endif
 
 
-    propagate_multiple_kernel <<< n_blocks_, n_threads_ >>> (d_states_, n_poses_, n_objects, n_features_, delta_time, d_mrg_states_);
+    propagate_multiple_kernel <<< n_blocks_, nr_threads_ >>> (d_states_, nr_poses_, n_objects, n_features_, delta_time, d_mrg_states_);
     #ifdef CHECK_ERRORS
         check_cuda_error("propagate kernel call");
     #endif
@@ -912,13 +912,13 @@ void CudaFilter::propagate_multiple(const float &current_time, vector<vector<vec
 
 
 
-    cudaMemcpy(states_raw, d_states_, n_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(states_raw, d_states_, nr_poses_ * n_objects * n_features_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy d_states -> states");
     #endif
 
 
-    for (int i = 0; i < n_poses_; i++) {
+    for (int i = 0; i < nr_poses_; i++) {
         for (int j = 0; j < n_objects; j++) {
             for (int k = 0; k < n_features_; k++) {
                 states[i][j][k] = states_raw[(i * n_objects *n_features_) + j * n_features_ + k];
@@ -941,7 +941,7 @@ void CudaFilter::compare(float observation_time, bool constant_occlusion, vector
     float milliseconds;
 #endif
 
-    dim3 gridDim = dim3(n_poses_x_, n_poses_y_);
+    dim3 gridDim = dim3(nr_poses_per_row_, nr_poses_per_column_);
 
     // update observation time
     float delta_time = observation_time - occlusion_time_;
@@ -954,7 +954,7 @@ void CudaFilter::compare(float observation_time, bool constant_occlusion, vector
 #endif
 
     compare_kernel <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, n_cols_ * n_rows_,
-            constant_occlusion, d_log_likelihoods_, delta_time, n_poses_, n_rows_, n_cols_);
+            constant_occlusion, d_log_likelihoods_, delta_time, nr_poses_, n_rows_, n_cols_);
     #ifdef CHECK_ERRORS
         check_cuda_error("compare kernel call");
     #endif
@@ -976,7 +976,7 @@ void CudaFilter::compare(float observation_time, bool constant_occlusion, vector
     cudaEventRecord(start);
 #endif
 
-    cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, n_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, nr_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
     #endif
@@ -1006,12 +1006,6 @@ void CudaFilter::compare_multiple(bool update, vector<float> &log_likelihoods) {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     float milliseconds;
-#endif
-
-    dim3 gridDim = dim3(n_poses_x_, n_poses_y_);
-
-
-#ifdef PROFILING_ACTIVE
     cudaEventRecord(start);
 #endif
 
@@ -1019,16 +1013,9 @@ void CudaFilter::compare_multiple(bool update, vector<float> &log_likelihoods) {
     if(update) occlusion_time_ = observation_time_;
 //    cout << "delta time: " << delta_time << endl;
 
-    int TEST_SIZE = n_cols_ * n_rows_;
-    float* test_array = (float*) malloc( TEST_SIZE * sizeof(float));
-    memset(test_array, 0, TEST_SIZE * sizeof(float));
 
-
-    allocate(d_test_array_, TEST_SIZE * sizeof(float), "test_array");
-    cudaMemset(d_test_array_, 0, TEST_SIZE * sizeof(float));
-
-    compare_multiple_kernel <<< gridDim, 128 >>> (d_observations_, d_visibility_probs_, d_visibility_probs_copy_, d_prev_sample_indices_, n_cols_ * n_rows_,
-                                           d_log_likelihoods_, delta_time, n_poses_, n_rows_, n_cols_, update, d_test_array_);
+    compare_multiple_kernel <<< grid_dimension_, nr_threads_ >>> (d_observations_, d_visibility_probs_, d_visibility_probs_copy_, d_prev_sample_indices_, n_cols_ * n_rows_,
+                                           d_log_likelihoods_, delta_time, nr_poses_, n_rows_, n_cols_, update);
     #ifdef CHECK_ERRORS
         check_cuda_error("compare kernel call");
     #endif
@@ -1038,16 +1025,6 @@ void CudaFilter::compare_multiple(bool update, vector<float> &log_likelihoods) {
         check_cuda_error("cudaDeviceSynchronize compare_multiple");
     #endif
 
-    cudaMemcpy(test_array, d_test_array_, TEST_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
-    #ifdef CHECK_ERRORS
-        check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
-    #endif
-
-//    for (int i = 0; i < TEST_SIZE; i++) {
-//        if (test_array[i] != 0) {
-//            cout << "(GPU) index: " << i << ", depth: " << test_array[i] << endl;
-//        }
-//    }
 
 
     // switch to new / copied visibility probabilities
@@ -1070,7 +1047,7 @@ void CudaFilter::compare_multiple(bool update, vector<float> &log_likelihoods) {
     cudaEventRecord(start);
 #endif
 
-    cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, n_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&log_likelihoods[0], d_log_likelihoods_, nr_poses_ * sizeof(float), cudaMemcpyDeviceToHost);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy d_log_likelihoods -> log_likelihoods");
     #endif
@@ -1101,7 +1078,7 @@ void CudaFilter::resample(vector<int> resampling_indices) {
 
 //    cout << "resample <<< " << n_poses_ << ", " << 128 << " >>>" << endl;
 
-    cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * n_poses_, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * nr_poses_, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy resampling_indices -> d_resampling_indices_");
     #endif
@@ -1118,7 +1095,7 @@ void CudaFilter::resample(vector<int> resampling_indices) {
 
     int nr_pixels = n_rows_ * n_cols_;
 
-    resample_kernel <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
+    resample_kernel <<< nr_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
                                     d_states_, d_states_copy_,
                                     d_resampling_indices_, nr_pixels, n_features_);
     #ifdef CHECK_ERRORS
@@ -1148,14 +1125,14 @@ void CudaFilter::resample(vector<int> resampling_indices) {
 
 void CudaFilter::resample_multiple(vector<int> resampling_indices) {
 
-    cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * n_poses_, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_resampling_indices_, &resampling_indices[0], sizeof(int) * nr_poses_, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy resampling_indices -> d_resampling_indices_");
     #endif
 
     int nr_pixels = n_rows_ * n_cols_;
 
-    resample_multiple_kernel <<< n_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
+    resample_multiple_kernel <<< nr_poses_, 128 >>> (d_visibility_probs_, d_visibility_probs_copy_,
                                              d_resampling_indices_, nr_pixels);
     #ifdef CHECK_ERRORS
         check_cuda_error("resample kernel call");
@@ -1191,10 +1168,10 @@ void CudaFilter::set_states(std::vector<std::vector<float> > &states, int seed)
          * right now, each MP needs 7 values out of d_states_. 8 would be a much better number. */
         n_features_ = states[0].size();
 
-        int states_size = n_poses_ * n_features_ * sizeof(float);
+        int states_size = nr_poses_ * n_features_ * sizeof(float);
         float *states_raw = (float*) malloc(states_size);
 
-        for (size_t i = 0; i < n_poses_; i++) {
+        for (size_t i = 0; i < nr_poses_; i++) {
             for (size_t j = 0; j < n_features_; j++) {
                 states_raw[i * n_features_ + j] = states[i][j];
             }
@@ -1211,9 +1188,9 @@ void CudaFilter::set_states(std::vector<std::vector<float> > &states, int seed)
         free(states_raw);
 
         // setup random number generators for each thread to be used in the propagate kernel
-        allocate(d_mrg_states_, n_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
+        allocate(d_mrg_states_, nr_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
 
-        setup_number_generators_kernel <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
+        setup_number_generators_kernel <<< n_blocks_, nr_threads_ >>> (seed, d_mrg_states_, nr_poses_);
 
         cudaDeviceSynchronize();
     } else {
@@ -1232,14 +1209,14 @@ void CudaFilter::set_states_multiple(int n_objects, int n_features, int seed)
     if (n_poses_set_) {
         n_features_ = n_features;
 
-        int states_size = n_poses_ * n_objects * n_features_ * sizeof(float);
+        int states_size = nr_poses_ * n_objects * n_features_ * sizeof(float);
         allocate(d_states_, states_size, "d_states");
 
 
         // setup random number generators for each thread to be used in the propagate kernel
-        allocate(d_mrg_states_, n_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
+        allocate(d_mrg_states_, nr_poses_ * sizeof(curandStateMRG32k3a), "d_mrg_states");
 
-        setup_number_generators_kernel <<< n_blocks_, n_threads_ >>> (seed, d_mrg_states_, n_poses_);
+        setup_number_generators_kernel <<< n_blocks_, nr_threads_ >>> (seed, d_mrg_states_, nr_poses_);
 
         cudaDeviceSynchronize();
     } else {
@@ -1272,7 +1249,7 @@ void CudaFilter::set_observations(const float* observations) {
 
 
 void CudaFilter::set_prev_sample_indices(const int* prev_sample_indices) {
-    cudaMemcpy(d_prev_sample_indices_, prev_sample_indices, n_poses_ * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_prev_sample_indices_, prev_sample_indices, nr_poses_ * sizeof(int), cudaMemcpyHostToDevice);
 //    cout << "when setting prev_sample_indices: n_poses: " << n_poses_ << ", max poses: " << n_max_poses_ << endl;
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy prev_sample_indices -> d_prev_sample_indices_");
@@ -1281,29 +1258,18 @@ void CudaFilter::set_prev_sample_indices(const int* prev_sample_indices) {
 }
 
 
-void CudaFilter::set_resolution(int n_rows, int n_cols) {
+void CudaFilter::set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
     n_rows_ = n_rows;
     n_cols_ = n_cols;
 
     // reallocate buffers
-    allocate(d_observations_, n_cols_ * n_rows_ * sizeof(float), "d_observations");
-    allocate(d_visibility_probs_, n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), "d_visibility_probs");
-    allocate(d_visibility_probs_copy_, n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), "d_visibility_probs_copy");
-
-    // fill all pixels of new visibility probs texture with the default value
-    vector<float> initial_visibility_probs (n_rows_ * n_cols_ * n_max_poses_, visibility_prob_default_);
-
-    cudaMemcpy(d_visibility_probs_, &initial_visibility_probs[0], n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), cudaMemcpyHostToDevice);
-    #ifdef CHECK_ERRORS
-        check_cuda_error("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
-    #endif
-
-    cudaDeviceSynchronize();
+    allocate(d_observations_, n_cols_ * n_rows_ * sizeof(float), "d_observations");    
+    allocate_memory_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column);
 }
 
 
 void CudaFilter::set_visibility_probabilities(const float* visibility_probabilities) {
-    cudaMemcpy(d_visibility_probs_, visibility_probabilities, n_rows_ * n_cols_ * n_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_visibility_probs_, visibility_probabilities, n_rows_ * n_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy visibility_probabilities -> d_visibility_probs_");
     #endif
@@ -1312,32 +1278,104 @@ void CudaFilter::set_visibility_probabilities(const float* visibility_probabilit
 
 
 
-void CudaFilter::set_number_of_max_poses(int n_poses, int n_poses_x) {
-    n_max_poses_ = n_poses;
-    n_max_poses_x_ = n_poses_x;
+void CudaFilter::allocate_memory_for_max_poses(int& allocated_poses,
+                                               int& allocated_poses_per_row,
+                                               int& allocated_poses_per_column) {
+
+    // check limitation by global memory
+    size_t size_of_log_likelihoods = sizeof(float) * allocated_poses;
+    size_t size_of_resampling_indices = sizeof(int) * allocated_poses;
+    size_t size_of_prev_sample_indices = sizeof(int) * allocated_poses;
+    size_t size_of_visibility_probs = n_rows_ * n_cols_ * allocated_poses * sizeof(float);
+    size_t size_of_opengl_textures = size_of_visibility_probs * 2;
+    size_t size_of_observations = n_cols_ * n_rows_ * sizeof(float);
+
+    size_t total_size = size_of_log_likelihoods + size_of_resampling_indices + size_of_prev_sample_indices
+                      + size_of_visibility_probs * 2 + size_of_opengl_textures + size_of_observations;
+
+    if (total_size > cuda_device_properties_.totalGlobalMem) {
+
+        std::cout << "The space (" << total_size << " B) for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
+                  << "The limit is global memory size (" << cuda_device_properties_.totalGlobalMem
+                  << " B) retrieved from CUDA properties." << std::endl;
+
+        size_t size_depending_on_nr_poses = (sizeof(float) + sizeof(int) * 2 + n_rows_ * n_cols_ * sizeof(float) * 4);
+        allocated_poses = min(allocated_poses, (int) floor((cuda_device_properties_.totalGlobalMem - size_of_observations) / size_depending_on_nr_poses));
+        allocated_poses_per_column = ceil(allocated_poses / allocated_poses_per_row);
+
+        std::cout << "Instead, space (" << allocated_poses * size_depending_on_nr_poses + size_of_observations << " B) for " << allocated_poses << " poses was allocated. " << std::endl;
+    }
+
+
+    // check limitation by texture size
+    if (cuda_device_properties_.maxTexture2D[0] <= allocated_poses_per_row * n_cols_) {
+
+        std::cout << "The max poses you requested (" << allocated_poses << ") could not be allocated." << std::endl;
+
+        allocated_poses_per_row = cuda_device_properties_.maxTexture2D[0] / n_cols_;
+        allocated_poses_per_column = ceil(allocated_poses / allocated_poses_per_row);
+
+        if (cuda_device_properties_.maxTexture2D[1] <= allocated_poses_per_column * n_rows_) {
+            allocated_poses_per_column = cuda_device_properties_.maxTexture2D[1] / n_rows_;
+        }
+
+        allocated_poses = min(allocated_poses, allocated_poses_per_row * allocated_poses_per_column);
+
+        std::cout << "The limit is max texture size (" << cuda_device_properties_.maxTexture2D[0]
+                  << ", " << cuda_device_properties_.maxTexture2D[1] << ") retrieved from CUDA properties. "
+                  << "Number of poses was reduced to (" << allocated_poses_per_row << ", "
+                  << allocated_poses_per_column << "), a total of " << allocated_poses << std::endl;
+    }
+
+    nr_max_poses_ = allocated_poses;
+    nr_max_poses_per_row_ = allocated_poses_per_row;
+    nr_max_poses_per_column_ = allocated_poses_per_column;
+
+
+/*
+    nr_max_poses_ = n_poses;
+    nr_max_poses_per_row_ = n_poses_x;
 
     // determine n_max_poses_y_
-    n_max_poses_y_ = n_max_poses_ / n_max_poses_x_;
-    if (n_poses % n_max_poses_x_ != 0) n_max_poses_y_++;
+    nr_max_poses_per_column_ = nr_max_poses_ / nr_max_poses_per_row_;
+    if (n_poses % nr_max_poses_per_row_ != 0) nr_max_poses_per_column_++;
 
-    n_poses_ = n_max_poses_;
-    n_poses_x_ = n_max_poses_x_;
-    n_poses_y_ = n_max_poses_y_;
+    n_poses_ = nr_max_poses_;
+    n_poses_x_ = nr_max_poses_per_row_;
+    n_poses_y_ = nr_max_poses_per_column_;
 
-
+*/
     n_poses_set_ = true;
-    set_default_kernel_config();
+
+    bool nr_poses_changed = false;
+    set_default_kernel_config(nr_max_poses_, nr_max_poses_per_row_, nr_max_poses_per_column_, nr_poses_changed);
+
+    allocated_poses = nr_max_poses_;
+    allocated_poses_per_row = nr_max_poses_per_row_;
+    allocated_poses_per_column = nr_max_poses_per_column_;
+
+    nr_poses_ = nr_max_poses_;
+    nr_poses_per_row_ = nr_max_poses_per_row_;
+    nr_poses_per_column_ = nr_max_poses_per_column_;
+
+    if (nr_poses_changed) {
+        size_of_log_likelihoods = sizeof(float) * nr_max_poses_;
+        size_of_resampling_indices = sizeof(int) * nr_max_poses_;
+        size_of_prev_sample_indices = sizeof(int) * nr_max_poses_;
+        size_of_visibility_probs = n_rows_ * n_cols_ * nr_max_poses_ * sizeof(float);
+    }
+
 
     // reallocate arrays
-    allocate(d_log_likelihoods_, sizeof(float) * n_max_poses_, "d_log_likelihoods");
-    allocate(d_resampling_indices_, sizeof(int) * n_max_poses_, "d_resampling_indices");
-    allocate(d_prev_sample_indices_, sizeof(int) * n_max_poses_, "d_prev_sample_indices");
-    allocate(d_visibility_probs_, n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), "d_visibility_probs");
-    allocate(d_visibility_probs_copy_, n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), "d_visibility_probs_copy");
+    allocate(d_log_likelihoods_, size_of_log_likelihoods, "d_log_likelihoods");
+    allocate(d_resampling_indices_, size_of_resampling_indices, "d_resampling_indices");
+    allocate(d_prev_sample_indices_, size_of_prev_sample_indices, "d_prev_sample_indices");
+    allocate(d_visibility_probs_, size_of_visibility_probs, "d_visibility_probs");
+    allocate(d_visibility_probs_copy_, size_of_visibility_probs, "d_visibility_probs_copy");
 
     // TODO maybe delete after set_visibility_probabilities is properly in use
-    vector<float> initial_visibility_probs (n_rows_ * n_cols_ * n_max_poses_, visibility_prob_default_);
-    cudaMemcpy(d_visibility_probs_, &initial_visibility_probs[0], n_rows_ * n_cols_ * n_max_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+    vector<float> initial_visibility_probs (n_rows_ * n_cols_ * nr_max_poses_, visibility_prob_default_);
+    cudaMemcpy(d_visibility_probs_, &initial_visibility_probs[0], size_of_visibility_probs, cudaMemcpyHostToDevice);
     #ifdef CHECK_ERRORS
         check_cuda_error("cudaMemcpy visibility_prob_default_ -> d_visibility_probs_");
     #endif
@@ -1345,48 +1383,101 @@ void CudaFilter::set_number_of_max_poses(int n_poses, int n_poses_x) {
 
     cudaDeviceSynchronize();
     #ifdef CHECK_ERRORS
-        check_cuda_error("cudaDeviceSynchronize set_number_of_states");
+        check_cuda_error("cudaDeviceSynchronize allocate_memory_for_max_poses");
     #endif
 
 
 }
 
 
-void CudaFilter::set_number_of_poses(int n_poses, int n_poses_x) {
-    if (n_poses_ <= n_max_poses_) {
-        n_poses_ = n_poses;
-        n_poses_x_ = n_poses_x;
+void CudaFilter::set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
+    if (nr_poses <= nr_max_poses_) {
 
-        // determine n_max_poses_y_
-        n_poses_y_ = n_poses_ / n_poses_x_;
-        if (n_poses % n_poses_x_ != 0) n_poses_y_++;
+        if (nr_max_poses_per_row_ < nr_poses_per_row) {
+            nr_poses_per_row = nr_max_poses_per_row_;
+            nr_poses_per_column = ceil(nr_poses / nr_poses_per_row);
+            if (nr_max_poses_per_column_ < nr_poses_per_column) {
+                nr_poses_per_column = nr_max_poses_per_column_;
+            }
 
-        if (n_poses_x_ > n_max_poses_x_ || n_poses_y_ > n_max_poses_y_) {
-            cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
-                 << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
+            std::cout << "Number of poses was reduced to (" << nr_poses_per_row << ", "
+                      << nr_poses_per_column << ") because of the maximum number of poses set in the beginning." << std::endl;
         }
 
-        set_default_kernel_config();
+        nr_poses = min(nr_poses, nr_poses_per_row * nr_poses_per_column);
+
+        nr_poses_ = nr_poses;
+        nr_poses_per_row_ = nr_poses_per_row;
+        nr_poses_per_column_ = nr_poses_per_column;
+
+        /*
+
+
+        nr_poses_ = nr_poses;
+        nr_poses_per_row_ = nr_poses_per_row;
+
+        // determine n_max_poses_y_
+        nr_poses_per_column_ = nr_poses_ / nr_poses_per_row_;
+        if (nr_poses % nr_poses_per_row_ != 0) nr_poses_per_column_++;
+
+        if (nr_poses_per_row_ > nr_max_poses_per_row_ || nr_poses_per_column_ > nr_max_poses_per_column_) {
+            cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
+                 << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
+        }*/
+
+        bool nr_poses_changed = false;
+        set_default_kernel_config(nr_poses_, nr_poses_per_row_, nr_poses_per_column_, nr_poses_changed);
+
+        nr_poses = nr_poses_;
+        nr_poses_per_row = nr_poses_per_row_;
+        nr_poses_per_column = nr_poses_per_column_;
+
     } else {
-        cout << "WARNING: You tried to evaluate more poses than specified by max_poses" << endl;
+        cout << "ERROR (Cuda): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
+        exit(-1);
     }
 }
 
 
 
-void CudaFilter::set_default_kernel_config() {
-    if (n_poses_set_) {
-        /* determine n_threads_ and n_blocks_
-         * n_threads_ should lie between 32 (warp_size) and 128 and all microprocessors should be busy */
-        n_threads_ = ((n_poses_ / n_mps_) / warp_size_) * warp_size_;
-        if (n_threads_ == 0) n_threads_ = warp_size_;
-        if (n_threads_ > 4 * warp_size_) n_threads_ = 4 * warp_size_;
+void CudaFilter::set_default_kernel_config(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column,
+                                           bool& nr_poses_changed) {
+    nr_threads_ = min(DEFAULT_NR_THREADS, cuda_device_properties_.maxThreadsDim[0]);
 
-        n_blocks_ = n_poses_ / n_threads_;
-        if (n_blocks_ % n_poses_ != 0) n_blocks_++;
-    } else {
-        cout << "WARNING: set_default_kernel_config() was not executed, because n_poses_ has not been set previously" << endl;
+    // check for grid dimension limitations
+    if (cuda_device_properties_.maxGridSize[0] < nr_poses_per_row) {
+        nr_poses_per_row = cuda_device_properties_.maxGridSize[0];
+        nr_poses_per_column = ceil(nr_poses / nr_poses_per_row);
+        if (cuda_device_properties_.maxGridSize[1] < nr_poses_per_column) {
+            nr_poses_per_column = cuda_device_properties_.maxGridSize[1];
+        }
+
+        nr_poses = min(nr_poses, nr_poses_per_row * nr_poses_per_column);
+
+        nr_poses_changed = true;
+
+        std::cout << "Number of poses was reduced to (" << nr_poses_per_row << ", "
+                  << nr_poses_per_column << ") because of the maximum grid size ("
+                  << cuda_device_properties_.maxGridSize[0] << ", " << cuda_device_properties_.maxGridSize[1]
+                  << ") retrieved from CUDA properties." << std::endl;
     }
+
+
+    grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_column);
+
+
+    /*
+
+    // determine n_threads_ and n_blocks_
+    // n_threads_ should lie between 32 (warp_size) and 128 and all microprocessors should be busy
+    nr_threads_ = ((nr_poses_ / n_mps_) / warp_size_) * warp_size_;
+    if (nr_threads_ == 0) nr_threads_ = warp_size_;
+    if (nr_threads_ > 4 * warp_size_) nr_threads_ = 4 * warp_size_;
+
+    n_blocks_ = nr_poses_ / nr_threads_;
+    if (n_blocks_ % nr_poses_ != 0) n_blocks_++;
+
+    */
 }
 
 
@@ -1421,14 +1512,14 @@ vector<float> CudaFilter::get_visibility_probabilities(int state_id) {
 
 
 vector<vector<float> > CudaFilter::get_visibility_probabilities() {
-    float* visibility_probabilities = (float*) malloc(n_poses_ * n_rows_ * n_cols_ * sizeof(float));
-    cudaMemcpy(visibility_probabilities, d_visibility_probs_, n_poses_ * n_rows_ * n_cols_ * sizeof(float), cudaMemcpyDeviceToHost);
+    float* visibility_probabilities = (float*) malloc(nr_poses_ * n_rows_ * n_cols_ * sizeof(float));
+    cudaMemcpy(visibility_probabilities, d_visibility_probs_, nr_poses_ * n_rows_ * n_cols_ * sizeof(float), cudaMemcpyDeviceToHost);
 #ifdef CHECK_ERRORS
     check_cuda_error("cudaMemcpy d_visibility_probabilities -> visibility_probabilities");
 #endif
     vector<vector<float> > visibility_probabilities_vector;
     vector<float> tmp_vector (n_rows_ * n_cols_);
-    for (int i = 0; i < n_poses_; i++) {
+    for (int i = 0; i < nr_poses_; i++) {
         for (int j = 0; j < n_rows_ * n_cols_; j++) {
             tmp_vector[j] = visibility_probabilities[i * n_rows_ * n_cols_ + j];
         }
@@ -1455,15 +1546,8 @@ template <typename T> void CudaFilter::allocate(T * &pointer, size_t size, strin
     cudaMalloc((void **) &pointer, size);
 #ifdef CHECK_ERRORS
     cuMemGetInfo(&free_space_after, &total_space);
-    if (free_space_after < free_space_before) {
-        cout << "memory to allocate for " << name << ": " << size / 1e6 << " MB; free space: " << free_space_before / 1e6
-             << "MB; --> allocated " << (free_space_before - free_space_after) / 1e6 << " MB, free space left: " << free_space_after / 1e6 << " MB" << endl;
-    } else if (free_space_after > free_space_before){
-        cout << "ERROR: memory to allocate for " << name << ": " << size / 1e6 << " MB; free space: " << free_space_before / 1e6
-             << "MB; --> allocation failed(!), freed " << (free_space_after - free_space_before) / 1e6 << " MB, free space now: " << free_space_after / 1e6 << " MB" << endl;
-    } else {
-//        cout << "memory reallocated for " << name << ": " << size / 1e6 << "MB, free space left: " << free_space_after / 1e6 << " MB" << endl;
-    }
+    std::cout << "memory to allocate for " << name << ": " << size / 1e6 << " MB; free space: " << free_space_before / 1e6
+         << "MB; --> allocated " << (free_space_before - free_space_after) / 1e6 << " MB, free space left: " << free_space_after / 1e6 << " MB" << std::endl;
     check_cuda_error("cudaMalloc failed");
 #endif
 }
