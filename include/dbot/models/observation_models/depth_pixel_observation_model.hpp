@@ -28,6 +28,7 @@
 #include <fl/util/descriptor.hpp>
 #include <fl/util/scalar_matrix.hpp>
 #include <fl/distribution/gaussian.hpp>
+#include <fl/distribution/uniform_distribution.hpp>
 #include <fl/model/observation/interface/observation_density.hpp>
 #include <fl/model/observation/interface/observation_function.hpp>
 
@@ -56,6 +57,7 @@ public:
         Real bg_sigma,
         int state_dim = DimensionOf<State>::Value)
         : state_dim_(state_dim),
+//          bg_density_(-bg_sigma + bg_depth, bg_sigma + bg_depth),
           renderer_(renderer),
           id_(0)
     {
@@ -70,11 +72,13 @@ public:
 
     Real log_probability(const Obsrv& obsrv, const State& state) const override
     {
+//        return density_evaluation(state).log_probability(obsrv);
         return density(state).log_probability(obsrv);
     }
 
     Real probability(const Obsrv& obsrv, const State& state) const override
     {
+//        return density_evaluation(state).probability(obsrv);
         return density(state).probability(obsrv);
     }
 
@@ -137,18 +141,46 @@ private:
         }
     }
 
-    const Gaussian<Obsrv>& density(const State& state) const
-    {
-        Obsrv y = depth(state);
+//    const StandardGaussianMapping<Vector1d, 1>& density(const State& state) const
+//    {
+//        Obsrv y = depth(state);
 
-        if (std::isinf(y(0)))
+//        if (std::isinf(y(0)))
+//        {
+//            return bg_density_;
+//        }
+
+//       fg_density_.mean(y);
+//       return fg_density_;
+//    }
+
+//    const Evaluation<Vector1d>& density_evaluation(const State& state) const
+//    {
+//        Obsrv y = depth(state);
+
+//        if (std::isinf(y(0)))
+//        {
+//            return bg_density_;
+//        }
+
+//       fg_density_.mean(y);
+//       return fg_density_;
+//    }
+
+
+        const Gaussian<Obsrv>& density(const State& state) const
         {
-            return bg_density_;
+            Obsrv y = depth(state);
+
+            if (std::isinf(y(0)))
+            {
+                return bg_density_;
+            }
+
+           fg_density_.mean(y);
+           return fg_density_;
         }
 
-       fg_density_.mean(y);
-       return fg_density_;
-    }
 
     Obsrv depth(const State& current_state) const
     {
@@ -178,6 +210,7 @@ public:
 
     mutable Gaussian<Obsrv> fg_density_;
     mutable Gaussian<Obsrv> bg_density_;
+//    mutable UniformDistribution bg_density_;
 
     mutable std::vector<float> depth_rendering_;
     std::shared_ptr<dbot::RigidBodyRenderer> renderer_;
