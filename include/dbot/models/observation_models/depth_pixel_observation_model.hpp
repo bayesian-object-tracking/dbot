@@ -29,6 +29,7 @@
 #include <fl/util/scalar_matrix.hpp>
 #include <fl/distribution/gaussian.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
+#include <fl/distribution/cauchy_distribution.hpp>
 #include <fl/model/observation/interface/observation_density.hpp>
 #include <fl/model/observation/interface/observation_function.hpp>
 
@@ -62,28 +63,64 @@ public:
           id_(0)
     {
         // setup backgroud density which is N(y| bg_mean, )
-        auto bg_mean = Obsrv();
-        bg_mean(0) += bg_depth;
+        auto bg_mean = Obsrv(1);
+
+        //! \todo BG changes
+        bg_mean(0) =
+            bg_depth < 0. ? std::numeric_limits<Real>::infinity() : bg_depth;
         bg_density_.mean(bg_mean);
         bg_density_.square_root(bg_density_.square_root() * bg_sigma);
+
+//        bg_density_.location(bg_mean);
+//        bg_density_.scaling_matrix(bg_density_.covariance() * bg_sigma * bg_sigma);
 
         fg_density_.square_root(fg_density_.square_root() * fg_sigma);
     }
 
     Real log_probability(const Obsrv& obsrv, const State& state) const override
     {
-//        return density_evaluation(state).log_probability(obsrv);
+//        Obsrv y = depth(state);
+
+//        if (std::isinf(y(0)))
+//        {
+//            return bg_density_.log_probability(obsrv);
+//        }
+
+//       fg_density_.mean(y);
+//        return fg_density_.log_probability(obsrv);
+
         return density(state).log_probability(obsrv);
     }
 
     Real probability(const Obsrv& obsrv, const State& state) const override
     {
+//        Obsrv y = depth(state);
+
+//        if (std::isinf(y(0)))
+//        {
+//            return bg_density_.probability(obsrv);;
+//        }
+
+//       fg_density_.mean(y);
+//        return fg_density_.probability(obsrv);
+
 //        return density_evaluation(state).probability(obsrv);
         return density(state).probability(obsrv);
     }
 
     Obsrv observation(const State& state, const Noise& noise) const override
     {
+
+//        Obsrv y = depth(state);
+
+//        if (std::isinf(y(0)))
+//        {
+//            return bg_density_.map_standard_normal(noise);
+//        }
+
+//       fg_density_.mean(y);
+//        return fg_density_.map_standard_normal(noise);
+
         Obsrv y = density(state).map_standard_normal(noise);
         return y;
     }
@@ -168,18 +205,18 @@ private:
 //    }
 
 
-        const Gaussian<Obsrv>& density(const State& state) const
+    const Gaussian<Obsrv>& density(const State& state) const
+    {
+        Obsrv y = depth(state);
+
+        if (std::isinf(y(0)))
         {
-            Obsrv y = depth(state);
-
-            if (std::isinf(y(0)))
-            {
-                return bg_density_;
-            }
-
-           fg_density_.mean(y);
-           return fg_density_;
+            return bg_density_;
         }
+
+       fg_density_.mean(y);
+       return fg_density_;
+    }
 
 
     Obsrv depth(const State& current_state) const
@@ -210,6 +247,7 @@ public:
 
     mutable Gaussian<Obsrv> fg_density_;
     mutable Gaussian<Obsrv> bg_density_;
+//    mutable CauchyDistribution<Obsrv> bg_density_;
 //    mutable UniformDistribution bg_density_;
 
     mutable std::vector<float> depth_rendering_;
