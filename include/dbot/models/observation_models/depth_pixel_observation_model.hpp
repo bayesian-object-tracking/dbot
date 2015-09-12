@@ -19,6 +19,8 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
+#pragma once
+
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
@@ -58,69 +60,33 @@ public:
         Real bg_sigma,
         int state_dim = DimensionOf<State>::Value)
         : state_dim_(state_dim),
-//          bg_density_(-bg_sigma + bg_depth, bg_sigma + bg_depth),
           renderer_(renderer),
           id_(0)
     {
-        // setup backgroud density which is N(y| bg_mean, )
+        // setup backgroud density
         auto bg_mean = Obsrv(1);
 
-        //! \todo BG changes
         bg_mean(0) =
             bg_depth < 0. ? std::numeric_limits<Real>::infinity() : bg_depth;
         bg_density_.mean(bg_mean);
         bg_density_.square_root(bg_density_.square_root() * bg_sigma);
 
-//        bg_density_.location(bg_mean);
-//        bg_density_.scaling_matrix(bg_density_.covariance() * bg_sigma * bg_sigma);
-
+        // setup backgroud density
         fg_density_.square_root(fg_density_.square_root() * fg_sigma);
     }
 
     Real log_probability(const Obsrv& obsrv, const State& state) const override
     {
-//        Obsrv y = depth(state);
-
-//        if (std::isinf(y(0)))
-//        {
-//            return bg_density_.log_probability(obsrv);
-//        }
-
-//       fg_density_.mean(y);
-//        return fg_density_.log_probability(obsrv);
-
         return density(state).log_probability(obsrv);
     }
 
     Real probability(const Obsrv& obsrv, const State& state) const override
     {
-//        Obsrv y = depth(state);
-
-//        if (std::isinf(y(0)))
-//        {
-//            return bg_density_.probability(obsrv);;
-//        }
-
-//       fg_density_.mean(y);
-//        return fg_density_.probability(obsrv);
-
-//        return density_evaluation(state).probability(obsrv);
         return density(state).probability(obsrv);
     }
 
     Obsrv observation(const State& state, const Noise& noise) const override
     {
-
-//        Obsrv y = depth(state);
-
-//        if (std::isinf(y(0)))
-//        {
-//            return bg_density_.map_standard_normal(noise);
-//        }
-
-//       fg_density_.mean(y);
-//        return fg_density_.map_standard_normal(noise);
-
         Obsrv y = density(state).map_standard_normal(noise);
         return y;
     }
@@ -132,7 +98,7 @@ public:
     virtual int id() const { return id_; }
     virtual void id(int new_id) { id_ = new_id; }
 
-    void nominal_pose(const PoseVector& p)
+    void nominal_pose(const State& p)
     {
         render_cache_.clear();
         nominal_pose_= p;
@@ -150,7 +116,7 @@ public:
 
 private:
     /** \cond internal */
-    void map(const PoseVector& pose, Eigen::VectorXd& obsrv_image) const
+    void map(const State& pose, Eigen::VectorXd& obsrv_image) const
     {
         renderer_->set_poses({pose.affine()});
         renderer_->Render(depth_rendering_);
@@ -178,33 +144,6 @@ private:
         }
     }
 
-//    const StandardGaussianMapping<Vector1d, 1>& density(const State& state) const
-//    {
-//        Obsrv y = depth(state);
-
-//        if (std::isinf(y(0)))
-//        {
-//            return bg_density_;
-//        }
-
-//       fg_density_.mean(y);
-//       return fg_density_;
-//    }
-
-//    const Evaluation<Vector1d>& density_evaluation(const State& state) const
-//    {
-//        Obsrv y = depth(state);
-
-//        if (std::isinf(y(0)))
-//        {
-//            return bg_density_;
-//        }
-
-//       fg_density_.mean(y);
-//       return fg_density_;
-//    }
-
-
     const Gaussian<Obsrv>& density(const State& state) const
     {
         Obsrv y = depth(state);
@@ -223,7 +162,7 @@ private:
     {
         if (render_cache_.find(current_state) == render_cache_.end())
         {
-            PoseVector current_pose;
+            State current_pose;
             current_pose.orientation() =
                 current_state.orientation() * nominal_pose_.orientation();
 
@@ -247,21 +186,19 @@ public:
 
     mutable Gaussian<Obsrv> fg_density_;
     mutable Gaussian<Obsrv> bg_density_;
-//    mutable CauchyDistribution<Obsrv> bg_density_;
-//    mutable UniformDistribution bg_density_;
 
     mutable std::vector<float> depth_rendering_;
     std::shared_ptr<dbot::RigidBodyRenderer> renderer_;
 
     mutable std::unordered_map<
-                PoseVector,
+                State,
                 Eigen::VectorXd,
-                PoseHash<PoseVector>
+                PoseHash<State>
             > render_cache_;
 
 public:
     int id_;
-    mutable PoseVector nominal_pose_;
+    mutable State nominal_pose_;
 };
 
 }
