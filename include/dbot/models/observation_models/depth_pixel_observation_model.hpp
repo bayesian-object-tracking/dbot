@@ -157,7 +157,6 @@ private:
        return fg_density_;
     }
 
-
     Obsrv depth(const State& current_state) const
     {
         if (render_cache_.find(current_state) == render_cache_.end())
@@ -170,6 +169,8 @@ private:
                 current_state.position() + nominal_pose_.position();
 
             map(current_pose, render_cache_[current_state]);
+
+            render_poses_[current_state] = current_pose;
         }
 
         assert (render_cache_.find(current_state) != render_cache_.end());
@@ -181,7 +182,7 @@ private:
     }
     /** \endcond */
 
-public:
+private:
     int state_dim_;
 
     mutable Gaussian<Obsrv> fg_density_;
@@ -190,15 +191,22 @@ public:
     mutable std::vector<float> depth_rendering_;
     std::shared_ptr<dbot::RigidBodyRenderer> renderer_;
 
+private:
+    int id_;
+    mutable State nominal_pose_;
+
+public:
     mutable std::unordered_map<
                 State,
                 Eigen::VectorXd,
                 PoseHash<State>
             > render_cache_;
 
-public:
-    int id_;
-    mutable State nominal_pose_;
+    mutable std::unordered_map<
+                State,
+                State,
+                PoseHash<State>
+            > render_poses_;
 };
 
 }
