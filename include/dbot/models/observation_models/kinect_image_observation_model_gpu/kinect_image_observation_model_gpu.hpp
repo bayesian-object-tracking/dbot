@@ -95,7 +95,7 @@ public:
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
 
-    ~KinectImageObservationModelGPU() { }
+    ~KinectImageObservationModelGPU() noexcept { }
 
 
     // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
