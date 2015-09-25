@@ -89,7 +89,7 @@ public:
 
     }
 
-    virtual ~KinectPixelObservationModel() {}
+    virtual ~KinectPixelObservationModel() noexcept {}
 
     virtual Scalar Probability(const Observation& observation) const
     {

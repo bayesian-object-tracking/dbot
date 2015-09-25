@@ -46,8 +46,8 @@ class OcclusionProcessModel
 //        ,public GaussianMap<double>
 {
 public:
-	// the prob of source being object given source was object one sec ago,
-	// and prob of source being object given one sec ago source was not object
+    // the prob of source being object given source was object one sec ago,
+    // and prob of source being object given one sec ago source was not object
     OcclusionProcessModel(double p_occluded_visible,
                           double p_occluded_occluded):
                                       p_occluded_visible_(p_occluded_visible),
@@ -55,7 +55,7 @@ public:
                                       c_(p_occluded_occluded_ - p_occluded_visible_),
                                       log_c_(std::log(c_)) { }
 
-    virtual ~OcclusionProcessModel() {}
+    virtual ~OcclusionProcessModel() noexcept {}
 
     virtual void Condition(const double& delta_time,
                            const double& occlusion_probability,

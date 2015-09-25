@@ -94,7 +94,7 @@ public:
             exit(-1);
         }
     }
-    virtual ~RBCoordinateParticleFilter() {}
+    virtual ~RBCoordinateParticleFilter() noexcept {}
 
     /// the filter functions ***************************************************
     void filter(const Observation&  observation,

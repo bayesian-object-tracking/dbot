@@ -53,7 +53,7 @@ public:
         *this = state_vector;
     }
 
-    virtual ~RigidBodiesState() {}
+    virtual ~RigidBodiesState() noexcept {}
 
     template <typename T>
     void operator = (const Eigen::MatrixBase<T>& state_vector)

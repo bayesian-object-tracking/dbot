@@ -80,7 +80,7 @@ public:
     template <typename T>
     FreeFloatingRigidBodiesState(const Eigen::MatrixBase<T>& state_vector):
                                                           Base(state_vector) { }
-    virtual ~FreeFloatingRigidBodiesState() {}
+    virtual ~FreeFloatingRigidBodiesState() noexcept {}
 
     // accessors ***************************************************************
     virtual fl::PoseVelocityVector component(int index) const

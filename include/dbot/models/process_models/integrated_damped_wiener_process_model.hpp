@@ -141,7 +141,7 @@ public:
                 "Dimension must be a multitude of 2");
     }
 
-    virtual ~IntegratedDampedWienerProcessModel() { }
+    virtual ~IntegratedDampedWienerProcessModel() noexcept { }
 
     virtual State MapStandardGaussian(const Noise& sample) const
     {

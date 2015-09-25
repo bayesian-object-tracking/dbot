@@ -65,7 +65,7 @@ public:
 public:
     /// constructor and destructor *********************************************
     RBObservationModel(const fl::Real& delta_time): delta_time_(delta_time) { }
-    virtual ~RBObservationModel() { }
+    virtual ~RBObservationModel() noexcept { }
 
     /// likelihood computation *************************************************
     virtual RealArray loglikes(const StateArray& deviations,

@@ -119,7 +119,7 @@ public:
         static_assert_base(State, Eigen::Matrix<typename State::Scalar, State::SizeAtCompileTime, 1>);
     }
 
-    virtual ~DampedWienerProcessModel() { }
+    virtual ~DampedWienerProcessModel() noexcept { }
 
     virtual State MapStandardGaussian(const Noise& sample) const
     {

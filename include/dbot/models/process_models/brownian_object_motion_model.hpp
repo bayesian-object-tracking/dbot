@@ -143,7 +143,7 @@ public:
 //        angular_process_.resize(count_objects);
     }
 
-    virtual ~BrownianObjectMotionModel() { }
+    virtual ~BrownianObjectMotionModel() noexcept { }
 
     virtual State MapStandardGaussian(const Noise& sample) const
     {
