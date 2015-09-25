@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
@@ -52,6 +53,18 @@ public:
     typedef Vector1d Noise;
     typedef State_   State;
 
+    typedef std::unordered_map<
+                    State,
+                    State,
+                    PoseHash<State>
+            > PoseCacheMap;
+
+    typedef std::unordered_map<
+                State,
+                Eigen::VectorXd,
+                PoseHash<State>
+            > RenderCacheMap;
+
 public:
     DepthPixelObservationModel(
         const std::shared_ptr<dbot::RigidBodyRenderer>& renderer,
@@ -63,6 +76,11 @@ public:
           renderer_(renderer),
           id_(0)
     {
+        mutex = std::make_shared<std::mutex>();
+        render_cache_ = std::make_shared<RenderCacheMap>();
+        poses_cache_ = std::make_shared<PoseCacheMap>();
+
+
         // setup backgroud density
         auto bg_mean = Obsrv(1);
 
@@ -74,6 +92,22 @@ public:
         // setup backgroud density
         fg_density_.square_root(fg_density_.square_root() * fg_sigma);
     }
+
+    DepthPixelObservationModel(const DepthPixelObservationModel& other)
+    {
+        state_dim_ = other.state_dim_;
+        renderer_ = other.renderer_;
+        id_ = other.id_;
+        bg_density_ = other.bg_density_;
+        fg_density_ = other.fg_density_;
+        mutex = other.mutex;
+        nominal_pose_ = other.nominal_pose_;
+        render_cache_ = other.render_cache_;
+        poses_cache_ = other.poses_cache_;
+    }
+
+
+    virtual ~DepthPixelObservationModel() noexcept { }
 
     Real log_probability(const Obsrv& obsrv, const State& state) const override
     {
@@ -100,7 +134,9 @@ public:
 
     void nominal_pose(const State& p)
     {
-        render_cache_.clear();
+        std::lock_guard<std::mutex> lock(*mutex);
+
+        render_cache_->clear();
         nominal_pose_= p;
     }
 
@@ -144,6 +180,7 @@ private:
         }
     }
 
+
     const Gaussian<Obsrv>& density(const State& state) const
     {
         Obsrv y = depth(state);
@@ -159,6 +196,9 @@ private:
 
     Obsrv depth(const State& current_state) const
     {
+        RenderCacheMap& render_cache_ = *this->render_cache_;
+        PoseCacheMap& poses_cache_ = *this->poses_cache_;
+
         if (render_cache_.find(current_state) == render_cache_.end())
         {
             State current_pose;
@@ -168,9 +208,9 @@ private:
             current_pose.position() =
                 current_state.position() + nominal_pose_.position();
 
+            std::lock_guard<std::mutex> lock(*mutex);
             map(current_pose, render_cache_[current_state]);
-
-            render_poses_[current_state] = current_pose;
+            poses_cache_[current_state] = current_pose;
         }
 
         assert (render_cache_.find(current_state) != render_cache_.end());
@@ -188,6 +228,7 @@ private:
     mutable Gaussian<Obsrv> fg_density_;
     mutable Gaussian<Obsrv> bg_density_;
 
+    mutable std::shared_ptr<std::mutex> mutex;
     mutable std::vector<float> depth_rendering_;
     std::shared_ptr<dbot::RigidBodyRenderer> renderer_;
 
@@ -196,17 +237,8 @@ private:
     mutable State nominal_pose_;
 
 public:
-    mutable std::unordered_map<
-                State,
-                Eigen::VectorXd,
-                PoseHash<State>
-            > render_cache_;
-
-    mutable std::unordered_map<
-                State,
-                State,
-                PoseHash<State>
-            > render_poses_;
+    mutable std::shared_ptr<RenderCacheMap> render_cache_;
+    mutable std::shared_ptr<PoseCacheMap> poses_cache_;
 };
 
 }
