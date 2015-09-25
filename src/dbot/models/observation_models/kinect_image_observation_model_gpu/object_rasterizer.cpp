@@ -1,5 +1,7 @@
 /** @author Claudia Pfreundt */
 
+/* Note: Profiling slows down the rendering process. Use only to display the runtimes
+ *       of the different subroutines inside the render call. */
 //#define PROFILING_ACTIVE
 
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
@@ -28,9 +30,10 @@ ObjectRasterizer::ObjectRasterizer()
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,
                                    const std::string vertex_shader_path,
-                                   const std::string fragment_shader_path) :
-    n_rows_(WINDOW_HEIGHT),
-    n_cols_(WINDOW_WIDTH),
+                                   const std::string fragment_shader_path,
+                                   const Eigen::Matrix3f camera_matrix) :
+    nr_rows_(WINDOW_HEIGHT),
+    nr_cols_(WINDOW_WIDTH),
     vertex_shader_path_(vertex_shader_path),
     fragment_shader_path_(fragment_shader_path)
 {
@@ -90,8 +93,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 
     /* create temporary pbuffer */
     int pbuffer_attribs[] = {
-           GLX_PBUFFER_WIDTH, n_cols_,
-           GLX_PBUFFER_HEIGHT, n_rows_,
+           GLX_PBUFFER_WIDTH, nr_cols_,
+           GLX_PBUFFER_HEIGHT, nr_rows_,
            None
     };
     pbuf = glXCreatePbuffer(dpy, fbc[0], pbuffer_attribs);
@@ -114,7 +117,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     /* try it out */
     printf("vendor: %s\n", (const char*)glGetString(GL_VENDOR));
 
-    checkGLErrors("init windowsless context");
+    check_GL_errors("init windowsless context");
 
     // Initialize GLEW
 
@@ -123,7 +126,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
         fprintf(stderr, "Failed to initialize GLEW\n");
         exit(EXIT_FAILURE);
     }
-    checkGLErrors("GLEW init");
+    check_GL_errors("GLEW init");
 
 
 
@@ -146,17 +149,15 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 
     // get GPU constraint values
-    GLint max_viewport_dims;
+    GLint max_texture_size;
     GLint max_renderbuffer_size;
 
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, &max_viewport_dims);
+    /* The values specify the max texture size in every dimension, i.e. 2048
+     * would mean we can have a texture of 2048 x 2048. */
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
     glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &max_renderbuffer_size);
 
-    /* TODO this only checks for the first dimension and then assumes the size will be
-     * the same for the other dimension. It is most likely to be so, but maybe this
-     * should be changed to avoid errors in the future. */
-    max_dimension_ = min(max_viewport_dims, max_renderbuffer_size);
-
+    max_texture_size_ = min(max_texture_size, max_renderbuffer_size);
 
 
 
@@ -218,16 +219,11 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
         (void*)0            // array buffer offset
     );
 
-//    // Index buffer
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);
-
-
-
 
     // ======================= CREATE PBO ======================= //
 
     // create PBO that will be used for copying the depth values to the CPU, if requested
-    glGenBuffers(1, &combined_result_buffer_);
+    glGenBuffers(1, &result_buffer_);
 
 
     // ======================= CREATE FRAMEBUFFER OBJECT AND ITS TEXTURES ======================= //
@@ -237,8 +233,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
 
     // create color texture that will contain the depth values after the render
-    glGenTextures(1, &combined_texture_);
-    glBindTexture(GL_TEXTURE_2D, combined_texture_);
+    glGenTextures(1, &framebuffer_texture_for_all_poses_);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -246,7 +242,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // create a renderbuffer to store depth info for z-testing
-    glGenRenderbuffers(1, &combined_depth_texture_);
+    glGenRenderbuffers(1, &texture_for_z_testing);
 
 
     // ================= COMPILE SHADERS AND GET HANDLES ================= //
@@ -267,65 +263,31 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
        If you are looking to pass a different camera matrix for each render call, move this function
        into that render call and change it to accept the camera position and rotation as parameter
        and calculate the respective matrix. */
-    SetupViewMatrix();
+    setup_view_matrix();
 
-    checkGLErrors("OpenGL initialization");
+    check_GL_errors("OpenGL initialization");
 
 
 
     // ========== INITIALIZE & SET DEFAULTS FOR MEASURING EXECUTION TIMES =========== //
 
-
     // generate query objects needed for timing OpenGL commands
-    glGenQueries(TIME_MEASUREMENTS_COUNT, time_query_);
+    glGenQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
 
-    vector<int> zero_calls (TIME_MEASUREMENTS_COUNT, 0);
-    vector<double> times (TIME_MEASUREMENTS_COUNT, 0);
-    for (int i = 0; i < RENDER_TYPE_COUNT; i++) {
-        calls_aggregate_.push_back(vector<int>(zero_calls));
-        cpu_times_aggregate_.push_back(vector<double>(times));
-        gpu_times_aggregate_.push_back(vector<double>(times));
-        poses_rendered_.push_back(0);
-    }
+    nr_calls_ = 0;
+    gpu_times_aggregate_ = vector<double> (NR_SUBROUTINES_TO_MEASURE, 0);
+    initial_run_ = true;
 
-    for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-        cpu_times_[i] = -1;
-    }
-    for (int i = 0; i < RENDER_TYPE_COUNT; i++) {
-        initial_[i] = true;
-    }
+    strings_for_subroutines.push_back("ATTACH_TEXTURE");
+    strings_for_subroutines.push_back("CLEAR_SCREEN");
+    strings_for_subroutines.push_back("RENDER");
+    strings_for_subroutines.push_back("DETACH_TEXTURE");
 
-    enum_strings_.push_back("SEND_MATRICES");
-    enum_strings_.push_back("CLEAR_SCREEN");
-    enum_strings_.push_back("RENDER");
-    enum_strings_.push_back("FILL_PBO");
-    enum_strings_.push_back("MAP_PBO");
-    enum_strings_.push_back("GET_DEPTH_VALUES");
-    enum_strings_.push_back("SEND_CONSTANTS");
-    enum_strings_.push_back("SEND_TEXTURES");
-    enum_strings_.push_back("SUM_LIKELIHOODS");
-    enum_strings_.push_back("UPDATE_TEXTURES");
-    enum_strings_.push_back("ATTACH_TEXTURE");
-    enum_strings_.push_back("ALLOCATE");
-    enum_strings_.push_back("SET_VIEWPORT");
-    enum_strings_.push_back("SEND_MODEL_MATRIX");
-    enum_strings_.push_back("DETACH_TEXTURE");
-    enum_strings_.push_back("GL_FINISH");
-}
+    // ========== SETUP PROJECTION MATRIX AND SHADER TO USE =========== //
 
-
-
-
-
-
-
-
-
-
-void ObjectRasterizer::PrepareRender(const Eigen::Matrix3f camera_matrix) {
-    SetupProjectionMatrix(camera_matrix);
+    setup_projection_matrix(camera_matrix);
     glUseProgram(shader_ID_);
-    checkGLErrors("prepare RenderCombinedFast");
+    check_GL_errors("setup projection matrix");
 }
 
 
@@ -336,183 +298,83 @@ void ObjectRasterizer::PrepareRender(const Eigen::Matrix3f camera_matrix) {
 
 
 
-void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> > > states,
+void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states,
                                           std::vector<std::vector<int> > &intersect_indices,
                                           std::vector<std::vector<float> > &depth) {
-    Render(states);
+    render(states);
     get_depth_values(intersect_indices, depth);
 }
 
 
 
-void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> > > states) {
+void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states) {
 
 #ifdef PROFILING_ACTIVE
-    combined_fast_set_viewport_queries_.resize(n_poses_);
-    combined_fast_send_model_matrix_queries_.resize(n_poses_);
-    combined_fast_render_queries_.resize(n_poses_);
-    glGenQueries(n_poses_, &combined_fast_set_viewport_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_send_model_matrix_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_render_queries_[0]);
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][ATTACH_TEXTURE]++;
+    nr_calls_++;
 #endif
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
                            GL_COLOR_ATTACHMENT0,  // 2. attachment point
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
 
 #ifdef PROFILING_ACTIVE
-
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[ATTACH_TEXTURE] = stop_time_ - start_time_;
-
     glBeginQuery(GL_TIME_ELAPSED, time_query_[CLEAR_SCREEN]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][CLEAR_SCREEN]++;
 #endif
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 #ifdef PROFILING_ACTIVE
-
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[CLEAR_SCREEN] = stop_time_ - start_time_;
-
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MATRICES]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SEND_MATRICES]++;
+    glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
 #endif
 
     glUniformMatrix4fv(projection_matrix_ID_, 1, GL_FALSE, projection_matrix_.data());
 
     Matrix4f model_view_matrix;
 
-#ifdef PROFILING_ACTIVE
+    for (int i = 0; i < nr_poses_per_column_ -1; i++) {
+        for (int j = 0; j < nr_poses_per_row_; j++) {
 
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SEND_MATRICES] = stop_time_ - start_time_;
-#endif
-
-
-    for (int i = 0; i < n_poses_y_ -1; i++) {
-        for (int j = 0; j < n_poses_x_; j++) {
-
-    #ifdef PROFILING_ACTIVE
-        glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[i * n_poses_x_ + j]);
-//        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-        start_time_ = sf::hf::get_wall_time();
-        calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
-    #endif
-
-            glViewport(j * n_cols_, (n_poses_y_ - 1 - i) * n_rows_, n_cols_, n_rows_);
-
-    #ifdef PROFILING_ACTIVE
-
-        glEndQuery(GL_TIME_ELAPSED);
-        stop_time_ = sf::hf::get_wall_time();
-        cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
-    #endif
+            glViewport(j * nr_cols_, (nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
 
             for (size_t k = 0; k < object_numbers_.size(); k++) {
                 int index = object_numbers_[k];
 
-        #ifdef PROFILING_ACTIVE
-            glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[i * n_poses_x_ + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-            start_time_ = sf::hf::get_wall_time();
-            calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
-        #endif
-
-                model_view_matrix = view_matrix_ * GetModelMatrix(states[n_poses_x_ * i + j][index]);
+                model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * i + j][index]);
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
-        #ifdef PROFILING_ACTIVE
-            glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = sf::hf::get_wall_time();
-            cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
-            glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[i * n_poses_x_ + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-            start_time_ = sf::hf::get_wall_time();
-            calls_aggregate_[COMBINED_FAST][RENDER]++;
-        #endif
-
-            glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
-
-        #ifdef PROFILING_ACTIVE
-
-            glEndQuery(GL_TIME_ELAPSED);
-            stop_time_ = sf::hf::get_wall_time();
-            cpu_times_[RENDER] = stop_time_ - start_time_;
-        #endif
+                glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
             }
         }
     }
 
-    for (int j = 0; j < n_poses_ - (n_poses_x_ * (n_poses_y_ - 1)); j++) {
+    // render last row of poses
+    for (int j = 0; j < nr_poses_ - (nr_poses_per_row_ * (nr_poses_per_column_ - 1)); j++) {
 
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_set_viewport_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//        glBeginQuery(GL_TIME_ELAPSED, time_query_[SET_VIEWPORT]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SET_VIEWPORT]++;
-#endif
-
-        glViewport(j * n_cols_, 0, n_cols_, n_rows_);
-
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SET_VIEWPORT] = stop_time_ - start_time_;
-#endif
+        glViewport(j * nr_cols_, 0, nr_cols_, nr_rows_);
 
         for (size_t k = 0; k < object_numbers_.size(); k++) {
             int index = object_numbers_[k];
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_send_model_matrix_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[SEND_MODEL_MATRIX]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][SEND_MODEL_MATRIX]++;
-#endif
-            model_view_matrix = view_matrix_ * GetModelMatrix(states[n_poses_x_ * (n_poses_y_ - 1) + j][index]);
+
+            model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * (nr_poses_per_column_ - 1) + j][index]);
             glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[SEND_MODEL_MATRIX] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, combined_fast_render_queries_[(n_poses_x_ * (n_poses_y_ - 1)) + j]);
-//            glBeginQuery(GL_TIME_ELAPSED, time_query_[RENDER]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][RENDER]++;
-#endif
-
             glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
-
-#ifdef PROFILING_ACTIVE
-
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[RENDER] = stop_time_ - start_time_;
-#endif
-
         }
     }
 
 
 
 #ifdef PROFILING_ACTIVE
+    glFinish();
+    glEndQuery(GL_TIME_ELAPSED);
     glBeginQuery(GL_TIME_ELAPSED, time_query_[DETACH_TEXTURE]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][DETACH_TEXTURE]++;
 #endif
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
@@ -522,94 +384,177 @@ void ObjectRasterizer::Render(const std::vector<std::vector<std::vector<float> >
                            0);
 
 #ifdef PROFILING_ACTIVE
+    glFinish();
     glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[DETACH_TEXTURE] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[GL_FINISH]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[COMBINED_FAST][GL_FINISH]++;
+    store_time_measurements();
 #endif
 
     /* TODO should be unnecessary when texture is previously detached from framebuffer..
      * would like to find evidence that this detaching really introduces a synchronization though*/
     glFinish();
 
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[GL_FINISH] = stop_time_ - start_time_;
-    poses_rendered_[COMBINED_FAST] += n_poses_ * object_numbers_.size();
-    map<int, int> factors;
-    factors[SET_VIEWPORT] = n_poses_;
-    factors[SEND_MODEL_MATRIX] = n_poses_ * object_numbers_.size();
-    factors[RENDER] = n_poses_ * object_numbers_.size();
-    DisplayTimeObservations(factors, COMBINED_FAST);
-#endif
 
 }
 
 
+void ObjectRasterizer::set_objects(vector<int> object_numbers) {
+    // TODO does it copy the vector or set a reference?
+    object_numbers_ = object_numbers;
+}
+
+void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
+                                                       int& allocated_poses_per_row,
+                                                       int& allocated_poses_per_column) {
+    int max_poses_per_row = floor(max_texture_size_ / nr_cols_);
+    int max_poses_per_column = floor(max_texture_size_ / nr_rows_);
+
+    allocated_poses_per_row = min(max_poses_per_row, allocated_poses);
+    allocated_poses_per_column = min(max_poses_per_column, (int) ceil(allocated_poses / (float) allocated_poses_per_row));
+
+    if (allocated_poses > allocated_poses_per_row * allocated_poses_per_column) {
+        std::cout << "The space for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
+                  << "The limit is OpenGL texture size: " << max_texture_size_ << ". Current resolution is (" << nr_cols_ << ", "
+                  << nr_rows_ << ") , which means a maximum of (" << max_poses_per_row << ", " << max_poses_per_column << ") poses. "
+                  << "As a result, space for " << allocated_poses_per_row * allocated_poses_per_column << " poses will be allocated "
+                  << "in the form of (" << allocated_poses_per_row << ", " << allocated_poses_per_column << ")." << std::endl;
+    }
 
 
-void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
-                                 vector<vector<float> > &depth,
-                                 GLuint pixel_buffer_object,
-                                 GLuint framebuffer_texture,
-                                 render_type calling_function) {
+    allocated_poses = allocated_poses_per_row * allocated_poses_per_column;
+
+    nr_max_poses_ = allocated_poses;
+    nr_poses_ = allocated_poses;
+    nr_max_poses_per_row_ = allocated_poses_per_row;
+    nr_poses_per_row_ = allocated_poses_per_row;
+    nr_max_poses_per_column_ = allocated_poses_per_column;
+    nr_poses_per_column_ = allocated_poses_per_column;
+
+    reallocate_buffers();
 
 
 
-#ifdef PROFILING_ACTIVE
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[FILL_PBO]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[calling_function][FILL_PBO]++;
-#endif
+    /*
+//    if (nr_max_poses_ != nr_max_poses) {
+        nr_max_poses_ = nr_max_poses;
+        nr_poses_ = nr_max_poses;
 
-    // ===================== COPY VALUES FROM GPU TO CPU ===================== //
+//        // TODO max_dimension[0], [1], at the moment they are identical
+        float sqrt_poses = sqrt(nr_poses_);
+        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
+        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
+        // TODO max_dimension[0], [1], at the moment they are identical
+        nr_max_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
+        int y_poses = nr_max_poses_ / nr_max_poses_per_row_;
+        if (y_poses * nr_max_poses_per_row_ < nr_max_poses_) y_poses++;
+        nr_max_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
 
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, pixel_buffer_object);
-    glBindTexture(GL_TEXTURE_2D, framebuffer_texture);
+        nr_poses_per_row_ = nr_max_poses_per_row_;
+        nr_poses_per_column_ = nr_max_poses_per_column_;
+
+        reallocate_buffers();
+//    }*/
+}
+
+void ObjectRasterizer::set_number_of_poses(const int nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
+    if (nr_poses <= nr_max_poses_) {
+        nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
+        nr_poses_per_column = min(nr_max_poses_per_column_, (int) ceil(nr_poses / (float) nr_poses_per_row));
+
+        nr_poses_ = nr_poses;
+        nr_poses_per_row_ = nr_poses_per_row;
+        nr_poses_per_column_ = nr_poses_per_column;
+
+
+
+        /*
+        nr_poses_ = nr_poses;
+
+
+//        // TODO max_dimension[0], [1], at the moment they are identical
+        float sqrt_poses = sqrt(nr_poses_);
+        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
+        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
+        // TODO max_dimension[0], [1], at the moment they are identical
+        nr_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
+        int y_poses = nr_poses_ / nr_poses_per_row_;
+        if (y_poses * nr_poses_per_row_ < nr_poses_) y_poses++;
+        nr_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
+
+        if (nr_poses_per_row_ > nr_max_poses_per_row_ || nr_poses_per_column_ > nr_max_poses_per_column_) {
+            cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
+                 << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
+        }*/
+
+    } else {
+        cout << "ERROR (OpenGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
+        exit(-1);
+    }
+}
+
+void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
+        nr_rows_ = n_rows;
+        nr_cols_ = n_cols;
+
+        // reallocate textures
+        allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column);
+}
+
+GLuint ObjectRasterizer::get_framebuffer_texture() {
+    return framebuffer_texture_for_all_poses_;
+}
+
+int ObjectRasterizer::get_nr_poses_per_row() {
+    return nr_poses_per_row_;
+}
+
+
+
+void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
+                                        std::vector<std::vector<float> > &depth) {
+
+    // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
+                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
+                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
+                           0);
+
+    // ===================== TRANSFER DEPTH VALUES FROM GPU TO CPU == SLOW!!! ================ //
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, result_buffer_);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
 
     GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[FILL_PBO] = stop_time_ - start_time_;
-    glBeginQuery(GL_TIME_ELAPSED, time_query_[GET_DEPTH_VALUES]);
-    start_time_ = sf::hf::get_wall_time();
-    calls_aggregate_[calling_function][GET_DEPTH_VALUES]++;
-#endif
-
 
     if (pixel_depth != (GLfloat*) NULL) {
-        vector<float> depth_image(n_rows_ * n_cols_ * n_poses_x_ * n_poses_y_, numeric_limits<float>::max());
+        vector<float> depth_image(nr_rows_ * nr_cols_ * nr_poses_per_row_ * nr_poses_per_column_, numeric_limits<float>::max());
 
-        int pixels_per_row_texture = n_max_poses_x_ * n_cols_;
-        int pixels_per_row_extracted = n_poses_x_ * n_cols_;
-        int highest_pixel_per_col = (n_poses_y_ * n_rows_) - 1;
+        int pixels_per_row_texture = nr_max_poses_per_row_ * nr_cols_;
+        int pixels_per_row_extracted = nr_poses_per_row_ * nr_cols_;
+        int highest_pixel_per_col = (nr_poses_per_column_ * nr_rows_) - 1;
 
         // reading OpenGL texture into an array on the CPU (inverted rows)
-        for (int row = 0; row < n_poses_y_ * n_rows_; row++) {
+        for (int row = 0; row < nr_poses_per_column_ * nr_rows_; row++) {
             int inverted_row = highest_pixel_per_col - row;
 
-            for (int col = 0; col < n_poses_x_ * n_cols_; col++) {
+            for (int col = 0; col < nr_poses_per_row_ * nr_cols_; col++) {
                 depth_image[row * pixels_per_row_extracted  + col] = pixel_depth[inverted_row * pixels_per_row_texture + col];
             }
         }
 
-
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 
         // subdividing this array into an array per pose
-        vector<vector<float> > depth_image_per_pose (n_poses_, vector<float> (n_rows_ * n_cols_, 0));
+        vector<vector<float> > depth_image_per_pose (nr_poses_, vector<float> (nr_rows_ * nr_cols_, 0));
 
-        for (int pose_y = 0; pose_y < n_poses_y_; pose_y++) {
-            for (int pose_x = 0; pose_x < n_poses_x_ && pose_y * n_poses_x_ + pose_x < n_poses_; pose_x++) {
-                for (int i = 0; i < n_rows_ * n_cols_; i++) {
+        for (int pose_y = 0; pose_y < nr_poses_per_column_; pose_y++) {
+            for (int pose_x = 0; pose_x < nr_poses_per_row_ && pose_y * nr_poses_per_row_ + pose_x < nr_poses_; pose_x++) {
+                for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
 
-                    depth_image_per_pose[pose_y * n_poses_x_ + pose_x][i] = depth_image[(pose_y * n_rows_ + (i / n_cols_)) * pixels_per_row_extracted + pose_x * n_cols_ + (i % n_cols_)];
+                    depth_image_per_pose[pose_y * nr_poses_per_row_ + pose_x][i] = depth_image[(pose_y * nr_rows_ + (i / nr_cols_)) * pixels_per_row_extracted + pose_x * nr_cols_ + (i % nr_cols_)];
                 }
             }
         }
@@ -618,8 +563,8 @@ void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
         vector<int> tmp_indices;
         vector<float> tmp_depth;
 
-        for (int state = 0; state < n_poses_; state++) {
-            for (int i = 0; i < n_rows_ * n_cols_; i++) {
+        for (int state = 0; state < nr_poses_; state++) {
+            for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
                 if (depth_image_per_pose[state][i] != 0) {
                     tmp_indices.push_back(i);
                     tmp_depth.push_back(depth_image_per_pose[state][i]);
@@ -631,99 +576,43 @@ void ObjectRasterizer::ReadDepth(vector<vector<int> > &intersect_indices,
             tmp_depth.resize(0);
         }
 
-
-
-
     } else {
         cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
     }
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
-#ifdef PROFILING_ACTIVE
-    glEndQuery(GL_TIME_ELAPSED);
-    stop_time_ = sf::hf::get_wall_time();
-    cpu_times_[GET_DEPTH_VALUES] = stop_time_ - start_time_;
-#endif
+    // ===================== DETACH TEXTURE FROM FRAMEBUFFER ================ //
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
+                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
+                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
+                           0,     // 4. tex ID
+                           0);
 }
 
 
 
 
 
-void ObjectRasterizer::set_objects(vector<int> object_numbers) {
-    // TODO does it copy the vector or set a reference?
-    object_numbers_ = object_numbers;
-}
-
-void ObjectRasterizer::set_number_of_max_poses(int n_poses) {
-//    if (n_poses_ != n_poses) {
-        n_max_poses_ = n_poses;
-        n_poses_ = n_poses;
-
-//        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(n_poses_);
-        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != n_poses_) sqrt_poses = (int) ceil(sqrt_poses);
-        // TODO max_dimension[0], [1], at the moment they are identical
-        n_max_poses_x_ = min((int) sqrt_poses, (max_dimension_ / n_cols_));
-        int y_poses = n_max_poses_ / n_max_poses_x_;
-        if (y_poses * n_max_poses_x_ < n_max_poses_) y_poses++;
-        n_max_poses_y_ = min(y_poses, (max_dimension_ / n_rows_));
-
-        n_poses_x_ = n_max_poses_x_;
-        n_poses_y_ = n_max_poses_y_;
-
-        ReallocateBuffers();
-//    }
-}
-
-void ObjectRasterizer::set_number_of_poses(int n_poses) {
-    if (n_poses <= n_max_poses_) {
-        n_poses_ = n_poses;
 
 
-//        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(n_poses_);
-        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != n_poses_) sqrt_poses = (int) ceil(sqrt_poses);
-        // TODO max_dimension[0], [1], at the moment they are identical
-        n_poses_x_ = min((int) sqrt_poses, (max_dimension_ / n_cols_));
-        int y_poses = n_poses_ / n_poses_x_;
-        if (y_poses * n_poses_x_ < n_poses_) y_poses++;
-        n_poses_y_ = min(y_poses, (max_dimension_ / n_rows_));
 
-        if (n_poses_x_ > n_max_poses_x_ || n_poses_y_ > n_max_poses_y_) {
-            cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
-                 << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
-        }
-
-    } else {
-        cout << "WARNING: You tried to evaluate more poses than specified by max_poses" << endl;
-    }
-}
-
-void ObjectRasterizer::set_resolution(const int n_rows,
-                                     const int n_cols) {
-//    if (n_rows_ != n_rows || n_cols_ != n_cols) {
-        n_rows_ = n_rows;
-        n_cols_ = n_cols;
-
-        // recalculate n_poses_x_ and n_poses_y_ depending on the resolution
-        set_number_of_max_poses(n_max_poses_);
+// ================================================================= //
+// ================================================================= //
+// ======================= PRIVATE FUNCTIONS ======================= //
+// ================================================================= //
+// ================================================================= //
 
 
-//    }
-}
 
-void ObjectRasterizer::ReallocateBuffers() {
+void ObjectRasterizer::reallocate_buffers() {
 
     // ======================= REALLOCATE PBO ======================= //
 
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, combined_result_buffer_);
-    // TODO PERFORMANCE: try GL_STREAM_READ instead of GL_DYNAMIC_READ
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, result_buffer_);
     // the NULL means this buffer is uninitialized, since I only want to copy values back to the CPU that will be written by the GPU
-    glBufferData(GL_PIXEL_PACK_BUFFER, n_max_poses_x_* n_cols_ * n_max_poses_y_ * n_rows_ *  sizeof(GLfloat), NULL, GL_STREAM_READ);
+    glBufferData(GL_PIXEL_PACK_BUFFER, nr_max_poses_per_row_* nr_cols_ * nr_max_poses_per_column_ * nr_rows_ *  sizeof(GLfloat), NULL, GL_STREAM_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
     // ======================= DETACH TEXTURES FROM FRAMEBUFFER ======================= //
@@ -740,16 +629,12 @@ void ObjectRasterizer::ReallocateBuffers() {
 
     // ======================= REALLOCATE FRAMEBUFFER TEXTURES ======================= //
 
-    cout << "reallocating combined texture..." << endl;
-
-    glBindTexture(GL_TEXTURE_2D, combined_texture_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n_max_poses_x_ * n_cols_, n_max_poses_y_ * n_rows_, 0, GL_RED, GL_FLOAT, 0);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, nr_max_poses_per_row_ * nr_cols_, nr_max_poses_per_column_ * nr_rows_, 0, GL_RED, GL_FLOAT, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    cout << "reallocating combined depth texture..." << endl;
-
-    glBindRenderbuffer(GL_RENDERBUFFER, combined_depth_texture_);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, n_max_poses_x_* n_cols_, n_max_poses_y_ * n_rows_);
+    glBindRenderbuffer(GL_RENDERBUFFER, texture_for_z_testing);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, nr_max_poses_per_row_* nr_cols_, nr_max_poses_per_column_ * nr_rows_);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // ======================= ATTACH NEW TEXTURES TO FRAMEBUFFER ======================= //
@@ -757,25 +642,22 @@ void ObjectRasterizer::ReallocateBuffers() {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER,      // 1. fbo target: GL_FRAMEBUFFER
                               GL_DEPTH_ATTACHMENT, // 2. attachment point
                               GL_RENDERBUFFER,     // 3. rbo target: GL_RENDERBUFFER
-                              combined_depth_texture_);     // 4. rbo ID
+                              texture_for_z_testing);     // 4. rbo ID
     glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
                            GL_COLOR_ATTACHMENT0,  // 2. attachment point
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
+                           framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
 
 
-    checkFramebufferStatus();
+    check_framebuffer_status();
     GLenum color_buffers[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, color_buffers);
 }
 
 
 
-
-
-
-Matrix4f ObjectRasterizer::GetModelMatrix(const vector<float> state) {
+Matrix4f ObjectRasterizer::get_model_matrix(const vector<float> state) {
     // Model matrix equals the state of the object. Position and Quaternion just have to be expressed as a matrix.
     // note: state = (q.w, q.x, q.y, q.z, v.x, v.y, v.z)
     Matrix4f model_matrix = Matrix4f::Identity();
@@ -790,7 +672,41 @@ Matrix4f ObjectRasterizer::GetModelMatrix(const vector<float> state) {
 }
 
 
-Matrix4f ObjectRasterizer::GetProjectionMatrix(float n, float f, float l, float r, float t, float b) {
+void ObjectRasterizer::setup_view_matrix() {
+    // =========================== VIEW MATRIX =========================== //
+
+    // OpenGL camera is rotated 180 degrees around the X-Axis compared to the Kinect camera
+    view_matrix_ = Matrix4f::Identity();
+    Transform<float, 3, Affine, ColMajor> view_matrix_transform;
+    view_matrix_transform = AngleAxisf(M_PI, Vector3f::UnitX());
+    view_matrix_ = view_matrix_transform.matrix();
+}
+
+void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matrix) {
+
+    // ==================== CONFIGURE IMAGE PARAMETERS ==================== //
+
+    Eigen::Matrix3f camera_matrix_inverse = camera_matrix.inverse();
+
+    Vector3f boundaries_min = camera_matrix_inverse * Vector3f(-0.5, -0.5, 1);
+    Vector3f boundaries_max = camera_matrix_inverse * Vector3f(float(nr_cols_)-0.5, float(nr_rows_)-0.5, 1);
+
+    float near = NEAR_PLANE;
+    float far = FAR_PLANE;
+    float left = near * boundaries_min(0);
+    float right = near * boundaries_max(0);
+    float top = -near * boundaries_min(1);
+    float bottom = -near * boundaries_max(1);
+
+    // ======================== PROJECTION MATRIX ======================== //
+
+    // Projection Matrix takes into account our view frustum and projects the (3D)-scene onto a 2D image
+    projection_matrix_ = get_projection_matrix(near, far, left, right, top, bottom);
+
+}
+
+
+Matrix4f ObjectRasterizer::get_projection_matrix(float n, float f, float l, float r, float t, float b) {
     Matrix4f projection_matrix = Matrix4f::Zero();
     projection_matrix(0,0) = 2 * n / (r - l);
     projection_matrix(0,2) = (r + l) / (r - l);
@@ -803,246 +719,43 @@ Matrix4f ObjectRasterizer::GetProjectionMatrix(float n, float f, float l, float 
     return projection_matrix;
 }
 
-void ObjectRasterizer::SetupProjectionMatrix(const Eigen::Matrix3f camera_matrix) {
-
-    // ==================== CONFIGURE IMAGE PARAMETERS ==================== //
-
-    Eigen::Matrix3f camera_matrix_inverse = camera_matrix.inverse();
-
-    Vector3f boundaries_min = camera_matrix_inverse * Vector3f(-0.5, -0.5, 1);
-    Vector3f boundaries_max = camera_matrix_inverse * Vector3f(float(n_cols_)-0.5, float(n_rows_)-0.5, 1);
-
-    float near = NEAR_PLANE;
-    float far = FAR_PLANE;
-    float left = near * boundaries_min(0);
-    float right = near * boundaries_max(0);
-    float top = -near * boundaries_min(1);
-    float bottom = -near * boundaries_max(1);
-
-    // ======================== PROJECTION MATRIX ======================== //
-
-    // Projection Matrix takes into account our view frustum and projects the (3D)-scene onto a 2D image
-    projection_matrix_ = GetProjectionMatrix(near, far, left, right, top, bottom);
-
-}
-
-void ObjectRasterizer::SetupViewMatrix() {
-    // =========================== VIEW MATRIX =========================== //
-
-    // OpenGL camera is rotated 180 degrees around the X-Axis compared to the Kinect camera
-    view_matrix_ = Matrix4f::Identity();
-    Transform<float, 3, Affine, ColMajor> view_matrix_transform;
-    view_matrix_transform = AngleAxisf(M_PI, Vector3f::UnitX());
-    view_matrix_ = view_matrix_transform.matrix();
-}
-
-void ObjectRasterizer::DisplayTimeObservations(map<int, int> factors, render_type calling_function) {
-
+void ObjectRasterizer::store_time_measurements() {
 #ifdef PROFILING_ACTIVE
 
-    string function;
-    switch (calling_function) {
-    case COMBINED_FAST: function = "COMBINED_FAST"; break;
-    default: function = "default";
-    }
+    // retrieve times from OpenGL and store them
+    for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+        GLint available = 0;
+        double time_elapsed_s;
+        unsigned int time_elapsed_ns;
 
-
-    for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-
-        if (cpu_times_[i] != -1) {
-            GLint available = 0;
-            double time_elapsed_s;
-
-            if (calling_function == COMBINED_FAST) {
-                if (i == SET_VIEWPORT) {
-                    for (int j = 0; j < combined_fast_set_viewport_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_set_viewport_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_set_viewport_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else if (i == SEND_MODEL_MATRIX) {
-                    for (int j = 0; j < combined_fast_send_model_matrix_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_send_model_matrix_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_send_model_matrix_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else if (i == RENDER) {
-                    for (int j = 0; j < combined_fast_render_queries_.size(); j++) {
-                        available = 0;
-                        while (!available) {
-                            glGetQueryObjectiv(combined_fast_render_queries_[j], GL_QUERY_RESULT_AVAILABLE, &available);
-                        }
-                        glGetQueryObjectuiv(combined_fast_render_queries_[j], GL_QUERY_RESULT, &time_elapsed_ns_);
-                        time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-
-                        gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                    }
-                } else {
-                    available = 0;
-                    while (!available) {
-                        glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
-                    }
-                    glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns_);
-                    time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-                    gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-                }
-            } else {
-                available = 0;
-                while (!available) {
-                    glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
-                }
-                glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns_);
-                time_elapsed_s = time_elapsed_ns_ / (double) 1e9;
-                gpu_times_aggregate_[calling_function][i] += time_elapsed_s;
-            }
-
-            cpu_times_aggregate_[calling_function][i] += cpu_times_[i];
-
-            cpu_times_[i] = -1;
+        while (!available) {
+            glGetQueryObjectiv(time_query_[i], GL_QUERY_RESULT_AVAILABLE, &available);
         }
+        glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns);
+        time_elapsed_s = time_elapsed_ns / (double) 1e9;
+        gpu_times_aggregate_[i] += time_elapsed_s;
+
     }
 
-    if (poses_rendered_[calling_function] == n_poses_ && initial_[calling_function]) {
-        cout << "reset after initial poses" << endl;
-        initial_[calling_function] = false;
-        for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-            if (calls_aggregate_[calling_function][i] != 0) {
-                cpu_times_aggregate_[calling_function][i] = 0;
-                gpu_times_aggregate_[calling_function][i] = 0;
-            }
-            calls_aggregate_[calling_function][i] = 0;
+    // the first run should not count. Reset all the counters.
+    if (initial_run_) {
+        initial_run_ = false;
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            gpu_times_aggregate_[i] = 0;
         }
 
-        poses_rendered_[calling_function] = 0;
+        nr_calls_ = 0;
     }
-
-    const int ROUNDS = 500;
-    if (poses_rendered_[calling_function] >= n_poses_ * ROUNDS) {
-
-        cout << endl << "Time observations for " << function << " averaged over " << poses_rendered_[calling_function] << " poses:" << endl << endl;
-
-
-        double total_time = 0;
-
-        for (int i = 0; i < TIME_MEASUREMENTS_COUNT; i++) {
-            if (calls_aggregate_[calling_function][i] != 0) {
-
-                total_time += max(gpu_times_aggregate_[calling_function][i], cpu_times_aggregate_[calling_function][i]);
-
-                int n_calls = calls_aggregate_[calling_function][i];
-                cout << getTextForEnum(i) << ":    "
-                     << "\t (GPU) " << gpu_times_aggregate_[calling_function][i] / n_calls
-                     << "\t (CPU) " << cpu_times_aggregate_[calling_function][i] / n_calls
-                     << "\t (x" << n_calls /* / ROUNDS */ << ") " << max(gpu_times_aggregate_[calling_function][i], cpu_times_aggregate_[calling_function][i]) /* / ROUNDS*/
-                     << "\t TOTAL_TIME: " << total_time /* / ROUNDS*/ << ", calls_aggregate: " << n_calls << endl;
-                cpu_times_aggregate_[calling_function][i] = 0;
-                gpu_times_aggregate_[calling_function][i] = 0;
-            }
-
-            calls_aggregate_[calling_function][i] = 0;
-        }
-        cout << "TOTAL_TIME: \t" << total_time / poses_rendered_[calling_function] << "\t(x" << poses_rendered_[calling_function] << ") " << total_time / ROUNDS << endl << endl;
-
-        poses_rendered_[calling_function] = 0;
-    }
-
 #endif
-
-}
-
-GLuint ObjectRasterizer::get_combined_texture() {
-    return combined_texture_;
-}
-
-int ObjectRasterizer::get_n_poses_x() {
-    return n_poses_x_;
 }
 
 
-
-void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                        std::vector<std::vector<float> > &depth) {
-
-    // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
-                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
-                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           combined_texture_,     // 4. tex ID
-                           0);
-
-    // ===================== TRANSFERS DEPTH VALUES TO CPU == SLOW!!! ================ //
-
-    ReadDepth(intersect_indices, depth, combined_result_buffer_, combined_texture_, COMBINED_FAST);
-
-//    vector<int> intersect_indices_all;
-//    vector<float> depth_all;
-
-//    int width = n_cols_ * n_poses_x_;
-//    int index, index_x, index_y, pose_x, pose_y, local_index, pose;
-
-//    vector<int> intersect_indices_tmp[n_poses_];
-//    vector<float> depth_tmp[n_poses_];
-
-////    int n_cols_old = n_cols_;
-////    int n_rows_old = n_rows_;
-////    n_cols_ = n_poses_x_ * n_cols_;
-////    n_rows_ = n_poses_y_ * n_rows_;
-//    ReadDepth(intersect_indices_all, depth_all, combined_result_buffer_, combined_texture_, COMBINED_FAST);
-////    n_cols_ = n_cols_old;
-////    n_rows_ = n_rows_old;
-
-//    cout << "intersect_indices_all size: " << intersect_indices_all.size() << endl;
-
-//    for (size_t i = 0; i < intersect_indices_all.size(); i++) {
-//        index = intersect_indices_all[i];
-//        index_x = index % width;
-//        index_y = index / width;
-//        pose_x = index_x / n_cols_;
-//        pose_y = index_y / n_rows_;
-
-//        local_index = (index_x % n_cols_) + (index_y % n_rows_) * n_cols_;
-//        pose = pose_y * n_poses_x_ + pose_x;
-
-//        intersect_indices_tmp[pose].push_back(local_index);
-//        depth_tmp[pose].push_back(depth_all[i]);
-
-//    }
-
-//    for (int i = 0; i < n_poses_; i++) {
-//        intersect_indices.push_back(intersect_indices_tmp[i]);
-//        depth.push_back(depth_tmp[i]);
-//        cout << "rasterizer indices: [" << i << "]: " << intersect_indices_tmp[i].size() << endl;
-//    }
-
-
-    // ===================== DETACH TEXTURE FROM FRAMEBUFFER ================ //
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER,        // 1. fbo target: GL_FRAMEBUFFER
-                           GL_COLOR_ATTACHMENT0,  // 2. attachment point
-                           GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
-                           0,     // 4. tex ID
-                           0);
-
+string ObjectRasterizer::get_text_for_enum( int enumVal ) {
+    return strings_for_subroutines[enumVal];
 }
 
 
-string ObjectRasterizer::getTextForEnum( int enumVal ) {
-    return enum_strings_[enumVal];
-}
-
-
-void ObjectRasterizer::checkGLErrors(const char *label) {
+void ObjectRasterizer::check_GL_errors(const char *label) {
     GLenum errCode;
     const GLubyte *errStr;
     if ((errCode = glGetError()) != GL_NO_ERROR) {
@@ -1055,7 +768,7 @@ void ObjectRasterizer::checkGLErrors(const char *label) {
     }
 }
 
-bool ObjectRasterizer::checkFramebufferStatus() {
+bool ObjectRasterizer::check_framebuffer_status() {
     GLenum status;
     status=(GLenum)glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
     switch(status) {
@@ -1089,6 +802,35 @@ bool ObjectRasterizer::checkFramebufferStatus() {
 
 ObjectRasterizer::~ObjectRasterizer()
 {
+
+#ifdef PROFILING_ON
+
+    if (nr_calls_ != 0) {
+        cout << endl << "Time measurements for the different steps of the rendering process averaged over " << nr_calls_ << " render calls:" << endl << endl;
+
+        double total_time_per_render = 0;
+
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            total_time_per_render += gpu_times_aggregate_[i];
+        }
+        total_time_per_render /= nr_calls_;
+
+        for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
+            double time_per_subroutine = gpu_times_aggregate_[i] / nr_calls_;
+
+                cout << get_text_for_enum(i) << ":     "
+                     << "\t " << time_per_subroutine << " s \t " << setprecision(1)
+                     << time_per_subroutine * 100 / total_time_per_render << " %" << setprecision(9) << endl;
+        }
+
+        cout << "TOTAL TIME PER RENDER CALL : " << total_time_per_render << endl << endl;
+    } else {
+        cout << "The render() function was never called, so there are no time measurements of it available." << endl;
+    }
+
+    glDeleteQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
+#endif
+
     cout << "clean up OpenGL.." << endl;
 
     glDisableVertexAttribArray(0);
@@ -1096,19 +838,13 @@ ObjectRasterizer::~ObjectRasterizer()
 
     glDeleteBuffers(1, &vertex_buffer_);
     glDeleteBuffers(1, &index_buffer_);
-    glDeleteBuffers(1, &combined_result_buffer_);
+    glDeleteBuffers(1, &result_buffer_);
 
     glDeleteFramebuffers(1, &framebuffer_);
-    glDeleteTextures(1, &combined_texture_);
-    glDeleteRenderbuffers(1, &combined_depth_texture_);
+    glDeleteTextures(1, &framebuffer_texture_for_all_poses_);
+    glDeleteRenderbuffers(1, &texture_for_z_testing);
 
     glDeleteProgram(shader_ID_);
-    glDeleteQueries(21, time_query_);
-#ifdef PROFILING_ON
-    glDeleteQueries(n_poses_, &combined_fast_set_viewport_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_send_model_matrix_queries_[0]);
-    glGenQueries(n_poses_, &combined_fast_render_queries_[0]);
-#endif
 
 }
 

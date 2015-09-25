@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
+#include "boost/filesystem.hpp"
 #include "Eigen/Core"
 
 #include <fl/util/math/pose_vector.hpp>
@@ -18,6 +19,8 @@
 #include <iostream>
 #include <cuda_gl_interop.h>
 
+
+#include <dbot/utils/helper_functions.hpp>
 #include <dbot/utils/profiling.hpp>
 
 namespace dbot
@@ -41,8 +44,6 @@ struct Traits<KinectImageObservationModelGPU<State> >
     typedef RBObservationModel<State, Observation> Base;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
-
-//  typedef sf::RigidBodySystem<-1>           State;
 };
 }
 
@@ -73,98 +74,47 @@ public:
 
     // TODO: ALL THIS SHOULD SWITCH FROM USING VISIBILITY TO OCCLUSION
     KinectImageObservationModelGPU(const CameraMatrix& camera_matrix,
-                     const size_t& n_rows,
-                     const size_t& n_cols,
-                     const size_t& max_sample_count,
-                     const Scalar& initial_occlusion_prob,
-                     const double& delta_time):
+                    const size_t& n_rows,
+                    const size_t& n_cols,
+                    const size_t& max_sample_count,
+                    const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
+                    const std::vector<std::vector<std::vector<int> > > indices,
+                    const std::string vertex_shader_path,
+                    const std::string fragment_shader_path,
+                    const Scalar& initial_occlusion_prob = 0.1d,
+                    const double& delta_time = 0.033d,
+                    const float p_occluded_visible = 0.1f,
+                    const float p_occluded_occluded = 0.7f,
+                    const float tail_weight = 0.01f,
+                    const float model_sigma = 0.003f,
+                    const float sigma_factor = 0.0014247f,
+                    const float max_depth = 6.0f,
+                    const float exponential_rate = -log(0.5f)):
             camera_matrix_(camera_matrix),
             n_rows_(n_rows),
             n_cols_(n_cols),
+            nr_max_poses_(max_sample_count),
+            indices_(indices),
             initial_visibility_prob_(1 - initial_occlusion_prob),
-            max_sample_count_(max_sample_count),
-            n_poses_(max_sample_count),
-            constants_set_(false),
-            initialized_(false),
+            p_visible_visible_(1.0 - p_occluded_visible),
+            p_visible_occluded_(1.0 - p_occluded_occluded),
+            tail_weight_(tail_weight),
+            model_sigma_(model_sigma),
+            sigma_factor_(sigma_factor),
+            max_depth_(max_depth),
+            exponential_rate_(exponential_rate),
+            nr_poses_(max_sample_count),
             observations_set_(false),
             resource_registered_(false),
             nr_calls_set_observation_(0),
             observation_time_(0),
             Traits::Base(delta_time)
     {
-        visibility_probs_.resize(n_rows_ * n_cols_);
-    }
-
-    ~KinectImageObservationModelGPU() noexcept { }
-
-
-    // TODO: DO WE NEED TWO DIFFERENT FUNCTIONS FOR THIS??
-    void Initialize()
-    {
-        if (constants_set_)
-        {
-            opengl_ = boost::shared_ptr<ObjectRasterizer>
-                    (new ObjectRasterizer(vertices_,
-                                          indices_,
-                                          vertex_shader_path_,
-                                          fragment_shader_path_));
-            cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
-
-            initialized_ = true;
-
-
-            opengl_->PrepareRender(camera_matrix_.cast<float>());
-
-
-            opengl_->set_number_of_max_poses(max_sample_count_);
-            n_poses_x_ = opengl_->get_n_poses_x();
-            cuda_->set_number_of_max_poses(max_sample_count_, n_poses_x_);
-
-
-            std:: cout << "set resolution in cuda..." << std::endl;
-
-            opengl_->set_resolution(n_rows_, n_cols_);
-            cuda_->set_resolution(n_rows_, n_cols_);
-
-            RegisterResource();
-
-            std:: cout << "set occlusions..." << std::endl;
-
-    //        set_occlusions();
-            reset();
-
-            float c = p_visible_visible_ - p_visible_occluded_;
-            float log_c = log(c);
-
-            std::vector<std::vector<float> > dummy_com_models;
-            cuda_->Init(dummy_com_models, 0.0f, 0.0f,
-                        initial_visibility_prob_, c, log_c, p_visible_occluded_,
-                        tail_weight_, model_sigma_, sigma_factor_, max_depth_, exponential_rate_);
-
-
-            count_ = 0;
-
-        } else {
-            std:: cout << "WARNING: GPUImageObservationModel::Initialize() was not executed, because GPUImageObservationModel::set_constants() has not been called previously." << std::endl;
-        }
-    }
-
-    void Constants(const std::vector<std::vector<Eigen::Vector3d> > vertices_double,
-                   const std::vector<std::vector<std::vector<int> > > indices,
-                   const float p_occluded_visible,
-                   const float p_occluded_occluded,
-                   const float tail_weight,
-                   const float model_sigma,
-                   const float sigma_factor,
-                   const float max_depth,
-                   const float exponential_rate,
-                   const std::string vertex_shader_path,
-                   const std::string fragment_shader_path)
-    {        
+        // set constants
         this->default_poses_.recount(vertices_double.size());
         this->default_poses_.setZero();
 
-        // since you love doubles i changed the argument type of the vertices to double and convert it here :)
+        // convert doubles to floats
         vertices_.resize(vertices_double.size());
         for(size_t object_index = 0; object_index < vertices_.size(); object_index++)
         {
@@ -173,43 +123,129 @@ public:
                 vertices_[object_index][vertex_index] = vertices_double[object_index][vertex_index].cast<float>();
         }
 
-
-        indices_ = indices;
-        p_visible_visible_ = 1.0 - p_occluded_visible;
-        p_visible_occluded_ = 1.0 - p_occluded_occluded;
-        tail_weight_ = tail_weight;
-        model_sigma_ = model_sigma;
-        sigma_factor_ = sigma_factor;
-        max_depth_ = max_depth;
-        exponential_rate_ = exponential_rate;
-
+        // check for incorrect path names
+        if(!boost::filesystem::exists(vertex_shader_path))
+        {
+            std::cout << "vertex shader does not exist at: "
+                 << vertex_shader_path << std::endl;
+            exit(-1);
+        }
+        if(!boost::filesystem::exists(fragment_shader_path))
+        {
+            std::cout << "fragment_shader does not exist at: "
+                 << fragment_shader_path << std::endl;
+            exit(-1);
+        }
 
         vertex_shader_path_ =  vertex_shader_path;
         fragment_shader_path_ = fragment_shader_path;
 
 
-        constants_set_ = true;
+        // initialize opengl and cuda
+        opengl_ = boost::shared_ptr<ObjectRasterizer>
+                (new ObjectRasterizer(vertices_,
+                                      indices_,
+                                      vertex_shader_path_,
+                                      fragment_shader_path_,
+                                      camera_matrix_.cast<float>()));
+        cuda_ = boost::shared_ptr<fil::CudaFilter> (new fil::CudaFilter());
+
+
+        // sets the dimensions of how many poses will be rendered per row and per column in a texture
+        opengl_->allocate_textures_for_max_poses(nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "OpenGL: allocated " << nr_max_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+        int tmp_max_nr_poses = nr_max_poses_;
+        int tmp_nr_poses_per_row = nr_poses_per_row_;
+        int tmp_nr_poses_per_column = nr_poses_per_column_;
+
+        cuda_->allocate_memory_for_max_poses(nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "CUDA: allocated " << nr_max_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+
+        // if number of poses gets limited by cuda, we have to reallocate the textures in OpenGL again
+        if (tmp_max_nr_poses != nr_max_poses_ ||
+            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+            tmp_nr_poses_per_column != nr_poses_per_column_) {
+            opengl_->allocate_textures_for_max_poses(nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+            std::cout << "OpenGL adapts to CUDA restrictions: allocated " << nr_max_poses_ << " poses in the form ("
+                      << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+        }
+
+
+        std:: cout << "set resolution in cuda..." << std::endl;
+
+        opengl_->set_resolution(n_rows_, n_cols_, nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "OpenGL: setting resolution changes allocation to " << nr_max_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+        tmp_max_nr_poses = nr_max_poses_;
+        tmp_nr_poses_per_row = nr_poses_per_row_;
+        tmp_nr_poses_per_column = nr_poses_per_column_;
+
+        cuda_->set_resolution(n_rows_, n_cols_, nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "CUDA: setting resolution changes allocation to " << nr_max_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+        // if number of poses gets limited by cuda, we have to reallocate the textures in OpenGL again
+        if (tmp_max_nr_poses != nr_max_poses_ ||
+            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+            tmp_nr_poses_per_column != nr_poses_per_column_) {
+            opengl_->set_resolution(n_rows_, n_cols_, nr_max_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+            std::cout << "OpenGL adapts to CUDA restrictions: setting resolution changes allocation to " << nr_max_poses_ << " poses in the form ("
+                      << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+        }
+
+        register_resource();
+
+        std:: cout << "set occlusions..." << std::endl;
+
+        reset();
+
+        float c = p_visible_visible_ - p_visible_occluded_;
+        float log_c = log(c);
+
+        std::vector<std::vector<float> > dummy_com_models;
+        cuda_->init(dummy_com_models, 0.0f, 0.0f,
+                    initial_visibility_prob_, c, log_c, p_visible_occluded_,
+                    tail_weight_, model_sigma_, sigma_factor_, max_depth_, exponential_rate_);
+
+
+        count_ = 0;
+        render_time_ = 0;
+
+        visibility_probs_.resize(n_rows_ * n_cols_);
     }
+
+    ~KinectImageObservationModelGPU() noexcept {
+
+        std::cout << "time for render: " << render_time_ / count_ << std::endl;
+
+    }
+
 
     RealArray loglikes(const StateArray& deltas,
                                   IntArray& occlusion_indices,
                                   const bool& update_occlusions = false)
     {
-        if (!initialized_)
 
-        {
-            std:: cout << "GPU: not initialized" << std::endl;
-            exit(-1);
-        }
-        else if(!observations_set_)
+        if(!observations_set_)
         {
             std:: cout << "GPU: observations not set" << std::endl;
             exit(-1);
         }
 
-        n_poses_ = deltas.size();
-        std::vector<float> flog_likelihoods (n_poses_, 0);
-        set_number_of_poses(n_poses_);
+        nr_poses_ = deltas.size();
+        std::vector<float> flog_likelihoods (nr_poses_, 0);
+        set_number_of_poses(nr_poses_);
 
         // transform occlusion indices from size_t to int
         std::vector<int> occlusion_indices_transformed (occlusion_indices.size(), 0);
@@ -224,14 +260,14 @@ public:
         MEASURE("gpu: setting occlusion indices");
         // convert to internal state format
         std::vector<std::vector<std::vector<float> > > poses(
-                    n_poses_,
+                    nr_poses_,
                     std::vector<std::vector<float> >(vertices_.size(),
                     std::vector<float>(7, 0)));
 
         MEASURE("gpu: creating state vectors");
 
 
-        for(size_t i_state = 0; i_state < size_t(n_poses_); i_state++)
+        for(size_t i_state = 0; i_state < size_t(nr_poses_); i_state++)
         {
             for(size_t i_obj = 0; i_obj < vertices_.size(); i_obj++)
             {
@@ -255,8 +291,15 @@ public:
         MEASURE("gpu: converting state format");
 
 
+        double before_render = dbot::hf::get_wall_time();
 
-        opengl_->Render(poses);
+
+        opengl_->render(poses);
+
+        double after_render = dbot::hf::get_wall_time();
+        render_time_ += after_render - before_render;
+        count_++;
+
 
         MEASURE("gpu: rendering");
 
@@ -264,10 +307,10 @@ public:
         cudaGraphicsMapResources(1, &combined_texture_resource_, 0);
         cudaGraphicsSubResourceGetMappedArray(&texture_array_, combined_texture_resource_, 0, 0);
         cuda_->set_texture_array(texture_array_);
-        cuda_->MapTexture();
+        cuda_->map_texture();
         MEASURE("gpu: mapping texture");
 
-        cuda_->CompareMultiple(update_occlusions, flog_likelihoods);
+        cuda_->compare_multiple(update_occlusions, flog_likelihoods);
         cudaGraphicsUnmapResources(1, &combined_texture_resource_, 0);
 
         MEASURE("gpu: computing likelihoods");
@@ -303,19 +346,19 @@ public:
 
     virtual void reset()
     {
-        Occlusions();
+        set_occlusions();
         observation_time_ = 0;
     }
 
 
     // TODO: this image should be in a different format BOTH OF THEM!!
-    const std::vector<float> Occlusions(size_t index) const
+    const std::vector<float> get_occlusions(size_t index) const
     {
         std::vector<float> visibility_probs = cuda_->get_visibility_probabilities((int) index);
         return visibility_probs;
     }
 
-    void RangeImage(std::vector<std::vector<int> > &intersect_indices,
+    void get_range_image(std::vector<std::vector<int> > &intersect_indices,
                     std::vector<std::vector<float> > &depth)
     {
         opengl_->get_depth_values(intersect_indices, depth);
@@ -326,19 +369,18 @@ private:
     void set_observation(const std::vector<float>& observations, const Scalar& delta_time)
     {
         observation_time_ += delta_time;
-        if (initialized_)
-        {
-            cuda_->set_observations(observations.data(), observation_time_);
-            observations_set_ = true;
-        }
+
+        cuda_->set_observations(observations.data(), observation_time_);
+        observations_set_ = true;
+
     }
 
-    void Occlusions(const float& visibility_prob = -1)
+    void set_occlusions(const float& visibility_prob = -1)
     {
         float default_visibility_probability = visibility_prob;
         if (visibility_prob == -1) default_visibility_probability = initial_visibility_prob_;
 
-        std::vector<float> visibility_probabilities (n_rows_ * n_cols_ * n_poses_, default_visibility_probability);
+        std::vector<float> visibility_probabilities (n_rows_ * n_cols_ * nr_poses_, default_visibility_probability);
         cuda_->set_visibility_probabilities(visibility_probabilities.data());
         // TODO set update times if you want to use them
 
@@ -348,20 +390,38 @@ private:
     const size_t n_rows_;
     const size_t n_cols_;
     const float initial_visibility_prob_;
-    const size_t max_sample_count_;
+    int nr_max_poses_;
 
-    void set_number_of_poses(int n_poses){
-        if (initialized_) {
-            n_poses_ = n_poses;
-            opengl_->set_number_of_poses(n_poses_);
-            n_poses_x_ = opengl_->get_n_poses_x();
-            cuda_->set_number_of_poses(n_poses_, n_poses_x_);
-        } else {
-            std:: cout << "WARNING: GPUImageObservationModel::set_number_of_poses() was not executed, because GPUImageObservationModel::Initialize() has not been called previously." << std::endl;
+    void set_number_of_poses(int nr_poses){
+
+        nr_poses_ = nr_poses;
+        opengl_->set_number_of_poses(nr_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "OpenGL: set number of poses to " << nr_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+        int tmp_nr_poses = nr_poses_;
+        int tmp_nr_poses_per_row = nr_poses_per_row_;
+        int tmp_nr_poses_per_column = nr_poses_per_column_;
+
+        cuda_->set_number_of_poses(nr_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+        std::cout << "CUDA: set number of poses to " << nr_poses_ << " poses in the form ("
+                  << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
+
+        // if number of poses gets limited by cuda, we have to tell OpenGL about it
+        if (tmp_nr_poses != nr_poses_ ||
+            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+            tmp_nr_poses_per_column != nr_poses_per_column_) {
+            opengl_->set_number_of_poses(nr_poses_, nr_poses_per_row_, nr_poses_per_column_);
+
+            std::cout << "OpenGL adapts to CUDA restrictions: set number of poses to " << nr_poses_ << " poses in the form ("
+                      << nr_poses_per_row_ << ", " << nr_poses_per_column_ << ")" << std::endl;
         }
+
     }
 
-    void checkCUDAError(const char *msg)
+    void check_cuda_error(const char *msg)
     {
         cudaError_t err = cudaGetLastError();
         if( cudaSuccess != err)
@@ -372,21 +432,21 @@ private:
     }
 
 
-    void UnregisterResource()
+    void unregister_resource()
     {
         if (resource_registered_) {
             cudaGraphicsUnregisterResource(combined_texture_resource_);
-            checkCUDAError("cudaGraphicsUnregisterResource");
+            check_cuda_error("cudaGraphicsUnregisterResource");
             resource_registered_ = false;
         }
     }
 
-    void RegisterResource()
+    void register_resource()
     {
         if (!resource_registered_) {
-            combined_texture_opengl_ = opengl_->get_combined_texture();
+            combined_texture_opengl_ = opengl_->get_framebuffer_texture();
             cudaGraphicsGLRegisterImage(&combined_texture_resource_, combined_texture_opengl_, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsReadOnly);
-            checkCUDAError("cudaGraphicsGLRegisterImage)");
+            check_cuda_error("cudaGraphicsGLRegisterImage)");
             resource_registered_ = true;
         }
     }
@@ -417,15 +477,16 @@ private:
     std::string fragment_shader_path_;
 
 
-    double start_time_;
+    double render_time_;
 
-    int n_poses_;
-    int n_poses_x_;
+    int nr_poses_;
+    int nr_poses_per_row_;
+    int nr_poses_per_column_;
 
     int count_;
 
     // booleans to ensure correct usage of function calls
-    bool constants_set_, initialized_, observations_set_, resource_registered_;
+    bool observations_set_, resource_registered_;
     int nr_calls_set_observation_;
 
     // Shared resource between OpenGL and CUDA
