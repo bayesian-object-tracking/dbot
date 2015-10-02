@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Dense>
 
 #include <boost/shared_ptr.hpp>
-#include <dbot/states/rigid_bodies_state.hpp>
+#include <osr/rigid_bodies_state.hpp>
 
 
 namespace dbot
@@ -43,7 +43,7 @@ class RigidBodyRenderer
 {
 public:
     typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
-    typedef dbot::RigidBodiesState<Eigen::Dynamic> State;
+    typedef osr::RigidBodiesState<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
     typedef typename Eigen::Transform<double, 3, Eigen::Affine> Affine;
