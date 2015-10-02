@@ -39,29 +39,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/util/types.hpp>
 #include <fl/distribution/gaussian.hpp>
 #include <fl/distribution/discrete_distribution.hpp>
+#include <fl/util/profiling.hpp>
 
-#include <dbot/utils/profiling.hpp>
 #include <dbot/utils/traits.hpp>
-#include <dbot/utils/helper_functions.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
-
-
 
 namespace dbot
 {
-
-template<typename ProcessModel, typename ObservationModel>
+template <typename ProcessModel, typename ObservationModel>
 class RBCoordinateParticleFilter
 {
 public:
-    typedef typename ProcessModel::State  State;
-    typedef typename ProcessModel::Input  Input;
-    typedef typename ProcessModel::Noise  Noise;
+    typedef typename ProcessModel::State State;
+    typedef typename ProcessModel::Input Input;
+    typedef typename ProcessModel::Noise Noise;
 
-    typedef Eigen::Array<State, -1, 1>       StateArray;
-    typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
-    typedef Eigen::Array<int, -1, 1>         IntArray;
-
+    typedef Eigen::Array<State, -1, 1> StateArray;
+    typedef Eigen::Array<fl::Real, -1, 1> RealArray;
+    typedef Eigen::Array<int, -1, 1> IntArray;
 
     typedef typename ObservationModel::Observation Observation;
 
@@ -70,23 +65,23 @@ public:
 public:
     /// constructor and destructor *********************************************
     RBCoordinateParticleFilter(
-            const boost::shared_ptr<ProcessModel>       process_model,
-            const boost::shared_ptr<ObservationModel>   observation_model,
-            const std::vector<std::vector<size_t> >&    sampling_blocks,
-            const fl::Real&                             max_kl_divergence = 0):
-        observation_model_(observation_model),
-        process_model_(process_model),
-        max_kl_divergence_(max_kl_divergence)
+        const boost::shared_ptr<ProcessModel> process_model,
+        const boost::shared_ptr<ObservationModel> observation_model,
+        const std::vector<std::vector<size_t>>& sampling_blocks,
+        const fl::Real& max_kl_divergence = 0)
+        : observation_model_(observation_model),
+          process_model_(process_model),
+          max_kl_divergence_(max_kl_divergence)
     {
         sampling_blocks_ = sampling_blocks;
 
         // make sure sizes are consistent --------------------------------------
         size_t dimension = 0;
-        for(size_t i = 0; i < sampling_blocks_.size(); i++)
+        for (size_t i = 0; i < sampling_blocks_.size(); i++)
         {
-           dimension +=  sampling_blocks_[i].size();
+            dimension += sampling_blocks_[i].size();
         }
-        if(dimension != process_model_->noise_dimension())
+        if (dimension != process_model_->noise_dimension())
         {
             std::cout << "the dimension of the sampling blocks is " << dimension
                       << " while the dimension of the noise is "
@@ -95,48 +90,45 @@ public:
         }
     }
     virtual ~RBCoordinateParticleFilter() noexcept {}
-
     /// the filter functions ***************************************************
-    void filter(const Observation&  observation,
-                const Input&        input)
+    void filter(const Observation& observation, const Input& input)
     {
         observation_model_->set_observation(observation);
 
         loglikes_ = RealArray::Zero(belief_.size());
-        noises_ = std::vector<Noise>(belief_.size(),
-                                 Noise::Zero(process_model_->noise_dimension()));
+        noises_ = std::vector<Noise>(
+            belief_.size(), Noise::Zero(process_model_->noise_dimension()));
         old_particles_ = belief_.locations();
 
-        for(size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
+        for (size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
             // add noise of this block -----------------------------------------
-            for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
+            for (size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                for(size_t i = 0; i < sampling_blocks_[i_block].size(); i++)
+                for (size_t i = 0; i < sampling_blocks_[i_block].size(); i++)
                 {
                     noises_[i_sampl](sampling_blocks_[i_block][i]) =
-                                                    unit_gaussian_.sample()(0);
+                        unit_gaussian_.sample()(0);
                 }
             }
 
             // propagate using partial noise -----------------------------------
-            for(size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
+            for (size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                belief_.location(i_sampl) =
-                        process_model_->state(old_particles_[i_sampl],
-                                              noises_[i_sampl], input);
+                belief_.location(i_sampl) = process_model_->state(
+                    old_particles_[i_sampl], noises_[i_sampl], input);
             }
 
             // compute likelihood ----------------------------------------------
-            bool update = (i_block == sampling_blocks_.size()-1);
-            RealArray new_loglikes =
-            observation_model_->loglikes(belief_.locations(), indices_, update);
+            bool update = (i_block == sampling_blocks_.size() - 1);
+            RealArray new_loglikes = observation_model_->loglikes(
+                belief_.locations(), indices_, update);
 
             // update the weights and resample if necessary --------------------
             belief_.delta_log_prob_mass(new_loglikes - loglikes_);
             loglikes_ = new_loglikes;
 
-            if(belief_.kl_given_uniform() > max_kl_divergence_)
+            if (belief_.kl_given_uniform() > max_kl_divergence_)
             {
                 resample(belief_.size());
             }
@@ -152,34 +144,29 @@ public:
 
         Belief new_belief(sample_count);
 
-        for(size_t i = 0; i < sample_count; i++)
+        for (size_t i = 0; i < sample_count; i++)
         {
             int index;
             new_belief.location(i) = belief_.sample(index);
 
-            indices[i]      = indices_[index];
-            noises[i]       = noises_[index];
+            indices[i] = indices_[index];
+            noises[i] = noises_[index];
             next_samples[i] = old_particles_[index];
-            loglikes[i]     = loglikes_[index];
+            loglikes[i] = loglikes_[index];
         }
-        belief_         = new_belief;
-        indices_        = indices;
-        noises_         = noises;
-        old_particles_   = next_samples;
-        loglikes_       = loglikes;
+        belief_ = new_belief;
+        indices_ = indices;
+        noises_ = noises;
+        old_particles_ = next_samples;
+        loglikes_ = loglikes;
     }
-
 
     /// mutators ***************************************************************
-    Belief& belief()
-    {
-        return belief_;
-    }
-
-    void set_particles(const std::vector<State >& samples)
+    Belief& belief() { return belief_; }
+    void set_particles(const std::vector<State>& samples)
     {
         belief_.set_uniform(samples.size());
-        for(int i = 0; i < belief_.size(); i++)
+        for (int i = 0; i < belief_.size(); i++)
             belief_.location(i) = samples[i];
 
         indices_ = IntArray::Zero(samples.size());
@@ -196,7 +183,6 @@ public:
         return process_model_;
     }
 
-
 private:
     /// member variables *******************************************************
     Belief belief_;
@@ -208,16 +194,15 @@ private:
 
     // models
     boost::shared_ptr<ObservationModel> observation_model_;
-    boost::shared_ptr<ProcessModel>     process_model_;
+    boost::shared_ptr<ProcessModel> process_model_;
 
     // parameters
-    std::vector<std::vector<size_t> > sampling_blocks_;
+    std::vector<std::vector<size_t>> sampling_blocks_;
     fl::Real max_kl_divergence_;
 
     // distribution for sampling
-    fl::Gaussian<Eigen::Matrix<fl::Real,1,1> > unit_gaussian_;
+    fl::Gaussian<Eigen::Matrix<fl::Real, 1, 1>> unit_gaussian_;
 };
-
 }
 
 #endif

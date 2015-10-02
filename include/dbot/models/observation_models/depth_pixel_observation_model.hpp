@@ -36,12 +36,12 @@
 #include <fl/model/observation/interface/observation_density.hpp>
 #include <fl/model/observation/interface/observation_function.hpp>
 
-#include <dbot/utils/pose_hashing.hpp>
 #include <dbot/utils/rigid_body_renderer.hpp>
+
+#include <osr/pose_hashing.hpp>
 
 namespace fl
 {
-
 template <typename State_>
 class DepthPixelObservationModel
     : public ObservationFunction<Vector1d, State_, Vector1d>,
@@ -51,19 +51,12 @@ class DepthPixelObservationModel
 public:
     typedef Vector1d Obsrv;
     typedef Vector1d Noise;
-    typedef State_   State;
+    typedef State_ State;
 
-    typedef std::unordered_map<
-                    State,
-                    State,
-                    PoseHash<State>
-            > PoseCacheMap;
+    typedef std::unordered_map<State, State, osr::PoseHash<State>> PoseCacheMap;
 
-    typedef std::unordered_map<
-                State,
-                Eigen::VectorXd,
-                PoseHash<State>
-            > RenderCacheMap;
+    typedef std::unordered_map<State, Eigen::VectorXd, osr::PoseHash<State>>
+        RenderCacheMap;
 
 public:
     DepthPixelObservationModel(
@@ -72,14 +65,11 @@ public:
         Real fg_sigma,
         Real bg_sigma,
         int state_dim = DimensionOf<State>::Value)
-        : state_dim_(state_dim),
-          renderer_(renderer),
-          id_(0)
+        : state_dim_(state_dim), renderer_(renderer), id_(0)
     {
         mutex = std::make_shared<std::mutex>();
         render_cache_ = std::make_shared<RenderCacheMap>();
         poses_cache_ = std::make_shared<PoseCacheMap>();
-
 
         // setup backgroud density
         auto bg_mean = Obsrv(1);
@@ -106,9 +96,7 @@ public:
         poses_cache_ = other.poses_cache_;
     }
 
-
-    virtual ~DepthPixelObservationModel() noexcept { }
-
+    virtual ~DepthPixelObservationModel() noexcept {}
     Real log_probability(const Obsrv& obsrv, const State& state) const override
     {
         return density(state).log_probability(obsrv);
@@ -128,23 +116,17 @@ public:
     virtual int obsrv_dimension() const { return 1; }
     virtual int noise_dimension() const { return 1; }
     virtual int state_dimension() const { return state_dim_; }
-
     virtual int id() const { return id_; }
     virtual void id(int new_id) { id_ = new_id; }
-
     void nominal_pose(const State& p)
     {
         std::lock_guard<std::mutex> lock(*mutex);
 
         render_cache_->clear();
-        nominal_pose_= p;
+        nominal_pose_ = p;
     }
 
-    virtual std::string name() const
-    {
-        return "DepthPixelObservationModel";
-    }
-
+    virtual std::string name() const { return "DepthPixelObservationModel"; }
     virtual std::string description() const
     {
         return "DepthPixelObservationModel";
@@ -160,9 +142,8 @@ private:
         convert(depth_rendering_, obsrv_image);
     }
 
-    void convert(
-        const std::vector<float>& depth,
-        Eigen::VectorXd& obsrv_image) const
+    void convert(const std::vector<float>& depth,
+                 Eigen::VectorXd& obsrv_image) const
     {
         const int pixel_count = depth.size();
         obsrv_image.resize(pixel_count, 1);
@@ -180,7 +161,6 @@ private:
         }
     }
 
-
     const Gaussian<Obsrv>& density(const State& state) const
     {
         Obsrv y = depth(state);
@@ -190,8 +170,8 @@ private:
             return bg_density_;
         }
 
-       fg_density_.mean(y);
-       return fg_density_;
+        fg_density_.mean(y);
+        return fg_density_;
     }
 
     Obsrv depth(const State& current_state) const
@@ -213,7 +193,7 @@ private:
             poses_cache_[current_state] = current_pose;
         }
 
-        assert (render_cache_.find(current_state) != render_cache_.end());
+        assert(render_cache_.find(current_state) != render_cache_.end());
 
         Obsrv depth;
         depth(0) = render_cache_[current_state](id_);
@@ -240,5 +220,4 @@ public:
     mutable std::shared_ptr<RenderCacheMap> render_cache_;
     mutable std::shared_ptr<PoseCacheMap> poses_cache_;
 };
-
 }

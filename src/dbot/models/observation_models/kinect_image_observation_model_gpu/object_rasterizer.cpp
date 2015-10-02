@@ -4,24 +4,24 @@
  *       of the different subroutines inside the render call. */
 //#define PROFILING_ACTIVE
 
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <GL/glew.h>
-#include <iostream>
-#include <GL/glx.h>
-#include <Eigen/Geometry>
-#include <ros/package.h>
-
 
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/shader.hpp>
+#include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 
-#include <dbot/utils/helper_functions.hpp>
+#include <iomanip>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+
+#include <GL/glew.h>
+#include <GL/glx.h>
+
+#include <Eigen/Geometry>
+
+#include <ros/package.h>
 
 using namespace std;
 using namespace Eigen;
-
 
 ObjectRasterizer::ObjectRasterizer()
 {
