@@ -51,7 +51,7 @@
 #include <fl/util/assertions.hpp>
 
 #include <dbot/utils/helper_functions.hpp>
-#include <dbot/states/free_floating_rigid_bodies_state.hpp>
+#include <osr/free_floating_rigid_bodies_state.hpp>
 #include <dbot/models/process_models/damped_wiener_process_model.hpp>
 #include <dbot/models/process_models/integrated_damped_wiener_process_model.hpp>
 
