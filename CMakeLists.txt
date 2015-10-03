@@ -125,6 +125,8 @@ if(DBOT_ON_GPU)
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
+
+    target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_gpu)
 endif(DBOT_ON_GPU)
 
 
