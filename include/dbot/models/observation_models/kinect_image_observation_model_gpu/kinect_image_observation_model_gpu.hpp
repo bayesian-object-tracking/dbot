@@ -6,7 +6,7 @@
 #include "boost/filesystem.hpp"
 #include "Eigen/Core"
 
-#include <fl/util/math/pose_vector.hpp>
+#include <osr/pose_vector.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
@@ -274,7 +274,7 @@ public:
                 auto pose_0 = this->default_poses_.component(i_obj);
                 auto delta = deltas[i_state].component(i_obj);
 
-                fl::PoseVector pose;
+                osr::PoseVector pose;
                 pose.orientation() = delta.orientation() * pose_0.orientation();
                 pose.position() = delta.position() + pose_0.position();
 

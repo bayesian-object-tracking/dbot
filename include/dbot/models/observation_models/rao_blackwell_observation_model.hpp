@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Eigen/Core>
 
 #include <fl/util/types.hpp>
-#include <fl/util/math/pose_vector.hpp>
-#include <fl/util/math/composed_vector.hpp>
+#include <osr/pose_vector.hpp>
+#include <osr/composed_vector.hpp>
 //#include <dbot/utils/traits.hpp>
 
 
@@ -58,7 +58,7 @@ public:
     typedef Eigen::Array<int, -1, 1>         IntArray;
     typedef Eigen::Matrix<fl::Real, -1, 1>   RealVector;
 
-    typedef fl::ComposedVector<fl::PoseBlock<RealVector>, RealVector> PoseArray;
+    typedef osr::ComposedVector<osr::PoseBlock<RealVector>, RealVector> PoseArray;
 
 
 

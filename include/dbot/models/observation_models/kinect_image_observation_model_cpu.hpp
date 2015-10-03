@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Core>
 
-#include <fl/util/math/pose_vector.hpp>
+#include <osr/pose_vector.hpp>
 #include <fl/util/assertions.hpp>
 #include <dbot/utils/traits.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
@@ -151,7 +151,7 @@ public:
                 auto pose_0 = this->default_poses_.component(i_obj);
                 auto delta = deltas[i_state].component(i_obj);
 
-                fl::PoseVector pose;
+                osr::PoseVector pose;
                 pose.orientation() = delta.orientation() * pose_0.orientation();
                 pose.position() = delta.position() + pose_0.position();
 
