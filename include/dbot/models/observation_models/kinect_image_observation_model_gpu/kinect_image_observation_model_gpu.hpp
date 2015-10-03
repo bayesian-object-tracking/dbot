@@ -296,7 +296,7 @@ public:
 
         opengl_->render(poses);
 
-        double after_render = dbot::hf::get_wall_time();
+//        double after_render = dbot::hf::get_wall_time();
 //        render_time_ += after_render - before_render;
         count_++;
 

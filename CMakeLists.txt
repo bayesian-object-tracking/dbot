@@ -4,7 +4,7 @@ project(dbot)
 ############################
 # Options                  #
 ############################
-option(DBOT_ON_CUDA "Compile CUDA enabled trackers" ON)
+option(DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
 
 ############################
 # Flags                    #
@@ -83,7 +83,6 @@ if(DBOT_ON_GPU)
         CATKIN_DEPENDS
             fl
             osr_catkin
-            dbot_ros_pkg
         DEPENDS
             eigen
     )
