@@ -91,6 +91,10 @@ private:
     void init();
 
 protected:
+    Matrix camera_matrix_;
+    int n_rows_;
+    int n_cols_;
+
     // triangles
     std::vector<std::vector<Vector> >               vertices_;
     std::vector<std::vector<Vector> >               normals_;
@@ -104,9 +108,6 @@ protected:
     std::vector<Vector> coms_;
     std::vector<float>  com_weights_;
 
-    Matrix camera_matrix_;
-    int n_rows_;
-    int n_cols_;
 };
 
 }
