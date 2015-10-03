@@ -127,7 +127,7 @@ public:
         state_(count_objects),
         delta_time_(delta_time)
     {
-        static_assert_base(State, FreeFloatingRigidBodiesState<OBJECTS>);
+        static_assert_base(State, osr::FreeFloatingRigidBodiesState<OBJECTS>);
 
         quaternion_map_.resize(count_objects);
         rotation_center_.resize(count_objects);

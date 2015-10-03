@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/util/math/pose_vector.hpp>
 #include <fl/util/assertions.hpp>
 #include <dbot/utils/traits.hpp>
-#include <dbot/states/free_floating_rigid_bodies_state.hpp>
+#include <osr/free_floating_rigid_bodies_state.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
 
 #include <dbot/utils/rigid_body_renderer.hpp>
@@ -117,7 +117,7 @@ public:
         observation_time_(0),
         Base(delta_time)
     {
-        static_assert_base(State, RigidBodiesState<OBJECTS>);
+        static_assert_base(State, osr::RigidBodiesState<OBJECTS>);
 
         this->default_poses_.recount(object_model_->vertices().size());
         this->default_poses_.setZero();
@@ -255,7 +255,7 @@ private:
     const size_t n_cols_;
     const float initial_occlusion_;
     const size_t max_sample_count_;
-    const boost::shared_ptr<RigidBodiesState<-1> > rigid_bodies_state_;
+    const boost::shared_ptr<osr::RigidBodiesState<-1> > rigid_bodies_state_;
 
 
     // models

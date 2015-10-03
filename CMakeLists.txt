@@ -24,6 +24,7 @@ add_definitions(-Wno-deprecated-register)
 # Setup                    #
 ############################
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 ############################
 # Dependencies            ##
@@ -82,6 +83,7 @@ if(DBOT_ON_GPU)
         CATKIN_DEPENDS
             fl
             osr_catkin
+            dbot_ros_pkg
         DEPENDS
             eigen
     )

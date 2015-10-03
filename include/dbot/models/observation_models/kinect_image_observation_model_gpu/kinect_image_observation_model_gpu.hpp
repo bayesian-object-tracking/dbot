@@ -8,7 +8,7 @@
 
 #include <fl/util/math/pose_vector.hpp>
 #include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
-#include <dbot/states/free_floating_rigid_bodies_state.hpp>
+#include <osr/free_floating_rigid_bodies_state.hpp>
 
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
 #include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
@@ -20,8 +20,8 @@
 #include <cuda_gl_interop.h>
 
 
-#include <dbot/utils/helper_functions.hpp>
-#include <dbot/utils/profiling.hpp>
+//#include <dbot/utils/helper_functions.hpp>
+#include <fl/util/profiling.hpp>
 
 namespace dbot
 {
@@ -220,14 +220,14 @@ public:
 
 
         count_ = 0;
-        render_time_ = 0;
+//        render_time_ = 0;
 
         visibility_probs_.resize(n_rows_ * n_cols_);
     }
 
     ~KinectImageObservationModelGPU() noexcept {
 
-        std::cout << "time for render: " << render_time_ / count_ << std::endl;
+//        std::cout << "time for render: " << render_time_ / count_ << std::endl;
 
     }
 
@@ -291,13 +291,13 @@ public:
         MEASURE("gpu: converting state format");
 
 
-        double before_render = dbot::hf::get_wall_time();
+//        double before_render = dbot::hf::get_wall_time();
 
 
         opengl_->render(poses);
 
         double after_render = dbot::hf::get_wall_time();
-        render_time_ += after_render - before_render;
+//        render_time_ += after_render - before_render;
         count_++;
 
 
@@ -477,7 +477,7 @@ private:
     std::string fragment_shader_path_;
 
 
-    double render_time_;
+//    double render_time_;
 
     int nr_poses_;
     int nr_poses_per_row_;
