@@ -4,7 +4,7 @@ project(dbot)
 ############################
 # Options                  #
 ############################
-option(DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
+option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
 
 ############################
 # Flags                    #
@@ -23,23 +23,26 @@ add_definitions(-Wno-deprecated-register)
 ############################
 # Setup                    #
 ############################
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+set(dbot_INCLUDE_DIRS "include")
+set(dbot_LIBRARY ${PROJECT_NAME})
+set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
+set(dbot_LIBRARIES ${dbot_LIBRARY})
 
 ############################
 # Dependencies            ##
 ############################
 find_package(Eigen REQUIRED)
-include_directories(${Eigen_INCLUDE_DIRS})
-add_definitions(${Eigen_DEFINITIONS})
-
 find_package(Boost REQUIRED)
+
+include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
-############################
-# GPU                      #
-############################
-if(DBOT_ON_GPU)
+add_definitions(${Eigen_DEFINITIONS})
+
+if(BUILD_DBOT_ON_GPU)
     set(GLEW_DIR ${CMAKE_MODULE_PATH})
 
     find_package(CUDA REQUIRED)
@@ -62,84 +65,70 @@ if(DBOT_ON_GPU)
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
     add_definitions( -DBUILD_GPU=1 )
-endif(DBOT_ON_GPU)
+
+    # add GLEW, OpenGL and CUDA paths
+    list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+    list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
+    list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
+    list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+
+    # add gpu sub library
+    list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
+endif(BUILD_DBOT_ON_GPU)
 
 ############################
 ## catkin                  #
 ############################
 find_package(catkin REQUIRED fl osr_catkin)
 
-if(DBOT_ON_GPU)
-    catkin_package(
-        INCLUDE_DIRS
-            include
-            ${GLEW_INCLUDE_DIRS}
-            ${OpenGL_INCLUDE_DIRS}
-            ${CUDA_CUT_INCLUDE_DIRS}
-            ${CUDA_INCLUDE_DIRS}
-        LIBRARIES
-            dbot_gpu
-            dbot
-        CATKIN_DEPENDS
-            fl
-            osr_catkin
-        DEPENDS
-            eigen
-    )
-else(DBOT_ON_GPU)
-    catkin_package(
-        INCLUDE_DIRS
-            include
-        LIBRARIES
-            dbot
-        CATKIN_DEPENDS
-            fl
-            osr_catkin
-        DEPENDS
-            eigen
-    )
-endif(DBOT_ON_GPU)
-
-include_directories(include ${catkin_INCLUDE_DIRS})
+catkin_package(
+    INCLUDE_DIRS
+        ${dbot_INCLUDE_DIRS}
+    LIBRARIES
+        ${dbot_LIBRARIES}
+    CATKIN_DEPENDS
+        fl
+        osr_catkin
+    DEPENDS
+        Eigen
+)
 
 ############################
 ## dbot library            #
 ############################
-file(GLOB_RECURSE dbot_headers include/${PROJECT_NAME}/*.hpp
-                               include/${PROJECT_NAME}/*.h)
-set(dbot_sources src/${PROJECT_NAME}/utils/rigid_body_renderer.cpp)
-add_library(${PROJECT_NAME} ${dbot_headers} ${dbot_sources})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+include_directories(${dbot_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
-if(DBOT_ON_GPU)
-    set(GPU_IMPL_PATH
-        src/${PROJECT_NAME}/models/observation_models/kinect_image_observation_model_gpu)
+set(dbot_SOURCE_DIR src/${PROJECT_NAME})
+set(dbot_HEADER_DIR include/${PROJECT_NAME})
 
-    cuda_add_library(${PROJECT_NAME}_gpu
-        ${GPU_IMPL_PATH}/cuda_filter.cu
-        ${GPU_IMPL_PATH}/object_rasterizer.cpp
-        ${GPU_IMPL_PATH}/shader.cpp)
+file(GLOB_RECURSE dbot_HEADERS
+    ${dbot_HEADER_DIR}/*.hpp
+    ${dbot_HEADER_DIR}/*.h)
 
-    target_link_libraries(${PROJECT_NAME}_gpu
+# Build dbot library
+set(dbot_SOURCES
+   ${dbot_SOURCE_DIR}/utils/rigid_body_renderer.cpp)
+
+add_library(${dbot_LIBRARY}
+    ${dbot_HEADERS}
+    ${dbot_SOURCES})
+
+target_link_libraries(${dbot_LIBRARY}
+    ${catkin_LIBRARIES})
+
+# Build dbot GPU library
+if(BUILD_DBOT_ON_GPU)
+    set(dbot_SOURCE_DIR_GPU
+        ${dbot_SOURCE_DIR}/models/observation_models/kinect_image_observation_model_gpu)
+
+    cuda_add_library(${dbot_LIBRARY_GPU}
+        ${dbot_SOURCE_DIR_GPU}/cuda_filter.cu
+        ${dbot_SOURCE_DIR_GPU}/object_rasterizer.cpp
+        ${dbot_SOURCE_DIR_GPU}/shader.cpp)
+
+    target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
-
-    target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_gpu)
-endif(DBOT_ON_GPU)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+endif(BUILD_DBOT_ON_GPU)
