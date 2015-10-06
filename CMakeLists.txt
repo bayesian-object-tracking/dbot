@@ -26,10 +26,11 @@ add_definitions(-Wno-deprecated-register)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(dbot_INCLUDE_DIRS "include")
 set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
-set(dbot_LIBRARIES ${dbot_LIBRARY})
+
+set(dbot_INCLUDE_DIRS ../dbot/include PARENT_SCOPE)
+set(dbot_LIBRARIES ${dbot_LIBRARY} PARENT_SCOPE)
 
 ############################
 # Dependencies            ##
@@ -79,19 +80,29 @@ endif(BUILD_DBOT_ON_GPU)
 ############################
 ## catkin                  #
 ############################
-find_package(catkin REQUIRED fl osr_catkin)
 
-catkin_package(
-    INCLUDE_DIRS
-        ${dbot_INCLUDE_DIRS}
-    LIBRARIES
-        ${dbot_LIBRARIES}
-    CATKIN_DEPENDS
-        fl
-        osr_catkin
-    DEPENDS
-        Eigen
-)
+find_package(fl REQUIRED)
+find_package(osr_catkin REQUIRED)
+
+include_directories(${fl_INCLUDE_DIRS})
+include_directories(${osr_catkin_INCLUDE_DIRS})
+
+list(APPEND dbot_INCLUDE_DIRS ${fl_INCLUDE_DIRS})
+list(APPEND dbot_INCLUDE_DIRS ${osr_catkin_INCLUDE_DIRS})
+
+#find_package(catkin REQUIRED fl osr_catkin)
+
+#catkin_package(
+#    INCLUDE_DIRS
+#        ${dbot_INCLUDE_DIRS}
+#    LIBRARIES
+#        ${dbot_LIBRARIES}
+#    CATKIN_DEPENDS
+#        fl
+#        osr_catkin
+#    DEPENDS
+#        Eigen
+#)
 
 ############################
 ## dbot library            #
