@@ -37,12 +37,12 @@ namespace osr
 class OSTFTypes
 {
 public:
-    typedef Eigen::Matrix<Real, 6,1> State;
-    typedef Eigen::Matrix<Real, 3,1> Noise;
-    typedef Eigen::Matrix<Real, 3,1> Input;
+    typedef Eigen::Matrix<fl::Real, 6,1> State;
+    typedef Eigen::Matrix<fl::Real, 3,1> Noise;
+    typedef Eigen::Matrix<fl::Real, 3,1> Input;
 
-    typedef Eigen::Matrix<Real, 3,1> Orientation;
-    typedef Eigen::Matrix<Real, 3,1> Delta;
+    typedef Eigen::Matrix<fl::Real, 3,1> Orientation;
+    typedef Eigen::Matrix<fl::Real, 3,1> Delta;
 };
 
 
