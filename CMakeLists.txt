@@ -29,11 +29,23 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(dbot_INCLUDE_DIRS "include")
 set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
-set(dbot_LIBRARIES ${dbot_LIBRARY})
+
+############################
+# Exports                  #
+############################
+set(dbot_FOUND 1 PARENT_SCOPE)
+set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include PARENT_SCOPE)
+set(dbot_LIBRARIES ${dbot_LIBRARY} PARENT_SCOPE)
+set(dbot_DEFINITIONS ${Eigen_DEFINITIONS} PARENT_SCOPE)
+set(dbot_DEPENDS Eigen PARENT_SCOPE)
 
 ############################
 # Dependencies             #
 ############################
+if(NOT fl_FOUND)
+    find_package(fl REQUIRED)
+endif(NOT fl_FOUND)
+
 if(NOT osr_FOUND)
     find_package(osr REQUIRED)
 endif(NOT osr_FOUND)
@@ -41,6 +53,7 @@ endif(NOT osr_FOUND)
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
+include_directories(${fl_INCLUDE_DIRS})
 include_directories(${osr_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
@@ -80,22 +93,6 @@ if(BUILD_DBOT_ON_GPU)
     # add gpu sub library
     list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
 endif(BUILD_DBOT_ON_GPU)
-
-############################
-## catkin                  #
-############################
-find_package(catkin REQUIRED fl)
-
-catkin_package(
-    INCLUDE_DIRS
-        ${dbot_INCLUDE_DIRS}
-    LIBRARIES
-        ${dbot_LIBRARIES}
-    CATKIN_DEPENDS
-        fl
-    DEPENDS
-        Eigen
-)
 
 ############################
 ## dbot library            #
