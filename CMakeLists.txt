@@ -32,11 +32,16 @@ set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 set(dbot_LIBRARIES ${dbot_LIBRARY})
 
 ############################
-# Dependencies            ##
+# Dependencies             #
 ############################
+if(NOT osr_FOUND)
+    find_package(osr REQUIRED)
+endif(NOT osr_FOUND)
+
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
+include_directories(${osr_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -79,7 +84,7 @@ endif(BUILD_DBOT_ON_GPU)
 ############################
 ## catkin                  #
 ############################
-find_package(catkin REQUIRED fl osr_catkin)
+find_package(catkin REQUIRED fl)
 
 catkin_package(
     INCLUDE_DIRS
@@ -88,7 +93,6 @@ catkin_package(
         ${dbot_LIBRARIES}
     CATKIN_DEPENDS
         fl
-        osr_catkin
     DEPENDS
         Eigen
 )
