@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <limits>
 
-#include <opencv2/highgui/highgui.hpp>
-
 using namespace std;
 using namespace Eigen;
 

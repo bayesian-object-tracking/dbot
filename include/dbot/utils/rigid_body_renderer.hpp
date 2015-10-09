@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <osr/rigid_bodies_state.hpp>
 
-
 namespace dbot
 {
 
