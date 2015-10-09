@@ -1,0 +1,10 @@
+
+set(DOC_SYNC_LOCATION "@DOC_SYNC_LOCATION@")
+
+if(DOC_SYNC_LOCATION)
+    message("\n --- Sync documentation to ${DOC_SYNC_LOCATION} ... \n ")
+    execute_process(
+        COMMAND rsync -ruv --force --delete ${CMAKE_CURRENT_BINARY_DIR}/doc/html/ ${DOC_SYNC_LOCATION})
+else(DOC_SYNC_LOCATION)
+    message(FATAL_ERROR "Please specify the doc location via DOC_SYNC_LOCATION !")
+endif(DOC_SYNC_LOCATION)

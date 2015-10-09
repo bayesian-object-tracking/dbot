@@ -21,23 +21,33 @@ add_definitions(-Wno-comment)
 add_definitions(-Wno-deprecated-register)
 
 ############################
+# Library Version          #
+############################
+include(cmake/version.cmake)
+
+##########################
+# Library info summary     #
+############################
+include(cmake/info.cmake)
+
+info_begin()
+  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
+info_end()
+
+############################
 # Setup                    #
 ############################
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(dbot_INCLUDE_DIRS "include")
+set(dbot_INCLUDE_DIRS include)
 set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
-############################
-# Exports                  #
-############################
-set(dbot_FOUND 1 PARENT_SCOPE)
-set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include PARENT_SCOPE)
-set(dbot_LIBRARIES ${dbot_LIBRARY} PARENT_SCOPE)
-set(dbot_DEFINITIONS ${Eigen_DEFINITIONS} PARENT_SCOPE)
-set(dbot_DEPENDS Eigen PARENT_SCOPE)
+set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
+set(dbot_LIBRARIES ${dbot_LIBRARY})
+set(dbot_DEFINITIONS ${Eigen_DEFINITIONS})
+set(dbot_DEPENDS Eigen)
 
 ############################
 # Dependencies             #
@@ -92,7 +102,17 @@ if(BUILD_DBOT_ON_GPU)
 
     # add gpu sub library
     list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
+    list(APPEND dbot_LIBRARIES ${OPENGL_LIBRARIES})
+    list(APPEND dbot_LIBRARIES ${GLEW_LIBRARIES})
+    list(APPEND dbot_LIBRARIES ${GLFW_LIBRARY})
+    list(APPEND dbot_LIBRARIES cuda)
+
+    list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+    list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
+    list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
 endif(BUILD_DBOT_ON_GPU)
+
+
 
 ############################
 ## dbot library            #
@@ -114,9 +134,6 @@ add_library(${dbot_LIBRARY}
     ${dbot_HEADERS}
     ${dbot_SOURCES})
 
-target_link_libraries(${dbot_LIBRARY}
-    ${catkin_LIBRARIES})
-
 # Build dbot GPU library
 if(BUILD_DBOT_ON_GPU)
     set(dbot_SOURCE_DIR_GPU
@@ -133,3 +150,16 @@ if(BUILD_DBOT_ON_GPU)
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
 endif(BUILD_DBOT_ON_GPU)
+
+
+
+############################
+# Exports                  #
+############################
+#message(WARN ${dbot_INCLUDE_DIRS})
+set(dbot_FOUND          1                       PARENT_SCOPE)
+set(dbot_INCLUDE_DIRS   "${dbot_INCLUDE_DIRS}"  PARENT_SCOPE)
+set(dbot_LIBRARIES      "${dbot_LIBRARIES}"     PARENT_SCOPE)
+set(dbot_DEFINITIONS    "${dbot_DEFINITIONS}"   PARENT_SCOPE)
+set(dbot_DEPENDS        "${dbot_DEPENDS}"       PARENT_SCOPE)
+#message(FATAL_ERROR ${dbot_INCLUDE_DIRS})
