@@ -53,11 +53,11 @@ set(dbot_DEPENDS Eigen)
 # Dependencies             #
 ############################
 if(NOT fl_FOUND)
-    find_package(fl REQUIRED)
+  find_package(fl REQUIRED)
 endif(NOT fl_FOUND)
 
 if(NOT osr_FOUND)
-    find_package(osr REQUIRED)
+  find_package(osr REQUIRED)
 endif(NOT osr_FOUND)
 
 find_package(Eigen REQUIRED)
@@ -112,8 +112,6 @@ if(BUILD_DBOT_ON_GPU)
     list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
 endif(BUILD_DBOT_ON_GPU)
 
-
-
 ############################
 ## dbot library            #
 ############################
@@ -150,8 +148,6 @@ if(BUILD_DBOT_ON_GPU)
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
 endif(BUILD_DBOT_ON_GPU)
-
-
 
 ############################
 # Exports                  #
