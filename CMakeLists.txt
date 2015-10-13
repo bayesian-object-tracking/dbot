@@ -40,10 +40,11 @@ info_end()
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(dbot_INCLUDE_DIRS include)
+# local variables
 set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
+# parent scope variables; exported at the end
 set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
 set(dbot_LIBRARIES ${dbot_LIBRARY})
 set(dbot_DEFINITIONS ${Eigen_DEFINITIONS})
