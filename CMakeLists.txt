@@ -47,76 +47,98 @@ set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 # parent scope variables; exported at the end
 set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
 set(dbot_LIBRARIES ${dbot_LIBRARY})
-set(dbot_DEFINITIONS ${Eigen_DEFINITIONS})
-set(dbot_DEPENDS Eigen)
 
 ############################
 # Dependencies             #
 ############################
-if(NOT fl_FOUND)
-  find_package(fl REQUIRED)
-endif(NOT fl_FOUND)
-
-if(NOT osr_FOUND)
-  find_package(osr REQUIRED)
-endif(NOT osr_FOUND)
 
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
-include_directories(${fl_INCLUDE_DIRS})
-include_directories(${osr_INCLUDE_DIRS})
+# include_directories(${fl_INCLUDE_DIRS})
+# include_directories(${osr_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_definitions(${Eigen_DEFINITIONS})
 
 if(BUILD_DBOT_ON_GPU)
-    set(GLEW_DIR ${CMAKE_MODULE_PATH})
+  set(GLEW_DIR ${CMAKE_MODULE_PATH})
 
-    find_package(CUDA REQUIRED)
-    find_package(GLEW REQUIRED)
-    find_package(OpenGL REQUIRED)
+  find_package(CUDA REQUIRED)
+  find_package(GLEW REQUIRED)
+  find_package(OpenGL REQUIRED)
 
-    include_directories(${GLEW_INCLUDE_DIRS})
-    include_directories(${OpenGL_INCLUDE_DIRS})
-    cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
+  include_directories(${GLEW_INCLUDE_DIRS})
+  include_directories(${OpenGL_INCLUDE_DIRS})
+  cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
 
-    link_directories(${OpenGL_LIBRARY_DIRS})
-    link_directories(${GLEW_LIBRARY_DIRS})
+  link_directories(${OpenGL_LIBRARY_DIRS})
+  link_directories(${GLEW_LIBRARY_DIRS})
 
-    add_definitions(${OpenGL_DEFINITIONS})
-    add_definitions(${GLEW_DEFINITIONS})
+  add_definitions(${OpenGL_DEFINITIONS})
+  add_definitions(${GLEW_DEFINITIONS})
 
-    # enable cuda debug information with -g -G -O0, to use with cuda-dbg use
-    # --ptxas-options=-v to see number of registers, local, shared and constant
-    # memory used in kernels
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
+  # enable cuda debug information with -g -G -O0, to use with cuda-dbg use
+  # --ptxas-options=-v to see number of registers, local, shared and constant
+  # memory used in kernels
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
-    add_definitions( -DBUILD_GPU=1 )
+  add_definitions( -DBUILD_GPU=1 )
 
-    # add GLEW, OpenGL and CUDA paths
-    list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
-    list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
-    list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
-    list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+  # add GLEW, OpenGL and CUDA paths
+  # list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
 
-    # add gpu sub library
-    list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
-    list(APPEND dbot_LIBRARIES ${OPENGL_LIBRARIES})
-    list(APPEND dbot_LIBRARIES ${GLEW_LIBRARIES})
-    list(APPEND dbot_LIBRARIES ${GLFW_LIBRARY})
-    list(APPEND dbot_LIBRARIES cuda)
+  # # add gpu sub library
+  # list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
+  # list(APPEND dbot_LIBRARIES ${OPENGL_LIBRARIES})
+  # list(APPEND dbot_LIBRARIES ${GLEW_LIBRARIES})
+  # list(APPEND dbot_LIBRARIES ${GLFW_LIBRARY})
+  # list(APPEND dbot_LIBRARIES cuda)
 
-    list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
-    list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
-    list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
+  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
 endif(BUILD_DBOT_ON_GPU)
+
+############################
+# Dependencies             #                  
+############################
+# Use catkin of available otherwise fall back to native cmake
+find_package(catkin QUIET COMPONENTS fl osr)
+if(catkin_FOUND)
+  message(STATUS "Using catkin")
+  catkin_package(
+    INCLUDE_DIRS
+      include
+      ${OpenGL_INCLUDE_DIRS}
+      ${GLEW_INCLUDE_DIRS}
+      ${CUDA_INCLUDE_DIRS}
+      ${CUDA_CUT_INCLUDE_DIRS}
+    LIBRARIES
+      ${dbot_LIBRARIES}
+    CATKIN_DEPENDS
+      osr
+      fl
+    DEPENDS
+      Eigen
+  )
+  list(APPEND dbot_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
+else(catkin_FOUND)
+  find_package(fl REQUIRED)
+  find_package(osr REQUIRED)
+
+  list(APPEND dbot_INCLUDE_DIRS ${fl_INCLUDE_DIRS})
+  list(APPEND dbot_INCLUDE_DIRS ${osr_INCLUDE_DIRS})
+endif(catkin_FOUND)
 
 ############################
 ## dbot library            #
 ############################
-include_directories(${dbot_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(${dbot_INCLUDE_DIRS})
 
 set(dbot_SOURCE_DIR src/${PROJECT_NAME})
 set(dbot_HEADER_DIR include/${PROJECT_NAME})
@@ -154,9 +176,9 @@ endif(BUILD_DBOT_ON_GPU)
 # Exports                  #
 ############################
 #message(WARN ${dbot_INCLUDE_DIRS})
-set(dbot_FOUND          1                       PARENT_SCOPE)
-set(dbot_INCLUDE_DIRS   "${dbot_INCLUDE_DIRS}"  PARENT_SCOPE)
-set(dbot_LIBRARIES      "${dbot_LIBRARIES}"     PARENT_SCOPE)
-set(dbot_DEFINITIONS    "${dbot_DEFINITIONS}"   PARENT_SCOPE)
-set(dbot_DEPENDS        "${dbot_DEPENDS}"       PARENT_SCOPE)
+# set(dbot_FOUND          1                       PARENT_SCOPE)
+# set(dbot_INCLUDE_DIRS   "${dbot_INCLUDE_DIRS}"  PARENT_SCOPE)
+# set(dbot_LIBRARIES      "${dbot_LIBRARIES}"     PARENT_SCOPE)
+# set(dbot_DEFINITIONS    "${dbot_DEFINITIONS}"   PARENT_SCOPE)
+# set(dbot_DEPENDS        "${dbot_DEPENDS}"       PARENT_SCOPE)
 #message(FATAL_ERROR ${dbot_INCLUDE_DIRS})
