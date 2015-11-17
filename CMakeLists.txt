@@ -46,7 +46,7 @@ set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
 # parent scope variables; exported at the end
 set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
-set(dbot_LIBRARIES ${dbot_LIBRARY})
+set(dbot_LIBRARIES ${dbot_LIBRARY} ${dbot_LIBRARY_GPU})
 
 ############################
 # Dependencies             #
@@ -85,23 +85,6 @@ if(BUILD_DBOT_ON_GPU)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
 
   add_definitions( -DBUILD_GPU=1 )
-
-  # add GLEW, OpenGL and CUDA paths
-  # list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
-  # list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
-  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
-  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-
-  # # add gpu sub library
-  # list(APPEND dbot_LIBRARIES ${PROJECT_NAME}_gpu)
-  # list(APPEND dbot_LIBRARIES ${OPENGL_LIBRARIES})
-  # list(APPEND dbot_LIBRARIES ${GLEW_LIBRARIES})
-  # list(APPEND dbot_LIBRARIES ${GLFW_LIBRARY})
-  # list(APPEND dbot_LIBRARIES cuda)
-
-  # list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
-  # list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIRS})
-  # list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
 endif(BUILD_DBOT_ON_GPU)
 
 ############################
@@ -169,16 +152,7 @@ if(BUILD_DBOT_ON_GPU)
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
-        ${GLEW_LIBRARIES})
+        ${GLEW_LIBRARIES}
+        cuda)
 endif(BUILD_DBOT_ON_GPU)
 
-############################
-# Exports                  #
-############################
-#message(WARN ${dbot_INCLUDE_DIRS})
-# set(dbot_FOUND          1                       PARENT_SCOPE)
-# set(dbot_INCLUDE_DIRS   "${dbot_INCLUDE_DIRS}"  PARENT_SCOPE)
-# set(dbot_LIBRARIES      "${dbot_LIBRARIES}"     PARENT_SCOPE)
-# set(dbot_DEFINITIONS    "${dbot_DEFINITIONS}"   PARENT_SCOPE)
-# set(dbot_DEPENDS        "${dbot_DEPENDS}"       PARENT_SCOPE)
-#message(FATAL_ERROR ${dbot_INCLUDE_DIRS})
