@@ -46,7 +46,7 @@ set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
 # parent scope variables; exported at the end
 set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
-set(dbot_LIBRARIES ${dbot_LIBRARY} ${dbot_LIBRARY_GPU})
+set(dbot_LIBRARIES ${dbot_LIBRARY})
 
 ############################
 # Dependencies             #
@@ -83,6 +83,7 @@ if(BUILD_DBOT_ON_GPU)
   # --ptxas-options=-v to see number of registers, local, shared and constant
   # memory used in kernels
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
+  list(APPEND dbot_LIBRARIES ${dbot_LIBRARY_GPU})
 
   add_definitions( -DBUILD_GPU=1 )
 endif(BUILD_DBOT_ON_GPU)
