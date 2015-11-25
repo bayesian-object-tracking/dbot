@@ -89,7 +89,7 @@ if(BUILD_DBOT_ON_GPU)
 endif(BUILD_DBOT_ON_GPU)
 
 ############################
-# Dependencies             #                  
+# Dependencies             #
 ############################
 # Use catkin of available otherwise fall back to native cmake
 find_package(catkin QUIET COMPONENTS fl osr)
@@ -133,7 +133,7 @@ file(GLOB_RECURSE dbot_HEADERS
 
 # Build dbot library
 set(dbot_SOURCES
-   ${dbot_SOURCE_DIR}/utils/rigid_body_renderer.cpp)
+   ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp)
 
 add_library(${dbot_LIBRARY}
     ${dbot_HEADERS}
@@ -142,12 +142,12 @@ add_library(${dbot_LIBRARY}
 # Build dbot GPU library
 if(BUILD_DBOT_ON_GPU)
     set(dbot_SOURCE_DIR_GPU
-        ${dbot_SOURCE_DIR}/models/observation_models/kinect_image_observation_model_gpu)
+        ${dbot_SOURCE_DIR}/model/observation/gpu)
 
     cuda_add_library(${dbot_LIBRARY_GPU}
-        ${dbot_SOURCE_DIR_GPU}/cuda_filter.cu
-        ${dbot_SOURCE_DIR_GPU}/object_rasterizer.cpp
-        ${dbot_SOURCE_DIR_GPU}/shader.cpp)
+        ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
+        ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp
+        ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp)
 
     target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}

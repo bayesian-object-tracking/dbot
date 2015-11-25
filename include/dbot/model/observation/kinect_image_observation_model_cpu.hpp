@@ -34,13 +34,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <osr/pose_vector.hpp>
 #include <fl/util/assertions.hpp>
-#include <dbot/utils/traits.hpp>
+#include <dbot/util/traits.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
-#include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
+#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
 
-#include <dbot/utils/rigid_body_renderer.hpp>
-#include <dbot/models/observation_models/kinect_pixel_observation_model.hpp>
-#include <dbot/models/process_models/occlusion_process_model.hpp>
+#include <dbot/util/rigid_body_renderer.hpp>
+#include <dbot/model/observation/kinect_pixel_observation_model.hpp>
+#include <dbot/model/state_transition/occlusion_process_model.hpp>
 
 namespace dbot
 {

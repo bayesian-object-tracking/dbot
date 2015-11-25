@@ -7,7 +7,7 @@
 #define VECTOR_DIM 3
 #define MATRIX_DIM 9
 
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
+#include <dbot/model/observation/gpu/cuda_filter.hpp>
 #include <GL/glut.h>
 
 

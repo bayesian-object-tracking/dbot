@@ -42,15 +42,14 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-#ifndef FAST_FILTERING_MODELS_PROCESS_MODELS_DAMPED_WIENER_PROCESS_MODEL_HPP
-#define FAST_FILTERING_MODELS_PROCESS_MODELS_DAMPED_WIENER_PROCESS_MODEL_HPP
+#pragma once
 
 //TODO: THIS IS A LINEAR GAUSSIAN PROCESS, THIS CLASS SHOULD DISAPPEAR
 
 #include <Eigen/Dense>
 
 #include <fl/util/assertions.hpp>
-//#include <dbot/models/process_models/stationary_process_model.hpp>
+//#include <dbot/model/state_transition/stationary_process_model.hpp>
 //#include <fast_filtering/distributions/gaussian.hpp>
 #include <fl/distribution/gaussian.hpp>
 
@@ -218,4 +217,3 @@ private:
 
 }
 
-#endif

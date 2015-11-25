@@ -7,11 +7,11 @@
 #include "Eigen/Core"
 
 #include <osr/pose_vector.hpp>
-#include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
+#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.hpp>
+#include <dbot/model/observation/gpu/object_rasterizer.hpp>
+#include <dbot/model/observation/gpu/cuda_filter.hpp>
 
 #include <limits>
 #include <stdio.h>
@@ -20,7 +20,7 @@
 #include <cuda_gl_interop.h>
 
 
-//#include <dbot/utils/helper_functions.hpp>
+//#include <dbot/util/helper_functions.hpp>
 #include <fl/util/profiling.hpp>
 
 namespace dbot

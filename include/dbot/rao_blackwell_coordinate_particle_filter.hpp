@@ -25,8 +25,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef DBOT__RB_COORDINATE_PARTICLE_FILTER_HPP
-#define DBOT__RB_COORDINATE_PARTICLE_FILTER_HPP
+#pragma once
 
 #include <vector>
 #include <limits>
@@ -41,8 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/distribution/discrete_distribution.hpp>
 #include <fl/util/profiling.hpp>
 
-#include <dbot/utils/traits.hpp>
-#include <dbot/models/observation_models/rao_blackwell_observation_model.hpp>
+#include <dbot/util/traits.hpp>
+#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
 
 namespace dbot
 {
@@ -204,5 +203,3 @@ private:
     fl::Gaussian<Eigen::Matrix<fl::Real, 1, 1>> unit_gaussian_;
 };
 }
-
-#endif

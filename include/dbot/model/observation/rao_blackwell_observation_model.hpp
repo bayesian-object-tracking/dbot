@@ -25,9 +25,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
-#ifndef FAST_FILTERING_MODELS_OBSERVATION_MODELS_INTERFACES_RAO_BLACKWELL_OBSERVATION_MODEL_HPP
-#define FAST_FILTERING_MODELS_OBSERVATION_MODELS_INTERFACES_RAO_BLACKWELL_OBSERVATION_MODEL_HPP
+#pragma once
 
 //#include <vector>
 #include <Eigen/Core>
@@ -35,38 +33,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <fl/util/types.hpp>
 #include <osr/pose_vector.hpp>
 #include <osr/composed_vector.hpp>
-//#include <dbot/utils/traits.hpp>
-
-
-
+//#include <dbot/util/traits.hpp>
 
 namespace dbot
 {
-
-
 /// \todo this observation model is now specific to rigid body rendering,
 /// terminology should be adapted accordingly.
-template<typename State_, typename Observation_>
+template <typename State_, typename Observation_>
 class RBObservationModel
 {
 public:
-    typedef State_       State;
+    typedef State_ State;
     typedef Observation_ Observation;
 
-    typedef Eigen::Array<State, -1, 1>       StateArray;
-    typedef Eigen::Array<fl::Real, -1, 1>    RealArray;
-    typedef Eigen::Array<int, -1, 1>         IntArray;
-    typedef Eigen::Matrix<fl::Real, -1, 1>   RealVector;
+    typedef Eigen::Array<State, -1, 1> StateArray;
+    typedef Eigen::Array<fl::Real, -1, 1> RealArray;
+    typedef Eigen::Array<int, -1, 1> IntArray;
+    typedef Eigen::Matrix<fl::Real, -1, 1> RealVector;
 
-    typedef osr::ComposedVector<osr::PoseBlock<RealVector>, RealVector> PoseArray;
-
-
+    typedef osr::ComposedVector<osr::PoseBlock<RealVector>, RealVector>
+        PoseArray;
 
 public:
     /// constructor and destructor *********************************************
-    RBObservationModel(const fl::Real& delta_time): delta_time_(delta_time) { }
-    virtual ~RBObservationModel() noexcept { }
-
+    RBObservationModel(const fl::Real& delta_time) : delta_time_(delta_time) {}
+    virtual ~RBObservationModel() noexcept {}
     /// likelihood computation *************************************************
     virtual RealArray loglikes(const StateArray& deviations,
                                IntArray& indices,
@@ -74,16 +65,11 @@ public:
 
     /// accessors **************************************************************
     virtual void set_observation(const Observation& image) = 0;
-    virtual PoseArray& default_poses()
-    {
-        return default_poses_;
-    }
+    virtual PoseArray& default_poses() { return default_poses_; }
     virtual void reset() = 0;
 
 protected:
     fl::Real delta_time_;
     PoseArray default_poses_;
 };
-
 }
-#endif

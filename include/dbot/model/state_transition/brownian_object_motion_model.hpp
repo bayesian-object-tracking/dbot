@@ -44,16 +44,14 @@
  * Max-Planck-Institute for Intelligent Systems, University of Southern California
  */
 
-
-#ifndef POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
-#define POSE_TRACKING_MODELS_PROCESS_MODELS_BROWNIAN_OBJECT_MOTION_MODEL_HPP
+#pragma once
 
 #include <fl/util/assertions.hpp>
 
-#include <dbot/utils/helper_functions.hpp>
+#include <dbot/util/helper_functions.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
-#include <dbot/models/process_models/damped_wiener_process_model.hpp>
-#include <dbot/models/process_models/integrated_damped_wiener_process_model.hpp>
+#include <dbot/model/state_transition/damped_wiener_process_model.hpp>
+#include <dbot/model/state_transition/integrated_damped_wiener_process_model.hpp>
 
 #include <fl/model/process/interface/state_transition_function.hpp>
 
@@ -263,5 +261,3 @@ private:
 };
 
 }
-
-#endif

@@ -5,8 +5,8 @@
 //#define PROFILING_ACTIVE
 
 
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/shader.hpp>
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.hpp>
+#include <dbot/model/observation/gpu/shader.hpp>
+#include <dbot/model/observation/gpu/object_rasterizer.hpp>
 
 #include <iomanip>
 #include <cstdio>

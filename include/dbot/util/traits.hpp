@@ -43,8 +43,7 @@
  *  University of Southern California
  */
 
-#ifndef FAST_FILTERING_UTILS_TRAITS_HPP
-#define FAST_FILTERING_UTILS_TRAITS_HPP
+#pragma once
 
 #include <Eigen/Dense>
 
@@ -66,6 +65,3 @@ typedef Eigen::Matrix<double, 0, 0> Empty;
 using internal::Traits;
 
 }
-
-#endif
-

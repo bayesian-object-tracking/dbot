@@ -1,12 +1,10 @@
 /*
- * This is part of the FL library, a C++ Bayesian filtering library
+ * This is part of the fl library, a C++ Bayesian filtering library
  * (https://github.com/filtering-library)
  *
- * Copyright (c) 2014 Jan Issac (jan.issac@gmail.com)
- * Copyright (c) 2014 Manuel Wuthrich (manuel.wuthrich@gmail.com)
- *
- * Max-Planck Institute for Intelligent Systems, AMD Lab
- * University of Southern California, CLMC Lab
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
  *
  * This Source Code Form is subject to the terms of the MIT License (MIT).
  * A copy of the license can be found in the LICENSE file distributed with this
@@ -36,7 +34,7 @@
 #include <fl/model/observation/interface/observation_density.hpp>
 #include <fl/model/observation/interface/observation_function.hpp>
 
-#include <dbot/utils/rigid_body_renderer.hpp>
+#include <dbot/util/rigid_body_renderer.hpp>
 
 #include <osr/pose_hashing.hpp>
 

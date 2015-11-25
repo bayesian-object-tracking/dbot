@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <dbot/utils/rigid_body_renderer.hpp>
+#include <dbot/util/rigid_body_renderer.hpp>
 #include <iostream>
 
 #include <limits>

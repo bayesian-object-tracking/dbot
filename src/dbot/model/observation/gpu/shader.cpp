@@ -10,7 +10,7 @@
 #include <string.h>
 #include <GL/glew.h>
 
-#include <dbot/models/observation_models/kinect_image_observation_model_gpu/shader.hpp>
+#include <dbot/model/observation/gpu/shader.hpp>
 
 GLuint LoadShaders(std::vector<const char *> shaderFilePaths) {
 
