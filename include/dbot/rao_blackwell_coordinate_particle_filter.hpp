@@ -30,8 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <limits>
 #include <string>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <Eigen/Core>
 
@@ -64,8 +63,8 @@ public:
 public:
     /// constructor and destructor *********************************************
     RBCoordinateParticleFilter(
-        const boost::shared_ptr<ProcessModel> process_model,
-        const boost::shared_ptr<ObservationModel> observation_model,
+        const std::shared_ptr<ProcessModel> process_model,
+        const std::shared_ptr<ObservationModel> observation_model,
         const std::vector<std::vector<size_t>>& sampling_blocks,
         const fl::Real& max_kl_divergence = 0)
         : observation_model_(observation_model),
@@ -172,12 +171,12 @@ public:
         observation_model_->reset();
     }
 
-    boost::shared_ptr<ObservationModel> observation_model()
+    std::shared_ptr<ObservationModel> observation_model()
     {
         return observation_model_;
     }
 
-    boost::shared_ptr<ObservationModel> process_model()
+    std::shared_ptr<ObservationModel> process_model()
     {
         return process_model_;
     }
@@ -192,8 +191,8 @@ private:
     RealArray loglikes_;
 
     // models
-    boost::shared_ptr<ObservationModel> observation_model_;
-    boost::shared_ptr<ProcessModel> process_model_;
+    std::shared_ptr<ObservationModel> observation_model_;
+    std::shared_ptr<ProcessModel> process_model_;
 
     // parameters
     std::vector<std::vector<size_t>> sampling_blocks_;

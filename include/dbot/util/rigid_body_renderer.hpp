@@ -25,14 +25,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-
-#ifndef POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP
-#define POSE_TRACKING_UTILS_RIGID_BODY_RENDERER_HPP
+#pragma once
 
 #include <vector>
+#include <memory>
+
 #include <Eigen/Dense>
 
-#include <boost/shared_ptr.hpp>
 #include <osr/rigid_bodies_state.hpp>
 
 namespace dbot
@@ -41,7 +40,7 @@ namespace dbot
 class RigidBodyRenderer
 {
 public:
-    typedef boost::shared_ptr<RigidBodyRenderer> Ptr;
+    typedef std::shared_ptr<RigidBodyRenderer> Ptr;
     typedef osr::RigidBodiesState<Eigen::Dynamic> State;
     typedef Eigen::Vector3d Vector;
     typedef Eigen::Matrix3d Matrix;
@@ -110,5 +109,3 @@ protected:
 };
 
 }
-
-#endif

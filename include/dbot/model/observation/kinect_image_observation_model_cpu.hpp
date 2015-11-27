@@ -25,11 +25,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
-#ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_CPU_HPP
-#define POSE_TRACKING_MODELS_OBSERVATION_MODELS_KINECT_IMAGE_OBSERVATION_MODEL_CPU_HPP
+#pragma once
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
+
 #include <Eigen/Core>
 
 #include <osr/pose_vector.hpp>
@@ -63,9 +63,9 @@ struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 
     typedef RBObservationModel<State, Observation> ObservationModelBase;
 
-    typedef boost::shared_ptr<dbot::RigidBodyRenderer> ObjectRendererPtr;
-    typedef boost::shared_ptr<dbot::KinectPixelObservationModel> PixelObservationModelPtr;
-    typedef boost::shared_ptr<dbot::OcclusionProcessModel> OcclusionProcessModelPtr;
+    typedef std::shared_ptr<dbot::RigidBodyRenderer> ObjectRendererPtr;
+    typedef std::shared_ptr<dbot::KinectPixelObservationModel> PixelObservationModelPtr;
+    typedef std::shared_ptr<dbot::OcclusionProcessModel> OcclusionProcessModelPtr;
 };
 }
 
@@ -255,7 +255,7 @@ private:
     const size_t n_cols_;
     const float initial_occlusion_;
     const size_t max_sample_count_;
-    const boost::shared_ptr<osr::RigidBodiesState<-1> > rigid_bodies_state_;
+    const std::shared_ptr<osr::RigidBodiesState<-1> > rigid_bodies_state_;
 
 
     // models
@@ -274,4 +274,3 @@ private:
 };
 
 }
-#endif
