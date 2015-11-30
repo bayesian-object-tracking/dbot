@@ -53,7 +53,7 @@ set(dbot_LIBRARIES ${dbot_LIBRARY})
 ############################
 
 find_package(Eigen REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 
 # include_directories(${fl_INCLUDE_DIRS})
 # include_directories(${osr_INCLUDE_DIRS})
@@ -129,15 +129,24 @@ set(dbot_HEADER_DIR include/${PROJECT_NAME})
 
 file(GLOB_RECURSE dbot_HEADERS
     ${dbot_HEADER_DIR}/*.hpp
-    ${dbot_HEADER_DIR}/*.h)
+    ${dbot_HEADER_DIR}/*.h
+)
 
 # Build dbot library
 set(dbot_SOURCES
-   ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp)
+    ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
+    ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
+)
 
 add_library(${dbot_LIBRARY}
     ${dbot_HEADERS}
-    ${dbot_SOURCES})
+    ${dbot_SOURCES}
+)
+
+target_link_libraries(${dbot_LIBRARY}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+)
 
 # Build dbot GPU library
 if(BUILD_DBOT_ON_GPU)
@@ -147,13 +156,21 @@ if(BUILD_DBOT_ON_GPU)
     cuda_add_library(${dbot_LIBRARY_GPU}
         ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
         ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp
-        ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp)
+        ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
+    )
 
     target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES}
-        cuda)
+        cuda
+    )
 endif(BUILD_DBOT_ON_GPU)
 
+############################
+# Tests                    #
+############################
+enable_testing()
+include(${CMAKE_MODULE_PATH}/gtest.cmake)
+add_subdirectory(tests)

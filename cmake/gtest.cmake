@@ -2,21 +2,13 @@
 include(ExternalProject)
 include(CMakeParseArguments)
 
-if(TARGET gtest)
+if(NOT catkin_FOUND)
 
-    set(gtest_LIBRARY gtest)
-    set(gtest_main_LIBRARY gtest_main)
+    set(gtest_LIBRARY gtest_local)
+    set(gtest_main_LIBRARY gtest_main_local)
     set(${PROJECT_NAME}_TEST_LIBS ${gtest_LIBRARY} ${gtest_main_LIBRARY})
 
-else(TARGET gtest)
-
-    message("No gtest found. Downloading and building gtest framework ...")
-
-    set(gtest_LIBRARY ${PROJECT_NAME}_gtest)
-    set(gtest_main_LIBRARY ${PROJECT_NAME}_gtest_main)
-    set(${PROJECT_NAME}_TEST_LIBS ${gtest_LIBRARY} ${gtest_main_LIBRARY})
-
-    set(GTEST_FRAMEWORK ${PROJECT_NAME}_gtest_framework)
+    set(GTEST_FRAMEWORK gtest_framework)
 
     ExternalProject_Add(
         ${GTEST_FRAMEWORK}
@@ -50,7 +42,13 @@ else(TARGET gtest)
 
     include_directories(${gtest_INCLUDE_DIR})
 
-endif(TARGET gtest)
+else(NOT catkin_FOUND)
+
+    set(gtest_LIBRARY gtest)
+    set(gtest_main_LIBRARY gtest_main)
+    set(${PROJECT_NAME}_TEST_LIBS ${gtest_LIBRARY} ${gtest_main_LIBRARY})
+
+endif(NOT catkin_FOUND)
 
 function(${PROJECT_NAME}_add_test)
     set(options)
@@ -61,8 +59,15 @@ function(${PROJECT_NAME}_add_test)
 
     set(TEST_NAME "${${PROJECT_NAME}_NAME}_test")
 
-    add_executable(${TEST_NAME} ${${PROJECT_NAME}_SOURCES})
-    target_link_libraries(${TEST_NAME}
-        ${${PROJECT_NAME}_TEST_LIBS} ${${PROJECT_NAME}_LIBS})
-    add_test(${TEST_NAME} ${TEST_NAME})
+    if(NOT catkin_FOUND)
+        add_executable(${TEST_NAME} ${${PROJECT_NAME}_SOURCES})
+        target_link_libraries(${TEST_NAME}
+            ${${PROJECT_NAME}_TEST_LIBS} ${${PROJECT_NAME}_LIBS})
+        add_test(${TEST_NAME} ${TEST_NAME})
+    else(NOT catkin_FOUND)
+        catkin_add_gtest(${TEST_NAME} ${${PROJECT_NAME}_SOURCES})
+        target_link_libraries(${TEST_NAME}
+            ${${PROJECT_NAME}_TEST_LIBS} ${${PROJECT_NAME}_LIBS})
+    endif(NOT catkin_FOUND)
 endfunction(${PROJECT_NAME}_add_test)
+
