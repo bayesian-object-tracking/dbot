@@ -136,6 +136,7 @@ file(GLOB_RECURSE dbot_HEADERS
 set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
     ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
+    ${dbot_SOURCE_DIR}/util/camera_data.cpp
 )
 
 add_library(${dbot_LIBRARY}
