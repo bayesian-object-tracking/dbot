@@ -24,32 +24,19 @@
 
 namespace dbot
 {
-class InvalidPackagePathException : public std::exception
-{
-public:
-    const char* what() const noexcept
-    {
-        return "Package path must be of the form '/path/to/packagename'";
-    }
-};
-
-class MissingPackageNameInPathException: public std::exception
-{
-public:
-    const char* what() const noexcept
-    {
-        return "Package path must be of the form '/path/to/packagename'";
-    }
-};
-
 class ObjectResourceIdentifier
 {
 public:
     /**
+     * \brief Creates an empty ObjectResourceIdentifier
+     */
+    ObjectResourceIdentifier();
+
+    /**
      * \brief Creates an ObjectResourceIdentifier
      */
     ObjectResourceIdentifier(const std::string& package_path_,
-                             const std::string& path_,
+                             const std::string& directory_,
                              const std::vector<std::string>& meshes_);
 
     /**
@@ -63,14 +50,14 @@ public:
      *        ("package://<package>/<path>/<meshes[i]>")
      * \param [in]  i  Index of the requested mesh file
      */
-    std::string mesh_uri(size_t i);
+    std::string mesh_uri(size_t i) const;
 
     /**
      * \brief Returns the absolute path of the i-th mesh file
      *        ("<package_path>/<path>/<meshes[i]>")
      * \param [in]  i  Index of the requested mesh file
      */
-    std::string mesh_path(size_t i);
+    std::string mesh_path(size_t i) const;
 
     /**
      * \brief package name if using catkin (ros) packages.
@@ -91,7 +78,7 @@ public:
      *
      *   "package://<package>/<PATH>/<meshes[i]>"
      */
-    const std::string& path() const;
+    const std::string& directory() const;
 
     /**
      * \brief Returns the number of mesh files
@@ -115,7 +102,7 @@ public:
      * file
      *        location
      */
-    void path(const std::string& path_);
+    void directory(const std::string& directory_);
 
     /**
      * \brief Sets mesh filenames
@@ -141,7 +128,7 @@ private:
      *
      *   "package://<package>/<PATH>/<meshes[i]>"
      */
-    std::string path_;
+    std::string directory_;
 
     /**
      * \brief Mesh file names
@@ -150,5 +137,27 @@ private:
      *   "package://<package>/<path>/<MESHES[i]>"
      */
     std::vector<std::string> meshes_;
+};
+
+/**
+ * \brief Represents an exception thrown if the package path is invalid, e.g.
+ *        empty or missing leading '/'
+ */
+class InvalidPackagePathException : public std::exception
+{
+public:
+    const char* what() const noexcept
+    {
+        return "Package path must be of the form '/path/to/packagename'";
+    }
+};
+
+/**
+ * \brief Represents an exception thrown if no package name has been specified
+ *        a missing package name is triggered when the path is either empty
+ *        or consists only of '/'
+ */
+class MissingPackageNameInPathException : public InvalidPackagePathException
+{
 };
 }

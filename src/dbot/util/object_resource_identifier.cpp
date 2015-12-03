@@ -25,13 +25,17 @@
 
 namespace dbot
 {
+ObjectResourceIdentifier::ObjectResourceIdentifier()
+{
+}
+
 ObjectResourceIdentifier::ObjectResourceIdentifier(
     const std::string& package_path_,
     const std::string& path_,
     const std::vector<std::string>& meshes_)
 {
     package_path(package_path_);
-    path(path_);
+    directory(path_);
     meshes(meshes_);
 }
 
@@ -49,28 +53,28 @@ const std::string& ObjectResourceIdentifier::package_path() const
     return package_path_;
 }
 
-const std::string& ObjectResourceIdentifier::path() const
+const std::string& ObjectResourceIdentifier::directory() const
 {
-    return path_;
+    return directory_;
 }
 
-std::string ObjectResourceIdentifier::mesh_uri(size_t i)
+std::string ObjectResourceIdentifier::mesh_uri(size_t i) const
 {
     assert(i < meshes_.size());
 
     boost::filesystem::path p(package());
-    p /= path_;
+    p /= directory_;
     p /= meshes_[i];
 
     return "package://" + p.string();
 }
 
-std::string ObjectResourceIdentifier::mesh_path(size_t i)
+std::string ObjectResourceIdentifier::mesh_path(size_t i) const
 {
     assert(i < meshes_.size());
 
     boost::filesystem::path p(package_path_);
-    p /= path_;
+    p /= directory_;
     p /= meshes_[i];
 
     return p.string();
@@ -79,6 +83,11 @@ std::string ObjectResourceIdentifier::mesh_path(size_t i)
 int ObjectResourceIdentifier::count_meshes() const
 {
     return meshes_.size();
+}
+
+const std::vector<std::string>& ObjectResourceIdentifier::meshes() const
+{
+    return meshes_;
 }
 
 void ObjectResourceIdentifier::package_path(const std::string& package_path_)
@@ -102,9 +111,9 @@ void ObjectResourceIdentifier::package_path(const std::string& package_path_)
     this->package_ = boost::filesystem::path(pp).filename().string();
 }
 
-void ObjectResourceIdentifier::path(const std::string& path_)
+void ObjectResourceIdentifier::directory(const std::string& directory_)
 {
-    this->path_ = path_;
+    this->directory_ = directory_;
 }
 
 void ObjectResourceIdentifier::meshes(const std::vector<std::string>& meshes_)
