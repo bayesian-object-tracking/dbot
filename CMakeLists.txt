@@ -11,14 +11,14 @@ option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
 ############################
 # Enable c++11 GCC 4.6 or greater required
 add_definitions(-std=c++0x)
-add_definitions(-DPROFILING_ON=1) #print profiling output
+add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
 
-add_definitions(-Wall)
-add_definitions(-Wno-unused-local-typedefs)
-add_definitions(-Wno-deprecated-declarations)
-add_definitions(-Wno-comment)
-# for eigen-3.1.2
-add_definitions(-Wno-deprecated-register)
+#add_definitions(-Wall)
+#add_definitions(-Wno-unused-local-typedefs)
+#add_definitions(-Wno-deprecated-declarations)
+#add_definitions(-Wno-comment)
+## for eigen-3.1.2
+#add_definitions(-Wno-deprecated-register)
 
 ############################
 # Library Version          #
@@ -92,7 +92,7 @@ endif(BUILD_DBOT_ON_GPU)
 # Dependencies             #
 ############################
 # Use catkin of available otherwise fall back to native cmake
-find_package(catkin QUIET COMPONENTS fl osr)
+find_package(catkin QUIET COMPONENTS fl osr roscpp roslib)
 if(catkin_FOUND)
   message(STATUS "Using catkin")
   catkin_package(
@@ -105,11 +105,12 @@ if(catkin_FOUND)
     LIBRARIES
       ${dbot_LIBRARIES}
     CATKIN_DEPENDS
+      roscpp
+      roslib
       osr
       fl
     DEPENDS
-      Eigen
-  )
+      Eigen)
   list(APPEND dbot_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
 else(catkin_FOUND)
   find_package(fl REQUIRED)
@@ -129,44 +130,39 @@ set(dbot_HEADER_DIR include/${PROJECT_NAME})
 
 file(GLOB_RECURSE dbot_HEADERS
     ${dbot_HEADER_DIR}/*.hpp
-    ${dbot_HEADER_DIR}/*.h
-)
+    ${dbot_HEADER_DIR}/*.h)
 
 # Build dbot library
 set(dbot_SOURCES
+    ${dbot_SOURCE_DIR}/util/camera_data.cpp
+    ${dbot_SOURCE_DIR}/util/object_file_reader.cpp
     ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
     ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
-    ${dbot_SOURCE_DIR}/util/camera_data.cpp
-)
+    ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp)
 
-add_library(${dbot_LIBRARY}
+add_library(${dbot_LIBRARY} SHARED
     ${dbot_HEADERS}
-    ${dbot_SOURCES}
-)
+    ${dbot_SOURCES})
 
 target_link_libraries(${dbot_LIBRARY}
     ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
+    ${Boost_LIBRARIES})
 
 # Build dbot GPU library
 if(BUILD_DBOT_ON_GPU)
     set(dbot_SOURCE_DIR_GPU
         ${dbot_SOURCE_DIR}/model/observation/gpu)
 
-    cuda_add_library(${dbot_LIBRARY_GPU}
+    cuda_add_library(${dbot_LIBRARY_GPU} SHARED
         ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
-        ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
-    )
+        ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp)
 
     target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
-        ${GLEW_LIBRARIES}
-        cuda
-    )
+        ${GLEW_LIBRARIES})
 endif(BUILD_DBOT_ON_GPU)
 
 ############################
