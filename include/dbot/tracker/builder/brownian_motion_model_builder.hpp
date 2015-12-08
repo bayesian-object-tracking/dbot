@@ -1,0 +1,77 @@
+/*
+ * This is part of the Bayesian Object Tracking (bot),
+ * (https://github.com/bayesian-object-tracking)
+ *
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License License (GNU GPL). A copy of the license can be found in the LICENSE
+ * file distributed with this source code.
+ */
+
+#pragma once
+
+#include <memory>
+
+#include <Eigen/Dense>
+
+#include <dbot/tracker/builder/state_transition_function_builder.hpp>
+#include <dbot/model/state_transition/brownian_object_motion_model.hpp>
+
+namespace dbot
+{
+
+template <typename State, typename Input>
+class BrownianMotionModelBuilder
+    : public StateTransitionFunctionBuilder<State, State, Input>
+{
+public:
+    typedef fl::StateTransitionFunction<State, State, Input> Model;
+    typedef BrownianObjectMotionModel<State> DerivedModel;
+
+    struct Parameters
+    {
+        double linear_acceleration_sigma;
+        double angular_acceleration_sigma;
+        double damping;
+        double delta_time;
+        int part_count;
+    };
+
+    BrownianMotionModelBuilder(const Parameters& param) : param_(param) { }
+
+protected:
+    std::shared_ptr<Model> create() const
+    {
+        using namespace Eigen;
+
+        MatrixXd linear_acceleration_covariance =
+            MatrixXd::Identity(3, 3) *
+            pow(double(param_.linear_acceleration_sigma), 2);
+        MatrixXd angular_acceleration_covariance =
+            MatrixXd::Identity(3, 3) *
+            pow(double(param_.angular_acceleration_sigma), 2);
+
+        std::shared_ptr<Model> model(
+            new DerivedModel(param_.delta_time, param_.part_count));
+
+        for (size_t i = 0; i < param_.part_count; i++)
+        {
+            std::static_pointer_cast<DerivedModel>(model)
+                ->Parameters(i,
+                             Vector3d::Zero(),
+                             param_.damping,
+                             linear_acceleration_covariance,
+                             angular_acceleration_covariance);
+        }
+
+        return model;
+    }
+
+private:
+    Parameters param_;
+};
+
+}
