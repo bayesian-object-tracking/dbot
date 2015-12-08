@@ -17,6 +17,8 @@
  * \date November 2015
  */
 
+#pragma once
+
 #include <string>
 #include <vector>
 #include <assert.h>
