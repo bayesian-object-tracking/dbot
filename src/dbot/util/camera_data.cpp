@@ -18,7 +18,9 @@
  */
 
 #include <string>
+
 #include <Eigen/Dense>
+
 #include <dbot/util/camera_data.hpp>
 
 namespace dbot

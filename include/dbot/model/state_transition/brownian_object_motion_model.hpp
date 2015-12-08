@@ -48,6 +48,7 @@
 
 #include <fl/util/assertions.hpp>
 
+#include <dbot/util/traits.hpp>
 #include <dbot/util/helper_functions.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 #include <dbot/model/state_transition/damped_wiener_process_model.hpp>
