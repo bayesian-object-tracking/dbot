@@ -29,7 +29,7 @@ public:
     typedef fl::StateTransitionFunction<State, Noise, Input> Model;
 
 public:
-    std::shared_ptr<Model> build() const
+    virtual std::shared_ptr<Model> build() const
     {
         std::shared_ptr<Model> model(create());
         return model;
