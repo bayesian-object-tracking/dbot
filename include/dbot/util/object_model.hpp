@@ -36,10 +36,10 @@ public:
 
     ObjectModel(const std::shared_ptr<ObjectModelLoader>& loader, bool center)
     {
-        from_loader(loader, center);
+        load_from(loader, center);
     }
 
-    void from_loader(const std::shared_ptr<ObjectModelLoader>& loader,
+    void load_from(const std::shared_ptr<ObjectModelLoader>& loader,
                      bool center)
     {
         loader->load(vertices_, triangle_indices_);
