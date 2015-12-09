@@ -26,11 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *************************************************************************/
 
 
-#include <dbot/util/object_file_reader.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <math.h>
+
+#include <dbot/util/object_file_reader.hpp>
 
 using namespace std;
 using namespace Eigen;
