@@ -42,30 +42,36 @@ public:
 
     BrownianMotionModelBuilder(const Parameters& param) : param_(param) { }
 
-protected:
-    std::shared_ptr<Model> create() const
+    virtual std::shared_ptr<Model> build() const
     {
-        using namespace Eigen;
+        std::shared_ptr<Model> model(create());
 
-        MatrixXd linear_acceleration_covariance =
-            MatrixXd::Identity(3, 3) *
+        Eigen::MatrixXd linear_acceleration_covariance =
+            Eigen::MatrixXd::Identity(3, 3) *
             pow(double(param_.linear_acceleration_sigma), 2);
-        MatrixXd angular_acceleration_covariance =
-            MatrixXd::Identity(3, 3) *
-            pow(double(param_.angular_acceleration_sigma), 2);
 
-        std::shared_ptr<Model> model(
-            new DerivedModel(param_.delta_time, param_.part_count));
+        Eigen::MatrixXd angular_acceleration_covariance =
+            Eigen::MatrixXd::Identity(3, 3) *
+            pow(double(param_.angular_acceleration_sigma), 2);
 
         for (size_t i = 0; i < param_.part_count; i++)
         {
             std::static_pointer_cast<DerivedModel>(model)
                 ->Parameters(i,
-                             Vector3d::Zero(),
+                             Eigen::Vector3d::Zero(),
                              param_.damping,
                              linear_acceleration_covariance,
                              angular_acceleration_covariance);
         }
+
+        return model;
+    }
+
+protected:
+    std::shared_ptr<Model> create() const
+    {
+        std::shared_ptr<Model> model(
+            new DerivedModel(param_.delta_time, param_.part_count));
 
         return model;
     }
