@@ -25,17 +25,23 @@ class SimpleCameraDataProvider : public CameraDataProvider
 {
 public:
     SimpleCameraDataLoader(const std::string& camera_frame_id,
-                           const Eigen::Matrix3d& camera_mat)
-        : frame_id_(camera_frame_id), camera_matrix_(camera_mat)
+                           const Eigen::Matrix3d& camera_mat,
+                           const CameraData::Resolution& native_res = {640,
+                                                                       480})
+        : frame_id_(camera_frame_id),
+          camera_matrix_(camera_mat),
+          native_res_(native_res)
+
     {
     }
 
-public:
     Eigen::Matrix3d camera_matrix() const { return camera_matrix_; }
     std::string frame_id() const { return frame_id_; }
+    CameraData::Resolution native_resolution() const { return native_res_; }
 
 private:
     std::string frame_id_;
     Eigen::Matrix3d camera_matrix_;
+    CameraData::Resolution native_res_;
 };
 }
