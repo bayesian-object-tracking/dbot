@@ -22,6 +22,7 @@
 #include <Eigen/Dense>
 
 #include <dbot/util/camera_data.hpp>
+#include <dbot/util/camera_data_provider.hpp>
 
 namespace dbot
 {
@@ -48,5 +49,26 @@ Eigen::Matrix3d CameraData::camera_matrix() const
 int CameraData::downsampling_factor() const
 {
     return data_provider_->downsampling_factor();
+}
+
+CameraData::Resolution CameraData::resolution() const
+{
+    Resolution res = native_resolution();
+
+    res.width = res.width / downsampling_factor();
+    res.height = res.height / downsampling_factor();
+
+    return res;
+}
+
+CameraData::Resolution CameraData::native_resolution() const
+{
+    return data_provider_->native_resolution();
+}
+
+int CameraData::pixels() const
+{
+    auto res = resolution();
+    return res.height * res.width;
 }
 }

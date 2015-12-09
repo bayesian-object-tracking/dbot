@@ -22,10 +22,12 @@
 #include <memory>
 #include <string>
 #include <Eigen/Dense>
-#include <dbot/util/camera_data_provider.hpp>
 
 namespace dbot
 {
+
+// Forward declarations
+class CameraDataProvider;
 
 /**
  * \brief Represents a source of camera data such obtaining depth images,
@@ -35,6 +37,13 @@ namespace dbot
  */
 class CameraData
 {
+public:
+    struct Resolution
+    {
+        int width;
+        int height;
+    };
+
 public:
     /**
      * \brief Creates a CameraData using the specified data provider
@@ -60,6 +69,22 @@ public:
      * \brief Returns the resolution integer downsampling factor
      */
     int downsampling_factor() const;
+
+    /**
+     * \brief Returns the camera downsampled resolution. That is, width and
+     *        height in pixels downsampled by the downsampling factor
+     */
+    Resolution resolution() const;
+
+    /**
+     * \brief Returns the original camera resolution
+     */
+    Resolution native_resolution() const;
+
+    /**
+     * \brief Returns the number of pixels in an image
+     */
+    int pixels() const;
 
 protected:
     /**
