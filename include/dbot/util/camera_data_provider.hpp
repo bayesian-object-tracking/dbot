@@ -22,6 +22,8 @@
 #include <string>
 #include <Eigen/Dense>
 
+#include <dbot/util/camera_data.hpp>
+
 namespace dbot
 {
 
@@ -51,6 +53,12 @@ public:
      * \brief Returns the resolution integer downsampling factor
      */
     virtual int downsampling_factor() const = 0;
+
+    /**
+     * \brief Returns the camera native resolution. That is, width and height in
+     *        pixels
+     */
+    virtual CameraData::Resolution native_resolution() const = 0;
 };
 
 }
