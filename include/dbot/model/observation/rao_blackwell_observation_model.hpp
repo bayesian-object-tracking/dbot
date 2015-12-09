@@ -1,50 +1,34 @@
-/*************************************************************************
-This software allows for filtering in high-dimensional observation and
-state spaces, as described in
-
-M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
-Probabilistic Object Tracking using a Range Camera
-IEEE/RSJ Intl Conf on Intelligent Robots and Systems, 2013
-
-In a publication based on this software pleace cite the above reference.
-
-
-Copyright (C) 2014  Manuel Wuthrich
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*************************************************************************/
+/*
+ * This is part of the Bayesian Object Tracking (bot),
+ * (https://github.com/bayesian-object-tracking)
+ *
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License License (GNU GPL). A copy of the license can be found in the LICENSE
+ * file distributed with this source code.
+ */
 
 #pragma once
 
-//#include <vector>
 #include <Eigen/Core>
 
 #include <fl/util/types.hpp>
 #include <osr/pose_vector.hpp>
 #include <osr/composed_vector.hpp>
-//#include <dbot/util/traits.hpp>
 
 namespace dbot
 {
 /// \todo this observation model is now specific to rigid body rendering,
 /// terminology should be adapted accordingly.
-template <typename State_, typename Observation_>
-class RBObservationModel
+template <typename State_>
+class RbObservationModel
 {
 public:
     typedef State_ State;
-    typedef Observation_ Observation;
+    typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
     typedef Eigen::Array<State, -1, 1> StateArray;
     typedef Eigen::Array<fl::Real, -1, 1> RealArray;
@@ -56,8 +40,8 @@ public:
 
 public:
     /// constructor and destructor *********************************************
-    RBObservationModel(const fl::Real& delta_time) : delta_time_(delta_time) {}
-    virtual ~RBObservationModel() noexcept {}
+    RbObservationModel(const fl::Real& delta_time) : delta_time_(delta_time) {}
+    virtual ~RbObservationModel() noexcept {}
     /// likelihood computation *************************************************
     virtual RealArray loglikes(const StateArray& deviations,
                                IntArray& indices,

@@ -59,9 +59,9 @@ namespace internal
 template <typename Scalar, typename State, int OBJECTS>
 struct Traits<KinectImageObservationModelCPU<Scalar, State, OBJECTS> >
 {
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RBObservationModel<State, Observation> ObservationModelBase;
+    typedef RbObservationModel<State> ObservationModelBase;
+    typedef typename ObservationModelBase::Observation Observation;
 
     typedef std::shared_ptr<dbot::RigidBodyRenderer> ObjectRendererPtr;
     typedef std::shared_ptr<dbot::KinectPixelObservationModel> PixelObservationModelPtr;
@@ -100,7 +100,6 @@ public:
             const Eigen::Matrix3d& camera_matrix,
             const size_t& n_rows,
             const size_t& n_cols,
-            const size_t& max_sample_count,
             const ObjectRendererPtr object_renderer,
             const PixelObservationModelPtr observation_model,
             const OcclusionProcessModelPtr occlusion_process_model,
@@ -110,7 +109,6 @@ public:
         n_rows_(n_rows),
         n_cols_(n_cols),
         initial_occlusion_(initial_occlusion),
-        max_sample_count_(max_sample_count),
         object_model_(object_renderer),
         observation_model_(observation_model),
         occlusion_process_model_(occlusion_process_model),
@@ -254,7 +252,6 @@ private:
     const size_t n_rows_;
     const size_t n_cols_;
     const float initial_occlusion_;
-    const size_t max_sample_count_;
     const std::shared_ptr<osr::RigidBodiesState<-1> > rigid_bodies_state_;
 
 

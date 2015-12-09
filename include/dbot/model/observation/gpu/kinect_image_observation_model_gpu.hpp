@@ -10,6 +10,7 @@
 #include <dbot/model/observation/rao_blackwell_observation_model.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
+#include <dbot/util/traits.hpp>
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
 #include <dbot/model/observation/gpu/cuda_filter.hpp>
 
@@ -38,10 +39,10 @@ namespace internal
 template <typename State>
 struct Traits<KinectImageObservationModelGPU<State> >
 {
-    typedef double Scalar;
-    typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
+    typedef fl::Real Scalar;
 
-    typedef RBObservationModel<State, Observation> Base;
+    typedef RbObservationModel<State> Base;
+    typedef typename Base::Observation Observation;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 };
