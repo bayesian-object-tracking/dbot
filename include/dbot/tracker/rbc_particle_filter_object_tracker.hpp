@@ -29,13 +29,9 @@
 #include <dbot/util/simple_wavefront_object_loader.hpp>
 #include <dbot/rao_blackwell_coordinate_particle_filter.hpp>
 #include <dbot/model/state_transition/brownian_object_motion_model.hpp>
-#include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
 
 #include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
-
-#ifdef BUILD_GPU
-#include <dbot/model/observation/gpu/kinect_image_observation_model_gpu.hpp>
-#endif
+#include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
 
 #include <fl/model/process/linear_state_transition_model.hpp>
 #include <fl/model/process/interface/state_transition_function.hpp>
@@ -45,7 +41,6 @@
 
 namespace dbot
 {
-
 // class RbcParticleFilterTrackerBuilder
 //{
 // public:
@@ -74,36 +69,25 @@ namespace dbot
 //    bool using_gpu_;
 //};
 
-
-
 /**
  * \brief RbcParticleFilterObjectTracker
  */
 class RbcParticleFilterObjectTracker
 {
 public:
-    typedef Eigen::VectorXd StateVector;
-    typedef osr::PoseBlock<StateVector> StateBlock;
-
     typedef osr::FreeFloatingRigidBodiesState<> State;
-    typedef State::Scalar Scalar;
-
-    typedef Eigen::Matrix<fl::Real, -1, 1> Input;
+    typedef Eigen::MatrixXd Obsrv;
+    typedef Eigen::VectorXd Input;
 
     typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
+    typedef dbot::RbObservationModel<State> ObservationModel;
 
-    typedef dbot::KinectImageObservationModelCPU<Scalar, State>
-        ObservationModelCPUType;
-
-#ifdef BUILD_GPU
-    typedef dbot::KinectImageObservationModelGPU<State> ObservationModelGPUType;
-#endif
-
-    typedef ObservationModelCPUType::Base ObservationModel;
-    typedef ObservationModelCPUType::Observation Obsrv;
+//    typedef typename RbObservationModelCpuBuilder<State>::BaseModel
+//        ObservationModel;
+//    typedef typename RbObservationModelCpuBuilder<State>::Obsrv Obsrv;
 
     typedef dbot::RBCoordinateParticleFilter<StateTransition, ObservationModel>
-        FilterType;
+        Filter;
 
     typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
 
@@ -115,22 +99,12 @@ public:
         bool use_gpu;
 
         int evaluation_count;
-        int max_sample_count;
         double max_kl_divergence;
 
-        double initial_occlusion_prob;
-        double p_occluded_visible;
-        double p_occluded_occluded;
-
-        double velocity_factor;
-        double linear_sigma;
-        double angular_sigma;
-        double tail_weight;
-        double model_sigma;
-        double sigma_factor;
-
+        RbObservationModelBuilder<State>::Parameters obsrv;
         BrownianMotionModelBuilder<State, Input>::Parameters process;
     };
+
     RbcParticleFilterObjectTracker(const Parameters& param,
                                    const std::vector<State>& initial_states,
                                    const dbot::CameraData& camera_data);
@@ -148,7 +122,7 @@ private:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<FilterType> filter_;
+    std::shared_ptr<Filter> filter_;
 
     ObjectModel object_model_;
 

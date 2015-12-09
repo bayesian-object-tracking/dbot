@@ -30,8 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/ros.h>
 #include <ros/package.h>
 
-#include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 #include <dbot/model/state_transition/orientation_transition_function.hpp>
+#include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
+#include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 
 namespace dbot
 {
@@ -51,15 +52,12 @@ void RbcParticleFilterObjectTracker::initialize(
     std::lock_guard<std::mutex> lock(mutex_);
 
     Obsrv image = camera_data_.depth_image();
-    Eigen::Matrix3d camera_matrix = camera_data_.camera_matrix();
 
-    object_model_.from_loader(
+    object_model_.load_from(
         std::shared_ptr<ObjectModelLoader>(
             new SimpleWavefrontObjectModelLoader(param_.ori)),
         true);
     /// read parameters ********************************************************
-
-    double delta_time = 0.033;
 
     std::vector<State> states = initial_states;
 
@@ -79,71 +77,21 @@ void RbcParticleFilterObjectTracker::initialize(
 
     /// initialize cpu observation model ***************************************
     std::shared_ptr<ObservationModel> observation_model;
-#ifndef BUILD_GPU
-    param_.use_gpu = false;
-#endif
-
     if (!param_.use_gpu)
     {
-        // cpu obseration model
-        std::shared_ptr<dbot::KinectPixelObservationModel>
-            kinect_pixel_observation_model(
-                new dbot::KinectPixelObservationModel(param_.tail_weight,
-                                                      param_.model_sigma,
-                                                      param_.sigma_factor));
-
-        std::shared_ptr<dbot::OcclusionProcessModel> occlusion_process(
-            new dbot::OcclusionProcessModel(param_.p_occluded_visible,
-                                            param_.p_occluded_occluded));
-
-        std::shared_ptr<dbot::RigidBodyRenderer> renderer(
-            new dbot::RigidBodyRenderer(object_model_.vertices(),
-                                        object_model_.triangle_indices()));
-
-        observation_model = std::shared_ptr<ObservationModelCPUType>(
-            new ObservationModelCPUType(camera_matrix,
-                                        image.rows(),
-                                        image.cols(),
-                                        states.size(),
-                                        renderer,
-                                        kinect_pixel_observation_model,
-                                        occlusion_process,
-                                        param_.initial_occlusion_prob,
-                                        delta_time));
+        observation_model = RbObservationModelCpuBuilder<State>(
+                                param_.obsrv, object_model_, camera_data_)
+                                .build();
     }
-
-    /// initialize gpu observation model ***************************************
     else
     {
 #ifdef BUILD_GPU
-        /// \todo this is suboptimal to hardcode the path here.
-        std::string vertex_shader_path =
-            ros::package::getPath("dbot") + "/src/dbot/model/observation/" +
-            "gpu/shaders/" + "VertexShader.vertexshader";
-
-        std::string fragment_shader_path =
-            ros::package::getPath("dbot") + "/src/dbot/model/observation/" +
-            "gpu/shaders/" + "FragmentShader.fragmentshader";
-
-        // gpu obseration model
-        std::shared_ptr<ObservationModelGPUType> gpu_observation_model(
-            new ObservationModelGPUType(camera_matrix,
-                                        image.rows(),
-                                        image.cols(),
-                                        param_.max_sample_count,
-                                        object_model_.vertices(),
-                                        object_model_.triangle_indices(),
-                                        vertex_shader_path,
-                                        fragment_shader_path,
-                                        param_.initial_occlusion_prob,
-                                        delta_time,
-                                        param_.p_occluded_visible,
-                                        param_.p_occluded_occluded,
-                                        param_.tail_weight,
-                                        param_.model_sigma,
-                                        param_.sigma_factor));
-
-        observation_model = gpu_observation_model;
+        observation_model = RbObservationModelGpuBuilder<State>(
+                                param_.obsrv, object_model_, camera_data_)
+                                .build();
+#else
+        ROS_FATAL("Tracker has not been compiled with GPU support!");
+        exit(1);
 #endif
     }
 
@@ -152,7 +100,7 @@ void RbcParticleFilterObjectTracker::initialize(
 
     /// initialize filter
     /// ******************************************************
-    filter_ = std::shared_ptr<FilterType>(new FilterType(
+    filter_ = std::shared_ptr<Filter>(new Filter(
         process,
         observation_model,
         create_sampling_blocks(
