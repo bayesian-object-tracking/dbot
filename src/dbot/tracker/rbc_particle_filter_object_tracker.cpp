@@ -31,19 +31,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ros/package.h>
 
 #include <dbot/model/state_transition/orientation_transition_function.hpp>
-#include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 
 namespace dbot
 {
 RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
+    const std::shared_ptr<Filter>& filter,
     const Parameters& param,
-    const std::vector<State>& initial_states,
-    const dbot::CameraData& camera_data)
-    : param_(param), camera_data_(camera_data)
+//    const std::vector<State>& initial_states,
+    const dbot::CameraData& camera_data,
+    const dbot::ObjectModel& object_model)
+    : filter_(filter), param_(param), camera_data_(camera_data), object_model_(object_model)
 
 {
-    initialize(initial_states);
+//    initialize(initial_states);
 }
 
 void RbcParticleFilterObjectTracker::initialize(
@@ -51,62 +52,12 @@ void RbcParticleFilterObjectTracker::initialize(
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    Obsrv image = camera_data_.depth_image();
-
-    object_model_.load_from(
-        std::shared_ptr<ObjectModelLoader>(
-            new SimpleWavefrontObjectModelLoader(param_.ori)),
-        true);
-    /// read parameters ********************************************************
-
-    std::vector<State> states = initial_states;
-
-    for (size_t i = 0; i < initial_states.size(); i++)
+    std::vector<State> states;
+    for (auto state : initial_states)
     {
-        State state = initial_states[i];
-
-        for (size_t j = 0; j < state.count(); j++)
-        {
-            state.component(j).position() +=
-                state.component(j).orientation().rotation_matrix() *
-                object_model_.centers()[j];
-        }
-
+        to_center_coordinate_system(state);
         states.push_back(state);
     }
-
-    /// initialize cpu observation model ***************************************
-    std::shared_ptr<ObservationModel> observation_model;
-    if (!param_.use_gpu)
-    {
-        observation_model = RbObservationModelCpuBuilder<State>(
-                                param_.obsrv, object_model_, camera_data_)
-                                .build();
-    }
-    else
-    {
-#ifdef BUILD_GPU
-        observation_model = RbObservationModelGpuBuilder<State>(
-                                param_.obsrv, object_model_, camera_data_)
-                                .build();
-#else
-        ROS_FATAL("Tracker has not been compiled with GPU support!");
-        exit(1);
-#endif
-    }
-
-    BrownianMotionModelBuilder<State, Input> process_builder(param_.process);
-    std::shared_ptr<StateTransition> process = process_builder.build();
-
-    /// initialize filter
-    /// ******************************************************
-    filter_ = std::shared_ptr<Filter>(new Filter(
-        process,
-        observation_model,
-        create_sampling_blocks(
-            param_.ori.count_meshes(),
-            process->noise_dimension() / param_.ori.count_meshes()),
-        param_.max_kl_divergence));
 
     std::vector<State> multi_body_samples(states.size());
     for (size_t i = 0; i < multi_body_samples.size(); i++)
@@ -117,7 +68,8 @@ void RbcParticleFilterObjectTracker::initialize(
     filter_->set_particles(multi_body_samples);
 
     filter_->filter(
-        image, StateTransition::Input::Zero(param_.ori.count_meshes() * 6));
+        camera_data_.depth_image(),
+        StateTransition::Input::Zero(param_.ori.count_meshes() * 6));
     filter_->resample(param_.evaluation_count / param_.ori.count_meshes());
 
     /// convert to a differential reperesentation ******************************
@@ -153,20 +105,26 @@ void RbcParticleFilterObjectTracker::initialize(
     }
 }
 
-std::vector<std::vector<size_t>>
-RbcParticleFilterObjectTracker::create_sampling_blocks(int blocks,
-                                                       int block_size) const
+void RbcParticleFilterObjectTracker::to_center_coordinate_system(
+    RbcParticleFilterObjectTracker::State& state)
 {
-    std::vector<std::vector<size_t>> sampling_blocks(param_.ori.count_meshes());
-    for (int i = 0; i < blocks; ++i)
+    for (size_t j = 0; j < state.count(); j++)
     {
-        for (int k = 0; k < block_size; ++k)
-        {
-            sampling_blocks[i].push_back(i * block_size + k);
-        }
+        state.component(j).position() +=
+            state.component(j).orientation().rotation_matrix() *
+            object_model_.centers()[j];
     }
+}
 
-    return sampling_blocks;
+void RbcParticleFilterObjectTracker::to_model_coordinate_system(
+    RbcParticleFilterObjectTracker::State& state)
+{
+    for (size_t j = 0; j < state.count(); j++)
+    {
+        state.component(j).position() -=
+            state.component(j).orientation().rotation_matrix() *
+            object_model_.centers()[j];
+    }
 }
 
 auto RbcParticleFilterObjectTracker::track(const Obsrv& image) -> State
@@ -214,13 +172,7 @@ auto RbcParticleFilterObjectTracker::track(const Obsrv& image) -> State
         state.orientation() = state.orientation() * pose_0.orientation();
     }
 
-    // switch coordinate system
-    for (size_t j = 0; j < mean.count(); j++)
-    {
-        mean.component(j).position() -=
-            mean.component(j).orientation().rotation_matrix() *
-            object_model_.centers()[j];
-    }
+    to_model_coordinate_system(mean);
 
     return mean;
 }

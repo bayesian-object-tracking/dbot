@@ -32,6 +32,7 @@
 
 #include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
 #include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
+#include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
 
 #include <fl/model/process/linear_state_transition_model.hpp>
 #include <fl/model/process/interface/state_transition_function.hpp>
@@ -41,33 +42,6 @@
 
 namespace dbot
 {
-// class RbcParticleFilterTrackerBuilder
-//{
-// public:
-//    typedef fl::Vector1d Input;
-
-//    typedef osr::FreeFloatingRigidBodiesState<> State;
-//    typedef fl::StateTransitionFunction<State, State, Input>
-//    StateTransitionFnc;
-
-// public:
-//    RbcParticleFilterTrackerBuilder() : using_gpu_(true) {}
-//    void use_gpu(bool using_gpu) { using_gpu_ = using_gpu; }
-//    void create_filter()
-//    {
-//        //        auto state_transition_model_builder = ;
-//    }
-
-//    auto create_state_transition_model() ->
-//    std::shared_ptr<StateTransitionFnc>
-//    {
-//        auto model = std::shared_ptr<StateTransitionFnc>(
-//            new BrownianObjectMotionModel<State>());
-//    }
-
-// private:
-//    bool using_gpu_;
-//};
 
 /**
  * \brief RbcParticleFilterObjectTracker
@@ -76,15 +50,11 @@ class RbcParticleFilterObjectTracker
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
-    typedef Eigen::MatrixXd Obsrv;
     typedef Eigen::VectorXd Input;
 
     typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
     typedef dbot::RbObservationModel<State> ObservationModel;
-
-//    typedef typename RbObservationModelCpuBuilder<State>::BaseModel
-//        ObservationModel;
-//    typedef typename RbObservationModelCpuBuilder<State>::Obsrv Obsrv;
+    typedef typename ObservationModel::Observation Obsrv;
 
     typedef dbot::RBCoordinateParticleFilter<StateTransition, ObservationModel>
         Filter;
@@ -105,21 +75,20 @@ public:
         BrownianMotionModelBuilder<State, Input>::Parameters process;
     };
 
-    RbcParticleFilterObjectTracker(const Parameters& param,
-                                   const std::vector<State>& initial_states,
-                                   const dbot::CameraData& camera_data);
+    RbcParticleFilterObjectTracker(const std::shared_ptr<Filter>& filter,
+                                   const Parameters& param,
+                                   const dbot::CameraData& camera_data,
+                                   const dbot::ObjectModel& object_model);
 
     void initialize(const std::vector<State>& initial_states);
 
     State track(const Obsrv& image);
 
+    void to_center_coordinate_system(State& state);
+    void to_model_coordinate_system(State& state);
+
     const Parameters& param() { return param_; }
     const dbot::CameraData& camera_data() const { return camera_data_; }
-private:
-    std::vector<std::vector<size_t>> create_sampling_blocks(
-        int blocks,
-        int block_size) const;
-
 private:
     std::mutex mutex_;
     std::shared_ptr<Filter> filter_;
