@@ -55,6 +55,8 @@ public:
     }
 
     const std::vector<Eigen::Vector3d>& centers() const { return centers_; }
+
+    int count_parts() const { return vertices_.size(); }
 private:
     void compute_centers(std::vector<Eigen::Vector3d>& centers)
     {
