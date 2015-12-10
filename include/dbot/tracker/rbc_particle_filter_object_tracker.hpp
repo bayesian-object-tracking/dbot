@@ -42,7 +42,6 @@
 
 namespace dbot
 {
-
 /**
  * \brief RbcParticleFilterObjectTracker
  */
@@ -53,15 +52,14 @@ public:
     typedef Eigen::VectorXd Input;
 
     typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
-    typedef dbot::RbObservationModel<State> ObservationModel;
+    typedef RbObservationModel<State> ObservationModel;
     typedef typename ObservationModel::Observation Obsrv;
 
-    typedef dbot::RBCoordinateParticleFilter<StateTransition, ObservationModel>
+    typedef RBCoordinateParticleFilter<StateTransition, ObservationModel>
         Filter;
 
     typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
 
-public:
     struct Parameters
     {
         dbot::ObjectResourceIdentifier ori;
@@ -75,28 +73,31 @@ public:
         BrownianMotionModelBuilder<State, Input>::Parameters process;
     };
 
+public:
+
     RbcParticleFilterObjectTracker(const std::shared_ptr<Filter>& filter,
                                    const Parameters& param,
-                                   const dbot::CameraData& camera_data,
-                                   const dbot::ObjectModel& object_model);
-
-    void initialize(const std::vector<State>& initial_states);
+                                   const ObjectModel& object_model,
+                                   const CameraData& camera_data);
 
     State track(const Obsrv& image);
 
-    void to_center_coordinate_system(State& state);
-    void to_model_coordinate_system(State& state);
+    void initialize(const std::vector<State>& initial_states);
+    State to_center_coordinate_system(const State& state);
+    State to_model_coordinate_system(const State &state);
 
     const Parameters& param() { return param_; }
-    const dbot::CameraData& camera_data() const { return camera_data_; }
+    const CameraData& camera_data() const { return camera_data_; }
+
 private:
-    std::mutex mutex_;
+    Input zero_input() const;
+
+private:
     std::shared_ptr<Filter> filter_;
-
-    ObjectModel object_model_;
-
-    std::vector<Affine> default_poses_;
     Parameters param_;
-    dbot::CameraData camera_data_;
+    ObjectModel object_model_;
+    CameraData camera_data_;
+
+    std::mutex mutex_;
 };
 }
