@@ -17,6 +17,7 @@
 
 #include <fl/util/types.hpp>
 #include <osr/pose_vector.hpp>
+#include <osr/pose_velocity_vector.hpp>
 #include <osr/composed_vector.hpp>
 
 namespace dbot
@@ -34,9 +35,7 @@ public:
     typedef Eigen::Array<fl::Real, -1, 1> RealArray;
     typedef Eigen::Array<int, -1, 1> IntArray;
     typedef Eigen::Matrix<fl::Real, -1, 1> RealVector;
-
-    typedef osr::ComposedVector<osr::PoseBlock<RealVector>, RealVector>
-        PoseArray;
+    typedef State PoseArray;
 
 public:
     /// constructor and destructor *********************************************
@@ -49,7 +48,7 @@ public:
 
     /// accessors **************************************************************
     virtual void set_observation(const Observation& image) = 0;
-    virtual PoseArray& default_poses() { return default_poses_; }
+    virtual PoseArray& integrated_poses() { return default_poses_; }
     virtual void reset() = 0;
 
 protected:
