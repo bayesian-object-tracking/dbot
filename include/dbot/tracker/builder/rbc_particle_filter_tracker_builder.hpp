@@ -1,4 +1,3 @@
-
 /*
  * This is part of the Bayesian Object Tracking (bot),
  * (https://github.com/bayesian-object-tracking)
@@ -37,7 +36,6 @@ public:
 
 public:
     RbcParticleFilterTrackerBuilder(const Parameters& param,
-                                    const std::vector<State>& initial_states,
                                     const dbot::CameraData& camera_data)
         : param_(param), camera_data_(camera_data)
     {
@@ -83,7 +81,7 @@ public:
             param_.max_kl_divergence));
 
         auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
-            filter, param_, camera_data_, object_model);
+            filter, param_, object_model, camera_data_);
 
         return tracker;
     }
