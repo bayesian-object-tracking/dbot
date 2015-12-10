@@ -89,14 +89,14 @@ public:
         Builder::set_nominal_pose(filter_, old_pose);
 
         State zero_pose = belief_.mean();
-        zero_pose.set_zero_pose();
+        zero_pose.set_zero();
         belief_.mean(zero_pose);
 
         filter_.predict(belief_, Input::Zero(), belief_);
         filter_.update(belief_, y, belief_);
 
         State new_pose = belief_.mean();
-        new_pose.set_zero_pose();
+        new_pose.set_zero();
         new_pose.orientation() = belief_.mean().orientation() * old_pose.orientation();
         new_pose.position() = belief_.mean().position() + old_pose.position();
         belief_.mean(new_pose);
