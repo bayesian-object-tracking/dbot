@@ -31,11 +31,11 @@ template <typename State>
 class RbObservationModelGpuBuilder : public RbObservationModelBuilder<State>
 {
 public:
-    typedef KinectImageObservationModelGPU<State> Model;
-    typedef typename Model::Observation Obsrv;
     typedef RbObservationModel<State> BaseModel;
-
     typedef RbObservationModelBuilder<State> Base;
+    typedef KinectImageObservationModelGPU<State> Model;
+
+    typedef typename Model::Observation Obsrv;
     typedef typename Base::Parameters Parameters;
 
 public:

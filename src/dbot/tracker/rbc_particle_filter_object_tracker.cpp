@@ -17,18 +17,17 @@ namespace dbot
 {
 RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
-    const Parameters& param,
     const dbot::ObjectModel& object_model,
     const dbot::CameraData& camera_data)
     : filter_(filter),
-      param_(param),
       object_model_(object_model),
       camera_data_(camera_data)
 {
 }
 
 void RbcParticleFilterObjectTracker::initialize(
-    const std::vector<State>& initial_states)
+    const std::vector<State>& initial_states,
+    int evaluation_count)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -40,7 +39,7 @@ void RbcParticleFilterObjectTracker::initialize(
 
     filter_->set_particles(states);
     filter_->filter(camera_data_.depth_image(), zero_input());
-    filter_->resample(param_.evaluation_count / param_.ori.count_meshes());
+    filter_->resample(evaluation_count / object_model_.count_parts());
 
     State delta_mean = filter_->belief().mean();
 
