@@ -29,7 +29,7 @@
 #include <fl/util/types.hpp>
 #include <fl/model/process/linear_state_transition_model.hpp>
 
-#include <dbot_ros_pkg/utils/ros_interface.hpp>
+#include <dbot_ros/utils/ros_interface.hpp>
 
 
 
