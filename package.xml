@@ -6,12 +6,12 @@
 
   <maintainer email="jan.issac@gmail.com">Jan Issac</maintainer>
 
-  <license>BSD</license>
+  <license>GNU GPL</license>
 
-  <url type="website"></url>
+  <url type="website">https://github.com/bayesian-object-tracking</url>
 
+  <author email="manuel.wuthrich@gmail.com">Manuel Wuethrich</author>
   <author email="jan.issac@gmail.com">Jan Issac</author>
-  <author email="manuel.wuthrich@gmail.com">Manuel Wuthrich</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
