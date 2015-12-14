@@ -22,28 +22,11 @@ namespace dbot
 class SimpleWavefrontObjectModelLoader : public ObjectModelLoader
 {
 public:
-    SimpleWavefrontObjectModelLoader(const ObjectResourceIdentifier& ori)
-        : ori_(ori)
-    {
-    }
+    SimpleWavefrontObjectModelLoader(const ObjectResourceIdentifier& ori);
 
     void load(
         std::vector<std::vector<Eigen::Vector3d>>& vertices,
-        std::vector<std::vector<std::vector<int>>>& triangle_indices) const
-    {
-        vertices.resize(ori_.count_meshes());
-        triangle_indices.resize(ori_.count_meshes());
-
-        for (size_t i = 0; i < ori_.count_meshes(); i++)
-        {
-            ObjectFileReader file_reader;
-            file_reader.set_filename(ori_.mesh_path(i));
-            file_reader.Read();
-
-            vertices[i] = *file_reader.get_vertices();
-            triangle_indices[i] = *file_reader.get_indices();
-        }
-    }
+        std::vector<std::vector<std::vector<int>>>& triangle_indices) const;
 
 private:
     ObjectResourceIdentifier ori_;

@@ -17,6 +17,10 @@
 
 namespace dbot
 {
+
+/**
+ * \brief Represents an Rbc Particle filter based tracker builder
+ */
 class RbcParticleFilterTrackerBuilder
 {
 public:
@@ -24,89 +28,80 @@ public:
     typedef Eigen::VectorXd Input;
 
     typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
-    typedef dbot::RbObservationModel<State> ObservationModel;
+    typedef RbObservationModel<State> ObservationModel;
     typedef typename ObservationModel::Observation Obsrv;
 
-    typedef dbot::RBCoordinateParticleFilter<StateTransition, ObservationModel>
+    typedef RBCoordinateParticleFilter<StateTransition, ObservationModel>
         Filter;
 
-    typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
+    struct Parameters
+    {
+        bool use_gpu;
+        int evaluation_count;
+        double max_kl_divergence;
 
-    typedef RbcParticleFilterObjectTracker::Parameters Parameters;
+        ObjectResourceIdentifier ori;
+        RbObservationModelBuilder<State>::Parameters obsrv;
+        BrownianMotionModelBuilder<State, Input>::Parameters process;
+    };
 
 public:
+    /**
+     * \brief Creates a RbcParticleFilterTrackerBuilder
+     * \param param			Builder and sub-builder parameters
+     * \param camera_data	Tracker camera data object
+     */
     RbcParticleFilterTrackerBuilder(const Parameters& param,
-                                    const dbot::CameraData& camera_data)
-        : param_(param), camera_data_(camera_data)
-    {
-    }
+                                    const CameraData& camera_data);
 
-    std::shared_ptr<RbcParticleFilterObjectTracker> build()
-    {
-        ObjectModel object_model;
-        object_model.load_from(
-            std::shared_ptr<ObjectModelLoader>(
-                new SimpleWavefrontObjectModelLoader(param_.ori)),
-            true);
-
-        std::shared_ptr<ObservationModel> obsrv_model;
-        if (!param_.use_gpu)
-        {
-            obsrv_model = RbObservationModelCpuBuilder<State>(
-                              param_.obsrv, object_model, camera_data_)
-                              .build();
-        }
-        else
-        {
-#ifdef BUILD_GPU
-            obsrv_model = RbObservationModelGpuBuilder<State>(
-                              param_.obsrv, object_model, camera_data_)
-                              .build();
-#else
-            ROS_FATAL("Tracker has not been compiled with GPU support!");
-            exit(1);
-#endif
-        }
-
-        BrownianMotionModelBuilder<State, Input> process_builder(
-            param_.process);
-        std::shared_ptr<StateTransition> process = process_builder.build();
-
-        auto filter = std::shared_ptr<Filter>(new Filter(
-            process,
-            obsrv_model,
-            create_sampling_blocks(
-                param_.ori.count_meshes(),
-                process->noise_dimension() / param_.ori.count_meshes()),
-            param_.max_kl_divergence));
-
-        auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
-            filter, param_, object_model, camera_data_);
-
-        return tracker;
-    }
+    /**
+     * \brief Builds the Rbc PF tracker
+     */
+    std::shared_ptr<RbcParticleFilterObjectTracker> build();
 
 private:
+    /**
+     * \brief Creates an instance of the Rbc particle filter
+     */
+    std::shared_ptr<Filter> create_filter(const ObjectModel& object_model,
+                                          double max_kl_divergence);
+
+    /**
+     * \brief Creates a Brownian motion state transition function used in the
+     *        filter
+     */
+    std::shared_ptr<StateTransition> create_state_transition_model(
+        const BrownianMotionModelBuilder<State, Input>& param) const;
+
+    /**
+     * \brief Creates the Rbc particle filter observation model. This can either
+     *        be CPU or GPU based
+     */
+    std::shared_ptr<ObservationModel> create_obsrv_model(
+        bool use_gpu,
+        const ObjectModel& object_model,
+        const CameraData& camera_data,
+        const RbObservationModelBuilder<State>::Parameters& param) const;
+
+    /**
+     * \brief Loads and creates an object model represented by the specified
+     *        resource identifier
+     */
+    ObjectModel create_object_model(const ObjectResourceIdentifier& ori) const;
+
+    /**
+     * \brief Creates a sampling block definition used by the coordinate
+     *        particle filter
+     *
+     * \param blocks		Number of objects or object parts
+     * \param block_size	State dimension of each part
+     */
     std::vector<std::vector<size_t>> create_sampling_blocks(
         int blocks,
-        int block_size) const
-    {
-        std::vector<std::vector<size_t>> sampling_blocks(
-            param_.ori.count_meshes());
-        for (int i = 0; i < blocks; ++i)
-        {
-            for (int k = 0; k < block_size; ++k)
-            {
-                sampling_blocks[i].push_back(i * block_size + k);
-            }
-        }
-
-        return sampling_blocks;
-    }
+        int block_size) const;
 
 private:
     Parameters param_;
     dbot::CameraData camera_data_;
 };
-
 }

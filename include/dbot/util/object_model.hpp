@@ -27,66 +27,33 @@ namespace dbot
 class ObjectModel
 {
 public:
-    typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
-
     typedef std::vector<std::vector<Eigen::Vector3d>> Vertices;
     typedef std::vector<std::vector<std::vector<int>>> TriangleIndecies;
 
+public:
     ObjectModel() = default;
 
-    ObjectModel(const std::shared_ptr<ObjectModelLoader>& loader, bool center)
-    {
-        load_from(loader, center);
-    }
+    ObjectModel(const std::shared_ptr<ObjectModelLoader>& loader, bool center);
 
     void load_from(const std::shared_ptr<ObjectModelLoader>& loader,
-                     bool center)
-    {
-        loader->load(vertices_, triangle_indices_);
-        compute_centers(centers_);
+                   bool center);
 
-        if (center) center_vertices(centers_, vertices_);
-    }
+    const Vertices& vertices() const;
 
-    const Vertices& vertices() const { return vertices_; }
-    const TriangleIndecies& triangle_indices() const
-    {
-        return triangle_indices_;
-    }
+    const TriangleIndecies& triangle_indices() const;
 
-    const std::vector<Eigen::Vector3d>& centers() const { return centers_; }
+    const std::vector<Eigen::Vector3d>& centers() const;
 
-    int count_parts() const { return vertices_.size(); }
+    int count_parts() const;
+
 private:
-    void compute_centers(std::vector<Eigen::Vector3d>& centers)
-    {
-        centers.resize(vertices_.size());
-        for (size_t i = 0; i < vertices_.size(); i++)
-        {
-            centers[i] = Eigen::Vector3d::Zero();
-            for (size_t j = 0; j < vertices_[i].size(); j++)
-            {
-                centers[i] += vertices_[i][j];
-            }
-            centers[i] /= double(vertices_[i].size());
-        }
-    }
+    void compute_centers(std::vector<Eigen::Vector3d>& centers);
 
     void center_vertices(const std::vector<Eigen::Vector3d>& centers,
-                         std::vector<std::vector<Eigen::Vector3d>>& vertices)
-    {
-        for (size_t i = 0; i < vertices.size(); i++)
-        {
-            for (size_t j = 0; j < vertices[i].size(); j++)
-            {
-                vertices[i][j] -= centers[i];
-            }
-        }
-    }
+                         std::vector<std::vector<Eigen::Vector3d>>& vertices);
 
 private:
     std::vector<Eigen::Vector3d> centers_;
-    std::vector<Affine> default_poses_;
 
     std::vector<std::vector<Eigen::Vector3d>> vertices_;
     std::vector<std::vector<std::vector<int>>> triangle_indices_;

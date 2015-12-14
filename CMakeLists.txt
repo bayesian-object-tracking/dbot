@@ -135,10 +135,14 @@ file(GLOB_RECURSE dbot_HEADERS
 # Build dbot library
 set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/camera_data.cpp
+    ${dbot_SOURCE_DIR}/util/object_model.cpp
     ${dbot_SOURCE_DIR}/util/object_file_reader.cpp
     ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
     ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
-    ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp)
+    ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
+    ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp)
 
 add_library(${dbot_LIBRARY} SHARED
     ${dbot_HEADERS}

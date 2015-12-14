@@ -58,45 +58,27 @@ public:
     typedef RBCoordinateParticleFilter<StateTransition, ObservationModel>
         Filter;
 
-    typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
-
-    struct Parameters
-    {
-        dbot::ObjectResourceIdentifier ori;
-
-        bool use_gpu;
-
-        int evaluation_count;
-        double max_kl_divergence;
-
-        RbObservationModelBuilder<State>::Parameters obsrv;
-        BrownianMotionModelBuilder<State, Input>::Parameters process;
-    };
-
 public:
-
     RbcParticleFilterObjectTracker(const std::shared_ptr<Filter>& filter,
-                                   const Parameters& param,
                                    const ObjectModel& object_model,
                                    const CameraData& camera_data);
 
     State track(const Obsrv& image);
 
-    void initialize(const std::vector<State>& initial_states);
+    void initialize(const std::vector<State>& initial_states,
+                    int evaluation_count);
     State to_center_coordinate_system(const State& state);
-    State to_model_coordinate_system(const State &state);
+    State to_model_coordinate_system(const State& state);
 
-    const Parameters& param() { return param_; }
     const CameraData& camera_data() const { return camera_data_; }
-
 private:
     Input zero_input() const;
 
 private:
     std::shared_ptr<Filter> filter_;
-    Parameters param_;
     ObjectModel object_model_;
     CameraData camera_data_;
+    int evaluation_count_;
 
     std::mutex mutex_;
 };
