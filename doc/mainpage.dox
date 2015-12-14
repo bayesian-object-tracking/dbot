@@ -1,0 +1,64 @@
+
+namespace fl
+{
+
+/**
+
+\mainpage notitle
+
+\tableofcontents
+
+\section about_fl About FL (draft)
+
+FL is general purpose C++ ([C++11](http://en.wikipedia.org/wiki/C%2B%2B11)
+standard) Bayesian filtering framework library with real-time support for
+linear and non-linear systems. Currently available filters are (just an
+example list)
+
+
+ - General Particle Filter
+ - Coordinate Particle Filter
+ - KalmanFilter for purely linear systems
+ - Sigma Point Kalman Filter for linear and non-linear systems
+
+
+The library is being developed as an extensible framework with low application
+restrictions.
+
+The employed underlying concepts are aimed to use this library in
+regular offline mode applications as well as in real-time systems. As a result
+of the real-time capability, the user has the option to take advantage of
+vectorization optimizations (SEE2, SSE3 or SSE4, AltiVec, ARM NEON) and zero
+runtime heap allocation all together with minimum effort.
+
+\section dependecies Dependencies and Compiling
+
+FL doesn't require pre-complication nor any library linking. The entire code
+base is generic and based on templates.
+
+The library dependencies are
+
+  - Eigen3 ([Eigen 3.1.2 or higher](http://eigen.tuxfamily.org/))
+
+To be able to compile your code with FL you need to enable the C++11 or C++0x
+standard for your compiler. With GCC you may add the definition
+
+    -std=c++0x OR -std=c++11
+
+\subsection tested_eigen Tested Eigen3
+
+  - Eigen 3.1.2
+  - Eigen 3.2.0
+
+\subsection tested_compilers Tested Compilers
+
+  - GCC 4.6 (-std=c++0x)
+  - GCC 4.8 (-std=c++11)
+
+\subsection tested_os Tested OS
+
+  - Ubuntu 12.04 LTS (Precise (AMD64))
+  - Ubuntu 14.04 LTS (Trusty Tahr (AMD64))
+*/
+
+}

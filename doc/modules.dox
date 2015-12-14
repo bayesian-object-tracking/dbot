@@ -1,0 +1,40 @@
+
+namespace fl
+{
+
+/**
+ \defgroup filters Filter Algorithms
+ \defgroup distributions Distributions
+ \defgroup observation_models Observation Models
+ \defgroup process_models Process Models
+ \defgroup numeric_integration Numeric Integration
+
+ \defgroup traits Traits
+ \defgroup meta Meta
+ \defgroup math Math
+ \defgroup types Types
+ \defgroup util Util
+ \defgroup exceptions Exceptions
+*/
+
+/**
+ * \defgroup distribution_interfaces Interfaces
+ * \ingroup distributions
+ */
+
+/**
+ * \defgroup special_functions Special Functions
+ * \ingroup math
+ */
+
+/**
+ * \defgroup general_functions General Functions
+ * \ingroup math
+ */
+
+/**
+ * \defgroup linear_algebra Linear Algebra
+ * \ingroup math
+ */
+
+}

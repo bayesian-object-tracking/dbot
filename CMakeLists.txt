@@ -1,206 +1,177 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dbot)
 
-set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE Debug)
-add_definitions(-std=c++0x )
-add_definitions(-DPROFILING_ON=1) #print profiling output
-set(USE_CUDA True)
+############################
+# Options                  #
+############################
+option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
 
-find_package(catkin REQUIRED
-    roscpp
-    roslib
-    sensor_msgs
-    cv_bridge
-    urdf
-    orocos_kdl
-    kdl_parser
-    rosbag
-    message_filters
-    image_transport
-    fl
-)
+############################
+# Flags                    #
+############################
+# Enable c++11 GCC 4.6 or greater required
+add_definitions(-std=c++0x)
+add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
 
+#add_definitions(-Wall)
+#add_definitions(-Wno-unused-local-typedefs)
+#add_definitions(-Wno-deprecated-declarations)
+#add_definitions(-Wno-comment)
+## for eigen-3.1.2
+#add_definitions(-Wno-deprecated-register)
 
-set(PROJECT_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-set(CMAKE_MODULE_PATH ${PROJECT_MODULE_PATH})
+############################
+# Library Version          #
+############################
+include(cmake/version.cmake)
 
-find_package(Boost REQUIRED)
+##########################
+# Library info summary     #
+############################
+include(cmake/info.cmake)
+
+info_begin()
+  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
+info_end()
+
+############################
+# Setup                    #
+############################
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+# local variables
+set(dbot_LIBRARY ${PROJECT_NAME})
+set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
+
+# parent scope variables; exported at the end
+set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
+set(dbot_LIBRARIES ${dbot_LIBRARY})
+
+############################
+# Dependencies             #
+############################
+
 find_package(Eigen REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(PCL 1.3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 
-
-
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
-
-set(ccache_DIR ${PROJECT_MODULE_PATH})
-find_package(ccache REQUIRED)
-
-if(CCACHE_FOUND)
-    message(" ccache found. GCC will be launched via ccache.")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-else(CCACHE_FOUND)
-    message(" ccache not found. ")
-endif(CCACHE_FOUND)
-
-include_directories(${Boost_INCLUDE_DIRS})
+# include_directories(${fl_INCLUDE_DIRS})
+# include_directories(${osr_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
-include_directories(${PCL_INCLUDE_DIRS})
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
 
-#########
-## GPU ##
-#########
-set(GLEW_DIR ${PROJECT_MODULE_PATH})
+add_definitions(${Eigen_DEFINITIONS})
 
-find_package(CUDA)
-find_package(GLEW)
-find_package(OpenGL)
+if(BUILD_DBOT_ON_GPU)
+  set(GLEW_DIR ${CMAKE_MODULE_PATH})
 
-include_directories(${GLEW_INCLUDE_DIRS})
-include_directories(${OpenGL_INCLUDE_DIRS})
-cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
+  find_package(CUDA REQUIRED)
+  find_package(GLEW REQUIRED)
+  find_package(OpenGL REQUIRED)
 
-link_directories(${OpenGL_LIBRARY_DIRS})
-link_directories(${GLEW_LIBRARY_DIRS})
+  include_directories(${GLEW_INCLUDE_DIRS})
+  include_directories(${OpenGL_INCLUDE_DIRS})
+  cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
 
-add_definitions(${OpenGL_DEFINITIONS})
-add_definitions(${GLEW_DEFINITIONS})
+  link_directories(${OpenGL_LIBRARY_DIRS})
+  link_directories(${GLEW_LIBRARY_DIRS})
 
-if(NOT CUDA_FOUND)
-    message(" CUDA not found!")
-else(NOT CUDA_FOUND)
-    message(" CUDA has been found")
-endif(NOT CUDA_FOUND)
+  add_definitions(${OpenGL_DEFINITIONS})
+  add_definitions(${GLEW_DEFINITIONS})
 
-if(NOT OPENGL_FOUND)
-    message(" OPENGL not found!")
-else(NOT OPENGL_FOUND)
-    message(" OPENGL has been found!")
-endif(NOT OPENGL_FOUND)
+  # enable cuda debug information with -g -G -O0, to use with cuda-dbg use
+  # --ptxas-options=-v to see number of registers, local, shared and constant
+  # memory used in kernels
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
+  list(APPEND dbot_LIBRARIES ${dbot_LIBRARY_GPU})
 
-if(NOT GLEW_FOUND)
-    message(" GLEW not found!")
-else(NOT GLEW_FOUND)
-    message(" GLEW has been found!")
-endif(NOT GLEW_FOUND)
+  add_definitions( -DBUILD_GPU=1 )
+endif(BUILD_DBOT_ON_GPU)
 
-
-
-# enable cuda debug information with -g -G -O0, to use with cuda-dbg
-# use --ptxas-options=-v to see number of registers, local, shared and constant memory used in kernels
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
-
-###################################
-## catkin specific configuration ##
-###################################
-
-if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-catkin_package(
+############################
+# Dependencies             #
+############################
+# Use catkin of available otherwise fall back to native cmake
+find_package(catkin QUIET COMPONENTS fl osr roscpp roslib)
+if(catkin_FOUND)
+  message(STATUS "Using catkin")
+  catkin_package(
     INCLUDE_DIRS
-        include
-        ${GLEW_INCLUDE_DIRS}
-        ${OpenGL_INCLUDE_DIRS}
-        ${CUDA_CUT_INCLUDE_DIRS}
-        ${CUDA_INCLUDE_DIRS}
+      include
+      ${OpenGL_INCLUDE_DIRS}
+      ${GLEW_INCLUDE_DIRS}
+      ${CUDA_INCLUDE_DIRS}
+      ${CUDA_CUT_INCLUDE_DIRS}
     LIBRARIES
-        dbot_cuda
-        dbot_gpu
-        dbot
+      ${dbot_LIBRARIES}
     CATKIN_DEPENDS
-        roscpp
-        roslib
-        sensor_msgs
-        urdf
-        orocos_kdl
-        kdl_parser
-        message_filters
-        image_transport
-        fl
+      roscpp
+      roslib
+      osr
+      fl
     DEPENDS
-        eigen)
-else(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-catkin_package(
-    INCLUDE_DIRS
-        include
-    LIBRARIES
-        dbot
-    CATKIN_DEPENDS
-        roscpp
-        roslib
-        sensor_msgs
-        urdf
-        orocos_kdl
-        kdl_parser
-        message_filters
-        image_transport
-        fl
-    DEPENDS
-        eigen)
-endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-###########
-## Build ##
-###########
+      Eigen)
+  list(APPEND dbot_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
+else(catkin_FOUND)
+  find_package(fl REQUIRED)
+  find_package(osr REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} )
+  list(APPEND dbot_INCLUDE_DIRS ${fl_INCLUDE_DIRS})
+  list(APPEND dbot_INCLUDE_DIRS ${osr_INCLUDE_DIRS})
+endif(catkin_FOUND)
 
+############################
+## dbot library            #
+############################
+include_directories(${dbot_INCLUDE_DIRS})
 
-## dbot #######################################################################
-set(PROJECT_NAME_DBOT "dbot")
+set(dbot_SOURCE_DIR src/${PROJECT_NAME})
+set(dbot_HEADER_DIR include/${PROJECT_NAME})
 
-file(GLOB_RECURSE dbot_headers include/${PROJECT_NAME_DBOT}/*.hpp
-                               include/${PROJECT_NAME_DBOT}/*.h)
-set(dbot_sources src/${PROJECT_NAME_DBOT}/utils/rigid_body_renderer.cpp)
+file(GLOB_RECURSE dbot_HEADERS
+    ${dbot_HEADER_DIR}/*.hpp
+    ${dbot_HEADER_DIR}/*.h)
 
+# Build dbot library
+set(dbot_SOURCES
+    ${dbot_SOURCE_DIR}/util/camera_data.cpp
+    ${dbot_SOURCE_DIR}/util/object_model.cpp
+    ${dbot_SOURCE_DIR}/util/object_file_reader.cpp
+    ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
+    ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
+    ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
+    ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp)
 
-add_library(${PROJECT_NAME_DBOT}     ${dbot_headers}
-                                     ${dbot_sources})
+add_library(${dbot_LIBRARY} SHARED
+    ${dbot_HEADERS}
+    ${dbot_SOURCES})
 
-target_link_libraries(${PROJECT_NAME_DBOT} ${catkin_LIBRARIES})
+target_link_libraries(${dbot_LIBRARY}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES})
 
+# Build dbot GPU library
+if(BUILD_DBOT_ON_GPU)
+    set(dbot_SOURCE_DIR_GPU
+        ${dbot_SOURCE_DIR}/model/observation/gpu)
 
+    cuda_add_library(${dbot_LIBRARY_GPU} SHARED
+        ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
+        ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
+        ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp)
 
-if(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-    add_definitions( -DBUILD_GPU=1 )
-    message("building cuda implementation")
-
-    set(dbot_gpu_sources
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_filter.cpp
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_opengl_multiple_filter.cpp
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/object_rasterizer.cpp
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/shader.cpp)
-
-    add_library(${PROJECT_NAME_DBOT}_gpu
-        ${dbot_gpu_sources})
-
-    target_link_libraries(${PROJECT_NAME_DBOT}_gpu
+    target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
+endif(BUILD_DBOT_ON_GPU)
 
-    cuda_add_library(${PROJECT_NAME_DBOT}_cuda
-        src/${PROJECT_NAME_DBOT}/models/observation_models/kinect_image_observation_model_gpu/cuda_filter.cu)
-    target_link_libraries(${PROJECT_NAME_DBOT} ${PROJECT_NAME_DBOT}_cuda)
-endif(USE_CUDA AND CUDA_FOUND AND OPENGL_FOUND AND GLEW_FOUND)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+############################
+# Tests                    #
+############################
+enable_testing()
+include(${CMAKE_MODULE_PATH}/gtest.cmake)
+add_subdirectory(tests)

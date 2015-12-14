@@ -1,0 +1,133 @@
+div.contents
+{
+  max-width:55em;
+}
+
+p, dl.warning, dl.attention, dl.note
+{
+  text-align:justify;
+}
+
+li {
+  text-align:justify;
+}
+
+div.fragment {
+  display: table;  
+}
+
+table.doxtable, table.example th, table.manual th, table.manual-vl th {
+  padding: 0.5em 0.5em 0.5em 0.5em;
+  text-align: left;
+  padding-right: 1em;
+  color: #555555;
+  background-color: #F4F4E5;
+
+  background-image: -webkit-gradient(linear,center top,center bottom,from(#FFFFFF), color-stop(0.3,#FFFFFF), color-stop(0.30,#FFFFFF), color-stop(0.98,#F4F4E5), to(#ECECDE));
+  background-image: -moz-linear-gradient(center top, #FFFFFF 0%, #FFFFFF 30%, #F4F4E5 98%, #ECECDE);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFF', endColorstr='#F4F4E5');
+}
+
+table.doxtable td, table.example td, table.manual td, table.manual-vl td {
+  vertical-align:top;
+  border-width: 1px;
+  border-color: #cccccc;
+}
+
+table.tparams td
+{
+    vertical-align:top;
+}
+
+
+h2 {
+  margin-top:2em;
+  border-style: none none solid none;
+  border-width: 1px;
+  border-color: #cccccc;
+}
+
+div.toc {
+  width:40%;
+  margin-right:0;
+}
+
+/* @group Code Colorization */
+
+span.keyword {
+    color: #a71d5d;
+
+}
+
+span.keywordtype {
+    color: #b58900
+}
+
+span.keywordflow {
+    color: #e08000
+}
+
+span.comment {
+    color: #969896
+}
+
+span.preprocessor {
+    color: #6c71c4
+}
+
+span.stringliteral {
+    color: #2aa198
+}
+
+span.charliteral {
+    color: #008080
+}
+
+span.concept {
+    color: #795da3;
+}
+
+span.traits {
+    font-weight: bold;
+}
+
+span.doccommand {
+    color: #2aa198;
+}
+
+span.function {
+    color: #0086b3;
+}
+
+span.staticfunction {
+    color: #800000;
+}
+
+div.fragment {
+    color: #333;
+    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 12px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 16.7999992370605px;
+
+    width: 100%;
+    padding: 0 0 0 0;
+    margin: 0 0 0 0;
+    background-color: #FFFFFF;
+    border: 1px solid #C4CFE5;
+}
+
+div.line{
+    color: #333;
+    font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 12px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 16.7999992370605px;
+}
+
+
+/* @end */
