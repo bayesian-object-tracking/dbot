@@ -1,40 +1,53 @@
-/// @author Claudia Pfreundt <claudilein@gmail.com>
+/*
+ * This is part of the Bayesian Object Tracking (bot),
+ * (https://github.com/bayesian-object-tracking)
+ *
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License License (GNU GPL). A copy of the license can be found in the LICENSE
+ * file distributed with this source code.
+ */
 
-#ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_OBJECT_RASTERIZER_HPP
-#define POSE_TRACKING_MODELS_OBSERVATION_MODELS_OBJECT_RASTERIZER_HPP
+/**
+ * \file object_resterizer.hpp
+ * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \date November 2015
+ */
 
 #include <vector>
 #include <Eigen/Dense>
 #include "GL/glew.h"
 
-
 /// renders the objects using openGL rasterization
 /** The objects that should be rendered have to be passed in the constructor and can then be rendered
-  * in different poses with the render() function. The resulting depth values are stored in a texture
-  * whose values can be obtained with get_depth_values(). Alternatively, get_framebuffer_texture() returns
-  * the ID of the texture for mapping it into CUDA.
-  */
+ * in different poses with the render() function. The resulting depth values are stored in a texture
+ * whose values can be obtained with get_depth_values(). Alternatively, get_framebuffer_texture() returns
+ * the ID of the texture for mapping it into CUDA.
+ */
 class ObjectRasterizer
 {
 public:
     /// constructor which takes the vertices and indices that describe the objects as input. The paths to the
     /// shader files and the instrinsic camera matrix also have to be passed here.
     /**
-      * @param[in] vertices [object_nr][vertex_nr] = {x, y, z}. This list should contain, for each object,
-      * a list of 3-dimensional vectors that specify the corners of the triangles of the object mesh.
-      * @param[in] indices [object_nr][index_nr][0 - 2] = {index}. This list should contain the indices
-      * that index the vertices list and tell us which vertices to connect to a triangle (every group of 3).
-      * For each object, the indices should be in the range of [0, nr_vertices - 1].
-      * @param[in] vertex_shader_path path to the vertex shader
-      * @param[in] fragment_shader_path path to the fragment shader
-      * @param[in] camera_matrix matrix of the intrinsic parameters of the camera
-      * @param[in] near_plane everything closer than the near plane will not be rendered. This should
-      * be similar to the minimal distance up to which the sensor can see objects.
-      * @param[in] far_plane everything further away than the far plane will not be rendered. This should
-      * be similar to the maximum distance up to which the sensor can see objects.
-      * @param[in] nr_rows the number of rows in one sensor image (vertical resolution)
-      * @param[in] nr_cols the number of columns in one sensor image (horizontal resolution)
-      */
+     * @param[in] vertices [object_nr][vertex_nr] = {x, y, z}. This list should contain, for each object,
+     * a list of 3-dimensional vectors that specify the corners of the triangles of the object mesh.
+     * @param[in] indices [object_nr][index_nr][0 - 2] = {index}. This list should contain the indices
+     * that index the vertices list and tell us which vertices to connect to a triangle (every group of 3).
+     * For each object, the indices should be in the range of [0, nr_vertices - 1].
+     * @param[in] vertex_shader_path path to the vertex shader
+     * @param[in] fragment_shader_path path to the fragment shader
+     * @param[in] camera_matrix matrix of the intrinsic parameters of the camera
+     * @param[in] near_plane everything closer than the near plane will not be rendered. This should
+     * be similar to the minimal distance up to which the sensor can see objects.
+     * @param[in] far_plane everything further away than the far plane will not be rendered. This should
+     * be similar to the maximum distance up to which the sensor can see objects.
+     * @param[in] nr_rows the number of rows in one sensor image (vertical resolution)
+     * @param[in] nr_cols the number of columns in one sensor image (horizontal resolution)
+     */
     ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                      const std::vector<std::vector<std::vector<int> > > indices,
                      const std::string vertex_shader_path,
@@ -51,34 +64,34 @@ public:
 
     /// render the objects in all given states and return the depth for all relevant pixels of each rendered object
     /** This function renders all poses (of all objects) into one large texture. Reading back the depth values
-      * is a relatively slow process, so this function should mainly be used for debugging. If you are using
-      * CUDA to further process the depth values, please use the other render() function.
-      * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
-      * and the translation for each object per pose.
-      * @param[out] intersect_indices [pose_nr][0 - nr_relevant_pixels] = {pixel_nr}. This list should be empty when passed
-      * to the function. Afterwards, it will contain the pixel numbers of all pixels that were rendered to, per pose. Pixels
-      * that have a depth value of 0 will be ignored.
-      * @param[out] depth [pose_nr][0 - nr_relevant_pixels] = {depth_value}. This list should be empty when passed to the function.
-      * Afterwards, it will contain the depth value of all pixels that were rendered to, per pose. Pixels
-      * that have a depth value of 0 will be ignored.
-      */
+     * is a relatively slow process, so this function should mainly be used for debugging. If you are using
+     * CUDA to further process the depth values, please use the other render() function.
+     * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
+     * and the translation for each object per pose.
+     * @param[out] intersect_indices [pose_nr][0 - nr_relevant_pixels] = {pixel_nr}. This list should be empty when passed
+     * to the function. Afterwards, it will contain the pixel numbers of all pixels that were rendered to, per pose. Pixels
+     * that have a depth value of 0 will be ignored.
+     * @param[out] depth [pose_nr][0 - nr_relevant_pixels] = {depth_value}. This list should be empty when passed to the function.
+     * Afterwards, it will contain the depth value of all pixels that were rendered to, per pose. Pixels
+     * that have a depth value of 0 will be ignored.
+     */
     void render(const std::vector<std::vector<Eigen::Matrix4f> > states,
                 std::vector<std::vector<float> > depth_values);
 
     /// render the objects in all given states into a texture that can then be accessed by CUDA
     /** This function renders all poses (of all objects) into one large texture, which can then be mapped into the CUDA
-      * context. To get the ID of the texture, call get_texture_ID().
-      * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
-      * and the translation for each object per pose.
-      */
+     * context. To get the ID of the texture, call get_texture_ID().
+     * @param[in] states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
+     * and the translation for each object per pose.
+     */
     void render(const std::vector<std::vector<Eigen::Matrix4f> > states);
 
     /// sets the objects that should be rendered.
     /** This function only needs to be called if any objects initially passed in the constructor should be left out when rendering.
-      * @param[in] object_numbers [0 - nr_objects] = {object_nr}. This list should contain the indices of all objects that
-      * should be rendered when calling render(). For example, [0,1,4,5] will only render objects 0,1,4 and 5 (whose vertices
-      * were passed in the constructor).
-      */
+     * @param[in] object_numbers [0 - nr_objects] = {object_nr}. This list should contain the indices of all objects that
+     * should be rendered when calling render(). For example, [0,1,4,5] will only render objects 0,1,4 and 5 (whose vertices
+     * were passed in the constructor).
+     */
     void set_objects(std::vector<int> object_numbers);
 
     /// set a new resolution
@@ -94,12 +107,12 @@ public:
 
     /// allocates memory on the GPU
     /** Use this function to allocate memory for the maximum number of poses that you will need throughout the filtering.
-      * @param[in,out] allocated_poses number of poses for which space should be allocated. Might be changed by the function
-      * if there are space restrictions posed by OpenGL.
-      * @param[out] allocated_poses_per_row the number of poses that will be rendered per row of the texture
-      * @param[out] allocated_poses_per_column the number of poses that will be rendered per column of the texture
-      * @param[in] adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program if constraints are not met
-      */
+     * @param[in,out] allocated_poses number of poses for which space should be allocated. Might be changed by the function
+     * if there are space restrictions posed by OpenGL.
+     * @param[out] allocated_poses_per_row the number of poses that will be rendered per row of the texture
+     * @param[out] allocated_poses_per_column the number of poses that will be rendered per column of the texture
+     * @param[in] adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program if constraints are not met
+     */
     void allocate_textures_for_max_poses(int& allocated_poses,
                                          int& allocated_poses_per_row,
                                          int& allocated_poses_per_column,
@@ -107,24 +120,24 @@ public:
 
     /// sets the number of poses that should be rendered in the next render call
     /** Use this function previously to every render call if you need to change the amount of poses.
-      * @param[in/out] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
-      * allocate_textures_for_max_poses(). Might be changed if adapt_to_constraints is activated.
-      * @param[out] nr_poses_per_row the number of poses that will be rendered per row of the texture
-      * @param[out] nr_poses_per_column the number of poses that will be rendered per column of the texture
-      * @param[in] adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
-      */
+     * @param[in/out] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
+     * allocate_textures_for_max_poses(). Might be changed if adapt_to_constraints is activated.
+     * @param[out] nr_poses_per_row the number of poses that will be rendered per row of the texture
+     * @param[out] nr_poses_per_column the number of poses that will be rendered per column of the texture
+     * @param[in] adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
+     */
     void set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints = false);
 
     /// returns the OpenGL framebuffer texture ID, which is needed for CUDA interoperation
     /** Use this function to retrieve the texture ID and pass it to the cudaGraphicsGLRegisterImage call.
-      * @return The texture ID
-      */
+     * @return The texture ID
+     */
     GLuint get_framebuffer_texture();
 
     /// returns the rendered depth values of all poses
     /** This function should only be used for debugging. It will be extremely slow.
-      * @return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
-      */
+     * @return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
+     */
     std::vector<std::vector<float> > get_depth_values();
 
 private:
@@ -212,5 +225,3 @@ private:
     void check_GL_errors(const char *label);
     bool check_framebuffer_status();
 };
-
-#endif // OBJECT_RASTERIZER_HPP

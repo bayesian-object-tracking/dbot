@@ -11,6 +11,11 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file rao_blackwell_observation_model.hpp
+ * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ */
+
 #pragma once
 
 #include <Eigen/Core>

@@ -11,6 +11,12 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file simple_camera_data_provider.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ */
+
 #include <dbot/util/simple_camera_data_provider.hpp>
 
 namespace dbot

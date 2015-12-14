@@ -1,4 +1,3 @@
-
 /*
  * This is part of the Bayesian Object Tracking (bot),
  * (https://github.com/bayesian-object-tracking)
@@ -10,6 +9,12 @@
  * This Source Code Form is subject to the terms of the GNU General Public
  * License License (GNU GPL). A copy of the license can be found in the LICENSE
  * file distributed with this source code.
+ */
+
+/**
+ * \file rb_observation_model_builder.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
  */
 
 #pragma once

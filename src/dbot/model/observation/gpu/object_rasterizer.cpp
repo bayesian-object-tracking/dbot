@@ -1,21 +1,31 @@
-/// @author Claudia Pfreundt <claudilein@gmail.com>
+/*
+ * This is part of the Bayesian Object Tracking (bot),
+ * (https://github.com/bayesian-object-tracking)
+ *
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License License (GNU GPL). A copy of the license can be found in the LICENSE
+ * file distributed with this source code.
+ */
 
-/* Note: Profiling slows down the rendering process. Use only to display the runtimes
- *       of the different subroutines inside the render call. */
-//#define PROFILING_ACTIVE
-//#define DEBUG
-
-#include <dbot/model/observation/gpu/object_rasterizer.hpp>
+/**
+ * \file object_rasterizer.cpp
+ * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \date November 2015
+ */
 
 #include <GL/glew.h>
 #include <GL/glx.h>
 #include <Eigen/Geometry>
-#include <dbot/model/observation/gpu/shader.hpp>
 #include <dbot/util/helper_functions.hpp>
+#include <dbot/model/observation/gpu/shader.hpp>
+#include <dbot/model/observation/gpu/object_rasterizer.hpp>
 
 using namespace std;
 using namespace Eigen;
-
 
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,

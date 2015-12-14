@@ -11,6 +11,12 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file brownian_motion_model_builder.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ */
+
 #pragma once
 
 #include <memory>

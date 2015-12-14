@@ -1,14 +1,20 @@
 /*
- * this is part of the bayesian object tracking (bot),
+ * This is part of the Bayesian Object Tracking (bot),
  * (https://github.com/bayesian-object-tracking)
  *
- * copyright (c) 2015 max planck society,
- * 				 autonomous motion department,
- * 			     institute for intelligent systems
+ * Copyright (c) 2015 Max Planck Society,
+ * 				 Autonomous Motion Department,
+ * 			     Institute for Intelligent Systems
  *
- * this source code form is subject to the terms of the gnu general public
- * license license (gnu gpl). a copy of the license can be found in the license
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License License (GNU GPL). A copy of the license can be found in the LICENSE
  * file distributed with this source code.
+ */
+
+/**
+ * \file simple_wavefront_object_model_loader.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
  */
 
 #include <dbot/util/simple_wavefront_object_loader.hpp>

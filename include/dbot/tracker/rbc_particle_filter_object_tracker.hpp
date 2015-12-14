@@ -11,6 +11,13 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file rbc_particle_filter_object_tracker.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
+ */
+
 #pragma once
 
 #include <Eigen/Dense>

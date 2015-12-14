@@ -11,6 +11,12 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file rbc_particle_filter_tracker_builder.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ */
+
 #pragma once
 
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>

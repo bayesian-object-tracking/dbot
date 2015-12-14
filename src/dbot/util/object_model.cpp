@@ -11,6 +11,12 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file object_model.cpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ */
+
 #include <dbot/util/object_model.hpp>
 
 namespace dbot

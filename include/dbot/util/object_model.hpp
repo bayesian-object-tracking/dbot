@@ -11,6 +11,12 @@
  * file distributed with this source code.
  */
 
+/**
+ * \file object_model.hpp
+ * \date November 2015
+ * \author Jan Issac (jan.issac@gmail.com)
+ */
+
 #pragma once
 
 #include <vector>
