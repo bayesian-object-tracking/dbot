@@ -1,44 +1,41 @@
-/** @author Claudia Pfreundt */
+/// @author Claudia Pfreundt <claudilein@gmail.com>
 
 /* Note: Profiling slows down the rendering process. Use only to display the runtimes
  *       of the different subroutines inside the render call. */
 //#define PROFILING_ACTIVE
+//#define DEBUG
 
-
-#include <dbot/model/observation/gpu/shader.hpp>
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
-
-#include <iomanip>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
 
 #include <GL/glew.h>
 #include <GL/glx.h>
-
 #include <Eigen/Geometry>
-
-#include <ros/package.h>
+#include <dbot/model/observation/gpu/shader.hpp>
+#include <dbot/util/helper_functions.hpp>
 
 using namespace std;
 using namespace Eigen;
 
-ObjectRasterizer::ObjectRasterizer()
-{
-}
 
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,
                                    const std::string vertex_shader_path,
                                    const std::string fragment_shader_path,
-                                   const Eigen::Matrix3f camera_matrix) :
-    nr_rows_(WINDOW_HEIGHT),
-    nr_cols_(WINDOW_WIDTH),
+                                   const Eigen::Matrix3f camera_matrix,
+                                   const float near_plane,
+                                   const float far_plane,
+                                   const int nr_rows,
+                                   const int nr_cols) :
+    near_plane_(near_plane),
+    far_plane_(far_plane),
+    nr_rows_(nr_rows),
+    nr_cols_(nr_cols),
     vertex_shader_path_(vertex_shader_path),
     fragment_shader_path_(fragment_shader_path)
 {
 
     // ========== CREATE WINDOWLESS OPENGL CONTEXT =========== //
+
 
     typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
     typedef Bool (*glXMakeContextCurrentARBProc)(Display*, GLXDrawable, GLXDrawable, GLXContext);
@@ -68,7 +65,6 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
            exit(1);
     }
 
-
     /* get framebuffer configs, any is usable (might want to add proper attribs) */
     if ( !(fbc = glXChooseFBConfig(dpy, DefaultScreen(dpy), visual_attribs, &fbcount) ) ){
            fprintf(stderr, "Failed to get FBConfig\n");
@@ -84,12 +80,14 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
            exit(1);
     }
 
+
     /* create a context using glXCreateContextAttribsARB */
     if ( !( ctx = glXCreateContextAttribsARB(dpy, fbc[0], 0, True, context_attribs)) ){
            fprintf(stderr, "Failed to create opengl context\n");
            XFree(fbc);
            exit(1);
     }
+
 
     /* create temporary pbuffer */
     int pbuffer_attribs[] = {
@@ -99,13 +97,12 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     };
     pbuf = glXCreatePbuffer(dpy, fbc[0], pbuffer_attribs);
 
-
     XFree(fbc);
     XSync(dpy, False);
 
     /* try to make it the current context */
     if ( !glXMakeContextCurrent(dpy, pbuf, pbuf, ctx) ){
-           /* some drivers does not support context without default framebuffer, so fallback on
+           /* some drivers do not support context without default framebuffer, so fallback on
             * using the default window.
             */
            if ( !glXMakeContextCurrent(dpy, DefaultRootWindow(dpy), DefaultRootWindow(dpy), ctx) ){
@@ -127,9 +124,6 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
         exit(EXIT_FAILURE);
     }
     check_GL_errors("GLEW init");
-
-
-
 
 
 
@@ -163,10 +157,12 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 
     // ========== CHANGE VERTICES AND INDICES FORMATS SO THAT OPENGL CAN READ THEM =========== //
 
+
+    std::vector<int> vertices_per_object;
+
     for (size_t i = 0; i < vertices.size(); i++) {        // each i equals one object
         object_numbers_.push_back(i);
-        // vertices_per_object_.push_back(vertices[i].size() * 3); ?? * 3 equals floats per object, how does gldrawelements index?
-        vertices_per_object_.push_back(vertices[i].size());
+        vertices_per_object.push_back(vertices[i].size());
         for (size_t j = 0; j < vertices[i].size(); j++) { // each j equals one vertex in that object
             for (int k = 0; k < vertices[i][j].size(); k++) {  // each k equals one dimension of that vertex
                 vertices_list_.push_back(vertices[i][j][k]);
@@ -184,7 +180,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
                 indices_list_.push_back(indices[i][j][k] + vertex_count);
             }
         }
-        vertex_count += vertices_per_object_[i];
+        vertex_count += vertices_per_object[i];
     }
 
 
@@ -232,7 +228,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     glGenFramebuffers(1, &framebuffer_);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
 
-    // create color texture that will contain the depth values after the render
+    // create color texture that will contain the depth values after the rendering
     glGenTextures(1, &framebuffer_texture_for_all_poses_);
     glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -255,27 +251,34 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     shader_ID_ = LoadShaders(shader_list);
 
 
-    // Set up handles for uniforms in transformation saving shaders
+    // Set up handles for uniforms
     model_view_matrix_ID_ = glGetUniformLocation(shader_ID_, "MV");
     projection_matrix_ID_ = glGetUniformLocation(shader_ID_, "P");
 
     /* The view matrix is constant throughout this class since we are not changing the camera position.
        If you are looking to pass a different camera matrix for each render call, move this function
-       into that render call and change it to accept the camera position and rotation as parameter
+       into the render call and change it to accept the camera position and rotation as parameter
        and calculate the respective matrix. */
     setup_view_matrix();
 
     check_GL_errors("OpenGL initialization");
 
 
+    // ========== SETUP PROJECTION MATRIX AND SHADER TO USE =========== //
+
+    setup_projection_matrix(camera_matrix);
+    glUseProgram(shader_ID_);
+    check_GL_errors("setup projection matrix");
+
 
     // ========== INITIALIZE & SET DEFAULTS FOR MEASURING EXECUTION TIMES =========== //
 
+#ifdef PROFILING_ACTIVE
     // generate query objects needed for timing OpenGL commands
     glGenQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
 
     nr_calls_ = 0;
-    gpu_times_aggregate_ = vector<double> (NR_SUBROUTINES_TO_MEASURE, 0);
+    time_measurement_ = vector<double> (NR_SUBROUTINES_TO_MEASURE, 0);
     initial_run_ = true;
 
     strings_for_subroutines.push_back("ATTACH_TEXTURE");
@@ -283,31 +286,21 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     strings_for_subroutines.push_back("RENDER");
     strings_for_subroutines.push_back("DETACH_TEXTURE");
 
-    // ========== SETUP PROJECTION MATRIX AND SHADER TO USE =========== //
-
-    setup_projection_matrix(camera_matrix);
-    glUseProgram(shader_ID_);
-    check_GL_errors("setup projection matrix");
+    check_GL_errors("Generating time queries");
+#endif
 }
 
 
 
-
-
-
-
-
-
-void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states,
-                                          std::vector<std::vector<int> > &intersect_indices,
-                                          std::vector<std::vector<float> > &depth) {
+void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > states,
+                              std::vector<std::vector<float> > depth_values) {
     render(states);
-    get_depth_values(intersect_indices, depth);
+    depth_values = get_depth_values();
 }
 
 
+void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > states) {
 
-void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> > > states) {
 
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
@@ -319,7 +312,9 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
                            framebuffer_texture_for_all_poses_,     // 4. tex ID
                            0);
-
+#ifdef DEBUG
+    check_GL_errors("attaching texture to framebuffer");
+#endif
 #ifdef PROFILING_ACTIVE
     glFinish();
     glEndQuery(GL_TIME_ELAPSED);
@@ -328,6 +323,9 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+#ifdef DEBUG
+    check_GL_errors("clearing framebuffer");
+#endif
 #ifdef PROFILING_ACTIVE
     glFinish();
     glEndQuery(GL_TIME_ELAPSED);
@@ -342,14 +340,19 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
         for (int j = 0; j < nr_poses_per_row_; j++) {
 
             glViewport(j * nr_cols_, (nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
-
+            #ifdef DEBUG
+                check_GL_errors("setting the viewport");
+            #endif
             for (size_t k = 0; k < object_numbers_.size(); k++) {
                 int index = object_numbers_[k];
 
-                model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * i + j][index]);
+                model_view_matrix = view_matrix_ * states[nr_poses_per_row_ * i + j][index];
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
                 glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
+                #ifdef DEBUG
+                    check_GL_errors("render call");
+                #endif
             }
         }
     }
@@ -358,17 +361,22 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
     for (int j = 0; j < nr_poses_ - (nr_poses_per_row_ * (nr_poses_per_column_ - 1)); j++) {
 
         glViewport(j * nr_cols_, 0, nr_cols_, nr_rows_);
+        #ifdef DEBUG
+            check_GL_errors("setting the viewport");
+        #endif
 
         for (size_t k = 0; k < object_numbers_.size(); k++) {
             int index = object_numbers_[k];
 
-            model_view_matrix = view_matrix_ * get_model_matrix(states[nr_poses_per_row_ * (nr_poses_per_column_ - 1) + j][index]);
+            model_view_matrix = view_matrix_ * states[nr_poses_per_row_ * (nr_poses_per_column_ - 1) + j][index];
             glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
             glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
+            #ifdef DEBUG
+                check_GL_errors("render call");
+            #endif
         }
     }
-
 
 
 #ifdef PROFILING_ACTIVE
@@ -383,28 +391,38 @@ void ObjectRasterizer::render(const std::vector<std::vector<std::vector<float> >
                            0,     // 4. tex ID
                            0);
 
+#ifdef DEBUG
+    check_GL_errors("detaching texture from framebuffer");
+#endif
+
 #ifdef PROFILING_ACTIVE
     glFinish();
     glEndQuery(GL_TIME_ELAPSED);
     store_time_measurements();
 #endif
 
-    /* TODO should be unnecessary when texture is previously detached from framebuffer..
-     * would like to find evidence that this detaching really introduces a synchronization though*/
-    glFinish();
-
 
 }
 
 
 void ObjectRasterizer::set_objects(vector<int> object_numbers) {
-    // TODO does it copy the vector or set a reference?
     object_numbers_ = object_numbers;
+}
+
+
+void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols,
+                                      int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints) {
+        nr_rows_ = n_rows;
+        nr_cols_ = n_cols;
+
+        // reallocate textures
+        allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column, adapt_to_constraints);
 }
 
 void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
                                                        int& allocated_poses_per_row,
-                                                       int& allocated_poses_per_column) {
+                                                       int& allocated_poses_per_column,
+                                                       const bool adapt_to_constraints) {
     int max_poses_per_row = floor(max_texture_size_ / nr_cols_);
     int max_poses_per_column = floor(max_texture_size_ / nr_rows_);
 
@@ -412,13 +430,19 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
     allocated_poses_per_column = min(max_poses_per_column, (int) ceil(allocated_poses / (float) allocated_poses_per_row));
 
     if (allocated_poses > allocated_poses_per_row * allocated_poses_per_column) {
-        std::cout << "The space for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
-                  << "The limit is OpenGL texture size: " << max_texture_size_ << ". Current resolution is (" << nr_cols_ << ", "
-                  << nr_rows_ << ") , which means a maximum of (" << max_poses_per_row << ", " << max_poses_per_column << ") poses. "
-                  << "As a result, space for " << allocated_poses_per_row * allocated_poses_per_column << " poses will be allocated "
-                  << "in the form of (" << allocated_poses_per_row << ", " << allocated_poses_per_column << ")." << std::endl;
+        if (adapt_to_constraints) {
+            std::cout << "WARNING (OPENGL): The space for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
+                      << "The limit is OpenGL texture size: " << max_texture_size_ << ". Current resolution is (" << nr_cols_ << ", "
+                      << nr_rows_ << ") , which means a maximum of (" << max_poses_per_row << ", " << max_poses_per_column << ") poses. "
+                      << "As a result, space for " << allocated_poses_per_row * allocated_poses_per_column << " poses will be allocated "
+                      << "in the form of (" << allocated_poses_per_row << ", " << allocated_poses_per_column << ")." << std::endl;
+        } else {
+            std::cout << "ERROR (OPENGL): The number of poses you requested cannot be rendered. The limit is the maximum OpenGL texture size: "
+                      << max_texture_size_ << " x " << max_texture_size_ << ". You requested a resolution of " << nr_cols_  << " x " << nr_rows_
+                      << " and " << allocated_poses << " poses." << std::endl;
+            exit(-1);
+        }
     }
-
 
     allocated_poses = allocated_poses_per_row * allocated_poses_per_column;
 
@@ -430,87 +454,37 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
     nr_poses_per_column_ = allocated_poses_per_column;
 
     reallocate_buffers();
-
-
-
-    /*
-//    if (nr_max_poses_ != nr_max_poses) {
-        nr_max_poses_ = nr_max_poses;
-        nr_poses_ = nr_max_poses;
-
-//        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(nr_poses_);
-        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
-        // TODO max_dimension[0], [1], at the moment they are identical
-        nr_max_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
-        int y_poses = nr_max_poses_ / nr_max_poses_per_row_;
-        if (y_poses * nr_max_poses_per_row_ < nr_max_poses_) y_poses++;
-        nr_max_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
-
-        nr_poses_per_row_ = nr_max_poses_per_row_;
-        nr_poses_per_column_ = nr_max_poses_per_column_;
-
-        reallocate_buffers();
-//    }*/
 }
 
-void ObjectRasterizer::set_number_of_poses(const int nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
-    if (nr_poses <= nr_max_poses_) {
-        nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
-        nr_poses_per_column = min(nr_max_poses_per_column_, (int) ceil(nr_poses / (float) nr_poses_per_row));
+void ObjectRasterizer::set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints) {
 
-        nr_poses_ = nr_poses;
-        nr_poses_per_row_ = nr_poses_per_row;
-        nr_poses_per_column_ = nr_poses_per_column;
-
-
-
-        /*
-        nr_poses_ = nr_poses;
-
-
-//        // TODO max_dimension[0], [1], at the moment they are identical
-        float sqrt_poses = sqrt(nr_poses_);
-        // TODO this can be done smarter. I want to only increment sqrt_poses, if it is not an int, i.e. 10.344 instead of 10)
-        if (sqrt_poses * sqrt_poses != nr_poses_) sqrt_poses = (int) ceil(sqrt_poses);
-        // TODO max_dimension[0], [1], at the moment they are identical
-        nr_poses_per_row_ = min((int) sqrt_poses, (max_texture_size_ / nr_cols_));
-        int y_poses = nr_poses_ / nr_poses_per_row_;
-        if (y_poses * nr_poses_per_row_ < nr_poses_) y_poses++;
-        nr_poses_per_column_ = min(y_poses, (max_texture_size_ / nr_rows_));
-
-        if (nr_poses_per_row_ > nr_max_poses_per_row_ || nr_poses_per_column_ > nr_max_poses_per_column_) {
-            cout << "WARNING: You tried to evaluate more poses in a row or in a column than was allocated in the beginning."
-                 << endl << "Check set_number_of_poses() functions in object_rasterizer.cpp" << endl;
-        }*/
-
-    } else {
-        cout << "ERROR (OpenGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
-        exit(-1);
+    if (nr_poses > nr_max_poses_) {
+        if (adapt_to_constraints) {
+            std::cout << "WARNING (OPENGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")."
+                      << "The number of poses was automatically reduced to " << nr_max_poses_ << "." << std::endl;
+            nr_poses = nr_max_poses_;
+        } else {
+            cout << "ERROR (OPENGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
+            exit(-1);
+        }
     }
+
+    nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
+    nr_poses_per_column = min(nr_max_poses_per_column_, (int) ceil(nr_poses / (float) nr_poses_per_row));
+
+    nr_poses_ = nr_poses;
+    nr_poses_per_row_ = nr_poses_per_row;
+    nr_poses_per_column_ = nr_poses_per_column;
 }
 
-void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column) {
-        nr_rows_ = n_rows;
-        nr_cols_ = n_cols;
-
-        // reallocate textures
-        allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column);
-}
 
 GLuint ObjectRasterizer::get_framebuffer_texture() {
     return framebuffer_texture_for_all_poses_;
 }
 
-int ObjectRasterizer::get_nr_poses_per_row() {
-    return nr_poses_per_row_;
-}
 
 
-
-void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersect_indices,
-                                        std::vector<std::vector<float> > &depth) {
+vector<vector<float> > ObjectRasterizer::get_depth_values() {
 
     // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
 
@@ -559,22 +533,7 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
             }
         }
 
-        // filling the respective values per pose into their indices and depth vectors
-        vector<int> tmp_indices;
-        vector<float> tmp_depth;
-
-        for (int state = 0; state < nr_poses_; state++) {
-            for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
-                if (depth_image_per_pose[state][i] != 0) {
-                    tmp_indices.push_back(i);
-                    tmp_depth.push_back(depth_image_per_pose[state][i]);
-                }
-            }
-            intersect_indices.push_back(tmp_indices);
-            depth.push_back(tmp_depth);
-            tmp_indices.resize(0);
-            tmp_depth.resize(0);
-        }
+        return depth_image_per_pose;
 
     } else {
         cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
@@ -589,12 +548,11 @@ void ObjectRasterizer::get_depth_values(std::vector<std::vector<int> > &intersec
                            GL_TEXTURE_2D,         // 3. tex target: GL_TEXTURE_2D
                            0,     // 4. tex ID
                            0);
+
+    #ifdef DEBUG
+        check_GL_errors("copying depth values to CPU");
+    #endif
 }
-
-
-
-
-
 
 
 
@@ -656,22 +614,6 @@ void ObjectRasterizer::reallocate_buffers() {
 }
 
 
-
-Matrix4f ObjectRasterizer::get_model_matrix(const vector<float> state) {
-    // Model matrix equals the state of the object. Position and Quaternion just have to be expressed as a matrix.
-    // note: state = (q.w, q.x, q.y, q.z, v.x, v.y, v.z)
-    Matrix4f model_matrix = Matrix4f::Identity();
-    Transform<float, 3, Affine, ColMajor> model_matrix_transform;
-    model_matrix_transform = Translation3f(state[4], state[5], state[6]);
-    model_matrix = model_matrix_transform.matrix();
-
-    Quaternionf qRotation = Quaternionf(state[0], state[1], state[2], state[3]);
-    model_matrix.topLeftCorner(3, 3) = qRotation.toRotationMatrix();
-
-    return model_matrix;
-}
-
-
 void ObjectRasterizer::setup_view_matrix() {
     // =========================== VIEW MATRIX =========================== //
 
@@ -691,8 +633,8 @@ void ObjectRasterizer::setup_projection_matrix(const Eigen::Matrix3f camera_matr
     Vector3f boundaries_min = camera_matrix_inverse * Vector3f(-0.5, -0.5, 1);
     Vector3f boundaries_max = camera_matrix_inverse * Vector3f(float(nr_cols_)-0.5, float(nr_rows_)-0.5, 1);
 
-    float near = NEAR_PLANE;
-    float far = FAR_PLANE;
+    float near = near_plane_;
+    float far = far_plane_;
     float left = near * boundaries_min(0);
     float right = near * boundaries_max(0);
     float top = -near * boundaries_min(1);
@@ -733,7 +675,7 @@ void ObjectRasterizer::store_time_measurements() {
         }
         glGetQueryObjectuiv(time_query_[i], GL_QUERY_RESULT, &time_elapsed_ns);
         time_elapsed_s = time_elapsed_ns / (double) 1e9;
-        gpu_times_aggregate_[i] += time_elapsed_s;
+        time_measurement_[i] += time_elapsed_s;
 
     }
 
@@ -741,7 +683,7 @@ void ObjectRasterizer::store_time_measurements() {
     if (initial_run_) {
         initial_run_ = false;
         for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
-            gpu_times_aggregate_[i] = 0;
+            time_measurement_[i] = 0;
         }
 
         nr_calls_ = 0;
@@ -803,7 +745,7 @@ bool ObjectRasterizer::check_framebuffer_status() {
 ObjectRasterizer::~ObjectRasterizer()
 {
 
-#ifdef PROFILING_ON
+#ifdef PROFILING_ACTIVE
 
     if (nr_calls_ != 0) {
         cout << endl << "Time measurements for the different steps of the rendering process averaged over " << nr_calls_ << " render calls:" << endl << endl;
@@ -811,12 +753,12 @@ ObjectRasterizer::~ObjectRasterizer()
         double total_time_per_render = 0;
 
         for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
-            total_time_per_render += gpu_times_aggregate_[i];
+            total_time_per_render += time_measurement_[i];
         }
         total_time_per_render /= nr_calls_;
 
         for (int i = 0; i < NR_SUBROUTINES_TO_MEASURE; i++) {
-            double time_per_subroutine = gpu_times_aggregate_[i] / nr_calls_;
+            double time_per_subroutine = time_measurement_[i] / nr_calls_;
 
                 cout << get_text_for_enum(i) << ":     "
                      << "\t " << time_per_subroutine << " s \t " << setprecision(1)
@@ -831,7 +773,6 @@ ObjectRasterizer::~ObjectRasterizer()
     glDeleteQueries(NR_SUBROUTINES_TO_MEASURE, time_query_);
 #endif
 
-    cout << "clean up OpenGL.." << endl;
 
     glDisableVertexAttribArray(0);
     glDeleteVertexArrays(1, &vertex_array_);
@@ -847,5 +788,4 @@ ObjectRasterizer::~ObjectRasterizer()
     glDeleteProgram(shader_ID_);
 
 }
-
 

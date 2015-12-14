@@ -1,168 +1,254 @@
+/// @author Claudia Pfreundt <claudilein@gmail.com>
+
 #ifndef POSE_TRACKING_MODELS_OBSERVATION_MODELS_CUDA_FILTER_HPP
 #define POSE_TRACKING_MODELS_OBSERVATION_MODELS_CUDA_FILTER_HPP
 
-#include "boost/shared_ptr.hpp"
 #include <curand_kernel.h>
-#include "GL/glut.h"
-
 #include <vector>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
 
 namespace fil
 {
+/// This class provides a parallel implementation of the weighting step on the
+/// GPU.
+/** After initializing the class and setting the execution parameters like the
+ * number of poses
+ *  and the resolution, you can weigh poses with the weigh_poses() function.
+ * Make sure to
+ *  always render the poses first with opengl, then map the texture into CUDA,
+ *  update the observation image with set_observations() and update the
+ * occlusion indices (after resampling)
+ *  before you call the weigh_poses() function.
+ */
 class CudaFilter
 {
-   public:
-    CudaFilter();
+public:
+    /// constructor which takes the resolution of the camera image
+    /**
+     * \param [in] nr_rows the number of rows in each camera image
+     * \param [in] nr_cols the number of columns in each camera image
+     */
+    CudaFilter(const int nr_rows = 60, const int nr_cols = 80);
+
+    /// destructor which frees the memory used on the GPU
     ~CudaFilter();
 
-    void init(std::vector<std::vector<float> > com_models,
-              float angle_sigma,
-              float trans_sigma,
-              float p_visible_init,
-              float c,
-              float log_c,
-              float p_visible_occluded,
-              float tail_weight,
-              float model_sigma,
-              float sigma_factor,
-              float max_depth,
-              float exponential_rate);
+    /// copies constants to GPU memory and initializes some memory-related
+    /// values.
+    /**
+     * This function has to be called once in the beginning, before calling the
+     * weigh_poses() function.
+     * \param [in] initial_occlusion_prob the initial probability for each pixel
+     * of being occluded, meaning
+      * that something occludes the object in this pixel
+     * \param [in] p_occluded_occluded the probability of a pixel staying
+     * occluded from one frame to the next
+     * \param [in] p_occluded_visible the probability of a pixel changing from
+     * being occluded to being visible
+     * from one frame to the next
+     * \param [in] tail_weight the probability of a faulty measurement
+     * \param [in] model_sigma the uncertainty in the 3D model of the object
+     * \param [in] sigma_factor the standard deviation of the measurement noise
+     * at a distance of 1m to the camera
+     * \param [in] max_depth maximum value which can be measured by the depth
+     * sensor
+     * \param [in] exponential_rate the rate of the exponential distribution
+     * that models the probability of a measurement coming from an unknown
+     * object
+     */
+    void init(const float initial_occlusion_prob,
+              const float p_occluded_occluded,
+              const float p_occluded_visible,
+              const float tail_weight,
+              const float model_sigma,
+              const float sigma_factor,
+              const float max_depth,
+              const float exponential_rate);
 
-    // filter functions
-    void propagate(const float& current_time,
-                   std::vector<std::vector<float> >& states);  // not used
-    void propagate_multiple(
-        const float& current_time,
-        std::vector<std::vector<std::vector<float> > >& states);  // not used
-    void compare(float observation_time,
-                 bool constant_occlusion,
-                 std::vector<float>& log_likelihoods);  // not used
-    void compare_multiple(bool update, std::vector<float>& log_likelihoods);
-    void resample(std::vector<int> resampling_indices);           // not used
-    void resample_multiple(std::vector<int> resampling_indices);  // not used
+    /// weights the different poses that were previously rendered with OpenGL
+    /**
+     * \param [in] update whether or not to update the occlusion probabilities
+     * during this weighting
+     * \param [out] log_likelihoods the computed likelihoods for each pose
+     */
+    void weigh_poses(const bool update_occlusions,
+                     std::vector<float>& log_likelihoods);
 
     // setters
-    void set_states(std::vector<std::vector<float> >& states,
-                    int seed);  // not needed if propagation not on GPU
-    void set_states_multiple(int n_objects,
-                             int n_features,
-                             int seed);  // not needed if propagation not on GPU
+    /// sets the number of threads used for the CUDA weighting kernel to the
+    /// desired number.
+    /// A default of 128 is used if nothing is specified here.
+    /**
+     * \param [in] nr_threads the desired number of threads
+     */
+    void set_nr_threads(const int nr_threads);
+
+    /// copies the observation image from the camera to the GPU for comparison
+    /**
+     * \param [in] observations a pointer to the observation values
+     * \param [in] observation_time the time at which this observation was
+     * captured
+     */
     void set_observations(const float* observations,
                           const float observation_time);
-    void set_observations(const float* observations);  // not used outside, can
-                                                       // be integrated into
-                                                       // above
-    void set_visibility_probabilities(const float* visibility_probabilities);
-    void set_prev_sample_indices(const int* prev_sample_indices);
+
+    /// sets the indices to the occlusion array for every state
+    /**
+     * \param [in] occlusion_indices [state_nr] = {index}. For each state, this
+     * gives the index
+     * into the occlusion array.
+     */
+    void set_occlusion_indices(const int* occlusion_indices);
+
+    /// sets the resolution for the images to be compared
+    /** This function might downgrade the number of poses or change the
+     * arrangement of the
+     *  poses in the grid due to the resolution change.
+     * \param [in] n_rows the number of rows in an image
+     * \param [in] n_cols the number of columns in an image
+     * \param [out] nr_poses the number of poses that will be weighted
+     * \param [out] nr_poses_per_row the number of poses per row that will be
+     * weighted
+     * \param [out] nr_poses_per_column the number of poses per column that will
+     * be weighted
+     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
+     * constraints or quit the program if constraints are not met
+     */
     void set_resolution(const int n_rows,
                         const int n_cols,
                         int& nr_poses,
                         int& nr_poses_per_row,
-                        int& nr_poses_per_column);
+                        int& nr_poses_per_column,
+                        bool adapt_to_constraints = false);
+
+    /// sets the occlusion probabilities for all pixels for all states
+    /**
+    * \param [in] occlusion_probabilities a 1D-array of occlusion probabilities
+    * which should contain
+    * nr_rows * nr_cols * nr_poses values.
+    */
+    void set_occlusion_probabilities(const float* occlusion_probabilities);
+
+    /// maps the texture array to an actual texture reference
+    /**
+     * \param [in] texture_array the cudaArray retrieved from OpenGL
+     */
+    void map_texture_to_texture_array(const cudaArray_t texture_array);
+
+    /// allocates the maximum amount of memory that will ever be needed by CUDA
+    /// during runtime
+    /**
+     * \param [in][out] allocated_poses the maximum number of poses that will
+     * ever be evaluated in one weighting step.
+     * This number might be lowered if GPU contraints do now allow this number
+     * of poses.
+     * \param [out] allocated_poses_per_row the maximum number of poses per row
+     * \param [out] allocated_poses_per_column the maximum number of poses per
+     * column
+     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
+     * constraints or quit the program if constraints are not met
+     */
     void allocate_memory_for_max_poses(int& allocated_poses,
                                        int& allocated_poses_per_row,
-                                       int& allocated_poses_per_column);
+                                       int& allocated_poses_per_column,
+                                       bool adapt_to_constraints = false);
+
+    /// sets the number of poses to be weighted in the next weighting step
+    /**
+     * \param [in][out] nr_poses the desired number of poses. Might be changed
+     * due to GPU constraints.
+     * \param [out] nr_poses_per_row the number of poses per row
+     * \param [out] nr_poses_per_column the number of poses per column
+     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
+     * constraints or quit the program if constraints are not met
+     */
     void set_number_of_poses(int& nr_poses,
                              int& nr_poses_per_row,
-                             int& nr_poses_per_column);
-    void set_texture_array(cudaArray_t texture_array);
+                             int& nr_poses_per_column,
+                             bool adapt_to_constraints = false);
 
     // getters
-    std::vector<float> get_visibility_probabilities(int state_id);
-    std::vector<std::vector<float> > get_visibility_probabilities();  // returns
-                                                                      // all of
-                                                                      // them.
-                                                                      // Ask
-                                                                      // Manuel
-                                                                      // if they
-                                                                      // could
-                                                                      // need
-                                                                      // that.
+    /// gets the maximum number of threads that can be handled with this GPU
+    /**
+     * \return the maximum number of threads that can be scheduled per block on
+     * the GPU
+     */
+    int get_max_nr_threads();
 
-    void map_texture();
-    void destroy_context();
+    /// gets the warp size of this GPU
+    /**
+     * \return the warp size = the number of threads that are executed
+     * concurrently on a CUDA streaming multiprocessor
+     */
+    int get_warp_size();
 
-   private:
-    // resolution values if not specified
-    static const int WINDOW_WIDTH = 80;
-    static const int WINDOW_HEIGHT = 60;
+    /// gets the occlusion probabilities of a particular state
+    /**
+     * \param [in] state_id the index into the state array
+     * \return a 1D array containing the occlusion probability for each pixel
+     */
+    std::vector<float> get_occlusion_probabilities(int state_id);
+
+private:
     static const int DEFAULT_NR_THREADS = 128;
 
-    // time observation
-    static const int COUNT = 500;
-    int count_;
-    double compare_kernel_time_;
-    double copy_likelihoods_time_;
-
     // device pointers to arrays stored in global memory on the GPU
-    float* d_states_;       // not needed if propagation not on GPU
-    float* d_states_copy_;  // not needed if propagation not on GPU
-    float* d_visibility_probs_;
-    float* d_visibility_probs_copy_;
+    float* d_occlusion_probs_;
+    float* d_occlusion_probs_copy_;
     float* d_observations_;
     float* d_log_likelihoods_;
-    int* d_prev_sample_indices_;
-    int* d_resampling_indices_;  // not needed if resampling not on GPU
-    curandStateMRG32k3a* d_mrg_states_;
+    int* d_occlusion_indices_;  // this contains, for each pose, the index into
+                                // the occlusion probabilities array, which
+                                // contains the occlusion probabilities for that
+                                // particular pose.
 
     // for OpenGL interop
     cudaArray_t d_texture_array_;
 
     // resolution
-    int n_cols_;
-    int n_rows_;
+    int nr_cols_;
+    int nr_rows_;
 
     // maximum number of poses and their arrangement in the OpenGL texture
     int nr_max_poses_;
     int nr_max_poses_per_row_;
     int nr_max_poses_per_column_;
 
-    // number of poses and their arrangement in the OpenGL texture
+    // actual number of poses and their arrangement in the OpenGL texture
+    // (current frame)
     int nr_poses_;
     int nr_poses_per_row_;
     int nr_poses_per_column_;
-
-    // number of features in a state vector
-    int n_features_;
 
     // block and grid arrangement of the CUDA kernels
     int nr_threads_, n_blocks_;
     dim3 grid_dimension_;
 
-    // system properties
-    int warp_size_;
-    int n_mps_;
+    // occlusion probability default value
+    float occlusion_prob_default_;
 
-    // visibility prob default
-    float visibility_prob_default_;
-
-    // time values to compute the time deltas when calling propagate() or
-    // evaluate()
+    // time values to compute the time deltas when calling the weighting
+    // function
     float occlusion_time_;
     float observation_time_;
 
-    // float delta_time_;
-    float last_propagation_time_;  // not needed if propagation not on GPU
-
-    // booleans to describe the state of the cuda filter, to avoid wrong usage
-    // of the class
-    bool n_poses_set_;
-
     // CUDA device properties
     cudaDeviceProp cuda_device_properties_;
+    int warp_size_;
+    int n_mps_;
+
+    // bool to ensure correct usage of public functions
+    bool observations_set_, occlusion_indices_set_,
+        occlusion_probabilities_set_, memory_allocated_;
+    bool number_of_poses_set_, constants_initialized_;
 
     void set_default_kernel_config(int& nr_poses_,
                                    int& nr_poses_per_row,
                                    int& nr_poses_per_column,
-                                   bool& nr_poses_changed);
-
+                                   bool& nr_poses_changed,
+                                   bool adapt_to_constraints);
     // helper functions
     template <typename T>
-    void allocate(T*& pointer, size_t size, std::string name);
+    void allocate(T*& pointer, size_t size);
     void check_cuda_error(const char* msg);
 };
 }

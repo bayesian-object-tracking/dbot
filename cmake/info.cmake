@@ -31,9 +31,9 @@ function(info_end)
 endfunction(info_end)
 
 function(info_project project_name project_version)
-message(STATUS "${COLOR_BORDER}== ${COLOR_CLEAR} ${COLOR_HEADER}${project_name}${COLOR_CLEAR}")
-message(STATUS "${COLOR_BORDER}== ${COLOR_CLEAR} Version: ${COLOR_BOLD}${project_version}${COLOR_CLEAR}")
-endfunction(info_package)
+  message(STATUS "${COLOR_BORDER}== ${COLOR_CLEAR} ${COLOR_HEADER}${project_name}${COLOR_CLEAR}")
+  message(STATUS "${COLOR_BORDER}== ${COLOR_CLEAR} Version: ${COLOR_BOLD}${project_version}${COLOR_CLEAR}")
+endfunction(info_project)
 
 function(info_header list_header)
   message(STATUS "${COLOR_BORDER}== ${COLOR_CLEAR} ")
