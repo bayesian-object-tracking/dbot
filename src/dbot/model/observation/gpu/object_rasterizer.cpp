@@ -17,9 +17,9 @@
  * \date November 2015
  */
 
+#include <Eigen/Geometry> // there is a clash with Success enum and in X.h
 #include <GL/glew.h>
 #include <GL/glx.h>
-#include <Eigen/Geometry>
 #include <dbot/util/helper_functions.hpp>
 #include <dbot/model/observation/gpu/shader.hpp>
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
