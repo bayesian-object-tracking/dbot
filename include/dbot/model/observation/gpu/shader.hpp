@@ -13,7 +13,7 @@
 
 /**
  * \file shader.hpp
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 
@@ -23,6 +23,8 @@
 #include <string>
 #include <GL/glew.h>
 
-GLuint LoadShaders(std::vector<const char *> shaderFilePaths);
-GLuint CreateShader(GLenum eShaderType, const char * strShaderFile);
+#include <dbot/model/observation/gpu/shader_provider.hpp>
+
+GLuint LoadShaders(const dbot::ShaderProvider& shaderProvider);
+GLuint CreateShader(GLenum eShaderType, const std::string& shaderCode);
 GLuint CreateProgram(const std::vector<GLuint> &shaderList);

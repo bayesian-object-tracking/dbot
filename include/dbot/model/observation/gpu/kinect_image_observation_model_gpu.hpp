@@ -13,7 +13,7 @@
 
 /**
  * \file kinect_image_observation_model_gpu.hpp
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 
@@ -67,7 +67,6 @@ struct Traits<KinectImageObservationModelGPU<State>>
 };
 }
 
-
 /**
  * \class ImageObservationModelGPU
  *
@@ -111,10 +110,12 @@ public:
      * 		that specify the corners of the triangles of the object mesh
      * \param [in] indices [object_nr][index_nr][0 - 2] = {index}. This list
      * 		should contain the indices
-     * 		that index the vertices list and tell us which vertices to connect to
+     * 		that index the vertices list and tell us which vertices to connect
+     * to
      * a
      * 		triangle (every group of 3).
-     * 		For each object, the indices should be in the range of [0, nr_vertices
+     * 		For each object, the indices should be in the range of [0,
+     * nr_vertices
      * - 1].
      * \param [in] vertex_shader_path path to the vertex shader
      * \param [in] fragment_shader_path path to the fragment shader
@@ -147,8 +148,7 @@ public:
         const size_t& max_sample_count,
         const std::vector<std::vector<Eigen::Vector3d>> vertices_double,
         const std::vector<std::vector<std::vector<int>>> indices,
-        const std::string vertex_shader_path,
-        const std::string fragment_shader_path,
+        const dbot::ShaderProvider& shader_provider,
         const Scalar& initial_occlusion_prob = 0.1d,
         const double& delta_time = 0.033d,
         const float p_occluded_visible = 0.1f,
@@ -193,29 +193,11 @@ public:
                     vertices_double[object_index][vertex_index].cast<float>();
         }
 
-        // check for incorrect path names
-        if (!boost::filesystem::exists(vertex_shader_path))
-        {
-            std::cout << "vertex shader does not exist at: "
-                      << vertex_shader_path << std::endl;
-            exit(-1);
-        }
-        if (!boost::filesystem::exists(fragment_shader_path))
-        {
-            std::cout << "fragment_shader does not exist at: "
-                      << fragment_shader_path << std::endl;
-            exit(-1);
-        }
-
-        vertex_shader_path_ = vertex_shader_path;
-        fragment_shader_path_ = fragment_shader_path;
-
         // initialize opengl and cuda
         opengl_ = boost::shared_ptr<ObjectRasterizer>(
             new ObjectRasterizer(vertices_,
                                  indices_,
-                                 vertex_shader_path_,
-                                 fragment_shader_path_,
+                                 shader_provider,
                                  camera_matrix_.cast<float>()));
 
         cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter());
@@ -284,7 +266,8 @@ public:
     /** Make sure the observation image was set previously, as it is used for
      * comparison.
      * \param [in] deltas the states which should be evaluated
-     * \param [in][out] occlusion_indices for each state, this should contain the
+     * \param [in][out] occlusion_indices for each state, this should contain
+     * the
      * index into the occlusion
      * array where the corresponding occlusion probabilities per pixel are
      * stored

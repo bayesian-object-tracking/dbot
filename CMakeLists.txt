@@ -158,6 +158,8 @@ if(BUILD_DBOT_ON_GPU)
         ${dbot_SOURCE_DIR}/model/observation/gpu)
 
     cuda_add_library(${dbot_LIBRARY_GPU} SHARED
+        ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
+        ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
         ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp)

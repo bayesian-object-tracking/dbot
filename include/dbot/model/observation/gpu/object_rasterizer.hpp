@@ -13,13 +13,15 @@
 
 /**
  * \file object_resterizer.hpp
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 
 #include <vector>
 #include <Eigen/Dense>
 #include "GL/glew.h"
+
+#include <dbot/model/observation/gpu/shader_provider.hpp>
 
 /// renders the objects using openGL rasterization
 /** The objects that should be rendered have to be passed in the constructor and can then be rendered
@@ -50,8 +52,7 @@ public:
      */
     ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                      const std::vector<std::vector<std::vector<int> > > indices,
-                     const std::string vertex_shader_path,
-                     const std::string fragment_shader_path,
+                     const dbot::ShaderProvider& shader_provider,
                      const Eigen::Matrix3f camera_matrix,
                      const float near_plane = 0.4,
                      const float far_plane = 4,
@@ -171,9 +172,8 @@ private:
     int nr_calls_;
     bool initial_run_;  // the first run should not count
 
-    // the paths to the respective shaders
-    std::string vertex_shader_path_;
-    std::string fragment_shader_path_;
+    // shade code provider
+//    dbot::ShaderProvider shader_provider_;
 
     // lists of all vertices and indices of all objects
     std::vector<float> vertices_list_;

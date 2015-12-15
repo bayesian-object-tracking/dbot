@@ -13,7 +13,7 @@
 
 /**
  * \file object_rasterizer.cpp
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 
@@ -29,8 +29,7 @@ using namespace Eigen;
 
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,
-                                   const std::string vertex_shader_path,
-                                   const std::string fragment_shader_path,
+                                   const dbot::ShaderProvider& shader_provider,
                                    const Eigen::Matrix3f camera_matrix,
                                    const float near_plane,
                                    const float far_plane,
@@ -39,9 +38,8 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     near_plane_(near_plane),
     far_plane_(far_plane),
     nr_rows_(nr_rows),
-    nr_cols_(nr_cols),
-    vertex_shader_path_(vertex_shader_path),
-    fragment_shader_path_(fragment_shader_path)
+    nr_cols_(nr_cols)
+//    shader_provider_(shader_provider)
 {
 
     // ========== CREATE WINDOWLESS OPENGL CONTEXT =========== //
@@ -254,11 +252,7 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     // ================= COMPILE SHADERS AND GET HANDLES ================= //
 
     // Create and compile our GLSL program from the shaders
-    vector<const char *> shader_list;
-    shader_list.clear();
-    shader_list.push_back(vertex_shader_path_.c_str());
-    shader_list.push_back(fragment_shader_path_.c_str());
-    shader_ID_ = LoadShaders(shader_list);
+    shader_ID_ = LoadShaders(shader_provider);
 
 
     // Set up handles for uniforms
