@@ -28,6 +28,7 @@
 
 #include <dbot/util/object_model.hpp>
 #include <dbot/util/camera_data.hpp>
+#include <dbot/util/file_shader_provider.hpp>
 #include <dbot/tracker/builder/rb_observation_model_builder.hpp>
 #include <dbot/model/observation/gpu/kinect_image_observation_model_gpu.hpp>
 
@@ -63,6 +64,9 @@ protected:
             ros::package::getPath("dbot") + "/src/dbot/model/observation/" +
             "gpu/shaders/" + "FragmentShader.fragmentshader";
 
+        dbot::FileShaderProvider shader_provider(fragment_shader_path,
+                                                 vertex_shader_path);
+
         std::shared_ptr<Model> observation_model(
             new Model(camera_data_.camera_matrix(),
                       camera_data_.resolution().height,
@@ -70,8 +74,7 @@ protected:
                       param_.max_sample_count,
                       object_model_.vertices(),
                       object_model_.triangle_indices(),
-                      vertex_shader_path,
-                      fragment_shader_path,
+                      shader_provider,
                       param_.initial_occlusion_prob,
                       param_.delta_time,
                       param_.p_occluded_visible,
