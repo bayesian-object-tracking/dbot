@@ -13,7 +13,7 @@
 
 /**
  * \file cude_filter.cu
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 

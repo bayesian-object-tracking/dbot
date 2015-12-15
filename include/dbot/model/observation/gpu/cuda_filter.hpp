@@ -13,7 +13,7 @@
 
 /**
  * \file cuda_filter.hpp
- * \author Claudia Pfreundt <claudilein@gmail.com>
+ * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
 
