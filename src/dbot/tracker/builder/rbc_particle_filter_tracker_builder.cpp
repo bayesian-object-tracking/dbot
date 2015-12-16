@@ -13,6 +13,10 @@
 
 #include <dbot/tracker/builder/rbc_particle_filter_tracker_builder.hpp>
 
+#ifdef BUILD_GPU
+#include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
+#endif
+
 namespace dbot
 {
 RbcParticleFilterTrackerBuilder::RbcParticleFilterTrackerBuilder(

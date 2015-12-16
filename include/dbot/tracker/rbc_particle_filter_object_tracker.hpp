@@ -37,9 +37,6 @@
 #include <dbot/rao_blackwell_coordinate_particle_filter.hpp>
 #include <dbot/model/state_transition/brownian_object_motion_model.hpp>
 
-#include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
-#include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
-#include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
 
 #include <fl/model/process/linear_state_transition_model.hpp>
 #include <fl/model/process/interface/state_transition_function.hpp>

@@ -19,12 +19,29 @@
 
 #include <gtest/gtest.h>
 
-#include <dbot/util/simple_shader_provider.hpp>
+#include <fstream>
+#include <boost/filesystem.hpp>
+
+#include <dbot/util/file_shader_provider.hpp>
+
+std::string write_temp_file(const std::string& content)
+{
+    boost::filesystem::path temp = boost::filesystem::unique_path();
+    std::ofstream ofs;
+    ofs.open(temp.c_str());
+    ofs << content;
+    ofs.close();
+
+    return temp.string();
+}
 
 TEST(FileShaderProviderTests, without_geometry_shaders)
 {
-    dbot::FileShaderProvider shader_provider("fragment shader code",
-                                             "vertex shader code");
+    std::string fragment_shader_file = write_temp_file("fragment shader code");
+    std::string vertex_shader_file = write_temp_file("vertex shader code");
+
+    dbot::FileShaderProvider shader_provider(fragment_shader_file,
+                                             vertex_shader_file);
 
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);
@@ -38,9 +55,13 @@ TEST(FileShaderProviderTests, without_geometry_shaders)
 
 TEST(FileShaderProviderTests, with_geometry_shaders)
 {
-    dbot::SimpleShaderProvider shader_provider("fragment shader code",
-                                               "vertex shader code",
-                                               "geometry shader code");
+    std::string fragment_shader_file = write_temp_file("fragment shader code");
+    std::string vertex_shader_file = write_temp_file("vertex shader code");
+    std::string geometry_shader_file = write_temp_file("geometry shader code");
+
+    dbot::FileShaderProvider shader_provider(fragment_shader_file,
+                                             vertex_shader_file,
+                                             geometry_shader_file);
 
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);

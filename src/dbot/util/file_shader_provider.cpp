@@ -45,8 +45,12 @@ std::string FileShaderProvider::load_file_content(const std::string& file)
 
     if (!shader_stream.is_open()) throw LoadingShaderFileFailedException();
 
-    std::string Line = "";
-    while (std::getline(shader_stream, Line)) content += "\n" + Line;
+    std::string line = "";
+    while (std::getline(shader_stream, line))
+    {
+        if (!content.empty()) content += "\n";
+        content += line;
+    }
     shader_stream.close();
 
     return content;

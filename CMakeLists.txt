@@ -4,7 +4,7 @@ project(dbot)
 ############################
 # Options                  #
 ############################
-option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" OFF)
+option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" ON)
 
 ############################
 # Flags                    #
@@ -133,7 +133,7 @@ file(GLOB_RECURSE dbot_HEADERS
     ${dbot_HEADER_DIR}/*.h)
 
 # Build dbot library
-set(dbot_SOURCES
+set(dbot_SOURCES    
     ${dbot_SOURCE_DIR}/util/camera_data.cpp
     ${dbot_SOURCE_DIR}/util/object_model.cpp
     ${dbot_SOURCE_DIR}/util/object_file_reader.cpp
@@ -141,6 +141,8 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
     ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
     ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
+    ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp)
 
@@ -158,8 +160,6 @@ if(BUILD_DBOT_ON_GPU)
         ${dbot_SOURCE_DIR}/model/observation/gpu)
 
     cuda_add_library(${dbot_LIBRARY_GPU} SHARED
-        ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
-        ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
         ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp)
