@@ -20,8 +20,8 @@
 #include <dbot/util/object_resource_identifier.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/convenience.hpp>
 
 namespace dbot
 {
@@ -88,6 +88,16 @@ int ObjectResourceIdentifier::count_meshes() const
 const std::vector<std::string>& ObjectResourceIdentifier::meshes() const
 {
     return meshes_;
+}
+
+std::string ObjectResourceIdentifier::mesh(int i) const
+{
+    return meshes_[i];
+}
+
+std::string ObjectResourceIdentifier::mesh_without_extension(int i) const
+{
+    return boost::filesystem::change_extension(mesh(i), "").string();
 }
 
 void ObjectResourceIdentifier::package_path(const std::string& package_path_)

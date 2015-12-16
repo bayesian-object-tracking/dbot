@@ -92,6 +92,16 @@ public:
      */
     const std::vector<std::string>& meshes() const;
 
+    /**
+     * \brief Returns the i-th mesh file name
+     */
+    std::string mesh(int i) const;
+
+    /**
+     * \brief Returns the i-th mesh file name without file type extension
+     */
+    std::string mesh_without_extension(int i) const;
+
 public:
     /**
      * \brief Sets the package top level path. This must include the package
@@ -110,6 +120,8 @@ public:
      * \brief Sets mesh filenames
      */
     void meshes(const std::vector<std::string>& meshes_);
+
+
 
 private:
     /**
