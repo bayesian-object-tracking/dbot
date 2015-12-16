@@ -141,3 +141,37 @@ TEST(ObjectResourceIndentifierTests, mesh_path)
                      "myobject.obj"),
         0);
 }
+
+TEST(ObjectResourceIndentifierTests, mesh_name_with_extension)
+{
+    EXPECT_EQ(
+        dbot::ObjectResourceIdentifier(
+            "/mypackage", "/path/within/package/to/object", {"myobject.obj"})
+            .mesh(0)
+            .compare("myobject.obj"),
+        0);
+
+    EXPECT_EQ(dbot::ObjectResourceIdentifier("/path/to/pkg/mypackage",
+                                             "/path/within/package/to/object",
+                                             {"myobject.obj"})
+                  .mesh(0)
+                  .compare("myobject.obj"),
+              0);
+}
+
+TEST(ObjectResourceIndentifierTests, mesh_name_without_extension)
+{
+    EXPECT_EQ(
+        dbot::ObjectResourceIdentifier(
+            "/mypackage", "/path/within/package/to/object", {"myobject.obj"})
+            .mesh_without_extension(0)
+            .compare("myobject"),
+        0);
+
+    EXPECT_EQ(dbot::ObjectResourceIdentifier("/path/to/pkg/mypackage",
+                                             "/path/within/package/to/object",
+                                             {"myobject.obj"})
+                  .mesh_without_extension(0)
+                  .compare("myobject"),
+              0);
+}
