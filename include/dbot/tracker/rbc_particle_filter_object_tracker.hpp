@@ -62,25 +62,84 @@ public:
         Filter;
 
 public:
+    /**
+     * \brief Creates the tracker
+     *
+     * \param filter
+     *          Rbc particle filter instance
+     * \param object_model
+     *          Object model instance
+     * \param camera_data
+     *          Camera data container
+     * \param update_rate
+     *          Moving average update rate
+     */
     RbcParticleFilterObjectTracker(const std::shared_ptr<Filter>& filter,
                                    const ObjectModel& object_model,
                                    const CameraData& camera_data,
                                    double update_rate);
 
+    /**
+     * \brief perform a single filter step
+     *
+     * \param image
+     *          Current observation image
+     */
     State track(const Obsrv& image);
 
+    /**
+     * \brief Initializes the particle filter with the given initial states and
+     *        the number of evaluations
+     * @param initial_states
+     * @param evaluation_count
+     */
     void initialize(const std::vector<State>& initial_states,
                     int evaluation_count);
 
+public: /* internals */
+
+    /**
+     * \brief Transforms the given state or pose in the model coordinate system
+     *        to the center coordinate system
+     * \param state
+     *          Object pose in the model coordinate system
+     */
     State to_center_coordinate_system(const State& state);
+
+    /**
+     * \brief Transforms the given state or pose in the center coordinate system
+     *        to the model coordinate system
+     * \param state
+     *          Object pose in the center coordinate system
+     */
     State to_model_coordinate_system(const State& state);
 
+    /**
+     * \brief Returns camera data
+     */
     const CameraData& camera_data() const { return camera_data_; }
+
+    /**
+     * \brief Updates the moving average with the new state using the specified
+     *        update rate. The update rate is the weight on the new state. That
+     *        is the new moving average is (1-update_rate) * moving_average +
+     *        update_rate * new_state
+     * \param moving_average
+     *          Last moveing average state
+     * @param new_state
+     *          New incoming state
+     * @param update_rate
+     *          Moving average update rate. The update rate is the weight on the
+     *          new state.
+     */
     void move_average(const State& moving_average,
                       State &new_state,
                       double update_rate);
 
 private:
+    /**
+     * \brief Shorthand for a zero input vector
+     */
     Input zero_input() const;
 
 private:
