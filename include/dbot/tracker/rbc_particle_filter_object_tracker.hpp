@@ -37,7 +37,6 @@
 #include <dbot/rao_blackwell_coordinate_particle_filter.hpp>
 #include <dbot/model/state_transition/brownian_object_motion_model.hpp>
 
-
 #include <fl/model/process/linear_state_transition_model.hpp>
 #include <fl/model/process/interface/state_transition_function.hpp>
 
@@ -65,16 +64,22 @@ public:
 public:
     RbcParticleFilterObjectTracker(const std::shared_ptr<Filter>& filter,
                                    const ObjectModel& object_model,
-                                   const CameraData& camera_data);
+                                   const CameraData& camera_data,
+                                   double update_rate);
 
     State track(const Obsrv& image);
 
     void initialize(const std::vector<State>& initial_states,
                     int evaluation_count);
+
     State to_center_coordinate_system(const State& state);
     State to_model_coordinate_system(const State& state);
 
     const CameraData& camera_data() const { return camera_data_; }
+    void move_average(const State& moving_average,
+                      State &new_state,
+                      double update_rate);
+
 private:
     Input zero_input() const;
 
@@ -82,8 +87,8 @@ private:
     std::shared_ptr<Filter> filter_;
     ObjectModel object_model_;
     CameraData camera_data_;
-    int evaluation_count_;
-
+    State moving_average_;
+    double update_rate_;
     std::mutex mutex_;
 };
 }

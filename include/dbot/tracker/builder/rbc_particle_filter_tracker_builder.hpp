@@ -48,6 +48,7 @@ public:
         bool use_gpu;
         int evaluation_count;
         double max_kl_divergence;
+        double update_rate;
 
         ObjectResourceIdentifier ori;
         RbObservationModelBuilder<State>::Parameters obsrv;

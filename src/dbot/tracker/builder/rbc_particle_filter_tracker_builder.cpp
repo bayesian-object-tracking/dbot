@@ -13,7 +13,7 @@
 
 #include <dbot/tracker/builder/rbc_particle_filter_tracker_builder.hpp>
 
-#ifdef BUILD_GPU
+#ifdef DBOT_BUILD_GPU
 #include <dbot/tracker/builder/rb_observation_model_gpu_builder.hpp>
 #endif
 
@@ -33,7 +33,7 @@ RbcParticleFilterTrackerBuilder::build()
     auto filter = create_filter(object_model, param_.max_kl_divergence);
 
     auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
-        filter, object_model, camera_data_);
+        filter, object_model, camera_data_, param_.update_rate);
 
     return tracker;
 }
@@ -86,7 +86,7 @@ auto RbcParticleFilterTrackerBuilder::create_obsrv_model(
     }
     else
     {
-#ifdef BUILD_GPU
+#ifdef DBOT_BUILD_GPU
         obsrv_model = RbObservationModelGpuBuilder<State>(
                           param, object_model, camera_data)
                           .build();

@@ -4,7 +4,7 @@ project(dbot)
 ############################
 # Options                  #
 ############################
-option(BUILD_DBOT_ON_GPU "Compile CUDA enabled trackers" OFF)
+option(DBOT_BUILD_GPU "Compile CUDA enabled trackers" OFF)
 
 ############################
 # Flags                    #
@@ -62,7 +62,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 add_definitions(${Eigen_DEFINITIONS})
 
-if(BUILD_DBOT_ON_GPU)
+if(DBOT_BUILD_GPU)
   set(GLEW_DIR ${CMAKE_MODULE_PATH})
 
   find_package(CUDA REQUIRED)
@@ -85,8 +85,9 @@ if(BUILD_DBOT_ON_GPU)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
   list(APPEND dbot_LIBRARIES ${dbot_LIBRARY_GPU})
 
-  add_definitions( -DBUILD_GPU=1 )
-endif(BUILD_DBOT_ON_GPU)
+  # activate gpu implementations
+  add_definitions(-DDBOT_BUILD_GPU=1)
+endif(DBOT_BUILD_GPU)
 
 ############################
 # Dependencies             #
@@ -155,7 +156,7 @@ target_link_libraries(${dbot_LIBRARY}
     ${Boost_LIBRARIES})
 
 # Build dbot GPU library
-if(BUILD_DBOT_ON_GPU)
+if(DBOT_BUILD_GPU)
     set(dbot_SOURCE_DIR_GPU
         ${dbot_SOURCE_DIR}/model/observation/gpu)
 
@@ -169,7 +170,7 @@ if(BUILD_DBOT_ON_GPU)
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
-endif(BUILD_DBOT_ON_GPU)
+endif(DBOT_BUILD_GPU)
 
 ############################
 # Tests                    #

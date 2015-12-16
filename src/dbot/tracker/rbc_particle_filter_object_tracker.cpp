@@ -18,10 +18,12 @@ namespace dbot
 RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
     const dbot::ObjectModel& object_model,
-    const dbot::CameraData& camera_data)
+    const dbot::CameraData& camera_data,
+    double update_rate)
     : filter_(filter),
       object_model_(object_model),
-      camera_data_(camera_data)
+      camera_data_(camera_data),
+      update_rate_(update_rate)
 {
 }
 
@@ -43,7 +45,7 @@ void RbcParticleFilterObjectTracker::initialize(
 
     State delta_mean = filter_->belief().mean();
 
-    filter_->observation_model()->integrated_poses().apply_delta(delta_mean);
+    //    filter_->observation_model()->integrated_poses().apply_delta(delta_mean);
 
     for (size_t i = 0; i < filter_->belief().size(); i++)
     {
@@ -53,6 +55,38 @@ void RbcParticleFilterObjectTracker::initialize(
         // system, the linear velocity changes, since it has to account for
         // part of the angular velocity.
         filter_->belief().location(i).set_zero_velocity();
+    }
+
+    auto& integrated_poses = filter_->observation_model()->integrated_poses();
+    integrated_poses.apply_delta(delta_mean);
+    moving_average_ = to_model_coordinate_system(integrated_poses);
+}
+
+void RbcParticleFilterObjectTracker::move_average(
+    const RbcParticleFilterObjectTracker::State& new_state,
+    RbcParticleFilterObjectTracker::State& moving_average,
+    double update_rate)
+{
+    for (int i = 0; i < moving_average.count(); i++)
+    {
+        auto partial_moving_average = moving_average.component(i);
+        auto partial_new_state = new_state.component(i);
+
+        Eigen::Vector4d average_q =
+            partial_moving_average.orientation().quaternion().coeffs();
+        Eigen::Vector4d new_q =
+            partial_new_state.orientation().quaternion().coeffs();
+
+        if (average_q.dot(new_q) < 0) new_q = -new_q;
+
+        Eigen::Quaterniond q;
+        q.coeffs() = (1.0 - update_rate) * average_q + update_rate * new_q;
+        q.normalize();
+
+        // taking weighted average
+        partial_moving_average = (1.0 - update_rate) * partial_moving_average +
+                                 update_rate * partial_new_state;
+        partial_moving_average.orientation().quaternion(q);
     }
 }
 
@@ -72,7 +106,11 @@ auto RbcParticleFilterObjectTracker::track(const Obsrv& image) -> State
     auto& integrated_poses = filter_->observation_model()->integrated_poses();
     integrated_poses.apply_delta(delta_mean);
 
-    return to_model_coordinate_system(integrated_poses);
+    move_average(to_model_coordinate_system(integrated_poses),
+                 moving_average_,
+                 update_rate_);
+
+    return moving_average_;
 }
 
 auto RbcParticleFilterObjectTracker::to_center_coordinate_system(
