@@ -91,7 +91,8 @@ auto RbcParticleFilterTrackerBuilder::create_obsrv_model(
                           param, object_model, camera_data)
                           .build();
 #else
-        ROS_FATAL("Tracker has not been compiled with GPU support!");
+        std::cout << "Tracker has not been compiled with GPU support!"
+                  << std::endl;
         exit(1);
 #endif
     }
