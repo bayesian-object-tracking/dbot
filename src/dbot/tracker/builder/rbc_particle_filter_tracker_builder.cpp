@@ -30,10 +30,13 @@ std::shared_ptr<RbcParticleFilterObjectTracker>
 RbcParticleFilterTrackerBuilder::build()
 {
     auto object_model = create_object_model(param_.ori);
-    auto filter = create_filter(object_model, param_.max_kl_divergence);
+    auto filter = create_filter(object_model, param_.tracker.max_kl_divergence);
 
     auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
-        filter, object_model, camera_data_, param_.update_rate);
+        filter,
+        object_model,
+        camera_data_,
+        param_.tracker.update_rate);
 
     return tracker;
 }
@@ -42,10 +45,11 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     const ObjectModel& object_model,
     double max_kl_divergence) -> std::shared_ptr<Filter>
 {
-    auto state_transition_model = create_state_transition_model(param_.process);
+    auto state_transition_model =
+        create_state_transition_model(param_.state_transition);
 
     auto obsrv_model = create_obsrv_model(
-        param_.use_gpu, object_model, camera_data_, param_.obsrv);
+        param_.use_gpu, object_model, camera_data_, param_.observation);
 
     auto sampling_blocks = create_sampling_blocks(
         object_model.count_parts(),
@@ -91,9 +95,7 @@ auto RbcParticleFilterTrackerBuilder::create_obsrv_model(
                           param, object_model, camera_data)
                           .build();
 #else
-        std::cout << "Tracker has not been compiled with GPU support!"
-                  << std::endl;
-        exit(1);
+        throw NoGpuSupportException();
 #endif
     }
 
@@ -127,5 +129,4 @@ RbcParticleFilterTrackerBuilder::create_sampling_blocks(int blocks,
 
     return sampling_blocks;
 }
-
 }
