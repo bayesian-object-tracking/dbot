@@ -31,10 +31,10 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
                                    const std::vector<std::vector<std::vector<int> > > indices,
                                    const std::shared_ptr<dbot::ShaderProvider>& shader_provider,
                                    const Eigen::Matrix3f camera_matrix,
-                                   const float near_plane,
-                                   const float far_plane,
                                    const int nr_rows,
-                                   const int nr_cols) :
+                                   const int nr_cols,
+                                   const float near_plane,
+                                   const float far_plane) :
     near_plane_(near_plane),
     far_plane_(far_plane),
     nr_rows_(nr_rows),

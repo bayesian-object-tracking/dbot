@@ -12,7 +12,7 @@
  */
 
 /**
- * \file cude_filter.cu
+ * \file cuda_likelihood_evaluator.cu
  * \author Claudia Pfreundt (claudilein@gmail.com)
  * \date November 2015
  */
@@ -22,7 +22,7 @@
 #define VECTOR_DIM 3
 #define MATRIX_DIM 9
 
-#include <dbot/model/observation/gpu/cuda_filter.hpp>
+#include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
 #include <GL/glut.h>
 
 
@@ -243,7 +243,7 @@ __global__ void evaluate_kernel(float *observations, float* old_occlusion_probs,
 
 // ************************************************************************************** //
 // ************************************************************************************** //
-// ========================== CUDA_FILTER MEMBER FUNCTIONS ============================== //
+// ========================== cuda_likelihood_evaluator MEMBER FUNCTIONS ============================== //
 // ************************************************************************************** //
 // ************************************************************************************** //
 

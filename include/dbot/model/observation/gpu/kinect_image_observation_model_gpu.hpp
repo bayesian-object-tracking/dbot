@@ -32,7 +32,7 @@
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
-#include <dbot/model/observation/gpu/cuda_filter.hpp>
+#include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
 
 #include <limits>
 #include <stdio.h>
@@ -198,9 +198,11 @@ public:
             new ObjectRasterizer(vertices_,
                                  indices_,
                                  shader_provider,
-                                 camera_matrix_.cast<float>()));
+                                 camera_matrix_.cast<float>(),
+                                 n_rows_,
+                                 n_cols_));
 
-        cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter());
+        cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter(n_rows_, n_cols_));
 
         // allocates memory and sets the dimensions of how many poses will be
         // rendered per row and per column in the texture
