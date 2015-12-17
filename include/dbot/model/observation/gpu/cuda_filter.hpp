@@ -24,11 +24,14 @@
 
 namespace fil
 {
-/// This class provides a parallel implementation of the weighting step on the
-/// GPU.
-/** After initializing the class and setting the execution parameters like the
- * number of poses
- *  and the resolution, you can weigh poses with the weigh_poses() function.
+/**
+ * \brief This class provides a parallel implementation of the weighting step on
+ *        the GPU.
+ *
+ * After initializing the class and setting the execution parameters like the
+ * number of poses and the resolution, you can weigh poses with the
+ * weigh_poses() function.
+ *
  * Make sure to
  *  always render the poses first with opengl, then map the texture into CUDA,
  *  update the observation image with set_observations() and update the
@@ -38,38 +41,48 @@ namespace fil
 class CudaFilter
 {
 public:
-    /// constructor which takes the resolution of the camera image
     /**
-     * \param [in] nr_rows the number of rows in each camera image
-     * \param [in] nr_cols the number of columns in each camera image
+     * \brief Constructor which takes the resolution of the camera image
+     *
+     * \param [in] nr_rows
+     *     The number of rows in each camera image
+     * \param [in] nr_cols
+     *     The number of columns in each camera image
      */
     CudaFilter(const int nr_rows = 60, const int nr_cols = 80);
 
-    /// destructor which frees the memory used on the GPU
+    /**
+     * \brief Destructor which frees the memory used on the GPU
+     */
     ~CudaFilter();
 
-    /// copies constants to GPU memory and initializes some memory-related
-    /// values.
     /**
-     * This function has to be called once in the beginning, before calling the
-     * weigh_poses() function.
-     * \param [in] initial_occlusion_prob the initial probability for each pixel
-     * of being occluded, meaning
-      * that something occludes the object in this pixel
-     * \param [in] p_occluded_occluded the probability of a pixel staying
-     * occluded from one frame to the next
-     * \param [in] p_occluded_visible the probability of a pixel changing from
-     * being occluded to being visible
-     * from one frame to the next
-     * \param [in] tail_weight the probability of a faulty measurement
-     * \param [in] model_sigma the uncertainty in the 3D model of the object
-     * \param [in] sigma_factor the standard deviation of the measurement noise
-     * at a distance of 1m to the camera
-     * \param [in] max_depth maximum value which can be measured by the depth
-     * sensor
-     * \param [in] exponential_rate the rate of the exponential distribution
-     * that models the probability of a measurement coming from an unknown
-     * object
+     * \brief This function has to be called once in the beginning, before
+     *        calling the weigh_poses() function.
+     *
+     * Copies constants to GPU memory and initializes some memory-related values
+     *
+     * \param [in] initial_occlusion_prob
+     *     The initial probability for each pixel of being occluded, meaning
+     *     that something occludes the object in this pixel
+     * \param [in] p_occluded_occluded
+     *     The probability of a pixel staying occluded from one frame to the
+     *     next
+     * \param [in] p_occluded_visible
+     *     The probability of a pixel changing from being occluded to being
+     *     visible from one frame to the next
+     * \param [in] tail_weight
+     *     The probability of a faulty measurement
+     * \param [in] model_sigma
+     *     The uncertainty in the 3D model of the object
+     * \param [in] sigma_factor
+     *     The standard deviation of the measurement noise at a distance of 1m
+     *     to the camera
+     * \param [in] max_depth
+     *     Maximum value which can be measured by the depth sensor
+     * \param [in] exponential_rate
+     *     The rate of the exponential distribution that models the probability
+     *     of a measurement coming from an unknown object
      */
     void init(const float initial_occlusion_prob,
               const float p_occluded_occluded,
@@ -80,21 +93,27 @@ public:
               const float max_depth,
               const float exponential_rate);
 
-    /// weights the different poses that were previously rendered with OpenGL
     /**
-     * \param [in] update whether or not to update the occlusion probabilities
-     * during this weighting
-     * \param [out] log_likelihoods the computed likelihoods for each pose
+     * \brief Weights the different poses that were previously rendered with
+     *        OpenGL
+     *
+     * \param [in] update_occlusions
+     *     Update whether or not to update the occlusion probabilities during
+     *     this weighting
+     * \param [out] log_likelihoods
+     *     The computed likelihoods for each pose
      */
     void weigh_poses(const bool update_occlusions,
                      std::vector<float>& log_likelihoods);
 
     // setters
-    /// sets the number of threads used for the CUDA weighting kernel to the
-    /// desired number.
-    /// A default of 128 is used if nothing is specified here.
+
     /**
-     * \param [in] nr_threads the desired number of threads
+     * Sets the number of threads used for the CUDA weighting kernel to the
+     * desired number.  A default of 128 is used if nothing is specified here.
+     *
+     * \param [in] nr_threads
+     *     The desired number of threads
      */
     void set_nr_threads(const int nr_threads);
 

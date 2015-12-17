@@ -26,6 +26,29 @@
 
 namespace dbot
 {
+
+/**
+ * \brief Represents an exception thrown if the package path is invalid, e.g.
+ *        empty or missing leading '/'
+ */
+class InvalidPackagePathException : public std::exception
+{
+public:
+    const char* what() const noexcept
+    {
+        return "Package path must be of the form '/path/to/packagename'";
+    }
+};
+
+/**
+ * \brief Represents an exception thrown if no package name has been specified
+ *        a missing package name is triggered when the path is either empty
+ *        or consists only of '/'
+ */
+class MissingPackageNameInPathException : public InvalidPackagePathException
+{
+};
+
 class ObjectResourceIdentifier
 {
 public:
@@ -105,9 +128,15 @@ public:
 public:
     /**
      * \brief Sets the package top level path. This must include the package
-     * name
+     * name. The package name is therefore deduced from this package path
      */
     void package_path(const std::string& package_path_);
+
+//    /**
+//     * \brief Sets the package name when the package name differs from the
+//     *        package top-level directory
+//     */
+//    void package(const std::string& package_name);
 
     /**
      * \brief Sets the relative path within the package pointing to the mesh
@@ -120,8 +149,6 @@ public:
      * \brief Sets mesh filenames
      */
     void meshes(const std::vector<std::string>& meshes_);
-
-
 
 private:
     /**
@@ -151,27 +178,5 @@ private:
      *   "package://<package>/<path>/<MESHES[i]>"
      */
     std::vector<std::string> meshes_;
-};
-
-/**
- * \brief Represents an exception thrown if the package path is invalid, e.g.
- *        empty or missing leading '/'
- */
-class InvalidPackagePathException : public std::exception
-{
-public:
-    const char* what() const noexcept
-    {
-        return "Package path must be of the form '/path/to/packagename'";
-    }
-};
-
-/**
- * \brief Represents an exception thrown if no package name has been specified
- *        a missing package name is triggered when the path is either empty
- *        or consists only of '/'
- */
-class MissingPackageNameInPathException : public InvalidPackagePathException
-{
 };
 }

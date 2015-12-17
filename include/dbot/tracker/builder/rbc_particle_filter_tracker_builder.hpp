@@ -19,12 +19,27 @@
 
 #pragma once
 
+#include <exception>
+
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 #include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
 #include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
 
 namespace dbot
 {
+
+/**
+ * \brief The NoGpuSupportException class
+ */
+class NoGpuSupportException: public std::exception
+{
+    const char* what() const noexcept
+    {
+        return "Tracker has not been compiled with GPU support "
+               "(DBOT_BUILD_GPU=OFF).";
+    }
+};
+
 
 /**
  * \brief Represents an Rbc Particle filter based tracker builder
@@ -44,14 +59,23 @@ public:
 
     struct Parameters
     {
+        struct TrackerParmeters
+        {
+            int evaluation_count;
+            int max_sample_count;
+            double update_rate;
+            double max_kl_divergence;
+        };
+
         bool use_gpu;
-        int evaluation_count;
-        double max_kl_divergence;
-        double update_rate;
+
+        TrackerParmeters cpu;
+        TrackerParmeters gpu;
+        TrackerParmeters tracker;
 
         ObjectResourceIdentifier ori;
-        RbObservationModelBuilder<State>::Parameters obsrv;
-        BrownianMotionModelBuilder<State, Input>::Parameters process;
+        RbObservationModelBuilder<State>::Parameters observation;
+        BrownianMotionModelBuilder<State, Input>::Parameters state_transition;
     };
 
 public:
@@ -85,6 +109,9 @@ private:
     /**
      * \brief Creates the Rbc particle filter observation model. This can either
      *        be CPU or GPU based
+     *
+     * \throws NoGpuSupportException if compile with DBOT_BUILD_GPU=OFF and
+     *         attempting to build a tracker with GPU support
      */
     std::shared_ptr<ObservationModel> create_obsrv_model(
         bool use_gpu,

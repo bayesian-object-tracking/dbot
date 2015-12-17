@@ -143,6 +143,7 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
     ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
     ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/util/default_shader_provider.cpp
     ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp)
