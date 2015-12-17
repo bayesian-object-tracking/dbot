@@ -30,20 +30,20 @@
 
 #include <dbot/model/observation/gpu/shader.hpp>
 
-GLuint LoadShaders(const dbot::ShaderProvider& shaderProvider)
+GLuint LoadShaders(const std::shared_ptr<dbot::ShaderProvider>& shaderProvider)
 {
     std::vector<GLuint> shaderList;
     shaderList.push_back(
-        CreateShader(GL_VERTEX_SHADER, shaderProvider.vertex_shader()));
+        CreateShader(GL_VERTEX_SHADER, shaderProvider->vertex_shader()));
 
-    if (shaderProvider.has_geometry_shader())
+    if (shaderProvider->has_geometry_shader())
     {
         shaderList.push_back(CreateShader(GL_GEOMETRY_SHADER,
-                                          shaderProvider.geometry_shader()));
+                                          shaderProvider->geometry_shader()));
     }
 
     shaderList.push_back(
-        CreateShader(GL_FRAGMENT_SHADER, shaderProvider.fragment_shader()));
+        CreateShader(GL_FRAGMENT_SHADER, shaderProvider->fragment_shader()));
 
     GLuint theProgram = CreateProgram(shaderList);
 

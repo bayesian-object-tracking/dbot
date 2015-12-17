@@ -21,6 +21,8 @@
 
 #include <memory>
 
+#include <fl/util/profiling.hpp>
+
 #include <Eigen/Dense>
 
 #include <dbot/tracker/builder/state_transition_function_builder.hpp>

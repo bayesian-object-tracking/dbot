@@ -51,6 +51,11 @@ public:
     CameraData(std::shared_ptr<CameraDataProvider>& data_provider);
 
     /**
+     * \brief Default virtual destructor
+     */
+    virtual ~CameraData() {  }
+
+    /**
      * \brief returns an obtained depth image as an Eigen matrix
      */
     Eigen::MatrixXd depth_image() const;

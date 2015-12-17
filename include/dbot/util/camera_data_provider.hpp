@@ -33,6 +33,10 @@ namespace dbot
 class CameraDataProvider
 {
 public:
+    /**
+     * \brief Default virtual destructor
+     */
+    virtual ~CameraDataProvider() {  }
 
     /**
      * \brief returns an obtained depth image as an Eigen matrix

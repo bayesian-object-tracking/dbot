@@ -21,10 +21,11 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <GL/glew.h>
 
 #include <dbot/model/observation/gpu/shader_provider.hpp>
 
-GLuint LoadShaders(const dbot::ShaderProvider& shaderProvider);
+GLuint LoadShaders(const std::shared_ptr<dbot::ShaderProvider> &shaderProvider);
 GLuint CreateShader(GLenum eShaderType, const std::string& shaderCode);
 GLuint CreateProgram(const std::vector<GLuint> &shaderList);

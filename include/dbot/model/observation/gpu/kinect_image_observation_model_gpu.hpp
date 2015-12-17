@@ -148,7 +148,7 @@ public:
         const size_t& max_sample_count,
         const std::vector<std::vector<Eigen::Vector3d>> vertices_double,
         const std::vector<std::vector<std::vector<int>>> indices,
-        const dbot::ShaderProvider& shader_provider,
+        const std::shared_ptr<ShaderProvider>& shader_provider,
         const Scalar& initial_occlusion_prob = 0.1d,
         const double& delta_time = 0.033d,
         const float p_occluded_visible = 0.1f,

@@ -32,16 +32,31 @@ template <typename State>
 class RbObservationModelBuilder
 {
 public:
+
     struct Parameters
     {
-        double tail_weight;
-        double model_sigma;
-        double sigma_factor;
-        double p_occluded_visible;
-        double p_occluded_occluded;
-        double initial_occlusion_prob;
+        struct Occlusion
+        {
+            double p_occluded_visible;
+            double p_occluded_occluded;
+            double initial_occlusion_prob;
+        };
+
+        struct Kinect
+        {
+            double tail_weight;
+            double model_sigma;
+            double sigma_factor;
+        };
+
+        Occlusion occlusion;
+        Kinect kinect;
         double delta_time;
-        int max_sample_count;
+        int sample_count;
+        bool use_custom_shaders;
+        std::string vertex_shader_file;
+        std::string fragment_shader_file;
+        std::string geometry_shader_file;
     };
 
     typedef RbObservationModel<State> Model;

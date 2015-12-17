@@ -29,7 +29,7 @@ using namespace Eigen;
 
 ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                                    const std::vector<std::vector<std::vector<int> > > indices,
-                                   const dbot::ShaderProvider& shader_provider,
+                                   const std::shared_ptr<dbot::ShaderProvider>& shader_provider,
                                    const Eigen::Matrix3f camera_matrix,
                                    const float near_plane,
                                    const float far_plane,
@@ -39,7 +39,6 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
     far_plane_(far_plane),
     nr_rows_(nr_rows),
     nr_cols_(nr_cols)
-//    shader_provider_(shader_provider)
 {
 
     // ========== CREATE WINDOWLESS OPENGL CONTEXT =========== //

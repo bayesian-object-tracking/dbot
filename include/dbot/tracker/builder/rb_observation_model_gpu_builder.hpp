@@ -29,6 +29,7 @@
 #include <dbot/util/object_model.hpp>
 #include <dbot/util/camera_data.hpp>
 #include <dbot/util/file_shader_provider.hpp>
+#include <dbot/util/default_shader_provider.hpp>
 #include <dbot/tracker/builder/rb_observation_model_builder.hpp>
 #include <dbot/model/observation/gpu/kinect_image_observation_model_gpu.hpp>
 
@@ -56,34 +57,36 @@ public:
 protected:
     virtual std::shared_ptr<BaseModel> create() const
     {
-        std::string vertex_shader_path =
-            ros::package::getPath("dbot") + "/src/dbot/model/observation/" +
-            "gpu/shaders/" + "VertexShader.vertexshader";
-
-        std::string fragment_shader_path =
-            ros::package::getPath("dbot") + "/src/dbot/model/observation/" +
-            "gpu/shaders/" + "FragmentShader.fragmentshader";
-
-        dbot::FileShaderProvider shader_provider(fragment_shader_path,
-                                                 vertex_shader_path);
-
         std::shared_ptr<Model> observation_model(
             new Model(camera_data_.camera_matrix(),
                       camera_data_.resolution().height,
                       camera_data_.resolution().width,
-                      param_.max_sample_count,
+                      param_.sample_count,
                       object_model_.vertices(),
                       object_model_.triangle_indices(),
-                      shader_provider,
-                      param_.initial_occlusion_prob,
+                      create_shader_provider(),
+                      param_.occlusion.initial_occlusion_prob,
                       param_.delta_time,
-                      param_.p_occluded_visible,
-                      param_.p_occluded_occluded,
-                      param_.tail_weight,
-                      param_.model_sigma,
-                      param_.sigma_factor));
+                      param_.occlusion.p_occluded_visible,
+                      param_.occlusion.p_occluded_occluded,
+                      param_.kinect.tail_weight,
+                      param_.kinect.model_sigma,
+                      param_.kinect.sigma_factor));
 
         return observation_model;
+    }
+
+    std::shared_ptr<ShaderProvider> create_shader_provider() const
+    {
+        if (param_.use_custom_shaders)
+        {
+            return std::shared_ptr<ShaderProvider>(
+                new FileShaderProvider(param_.fragment_shader_file,
+                                       param_.vertex_shader_file,
+                                       param_.geometry_shader_file));
+        }
+
+        return std::shared_ptr<ShaderProvider>(new DefaultShaderProvider());
     }
 
 private:

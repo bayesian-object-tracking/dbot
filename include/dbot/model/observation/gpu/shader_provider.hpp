@@ -31,6 +31,11 @@ class ShaderProvider
 {
 public:
     /**
+     * \brief Default virtual destructor
+     */
+    virtual ~ShaderProvider() {  }
+
+    /**
      * \brief Returns the fragment shader source code
      */
     virtual std::string fragment_shader() const = 0;
