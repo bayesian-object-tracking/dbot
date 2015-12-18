@@ -52,9 +52,10 @@ class RbcParticleFilterObjectTracker
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
+    typedef Eigen::VectorXd Noise;
     typedef Eigen::VectorXd Input;
 
-    typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
+    typedef fl::StateTransitionFunction<State, Noise, Input> StateTransition;
     typedef RbObservationModel<State> ObservationModel;
     typedef typename ObservationModel::Observation Obsrv;
 

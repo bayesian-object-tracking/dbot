@@ -33,10 +33,7 @@ RbcParticleFilterTrackerBuilder::build()
     auto filter = create_filter(object_model, param_.tracker.max_kl_divergence);
 
     auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
-        filter,
-        object_model,
-        camera_data_,
-        param_.tracker.update_rate);
+        filter, object_model, camera_data_, param_.tracker.update_rate);
 
     return tracker;
 }
@@ -45,8 +42,11 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     const ObjectModel& object_model,
     double max_kl_divergence) -> std::shared_ptr<Filter>
 {
+//    auto state_transition_model =
+//        create_brownian_state_transition_model(param_.state_transition);
+
     auto state_transition_model =
-        create_state_transition_model(param_.state_transition);
+        create_object_transition_model(param_.object_transition);
 
     auto obsrv_model = create_obsrv_model(
         param_.use_gpu, object_model, camera_data_, param_.observation);
@@ -63,15 +63,15 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     return filter;
 }
 
-auto RbcParticleFilterTrackerBuilder::create_state_transition_model(
-    const BrownianMotionModelBuilder<State, Input>& param) const
-    -> std::shared_ptr<StateTransition>
-{
-    BrownianMotionModelBuilder<State, Input> process_builder(param);
-    std::shared_ptr<StateTransition> process = process_builder.build();
+//auto RbcParticleFilterTrackerBuilder::create_brownian_state_transition_model(
+//    const BrownianMotionModelBuilder<State, Input>::Parameters& param) const
+//    -> std::shared_ptr<StateTransition>
+//{
+//    BrownianMotionModelBuilder<State, Input> process_builder(param);
+//    std::shared_ptr<StateTransition> process = process_builder.build();
 
-    return process;
-}
+//    return process;
+//}
 
 auto RbcParticleFilterTrackerBuilder::create_obsrv_model(
     bool use_gpu,
@@ -128,5 +128,18 @@ RbcParticleFilterTrackerBuilder::create_sampling_blocks(int blocks,
     }
 
     return sampling_blocks;
+}
+
+auto RbcParticleFilterTrackerBuilder::create_object_transition_model(
+    const ObjectTransitionModelBuilder<
+        RbcParticleFilterTrackerBuilder::State,
+        RbcParticleFilterTrackerBuilder::Input>::Parameters& param) const
+    ->  std::shared_ptr<StateTransition>
+{
+
+    ObjectTransitionModelBuilder<State, Input> process_builder(param);
+    std::shared_ptr<StateTransition> process = process_builder.build();
+
+    return process;
 }
 }

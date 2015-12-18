@@ -84,7 +84,7 @@ struct FilterBuilderBase
     /* ---------------------------------------------------------------------- */
     /* - State Transition Model                                             - */
     /* ---------------------------------------------------------------------- */
-    typedef fl::LinearStateTransitionModel<State, Input> LinearStateModel;
+    typedef fl::LinearStateTransitionModel<State, State, Input> LinearStateModel;
 
     struct Parameter
     {
