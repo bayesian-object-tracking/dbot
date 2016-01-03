@@ -21,6 +21,7 @@
 
 #include <exception>
 
+#include <dbot/util/object_resource_identifier.hpp>
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 #include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
 #include <dbot/tracker/builder/object_transition_model_builder.hpp>
@@ -54,8 +55,8 @@ public:
     typedef RbObservationModel<State> ObservationModel;
     typedef typename ObservationModel::Observation Obsrv;
 
-    typedef RBCoordinateParticleFilter<StateTransition, ObservationModel>
-        Filter;
+    typedef RaoBlackwellCoordinateParticleFilter<StateTransition,
+                                                 ObservationModel> Filter;
 
     struct Parameters
     {
