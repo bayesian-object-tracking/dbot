@@ -12,8 +12,8 @@
  */
 
 /**
- * \file brownian_motion_model_builder.hpp
- * \date November 2015
+ * \file object_transition_model_builder.hpp
+ * \date December 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
@@ -70,33 +70,53 @@ public:
     ObjectTransitionModelBuilder(const Parameters& param) : param_(param) {}
     virtual std::shared_ptr<Model> build() const
     {
-        auto model = std::shared_ptr<DerivedModel>(new DerivedModel(12, 6, 1));
-
-        auto A = model->create_dynamics_matrix();
-        A.setIdentity();
-        A.topRightCorner(6, 6).setIdentity();
-        A.rightCols(6) *= param_.velocity_factor;
-        model->dynamics_matrix(A);
-
-        Eigen::MatrixXd B = model->create_noise_matrix();
-        B.setZero();
-        B.block(6, 0, 3, 3) = Eigen::Matrix3d::Identity() * param_.linear_sigma;
-        B.block(9, 3, 3, 3) =
-            Eigen::Matrix3d::Identity() * param_.angular_sigma;
-        B.topRows(6) = B.bottomRows(6);
-        model->noise_matrix(B);
-
-        auto C = model->create_input_matrix();
-        C.setZero();
-        model->input_matrix(C);
+        auto model =
+            std::shared_ptr<DerivedModel>(new DerivedModel(build_model()));
 
         return std::static_pointer_cast<Model>(model);
     }
 
-protected:
-    std::shared_ptr<Model> create() const
+    virtual DerivedModel build_model() const
     {
-        std::shared_ptr<Model> model(new DerivedModel(12, 6, 1));
+        int total_state_dim = param_.part_count * 12;
+        int total_noise_dim = total_state_dim / 2;
+
+        auto model = DerivedModel(total_state_dim, total_noise_dim, 1);
+
+        auto A = model.create_dynamics_matrix();
+        auto B = model.create_noise_matrix();
+        auto C = model.create_input_matrix();
+
+        auto part_A = Eigen::Matrix<fl::Real, 12, 12>();
+        auto part_B = Eigen::Matrix<fl::Real, 12, 6>();
+
+        A.setIdentity();
+        B.setZero();
+        C.setZero();
+
+        part_A.setIdentity();
+        part_A.topRightCorner(6, 6).setIdentity();
+        part_A.rightCols(6) *= param_.velocity_factor;
+
+        part_B.setZero();
+        part_B.block(0, 0, 3, 3) =
+            Eigen::Matrix3d::Identity() * param_.linear_sigma;
+        part_B.block(3, 3, 3, 3) =
+            Eigen::Matrix3d::Identity() * param_.angular_sigma;
+        part_B.bottomRows(6) = part_B.topRows(6);
+
+        for (int i = 0; i < param_.part_count; ++i)
+        {
+            A.block(i * 12, i * 12, 12, 12) = part_A;
+            B.block(i * 12, i * 6, 12, 6) = part_B;
+        }
+
+        PV(A);
+        PV(B);
+
+        model.dynamics_matrix(A);
+        model.noise_matrix(B);
+        model.input_matrix(C);
 
         return model;
     }
