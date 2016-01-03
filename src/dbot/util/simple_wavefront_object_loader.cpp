@@ -18,6 +18,7 @@
  */
 
 #include <dbot/util/simple_wavefront_object_loader.hpp>
+
 namespace dbot
 {
 SimpleWavefrontObjectModelLoader::SimpleWavefrontObjectModelLoader(
