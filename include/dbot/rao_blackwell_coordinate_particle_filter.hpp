@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace dbot
 {
 template <typename ProcessModel, typename ObservationModel>
-class RBCoordinateParticleFilter
+class RaoBlackwellCoordinateParticleFilter
 {
 public:
     typedef typename ProcessModel::State State;
@@ -62,7 +62,7 @@ public:
 
 public:
     /// constructor and destructor *********************************************
-    RBCoordinateParticleFilter(
+    RaoBlackwellCoordinateParticleFilter(
         const std::shared_ptr<ProcessModel> process_model,
         const std::shared_ptr<ObservationModel> observation_model,
         const std::vector<std::vector<size_t>>& sampling_blocks,
@@ -87,7 +87,7 @@ public:
             exit(-1);
         }
     }
-    virtual ~RBCoordinateParticleFilter() noexcept {}
+    virtual ~RaoBlackwellCoordinateParticleFilter() noexcept {}
     /// the filter functions ***************************************************
     void filter(const Observation& observation, const Input& input)
     {
