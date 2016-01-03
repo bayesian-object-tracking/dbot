@@ -428,9 +428,10 @@ public:
     {
         std::vector<float> std_measurement(image.size());
 
-        for (size_t row = 0; row < image.rows(); row++)
-            for (size_t col = 0; col < image.cols(); col++)
-                std_measurement[row * image.cols() + col] = image(row, col);
+        for(int i = 0; i < image.size(); ++i)
+        {
+            std_measurement[i] = image(i);
+        }
 
         observation_time_ += this->delta_time_;
 
