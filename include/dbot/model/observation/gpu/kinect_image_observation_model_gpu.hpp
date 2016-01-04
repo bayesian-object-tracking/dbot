@@ -198,7 +198,11 @@ public:
             new ObjectRasterizer(vertices_,
                                  indices_,
                                  shader_provider,
-                                 camera_matrix_.cast<float>()));
+                                 camera_matrix_.cast<float>(),
+                                 0.4,
+                                 4,
+                                 n_rows,
+                                 n_cols));
 
         cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter());
 
@@ -428,7 +432,7 @@ public:
     {
         std::vector<float> std_measurement(image.size());
 
-        for(int i = 0; i < image.size(); ++i)
+        for (int i = 0; i < image.size(); ++i)
         {
             std_measurement[i] = image(i);
         }
