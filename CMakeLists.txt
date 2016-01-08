@@ -164,7 +164,7 @@ if(DBOT_BUILD_GPU)
         ${dbot_SOURCE_DIR}/model/observation/gpu)
 
     cuda_add_library(${dbot_LIBRARY_GPU} SHARED
-        ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_filter.cu
+        ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_likelihood_evaluator.cu
         ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
         ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp)
 

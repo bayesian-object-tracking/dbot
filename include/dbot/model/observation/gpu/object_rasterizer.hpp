@@ -43,21 +43,21 @@ public:
      * \param [in]  vertex_shader_path path to the vertex shader
      * \param [in]  fragment_shader_path path to the fragment shader
      * \param [in]  camera_matrix matrix of the intrinsic parameters of the camera
+     * \param [in]  nr_rows the number of rows in one sensor image (vertical resolution)
+     * \param [in]  nr_cols the number of columns in one sensor image (horizontal resolution)
      * \param [in]  near_plane everything closer than the near plane will not be rendered. This should
      * be similar to the minimal distance up to which the sensor can see objects.
      * \param [in]  far_plane everything further away than the far plane will not be rendered. This should
      * be similar to the maximum distance up to which the sensor can see objects.
-     * \param [in]  nr_rows the number of rows in one sensor image (vertical resolution)
-     * \param [in]  nr_cols the number of columns in one sensor image (horizontal resolution)
      */
     ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f> > vertices,
                      const std::vector<std::vector<std::vector<int> > > indices,
                      const std::shared_ptr<dbot::ShaderProvider>& shader_provider,
                      const Eigen::Matrix3f camera_matrix,
+                     const int nr_rows,
+                     const int nr_cols,
                      const float near_plane = 0.4,
-                     const float far_plane = 4,
-                     const int nr_rows = 60,
-                     const int nr_cols = 80);
+                     const float far_plane = 4);
 
     /// destructor which deletes the buffers and programs used by openGL
     ~ObjectRasterizer();

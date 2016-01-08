@@ -49,7 +49,8 @@ public:
      * \param [in] nr_cols
      *     The number of columns in each camera image
      */
-    CudaFilter(const int nr_rows = 60, const int nr_cols = 80);
+    CudaFilter(const int nr_rows,
+               const int nr_cols);
 
     /**
      * \brief Destructor which frees the memory used on the GPU
