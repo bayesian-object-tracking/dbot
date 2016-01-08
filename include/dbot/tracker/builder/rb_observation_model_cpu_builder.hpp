@@ -47,6 +47,7 @@ public:
                                  const CameraData& camera_data)
         : param_(param), object_model_(object_model), camera_data_(camera_data)
     {
+
     }
 
 protected:

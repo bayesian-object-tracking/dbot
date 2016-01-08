@@ -111,9 +111,6 @@ public:
             B.block(i * 12, i * 6, 12, 6) = part_B;
         }
 
-        PV(A);
-        PV(B);
-
         model.dynamics_matrix(A);
         model.noise_matrix(B);
         model.input_matrix(C);

@@ -134,7 +134,6 @@ private:
     void map(const State& pose, Eigen::VectorXd& obsrv_image) const
     {
         renderer_->set_poses({pose.component(0).affine()});
-        //        renderer_->set_poses({pose.affine()});
         renderer_->Render(depth_rendering_);
 
         convert(depth_rendering_, obsrv_image);
@@ -187,15 +186,6 @@ private:
             current_pose.component(0).position() =
                 current_state.component(0).position() +
                 nominal_pose_.component(0).position();
-
-            //            State current_pose;
-            //            current_pose.orientation() =
-            //                current_state.orientation() *
-            //                nominal_pose_.orientation();
-
-            //            current_pose.position() =
-            //                current_state.position() +
-            //                nominal_pose_.position();
 
             std::lock_guard<std::mutex> lock(*mutex);
             map(current_pose, render_cache_[current_state]);

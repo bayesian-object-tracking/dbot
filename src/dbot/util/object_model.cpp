@@ -55,6 +55,7 @@ int ObjectModel::count_parts() const
 {
     return vertices_.size();
 }
+
 void ObjectModel::compute_centers(std::vector<Eigen::Vector3d>& centers)
 {
     centers.resize(vertices_.size());

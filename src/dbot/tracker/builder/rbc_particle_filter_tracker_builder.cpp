@@ -68,16 +68,6 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     return filter;
 }
 
-// auto RbcParticleFilterTrackerBuilder::create_brownian_state_transition_model(
-//    const BrownianMotionModelBuilder<State, Input>::Parameters& param) const
-//    -> std::shared_ptr<StateTransition>
-//{
-//    BrownianMotionModelBuilder<State, Input> process_builder(param);
-//    std::shared_ptr<StateTransition> process = process_builder.build();
-
-//    return process;
-//}
-
 auto RbcParticleFilterTrackerBuilder::create_object_transition_model(
     const ObjectTransitionModelBuilder<
         RbcParticleFilterTrackerBuilder::State,

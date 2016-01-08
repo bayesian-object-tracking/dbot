@@ -103,16 +103,6 @@ private:
     std::shared_ptr<Filter> create_filter(const ObjectModel& object_model,
                                           double max_kl_divergence);
 
-    //    /**
-    //     * \brief Creates a Brownian motion state transition function used in
-    //     the
-    //     *        filter
-    //     */
-    //    std::shared_ptr<StateTransition>
-    //    create_brownian_state_transition_model(
-    //        const BrownianMotionModelBuilder<State, Input>::Parameters& param)
-    //        const;
-
     /**
      * \brief Creates a Linear object transition function used in the
      *        filter
