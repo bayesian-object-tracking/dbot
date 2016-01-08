@@ -35,10 +35,11 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
                                    const int nr_cols,
                                    const float near_plane,
                                    const float far_plane) :
-    near_plane_(near_plane),
-    far_plane_(far_plane),
+
     nr_rows_(nr_rows),
-    nr_cols_(nr_cols)
+    nr_cols_(nr_cols),
+    near_plane_(near_plane),
+    far_plane_(far_plane)
 {
 
     // ========== CREATE WINDOWLESS OPENGL CONTEXT =========== //

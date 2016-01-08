@@ -175,6 +175,8 @@ public:
           observation_time_(0),
           Traits::Base(delta_time)
     {
+
+
         // set constants
         this->default_poses_.recount(vertices_double.size());
         this->default_poses_.setZero();
@@ -199,10 +201,10 @@ public:
                                  indices_,
                                  shader_provider,
                                  camera_matrix_.cast<float>(),
+                                 n_rows_,
+                                 n_cols_,
                                  0.4,
-                                 4,
-                                 n_rows,
-                                 n_cols));
+                                 4));
 
 
         cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter(n_rows_, n_cols_));
@@ -599,9 +601,6 @@ private:
                                                  nr_poses_per_column_,
                                                  adapt_to_constraints_);
 
-        std::cout << "OpenGL: allocated " << nr_max_poses_
-                  << " poses in the form (" << nr_poses_per_row_ << ", "
-                  << nr_poses_per_column_ << ")" << std::endl;
 
         int tmp_max_nr_poses = nr_max_poses_;
         int tmp_nr_poses_per_row = nr_poses_per_row_;
@@ -612,9 +611,6 @@ private:
                                              nr_poses_per_column_,
                                              adapt_to_constraints_);
 
-        std::cout << "CUDA: allocated " << nr_max_poses_
-                  << " poses in the form (" << nr_poses_per_row_ << ", "
-                  << nr_poses_per_column_ << ")" << std::endl;
 
         // if number of poses gets limited by cuda, we have to reallocate the
         // textures in OpenGL again
@@ -627,10 +623,6 @@ private:
                                                      nr_poses_per_column_,
                                                      adapt_to_constraints_);
 
-            std::cout << "OpenGL adapts to CUDA restrictions: allocated "
-                      << nr_max_poses_ << " poses in the form ("
-                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
-                      << ")" << std::endl;
         }
     }
 
