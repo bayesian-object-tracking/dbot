@@ -93,7 +93,7 @@ endif(DBOT_BUILD_GPU)
 # Dependencies             #
 ############################
 # Use catkin of available otherwise fall back to native cmake
-find_package(catkin QUIET COMPONENTS fl osr roscpp roslib)
+find_package(catkin QUIET COMPONENTS fl osr)
 if(catkin_FOUND)
   message(STATUS "Using catkin")
   catkin_package(
@@ -106,8 +106,6 @@ if(catkin_FOUND)
     LIBRARIES
       ${dbot_LIBRARIES}
     CATKIN_DEPENDS
-      roscpp
-      roslib
       osr
       fl
     DEPENDS
@@ -145,8 +143,12 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
     ${dbot_SOURCE_DIR}/util/default_shader_provider.cpp
     ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
-    ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp)
+    ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/tracker/builder/rms_gaussian_filter_tracker_builder.cpp
+)
 
 add_library(${dbot_LIBRARY} SHARED
     ${dbot_HEADERS}

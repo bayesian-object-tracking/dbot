@@ -22,6 +22,7 @@
 #include <memory>
 
 #include <fl/util/profiling.hpp>
+#include <fl/util/meta.hpp>
 
 #include <Eigen/Dense>
 
@@ -48,8 +49,7 @@ public:
         int part_count;
     };
 
-    BrownianMotionModelBuilder(const Parameters& param) : param_(param) { }
-
+    BrownianMotionModelBuilder(const Parameters& param) : param_(param) {}
     virtual std::shared_ptr<Model> build() const
     {
         std::shared_ptr<Model> model(create());
@@ -87,5 +87,4 @@ protected:
 private:
     Parameters param_;
 };
-
 }

@@ -21,17 +21,18 @@
 
 #include <exception>
 
+#include <dbot/util/object_resource_identifier.hpp>
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 #include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
+#include <dbot/tracker/builder/object_transition_model_builder.hpp>
 #include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
 
 namespace dbot
 {
-
 /**
  * \brief The NoGpuSupportException class
  */
-class NoGpuSupportException: public std::exception
+class NoGpuSupportException : public std::exception
 {
     const char* what() const noexcept
     {
@@ -40,7 +41,6 @@ class NoGpuSupportException: public std::exception
     }
 };
 
-
 /**
  * \brief Represents an Rbc Particle filter based tracker builder
  */
@@ -48,14 +48,15 @@ class RbcParticleFilterTrackerBuilder
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
+    typedef Eigen::VectorXd Noise;
     typedef Eigen::VectorXd Input;
 
-    typedef fl::StateTransitionFunction<State, State, Input> StateTransition;
+    typedef fl::StateTransitionFunction<State, Noise, Input> StateTransition;
     typedef RbObservationModel<State> ObservationModel;
     typedef typename ObservationModel::Observation Obsrv;
 
-    typedef RBCoordinateParticleFilter<StateTransition, ObservationModel>
-        Filter;
+    typedef RaoBlackwellCoordinateParticleFilter<StateTransition,
+                                                 ObservationModel> Filter;
 
     struct Parameters
     {
@@ -75,7 +76,10 @@ public:
 
         ObjectResourceIdentifier ori;
         RbObservationModelBuilder<State>::Parameters observation;
-        BrownianMotionModelBuilder<State, Input>::Parameters state_transition;
+        ObjectTransitionModelBuilder<State, Input>::Parameters
+            object_transition;
+        BrownianMotionModelBuilder<State, Input>::Parameters
+            brownian_transition;
     };
 
 public:
@@ -99,12 +103,23 @@ private:
     std::shared_ptr<Filter> create_filter(const ObjectModel& object_model,
                                           double max_kl_divergence);
 
+    //    /**
+    //     * \brief Creates a Brownian motion state transition function used in
+    //     the
+    //     *        filter
+    //     */
+    //    std::shared_ptr<StateTransition>
+    //    create_brownian_state_transition_model(
+    //        const BrownianMotionModelBuilder<State, Input>::Parameters& param)
+    //        const;
+
     /**
-     * \brief Creates a Brownian motion state transition function used in the
+     * \brief Creates a Linear object transition function used in the
      *        filter
      */
-    std::shared_ptr<StateTransition> create_state_transition_model(
-        const BrownianMotionModelBuilder<State, Input>& param) const;
+    std::shared_ptr<StateTransition> create_object_transition_model(
+        const ObjectTransitionModelBuilder<State, Input>::Parameters& param)
+        const;
 
     /**
      * \brief Creates the Rbc particle filter observation model. This can either

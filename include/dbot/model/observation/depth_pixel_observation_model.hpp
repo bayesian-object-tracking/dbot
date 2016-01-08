@@ -77,7 +77,6 @@ public:
         bg_density_.mean(bg_mean);
         bg_density_.square_root(bg_density_.square_root() * bg_sigma);
 
-        // setup backgroud density
         fg_density_.square_root(fg_density_.square_root() * fg_sigma);
     }
 
@@ -134,7 +133,8 @@ private:
     /** \cond internal */
     void map(const State& pose, Eigen::VectorXd& obsrv_image) const
     {
-        renderer_->set_poses({pose.affine()});
+        renderer_->set_poses({pose.component(0).affine()});
+        //        renderer_->set_poses({pose.affine()});
         renderer_->Render(depth_rendering_);
 
         convert(depth_rendering_, obsrv_image);
@@ -179,12 +179,23 @@ private:
 
         if (render_cache_.find(current_state) == render_cache_.end())
         {
-            State current_pose;
-            current_pose.orientation() =
-                current_state.orientation() * nominal_pose_.orientation();
+            State current_pose = current_state;
+            current_pose.component(0).orientation() =
+                current_state.component(0).orientation() *
+                nominal_pose_.component(0).orientation();
 
-            current_pose.position() =
-                current_state.position() + nominal_pose_.position();
+            current_pose.component(0).position() =
+                current_state.component(0).position() +
+                nominal_pose_.component(0).position();
+
+            //            State current_pose;
+            //            current_pose.orientation() =
+            //                current_state.orientation() *
+            //                nominal_pose_.orientation();
+
+            //            current_pose.position() =
+            //                current_state.position() +
+            //                nominal_pose_.position();
 
             std::lock_guard<std::mutex> lock(*mutex);
             map(current_pose, render_cache_[current_state]);

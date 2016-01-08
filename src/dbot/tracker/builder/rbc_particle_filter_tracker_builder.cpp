@@ -11,6 +11,7 @@
  * file distributed with this source code.
  */
 
+#include <dbot/util/simple_wavefront_object_loader.hpp>
 #include <dbot/tracker/builder/rbc_particle_filter_tracker_builder.hpp>
 
 #ifdef DBOT_BUILD_GPU
@@ -36,6 +37,7 @@ RbcParticleFilterTrackerBuilder::build()
         filter,
         object_model,
         camera_data_,
+        param_.tracker.evaluation_count,
         param_.tracker.update_rate);
 
     return tracker;
@@ -45,8 +47,11 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     const ObjectModel& object_model,
     double max_kl_divergence) -> std::shared_ptr<Filter>
 {
+    //    auto state_transition_model =
+    //        create_brownian_state_transition_model(param_.state_transition);
+
     auto state_transition_model =
-        create_state_transition_model(param_.state_transition);
+        create_object_transition_model(param_.object_transition);
 
     auto obsrv_model = create_obsrv_model(
         param_.use_gpu, object_model, camera_data_, param_.observation);
@@ -63,11 +68,23 @@ auto RbcParticleFilterTrackerBuilder::create_filter(
     return filter;
 }
 
-auto RbcParticleFilterTrackerBuilder::create_state_transition_model(
-    const BrownianMotionModelBuilder<State, Input>& param) const
+// auto RbcParticleFilterTrackerBuilder::create_brownian_state_transition_model(
+//    const BrownianMotionModelBuilder<State, Input>::Parameters& param) const
+//    -> std::shared_ptr<StateTransition>
+//{
+//    BrownianMotionModelBuilder<State, Input> process_builder(param);
+//    std::shared_ptr<StateTransition> process = process_builder.build();
+
+//    return process;
+//}
+
+auto RbcParticleFilterTrackerBuilder::create_object_transition_model(
+    const ObjectTransitionModelBuilder<
+        RbcParticleFilterTrackerBuilder::State,
+        RbcParticleFilterTrackerBuilder::Input>::Parameters& param) const
     -> std::shared_ptr<StateTransition>
 {
-    BrownianMotionModelBuilder<State, Input> process_builder(param);
+    ObjectTransitionModelBuilder<State, Input> process_builder(param);
     std::shared_ptr<StateTransition> process = process_builder.build();
 
     return process;
