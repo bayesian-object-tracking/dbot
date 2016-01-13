@@ -61,6 +61,11 @@ public:
     Eigen::MatrixXd depth_image() const;
 
     /**
+     * \brief returns an obtained depth image as an Eigen matrix
+     */
+    Eigen::VectorXd depth_image_vector() const;
+
+    /**
      * \brief Returns the frame_id name of the camera
      */
     std::string frame_id() const;

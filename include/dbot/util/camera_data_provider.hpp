@@ -44,6 +44,11 @@ public:
     virtual Eigen::MatrixXd depth_image() const = 0;
 
     /**
+     * \brief returns an obtained depth image as an Eigen vector
+     */
+    virtual Eigen::VectorXd depth_image_vector() const = 0;
+
+    /**
      * \brief Obtains the camera matrix
      */
     virtual Eigen::Matrix3d camera_matrix() const = 0;
