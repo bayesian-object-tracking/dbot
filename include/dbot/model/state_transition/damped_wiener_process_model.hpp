@@ -27,6 +27,7 @@
 //#include <dbot/model/state_transition/stationary_process_model.hpp>
 //#include <fast_filtering/distributions/gaussian.hpp>
 #include <fl/distribution/gaussian.hpp>
+#include <dbot/util/traits.hpp>
 
 namespace dbot
 {

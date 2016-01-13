@@ -25,6 +25,7 @@
 
 #include <dbot/util/object_model.hpp>
 #include <dbot/util/camera_data.hpp>
+#include <dbot/util/rigid_body_renderer.hpp>
 #include <dbot/tracker/builder/rb_observation_model_builder.hpp>
 #include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
 
@@ -50,7 +51,6 @@ public:
 
     }
 
-protected:
     virtual std::shared_ptr<BaseModel> create() const
     {
         auto pixel_model = create_pixel_model();
@@ -70,7 +70,6 @@ protected:
         return observation_model;
     }
 
-protected:
     virtual std::shared_ptr<KinectPixelObservationModel> create_pixel_model()
         const
     {
