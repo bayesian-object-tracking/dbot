@@ -109,8 +109,8 @@ public:
     {
         static_assert_base(State, osr::RigidBodiesState<OBJECTS>);
 
-//        this->default_poses_.recount(object_model_->vertices().size());
-//        this->default_poses_.setZero();
+        this->default_poses_.recount(object_model_->vertices().size());
+        this->default_poses_.setZero();
 
         reset();
     }
@@ -220,7 +220,10 @@ public:
 
     void set_observation(const Observation& image)
     {
-        std::vector<float> std_measurement(image.size());
+        assert(image.rows() == image.size());
+        assert(image.cols() == 1);
+
+        std::vector<float> std_measurement(image.size());        
 
         for (int i = 0; i < image.size(); ++i)
         {

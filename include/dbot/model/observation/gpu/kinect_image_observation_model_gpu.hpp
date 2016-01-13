@@ -31,6 +31,7 @@
 #include <dbot/model/observation/rao_blackwell_observation_model.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
+#include <dbot/util/traits.hpp>
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
 #include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
 
