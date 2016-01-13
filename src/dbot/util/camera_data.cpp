@@ -36,6 +36,11 @@ Eigen::MatrixXd CameraData::depth_image() const
     return data_provider_->depth_image();
 }
 
+Eigen::VectorXd CameraData::depth_image_vector() const
+{
+   return data_provider_->depth_image_vector();
+}
+
 std::string CameraData::frame_id() const
 {
     return data_provider_->frame_id();
