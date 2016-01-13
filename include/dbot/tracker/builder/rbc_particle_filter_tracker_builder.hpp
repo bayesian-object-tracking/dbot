@@ -37,7 +37,7 @@ class NoGpuSupportException : public std::exception
     const char* what() const noexcept
     {
         return "Tracker has not been compiled with GPU support "
-               "(DBOT_BUILD_GPU=OFF).";
+               "(<PROJECT_NAME>_BUILD_GPU=OFF).";
     }
 };
 
@@ -96,7 +96,6 @@ public:
      */
     std::shared_ptr<RbcParticleFilterObjectTracker> build();
 
-private:
     /**
      * \brief Creates an instance of the Rbc particle filter
      */
