@@ -24,6 +24,7 @@
 #include <osr/pose_vector.hpp>
 #include <osr/pose_velocity_vector.hpp>
 #include <osr/composed_vector.hpp>
+#include <osr/free_floating_rigid_bodies_state.hpp>
 
 namespace dbot
 {
@@ -40,7 +41,8 @@ public:
     typedef Eigen::Array<fl::Real, -1, 1> RealArray;
     typedef Eigen::Array<int, -1, 1> IntArray;
     typedef Eigen::Matrix<fl::Real, -1, 1> RealVector;
-    typedef State PoseArray;
+//    typedef State PoseArray;
+    typedef osr::FreeFloatingRigidBodiesState<> PoseArray;
 
 public:
     /// constructor and destructor *********************************************
