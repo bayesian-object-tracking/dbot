@@ -97,7 +97,6 @@ public:
         noises_ = std::vector<Noise>(
             belief_.size(), Noise::Zero(process_model_->noise_dimension()));
         old_particles_ = belief_.locations();
-
         for (size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
             // add noise of this block -----------------------------------------

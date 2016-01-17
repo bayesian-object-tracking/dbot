@@ -10,7 +10,7 @@ option(DBOT_BUILD_GPU "Compile CUDA enabled trackers" OFF)
 # Flags                    #
 ############################
 # Enable c++11 GCC 4.6 or greater required
-add_definitions(-std=c++0x)
+add_definitions(-std=c++0x -fno-omit-frame-pointer)
 add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
 
 #add_definitions(-Wall)
