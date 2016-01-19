@@ -70,8 +70,8 @@ public:
     ObjectTransitionModelBuilder(const Parameters& param) : param_(param) {}
     virtual std::shared_ptr<Model> build() const
     {
-        auto model =
-            std::shared_ptr<DerivedModel>(new DerivedModel(build_model()));
+        auto model = std::shared_ptr<DerivedModel>(
+            new DerivedModel(build_crazy_model()));
 
         return std::static_pointer_cast<Model>(model);
     }
@@ -114,6 +114,63 @@ public:
         model.dynamics_matrix(A);
         model.noise_matrix(B);
         model.input_matrix(C);
+
+        return model;
+    }
+
+    virtual DerivedModel build_crazy_model() const
+    {
+        int total_state_dim = param_.part_count * 12;
+        int total_noise_dim = total_state_dim;
+
+        auto model = DerivedModel(total_state_dim, total_noise_dim, 1);
+
+        auto A = model.create_dynamics_matrix();
+        auto B = model.create_noise_matrix();
+        auto C = model.create_input_matrix();
+
+        auto part_A = Eigen::Matrix<fl::Real, 12, 12>();
+        auto part_B = Eigen::Matrix<fl::Real, 12, 12>();
+
+        A.setIdentity();
+        B.setZero();
+        C.setZero();
+
+        part_A.setIdentity();
+        part_A.topRightCorner(6, 6).setIdentity();
+        part_A.topRightCorner(6, 6) *= 1. / 30.;
+
+        auto part_part_B = Eigen::Matrix<fl::Real, 6, 6>();
+        part_part_B.setIdentity();
+        part_part_B.bottomLeftCorner(3, 3).setIdentity();
+        part_part_B.topLeftCorner(3, 3) *= 1. / (90 * std::sqrt(10));
+        part_part_B.bottomLeftCorner(3, 3) *= 1. / (2 * std::sqrt(10));
+        part_part_B.bottomRightCorner(3, 3) *= 1. / (2 * std::sqrt(30));
+
+        part_B.setIdentity();
+        part_B.block(0, 0, 6, 6) = part_part_B * param_.linear_sigma;
+        part_B.block(6, 6, 6, 6) = part_part_B * param_.angular_sigma;
+
+        Eigen::MatrixXd tmp = part_B;
+        part_B.middleRows(3, 3) = tmp.middleRows(6, 3);
+        part_B.middleRows(6, 3) = tmp.middleRows(3, 3);
+
+        PV(part_A);
+        PV(part_B);
+        PV(part_part_B);
+
+        for (int i = 0; i < param_.part_count; ++i)
+        {
+            A.block(i * 12, i * 12, 12, 12) = part_A;
+            B.block(i * 12, i * 12, 12, 12) = part_B;
+        }
+
+        model.dynamics_matrix(A);
+        model.noise_matrix(B);
+        model.input_matrix(C);
+
+        PV(A);
+        PV(B);
 
         return model;
     }

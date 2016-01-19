@@ -88,7 +88,8 @@ private:
      */
     void init();
 
-protected:
+//protected:
+public:
     Matrix camera_matrix_;
     int n_rows_;
     int n_cols_;
