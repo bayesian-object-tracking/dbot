@@ -24,9 +24,8 @@
 #include <dbot/util/object_model_loader.hpp>
 #include <dbot/util/object_resource_identifier.hpp>
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
-#include <dbot/tracker/builder/brownian_motion_model_builder.hpp>
 #include <dbot/tracker/builder/object_transition_model_builder.hpp>
-#include <dbot/tracker/builder/rb_observation_model_builder.hpp>
+#include <dbot/tracker/builder/rb_observation_model_builder.h>
 
 namespace dbot
 {

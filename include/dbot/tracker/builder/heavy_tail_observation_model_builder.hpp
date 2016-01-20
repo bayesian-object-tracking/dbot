@@ -25,7 +25,7 @@
 
 #include <dbot/util/object_model.hpp>
 #include <dbot/util/camera_data.hpp>
-#include <dbot/tracker/builder/rb_observation_model_builder.hpp>
+#include <dbot/tracker/builder/rb_observation_model_builder.h>
 #include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
 
 namespace dbot
