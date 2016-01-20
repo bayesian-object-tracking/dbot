@@ -71,8 +71,9 @@ public:
      * \param param			Builder and sub-builder parameters
      * \param camera_data	Tracker camera data object
      */
-    RmsGaussianFilterTrackerBuilder(const Parameters& param,
-                                    const CameraData& camera_data);
+    RmsGaussianFilterTrackerBuilder(
+        const Parameters& param,
+        const std::shared_ptr<CameraData>& camera_data);
 
     /**
      * \brief Builds the Rbc PF tracker
@@ -83,7 +84,8 @@ private:
     /**
      * \brief Creates an instance of the Rbc particle filter
      */
-    std::shared_ptr<Filter> create_filter(const ObjectModel& object_model);
+    std::shared_ptr<Filter> create_filter(
+        const std::shared_ptr<ObjectModel>& object_model);
 
     /**
      * \brief Creates a Linear object transition function used in the
@@ -101,24 +103,25 @@ private:
      *         attempting to build a tracker with GPU support
      */
     ObservationModel create_obsrv_model(
-        const ObjectModel& object_model,
-        const CameraData& camera_data,
+        const std::shared_ptr<ObjectModel>& object_model,
+        const std::shared_ptr<CameraData>& camera_data,
         const Parameters::Observation& param) const;
 
     /**
      * \brief Creates an object model renderer
      */
     std::shared_ptr<RigidBodyRenderer> create_renderer(
-        const ObjectModel& object_model) const;
+        const std::shared_ptr<ObjectModel>& object_model) const;
 
     /**
      * \brief Loads and creates an object model represented by the specified
      *        resource identifier
      */
-    ObjectModel create_object_model(const ObjectResourceIdentifier& ori) const;
+    std::shared_ptr<ObjectModel> create_object_model(
+        const ObjectResourceIdentifier& ori) const;
 
 private:
     Parameters param_;
-    dbot::CameraData camera_data_;
+    std::shared_ptr<dbot::CameraData> camera_data_;
 };
 }

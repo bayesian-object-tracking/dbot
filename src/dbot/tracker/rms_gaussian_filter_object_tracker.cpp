@@ -17,8 +17,8 @@ namespace dbot
 {
 RmsGaussianFilterObjectTracker::RmsGaussianFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
-    const ObjectModel& object_model,
-    const CameraData& camera_data,
+    const std::shared_ptr<ObjectModel>& object_model,
+    const std::shared_ptr<CameraData>& camera_data,
     double update_rate)
     : ObjectTracker(object_model, camera_data, update_rate),
       filter_(filter),

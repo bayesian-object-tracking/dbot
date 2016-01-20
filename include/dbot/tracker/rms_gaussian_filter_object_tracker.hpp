@@ -81,10 +81,11 @@ public:
      * \param update_rate
      *     Moving average update rate
      */
-    RmsGaussianFilterObjectTracker(const std::shared_ptr<Filter>& filter,
-                                   const ObjectModel& object_model,
-                                   const CameraData& camera_data,
-                                   double update_rate);
+    RmsGaussianFilterObjectTracker(
+        const std::shared_ptr<Filter>& filter,
+        const std::shared_ptr<ObjectModel>& object_model,
+        const std::shared_ptr<CameraData>& camera_data,
+        double update_rate);
 
     /**
      * \brief perform a single filter step

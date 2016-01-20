@@ -35,15 +35,15 @@
 
 namespace dbot
 {
-
 class ObjectTrackerAlgorithm
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
-//    typedef osr::PoseVelocityVector State;
+    //    typedef osr::PoseVelocityVector State;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Obsrv;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Noise;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Input;
+
 public:
     /**
      * \brief Hook function which is called during tracking
@@ -65,7 +65,6 @@ class ObjectTracker
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
-    //typedef osr::PoseVelocityVector State;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Obsrv;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Noise;
     typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Input;
@@ -83,8 +82,8 @@ public:
      * \param update_rate
      *     Moving average update rate
      */
-    ObjectTracker(const ObjectModel& object_model,
-                  const CameraData& camera_data,
+    ObjectTracker(const std::shared_ptr<ObjectModel>& object_model,
+                  const std::shared_ptr<CameraData>& camera_data,
                   double update_rate);
 
     /**
@@ -106,7 +105,6 @@ public:
      *     Current observation image
      */
     State track(const Obsrv& image);
-
 
     /**
      * \brief Initializes the particle filter with the given initial states and
@@ -135,7 +133,7 @@ public:
     /**
      * \brief Returns camera data
      */
-    const CameraData& camera_data() const;
+    const std::shared_ptr<CameraData> &camera_data() const;
 
     /**
      * \brief Updates the moving average with the new state using the specified
@@ -160,8 +158,8 @@ public:
     Input zero_input() const;
 
 protected:
-    ObjectModel object_model_;
-    CameraData camera_data_;
+    std::shared_ptr<ObjectModel> object_model_;
+    std::shared_ptr<CameraData> camera_data_;
     State moving_average_;
     double update_rate_;
     std::mutex mutex_;

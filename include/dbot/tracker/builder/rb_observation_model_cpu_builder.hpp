@@ -29,79 +29,74 @@
 #include <dbot/tracker/builder/rb_observation_model_builder.hpp>
 #include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
 
-namespace dbot
-{
-template <typename State>
-class RbObservationModelCpuBuilder : public RbObservationModelBuilder<State>
-{
-public:
-    typedef KinectImageObservationModelCPU<fl::Real, State> Model;
-    typedef typename Model::Observation Obsrv;
-    typedef RbObservationModel<State> BaseModel;
+//namespace dbot
+//{
+//template <typename State>
+//class RbObservationModelCpuBuilder : public RbObservationModelBuilder<State>
+//{
+//public:
+//    typedef KinectImageObservationModelCPU<fl::Real, State> Model;
+//    typedef typename Model::Observation Obsrv;
+//    typedef RbObservationModel<State> BaseModel;
 
-    typedef RbObservationModelBuilder<State> Base;
-    typedef typename Base::Parameters Parameters;
+//    typedef RbObservationModelBuilder<State> Base;
+//    typedef typename Base::Parameters Parameters;
 
-public:
-    RbObservationModelCpuBuilder(const Parameters& param,
-                                 const ObjectModel& object_model,
-                                 const CameraData& camera_data)
-        : param_(param), object_model_(object_model), camera_data_(camera_data)
-    {
+//public:
+//    RbObservationModelCpuBuilder(
+//        const std::shared_ptr<ObjectModel> object_model,
+//        const std::shared_ptr<CameraData> camera_data,
+//        const Parameters& params)
+//        : RbObservationModelBuilder(object_model, camera_data, params)
+//    {
+//    }
 
-    }
+//    virtual std::shared_ptr<BaseModel> create() const
+//    {
+//        auto pixel_model = create_pixel_model();
+//        auto occlusion_process = create_occlusion_process();
+//        auto renderer = create_renderer();
 
-    virtual std::shared_ptr<BaseModel> create() const
-    {
-        auto pixel_model = create_pixel_model();
-        auto occlusion_process = create_occlusion_process();
-        auto renderer = create_renderer();
+//        auto observation_model = std::shared_ptr<Model>(
+//            new Model(camera_data_->camera_matrix(),
+//                      camera_data_->resolution().height,
+//                      camera_data_->resolution().width,
+//                      renderer,
+//                      pixel_model,
+//                      occlusion_process,
+//                      params_.occlusion.initial_occlusion_prob,
+//                      params_.delta_time));
 
-        auto observation_model = std::shared_ptr<Model>(
-            new Model(camera_data_.camera_matrix(),
-                      camera_data_.resolution().height,
-                      camera_data_.resolution().width,
-                      renderer,
-                      pixel_model,
-                      occlusion_process,
-                      param_.occlusion.initial_occlusion_prob,
-                      param_.delta_time));
+//        return observation_model;
+//    }
 
-        return observation_model;
-    }
+//    virtual std::shared_ptr<KinectPixelObservationModel> create_pixel_model()
+//        const
+//    {
+//        std::shared_ptr<KinectPixelObservationModel>
+//            kinect_pixel_observation_model(
+//                new KinectPixelObservationModel(params_.kinect.tail_weight,
+//                                                params_.kinect.model_sigma,
+//                                                params_.kinect.sigma_factor));
+//        return kinect_pixel_observation_model;
+//    }
 
-    virtual std::shared_ptr<KinectPixelObservationModel> create_pixel_model()
-        const
-    {
-        std::shared_ptr<KinectPixelObservationModel>
-            kinect_pixel_observation_model(
-                new KinectPixelObservationModel(param_.kinect.tail_weight,
-                                                param_.kinect.model_sigma,
-                                                param_.kinect.sigma_factor));
-        return kinect_pixel_observation_model;
-    }
+//    virtual std::shared_ptr<OcclusionProcessModel> create_occlusion_process()
+//        const
+//    {
+//        std::shared_ptr<OcclusionProcessModel> occlusion_process(
+//            new OcclusionProcessModel(params_.occlusion.p_occluded_visible,
+//                                      params_.occlusion.p_occluded_occluded));
 
-    virtual std::shared_ptr<OcclusionProcessModel> create_occlusion_process()
-        const
-    {
-        std::shared_ptr<OcclusionProcessModel> occlusion_process(
-            new OcclusionProcessModel(param_.occlusion.p_occluded_visible,
-                                      param_.occlusion.p_occluded_occluded));
+//        return occlusion_process;
+//    }
 
-        return occlusion_process;
-    }
+//    virtual std::shared_ptr<RigidBodyRenderer> create_renderer() const
+//    {
+//        std::shared_ptr<RigidBodyRenderer> renderer(new RigidBodyRenderer(
+//            object_model_->vertices(), object_model_->triangle_indices()));
 
-    virtual std::shared_ptr<RigidBodyRenderer> create_renderer() const
-    {
-        std::shared_ptr<RigidBodyRenderer> renderer(new RigidBodyRenderer(
-            object_model_.vertices(), object_model_.triangle_indices()));
-
-        return renderer;
-    }
-
-private:
-    Parameters param_;
-    ObjectModel object_model_;
-    CameraData camera_data_;
-};
+//        return renderer;
+//    }
+//};
 }

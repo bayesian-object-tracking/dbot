@@ -18,7 +18,7 @@ namespace dbot
 {
 RmsGaussianFilterTrackerBuilder::RmsGaussianFilterTrackerBuilder(
     const Parameters& param,
-    const CameraData& camera_data)
+    const std::shared_ptr<CameraData>& camera_data)
     : param_(param), camera_data_(camera_data)
 {
 }
@@ -66,8 +66,8 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
 }
 
 auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
-    const ObjectModel& object_model,
-    const CameraData& camera_data,
+    const std::shared_ptr<ObjectModel>& object_model,
+    const std::shared_ptr<CameraData>& camera_data,
     const Parameters::Observation& param) const -> ObservationModel
 {
     typedef RmsGaussianFilterObjectTracker::PixelModel PixelModel;
@@ -85,17 +85,15 @@ auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
     auto body_tail_pixel_model =
         BodyTailModel(pixel_obsrv_model, tail_obsrv_model, param.tail_weight);
 
-    return ObservationModel(body_tail_pixel_model, camera_data.pixels());
+    return ObservationModel(body_tail_pixel_model, camera_data->pixels());
 }
 
-ObjectModel RmsGaussianFilterTrackerBuilder::create_object_model(
+std::shared_ptr<ObjectModel>
+RmsGaussianFilterTrackerBuilder::create_object_model(
     const ObjectResourceIdentifier& ori) const
 {
-    ObjectModel object_model;
-
-    object_model.load_from(std::shared_ptr<ObjectModelLoader>(
-                               new SimpleWavefrontObjectModelLoader(ori)),
-                           true);
+    auto object_model = std::shared_ptr<ObjectModel>(
+        new SimpleWavefrontObjectModelLoader(ori), true);
 
     return object_model;
 }
@@ -114,14 +112,14 @@ auto RmsGaussianFilterTrackerBuilder::create_object_transition_model(
 
 std::shared_ptr<RigidBodyRenderer>
 RmsGaussianFilterTrackerBuilder::create_renderer(
-    const ObjectModel& object_model) const
+    const std::shared_ptr<ObjectModel>& object_model) const
 {
     std::shared_ptr<RigidBodyRenderer> renderer(
-        new RigidBodyRenderer(object_model.vertices(),
-                              object_model.triangle_indices(),
-                              camera_data_.camera_matrix(),
-                              camera_data_.resolution().height,
-                              camera_data_.resolution().width));
+        new RigidBodyRenderer(object_model->vertices(),
+                              object_model->triangle_indices(),
+                              camera_data_->camera_matrix(),
+                              camera_data_->resolution().height,
+                              camera_data_->resolution().width));
 
     return renderer;
 }

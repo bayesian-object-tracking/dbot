@@ -17,8 +17,8 @@ namespace dbot
 {
 RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
-    const dbot::ObjectModel& object_model,
-    const dbot::CameraData& camera_data,
+    const std::shared_ptr<ObjectModel>& object_model,
+    const std::shared_ptr<dbot::CameraData>& camera_data,
     int evaluation_count,
     double update_rate)
     : ObjectTracker(object_model, camera_data, update_rate),
@@ -31,8 +31,8 @@ auto RbcParticleFilterObjectTracker::on_initialize(
     const std::vector<State>& initial_states) -> State
 {
     filter_->set_particles(initial_states);
-    filter_->filter(camera_data_.depth_image_vector(), zero_input());
-    filter_->resample(evaluation_count_ / object_model_.count_parts());
+    filter_->filter(camera_data_->depth_image_vector(), zero_input());
+    filter_->resample(evaluation_count_ / object_model_->count_parts());
 
     State delta_mean = filter_->belief().mean();
 

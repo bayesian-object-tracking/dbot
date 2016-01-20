@@ -37,27 +37,30 @@ struct ObjectStateTrait
     enum
     {
         NoiseDim = State::SizeAtCompileTime != -1 ? State::SizeAtCompileTime / 2
-                                                  : Eigen::Dynamic
+                                                  : Eigen::Dynamic,
+        InputDim = Eigen::Dynamic
     };
 
     typedef Eigen::Matrix<typename State::Scalar, NoiseDim, 1> Noise;
+    typedef Eigen::Matrix<typename State::Scalar, InputDim, 1> Input;
 };
 
-template <typename State, typename Input>
+template <typename State>
 class ObjectTransitionModelBuilder
     : public StateTransitionFunctionBuilder<
           State,
           typename ObjectStateTrait<State>::Noise,
-          Input>
+          typename ObjectStateTrait<State>::Input>
 {
 public:
     typedef fl::StateTransitionFunction<State,
                                         typename ObjectStateTrait<State>::Noise,
-                                        Input> Model;
+                                        typename ObjectStateTrait<State>::Input>
+        Model;
     typedef fl::LinearStateTransitionModel<
         State,
         typename ObjectStateTrait<State>::Noise,
-        Input> DerivedModel;
+        typename ObjectStateTrait<State>::Input> DerivedModel;
 
     struct Parameters
     {
@@ -71,7 +74,7 @@ public:
     virtual std::shared_ptr<Model> build() const
     {
         auto model = std::shared_ptr<DerivedModel>(
-            new DerivedModel(build_crazy_model()));
+            new DerivedModel(build_model()));
 
         return std::static_pointer_cast<Model>(model);
     }
@@ -114,6 +117,9 @@ public:
         model.dynamics_matrix(A);
         model.noise_matrix(B);
         model.input_matrix(C);
+
+        PV(model.dynamics_matrix());
+        PV(model.noise_matrix());
 
         return model;
     }
