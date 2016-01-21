@@ -37,7 +37,7 @@ RmsGaussianFilterTrackerBuilder::build()
 }
 
 auto RmsGaussianFilterTrackerBuilder::create_filter(
-    const ObjectModel& object_model) -> std::shared_ptr<Filter>
+    const std::shared_ptr<ObjectModel>& object_model) -> std::shared_ptr<Filter>
 {
     /* ------------------------------ */
     /* - State transition model     - */
@@ -92,19 +92,17 @@ std::shared_ptr<ObjectModel>
 RmsGaussianFilterTrackerBuilder::create_object_model(
     const ObjectResourceIdentifier& ori) const
 {
-    auto object_model = std::shared_ptr<ObjectModel>(
-        new SimpleWavefrontObjectModelLoader(ori), true);
+    auto object_model = std::make_shared<ObjectModel>(
+        std::shared_ptr<ObjectModelLoader>(new SimpleWavefrontObjectModelLoader(ori)), true);
 
     return object_model;
 }
 
 auto RmsGaussianFilterTrackerBuilder::create_object_transition_model(
-    const ObjectTransitionModelBuilder<
-        RmsGaussianFilterTrackerBuilder::State,
-        RmsGaussianFilterTrackerBuilder::Input>::Parameters& param) const
-    -> StateTransition
+    const ObjectTransitionModelBuilder<RmsGaussianFilterTrackerBuilder::State>::
+        Parameters& param) const -> StateTransition
 {
-    ObjectTransitionModelBuilder<State, Input> process_builder(param);
+    ObjectTransitionModelBuilder<State> process_builder(param);
     auto process = process_builder.build_model();
 
     return process;

@@ -24,7 +24,6 @@
 #include <dbot/util/object_resource_identifier.hpp>
 #include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
 #include <dbot/tracker/builder/object_transition_model_builder.hpp>
-#include <dbot/tracker/builder/rb_observation_model_cpu_builder.hpp>
 
 namespace dbot
 {
@@ -61,7 +60,7 @@ public:
 
         ObjectResourceIdentifier ori;
         Observation observation;
-        ObjectTransitionModelBuilder<State, Input>::Parameters
+        ObjectTransitionModelBuilder<State>::Parameters
             object_transition;
     };
 
@@ -92,7 +91,7 @@ private:
      *        filter
      */
     StateTransition create_object_transition_model(
-        const ObjectTransitionModelBuilder<State, Input>::Parameters& param)
+        const ObjectTransitionModelBuilder<State>::Parameters& param)
         const;
 
     /**
