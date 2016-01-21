@@ -4,7 +4,7 @@ project(dbot)
 ############################
 # Options                  #
 ############################
-option(DBOT_BUILD_GPU "Compile CUDA enabled trackers" OFF)
+option(DBOT_BUILD_GPU "Compile CUDA enabled trackers" ON)
 
 ############################
 # Flags                    #
@@ -24,15 +24,6 @@ add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
 # Library Version          #
 ############################
 include(cmake/version.cmake)
-
-##########################
-# Library info summary     #
-############################
-include(cmake/info.cmake)
-
-info_begin()
-  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
-info_end()
 
 ############################
 # Setup                    #
@@ -55,20 +46,18 @@ set(dbot_LIBRARIES ${dbot_LIBRARY})
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 
-# include_directories(${fl_INCLUDE_DIRS})
-# include_directories(${osr_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_definitions(${Eigen_DEFINITIONS})
 
-if(DBOT_BUILD_GPU)
-  set(GLEW_DIR ${CMAKE_MODULE_PATH})
+# GPU libs
+set(GLEW_DIR ${CMAKE_MODULE_PATH})
+find_package(CUDA QUIET)
+find_package(GLEW QUIET)
+find_package(OpenGL QUIET)
 
-  find_package(CUDA REQUIRED)
-  find_package(GLEW REQUIRED)
-  find_package(OpenGL REQUIRED)
-
+if(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   include_directories(${GLEW_INCLUDE_DIRS})
   include_directories(${OpenGL_INCLUDE_DIRS})
   cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
@@ -87,7 +76,28 @@ if(DBOT_BUILD_GPU)
 
   # activate gpu implementations
   add_definitions(-DDBOT_BUILD_GPU=1)
-endif(DBOT_BUILD_GPU)
+  set(DBOT_GPU_SUPPORT "YES")
+else(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
+  set(DBOT_GPU_SUPPORT "NO")
+endif(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
+
+############################
+# Library info summary     #
+############################
+include(cmake/info.cmake)
+
+info_yesorno(CUDA_FOUND DBOT_FOUND_CUDA)
+info_yesorno(GLEW_FOUND DBOT_FOUND_GLEW)
+info_yesorno(OPENGL_FOUND DBOT_FOUND_OPENGL)
+
+info_begin()
+  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
+  info_header("Setup")
+  info_item("Found CUDA" "${DBOT_FOUND_CUDA}")
+  info_item("Found GLEW" "${DBOT_FOUND_GLEW}")
+  info_item("Found OpenGL" "${DBOT_FOUND_OPENGL}")
+  info_item("GPU Support" "${DBOT_GPU_SUPPORT}")
+info_end()
 
 ############################
 # Dependencies             #
@@ -145,10 +155,10 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
-#    ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/builder/rb_observation_model_builder.cpp
     ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp
-#    ${dbot_SOURCE_DIR}/tracker/builder/rms_gaussian_filter_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/tracker/builder/rms_gaussian_filter_tracker_builder.cpp
 )
 
 add_library(${dbot_LIBRARY} SHARED
