@@ -89,7 +89,6 @@ public:
                               const std::shared_ptr<CameraData>& camera_data,
                               const Parameters& params);
 
-public:
     virtual std::shared_ptr<Model> build() const;
 
 public:
