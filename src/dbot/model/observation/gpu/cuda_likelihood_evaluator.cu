@@ -495,10 +495,10 @@ void CudaFilter::set_resolution(const int n_rows, const int n_cols, int& nr_pose
 
 void CudaFilter::set_occlusion_probabilities(const float* occlusion_probabilities) {
 
-       PV(nr_rows_) ;
-       PV(nr_cols_) ;
-       PV(nr_poses_) ;
-    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities, nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+        std::vector<float> occlusion_probabilities_local(
+            nr_rows_ * nr_cols_ * nr_poses_, occlusion_prob_default_);
+
+    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities_local.data(), nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
 
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_probabilities -> d_occlusion_probs_");

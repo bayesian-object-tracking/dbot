@@ -452,9 +452,10 @@ public:
     {
         float default_occlusion_probability = initial_occlusion_prob_;
 
-        std::vector<float> occlusion_probabilities(
-            n_rows_ * n_cols_ * nr_poses_, default_occlusion_probability);
-        cuda_->set_occlusion_probabilities(occlusion_probabilities.data());
+//        std::vector<float> occlusion_probabilities(
+//            n_rows_ * n_cols_ * (nr_poses_+40), default_occlusion_probability);
+//        cuda_->set_occlusion_probabilities(occlusion_probabilities.data());
+        cuda_->set_occlusion_probabilities(NULL);
 
         observation_time_ = 0;
     }
