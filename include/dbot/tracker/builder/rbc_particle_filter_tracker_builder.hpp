@@ -86,7 +86,7 @@ public:
     /**
      * \brief Builds the Rbc PF tracker
      */
-    virtual std::shared_ptr<RbcParticleFilterObjectTracker> build()
+    std::shared_ptr<RbcParticleFilterObjectTracker> build()
     {
         auto filter = create_filter(object_model_, params_.max_kl_divergence);
 
@@ -122,7 +122,6 @@ public:
                                                          obsrv_model,
                                                          sampling_blocks,
                                                          max_kl_divergence));
-
         return filter;
     }
 
@@ -149,7 +148,7 @@ public:
         return sampling_blocks;
     }
 
-private:
+protected:
     std::shared_ptr<StateTransitionBuilder> state_transition_builder_;
     std::shared_ptr<ObservationModelBuilder> obsrv_model_builder_;
     std::shared_ptr<ObjectModel> object_model_;

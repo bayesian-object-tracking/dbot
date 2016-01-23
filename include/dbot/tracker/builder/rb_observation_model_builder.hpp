@@ -60,6 +60,7 @@ auto RbObservationModelBuilder<State>::create_gpu_based_model() const
     -> std::shared_ptr<Model>
 {
 #ifdef DBOT_BUILD_GPU
+
     auto observation_model =
         std::shared_ptr<Model>(new dbot::KinectImageObservationModelGPU<State>(
             camera_data_->camera_matrix(),
