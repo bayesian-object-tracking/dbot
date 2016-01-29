@@ -32,7 +32,7 @@ public:
     std::string frame_id() const;
     CameraData::Resolution native_resolution() const;
 
-private:
+protected:
     std::string frame_id_;
     Eigen::Matrix3d camera_matrix_;
     CameraData::Resolution native_res_;
