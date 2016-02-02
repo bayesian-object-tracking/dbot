@@ -96,7 +96,7 @@ info_begin()
   info_item("Found CUDA" "${DBOT_FOUND_CUDA}")
   info_item("Found GLEW" "${DBOT_FOUND_GLEW}")
   info_item("Found OpenGL" "${DBOT_FOUND_OPENGL}")
-  info_item("GPU Support" "${DBOT_GPU_SUPPORT}")
+  info_item("Compiling with GPU Support" "${DBOT_GPU_SUPPORT}")
 info_end()
 
 ############################
