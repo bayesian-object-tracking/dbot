@@ -132,11 +132,11 @@ public:
      * \param blocks		Number of objects or object parts
      * \param block_size	State dimension of each part
      */
-    virtual std::vector<std::vector<size_t>> create_sampling_blocks(
+    virtual std::vector<std::vector<int>> create_sampling_blocks(
         int blocks,
         int block_size) const
     {
-        std::vector<std::vector<size_t>> sampling_blocks(blocks);
+        std::vector<std::vector<int>> sampling_blocks(blocks);
         for (int i = 0; i < blocks; ++i)
         {
             for (int k = 0; k < block_size; ++k)
