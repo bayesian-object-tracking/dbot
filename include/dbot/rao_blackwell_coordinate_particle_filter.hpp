@@ -65,7 +65,7 @@ public:
     RaoBlackwellCoordinateParticleFilter(
         const std::shared_ptr<ProcessModel> process_model,
         const std::shared_ptr<ObservationModel> observation_model,
-        const std::vector<std::vector<size_t>>& sampling_blocks,
+        const std::vector<std::vector<int>>& sampling_blocks,
         const fl::Real& max_kl_divergence = 0)
         : observation_model_(observation_model),
           process_model_(process_model),
@@ -194,7 +194,7 @@ private:
     std::shared_ptr<ProcessModel> process_model_;
 
     // parameters
-    std::vector<std::vector<size_t>> sampling_blocks_;
+    std::vector<std::vector<int>> sampling_blocks_;
     fl::Real max_kl_divergence_;
 
     // distribution for sampling
