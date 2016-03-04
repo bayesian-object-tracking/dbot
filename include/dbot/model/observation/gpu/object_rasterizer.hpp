@@ -108,16 +108,13 @@ public:
 
     /// allocates memory on the GPU
     /** Use this function to allocate memory for the maximum number of poses that you will need throughout the filtering.
-     * @param[in,out] allocated_poses number of poses for which space should be allocated. Might be changed by the function
-     * if there are space restrictions posed by OpenGL.
-     * \param [out] allocated_poses_per_row the number of poses that will be rendered per row of the texture
-     * \param [out] allocated_poses_per_column the number of poses that will be rendered per column of the texture
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program if constraints are not met
+     * \param[in] nr_poses number of poses for which space should be allocated.
+     * \param [in] nr_poses_per_row the number of poses that will be rendered per row of the texture
+     * \param [in] nr_poses_per_col the number of poses that will be rendered per column of the texture
      */
-    void allocate_textures_for_max_poses(int& allocated_poses,
-                                         int& allocated_poses_per_row,
-                                         int& allocated_poses_per_column,
-                                         const bool adapt_to_constraints = false);
+    void allocate_textures_for_max_poses(int nr_poses,
+                                         int nr_poses_per_row,
+                                         int nr_poses_per_col);
 
     /// sets the number of poses that should be rendered in the next render call
     /** Use this function previously to every render call if you need to change the amount of poses.
@@ -140,6 +137,24 @@ public:
      * @return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
      */
     std::vector<std::vector<float> > get_depth_values();
+
+    /// returns the constant and per-pose memory needs that OpenGL will have (in bytes)
+    /**
+     * \param [in] nr_rows the vertical resolution per pose rendering
+     * \param [in] nr_cols the horizontal resolution per pose rendering
+     * \param [out] constant_need the amount of memory that OpenGL will need,
+     * independently of the number of poses (in bytes)
+     * \param [out] per_pose_need the amount of memory that OpenGL will need
+     * per pose (in bytes)
+     */
+    void get_memory_need_parameters(int nr_rows, int nr_cols,
+                                    int& constant_need, int& per_pose_need);
+
+    /// returns the maximum texture size that OpenGL supports with this GPU
+    /**
+     * @return The maximum texture size that can be allocated
+     */
+    int get_max_texture_size();
 
 private:
     // GPU constraints

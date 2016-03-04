@@ -22,8 +22,6 @@
 #include <curand_kernel.h>
 #include <vector>
 
-namespace fil
-{
 /**
  * \brief This class provides a parallel implementation of the weighting step on
  *        the GPU.
@@ -38,7 +36,7 @@ namespace fil
  * occlusion indices (after resampling)
  *  before you call the weigh_poses() function.
  */
-class CudaFilter
+class CudaEvaluator
 {
 public:
     /**
@@ -49,13 +47,13 @@ public:
      * \param [in] nr_cols
      *     The number of columns in each camera image
      */
-    CudaFilter(const int nr_rows,
+    CudaEvaluator(const int nr_rows,
                const int nr_cols);
 
     /**
      * \brief Destructor which frees the memory used on the GPU
      */
-    ~CudaFilter();
+    ~CudaEvaluator();
 
     /**
      * \brief This function has to be called once in the beginning, before
@@ -217,6 +215,41 @@ public:
      */
     int get_warp_size();
 
+    /// gets the GPU properties obtained by CUDA
+    /**
+     * \return the device properties = i.e. maximum number of allowed threads,
+       maximum texture size, warp size etc. */
+    cudaDeviceProp get_device_properties();
+
+    /// returns the amount of memory (in bytes) that will be used by CUDA
+    /**
+     * \param [in] max_nr_poses the maximum number of poses to be evaluated
+     * \param [in] nr_rows the vertical resolution per pose rendering
+     * \param [in] nr_cols the horizontal resolution per pose rendering
+     *
+     * \return the amount of memory needed by CUDA in bytes
+     */
+    int query_memory_needs_in_bytes(int max_nr_poses, int nr_rows, int nr_cols);
+
+    /// returns the constant and per-pose memory needs that CUDA will have (in bytes)
+    /**
+     * \param [in] nr_rows the vertical resolution per pose rendering
+     * \param [in] nr_cols the horizontal resolution per pose rendering
+     * \param [out] constant_need the amount of memory that CUDA will need,
+     * independently of the number of poses (in bytes)
+     * \param [out] per_pose_need the amount of memory that CUDA will need
+     * per pose (in bytes)
+     */
+    void get_memory_need_parameters(int nr_rows, int nr_cols,
+                                    int& constant_need, int& per_pose_need);
+
+    /// gets the default number of threads that should be used for the
+    /// evaluation kernel
+    /**
+     * \return the default number of threads
+     */
+    int get_default_nr_threads();
+
     /// gets the occlusion probabilities of a particular state
     /**
      * \param [in] state_id the index into the state array
@@ -256,7 +289,7 @@ private:
     int nr_poses_per_column_;
 
     // block and grid arrangement of the CUDA kernels
-    int nr_threads_, n_blocks_;
+    int nr_threads_;
     dim3 grid_dimension_;
 
     // occlusion probability default value
@@ -287,4 +320,3 @@ private:
     void allocate(T*& pointer, size_t size);
     void check_cuda_error(const char* msg);
 };
-}

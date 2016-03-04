@@ -34,6 +34,7 @@
 #include <dbot/util/traits.hpp>
 #include <dbot/model/observation/gpu/object_rasterizer.hpp>
 #include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
+#include <dbot/model/observation/gpu/buffer_configuration.hpp>
 
 #include <limits>
 #include <stdio.h>
@@ -43,6 +44,7 @@
 
 #include <dbot/util/helper_functions.hpp>
 #include <fl/util/profiling.hpp>
+
 
 namespace dbot
 {
@@ -67,6 +69,8 @@ struct Traits<KinectImageObservationModelGPU<State>>
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 };
 }
+
+
 
 /**
  * \class ImageObservationModelGPU
@@ -178,6 +182,7 @@ public:
     {
 
 
+
         // set constants
         this->default_poses_.recount(vertices_double.size());
         this->default_poses_.setZero();
@@ -208,7 +213,9 @@ public:
                                  4));
 
 
-        cuda_ = boost::shared_ptr<fil::CudaFilter>(new fil::CudaFilter(n_rows_, n_cols_));
+        cuda_ = boost::shared_ptr<CudaEvaluator>(new CudaEvaluator(n_rows_, n_cols_));
+
+        BufferConfiguration bufferConfig = BufferConfiguration
 
         // allocates memory and sets the dimensions of how many poses will be
         // rendered per row and per column in the texture
@@ -787,7 +794,7 @@ private:
     std::string fragment_shader_path_;
 
     // CUDA handle
-    boost::shared_ptr<fil::CudaFilter> cuda_;
+    boost::shared_ptr<CudaEvaluator> cuda_;
 
     // constants for likelihood evaluation in CUDA kernel
     double observation_time_;

@@ -423,39 +423,24 @@ void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols,
         allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column, adapt_to_constraints);
 }
 
-void ObjectRasterizer::allocate_textures_for_max_poses(int& allocated_poses,
-                                                       int& allocated_poses_per_row,
-                                                       int& allocated_poses_per_column,
-                                                       const bool adapt_to_constraints) {
-    int max_poses_per_row = floor(max_texture_size_ / nr_cols_);
-    int max_poses_per_column = floor(max_texture_size_ / nr_rows_);
+void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
+                                                       int nr_poses_per_row,
+                                                       int nr_poses_per_column) {
 
-    allocated_poses_per_row = min(max_poses_per_row, allocated_poses);
-    allocated_poses_per_column = min(max_poses_per_column, (int) ceil(allocated_poses / (float) allocated_poses_per_row));
-
-    if (allocated_poses > allocated_poses_per_row * allocated_poses_per_column) {
-        if (adapt_to_constraints) {
-            std::cout << "WARNING (OPENGL): The space for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
-                      << "The limit is OpenGL texture size: " << max_texture_size_ << ". Current resolution is (" << nr_cols_ << ", "
-                      << nr_rows_ << ") , which means a maximum of (" << max_poses_per_row << ", " << max_poses_per_column << ") poses. "
-                      << "As a result, space for " << allocated_poses_per_row * allocated_poses_per_column << " poses will be allocated "
-                      << "in the form of (" << allocated_poses_per_row << ", " << allocated_poses_per_column << ")." << std::endl;
-        } else {
-            std::cout << "ERROR (OPENGL): The number of poses you requested cannot be rendered. The limit is the maximum OpenGL texture size: "
-                      << max_texture_size_ << " x " << max_texture_size_ << ". You requested a resolution of " << nr_cols_  << " x " << nr_rows_
-                      << " and " << allocated_poses << " poses." << std::endl;
-            exit(-1);
-        }
+    if (nr_poses_per_row * nr_cols_ > max_texture_size_ ||
+        nr_poses_per_col * nr_rows_ > max_texture_size_) {
+        std::cout << "ERROR (OPENGL): Exceeding maximum texture size with"
+                  << nr_poses_per_row << " x " << nr_poses_per_col << " poses"
+                  << std::endl;
+        exit(-1);
     }
 
-    allocated_poses = allocated_poses_per_row * allocated_poses_per_column;
-
-    nr_max_poses_ = allocated_poses;
-    nr_poses_ = allocated_poses;
-    nr_max_poses_per_row_ = allocated_poses_per_row;
-    nr_poses_per_row_ = allocated_poses_per_row;
-    nr_max_poses_per_column_ = allocated_poses_per_column;
-    nr_poses_per_column_ = allocated_poses_per_column;
+    nr_max_poses_ = nr_poses;
+    nr_poses_ = nr_poses;
+    nr_max_poses_per_row_ = nr_poses_per_row;
+    nr_poses_per_row_ = nr_poses_per_row;
+    nr_max_poses_per_column_ = nr_poses_per_column;
+    nr_poses_per_column_ = nr_poses_per_column;
 
     reallocate_buffers();
 }
@@ -558,6 +543,17 @@ vector<vector<float> > ObjectRasterizer::get_depth_values() {
     #endif
 }
 
+int ObjectRasterizer::get_max_texture_size() {
+    return max_texture_size_;
+}
+
+
+void ObjectRasterizer::get_memory_need_parameters(int nr_rows, int nr_cols,
+                                int& constant_need, int& per_pose_need) {
+    constant_need = vertices_list_.size() * sizeof(float)
+                    + indices_list_.size() * sizeof(uint);
+    per_pose_need = nr_rows * nr_cols * (8 + sizeof(float));
+}
 
 
 // ================================================================= //
