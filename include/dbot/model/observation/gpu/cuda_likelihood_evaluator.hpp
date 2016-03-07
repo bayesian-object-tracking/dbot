@@ -134,25 +134,12 @@ public:
     void set_occlusion_indices(const int* occlusion_indices);
 
     /// sets the resolution for the images to be compared
-    /** This function might downgrade the number of poses or change the
-     * arrangement of the
-     *  poses in the grid due to the resolution change.
+    /** Be sure to call allocate_memory_for_max_poses afterwards to reallocate
+     *  the buffers according to the new resolution.
      * \param [in] n_rows the number of rows in an image
      * \param [in] n_cols the number of columns in an image
-     * \param [out] nr_poses the number of poses that will be weighted
-     * \param [out] nr_poses_per_row the number of poses per row that will be
-     * weighted
-     * \param [out] nr_poses_per_column the number of poses per column that will
-     * be weighted
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
      */
-    void set_resolution(const int n_rows,
-                        const int n_cols,
-                        int& nr_poses,
-                        int& nr_poses_per_row,
-                        int& nr_poses_per_column,
-                        bool adapt_to_constraints = false);
+    void set_resolution(const int nr_rows, const int nr_cols);
 
     /// sets the occlusion probabilities for all pixels for all states
     /**
@@ -171,34 +158,23 @@ public:
     /// allocates the maximum amount of memory that will ever be needed by CUDA
     /// during runtime
     /**
-     * \param [in][out] allocated_poses the maximum number of poses that will
+     * \param [in] nr_poses the maximum number of poses that will
      * ever be evaluated in one weighting step.
      * This number might be lowered if GPU contraints do now allow this number
      * of poses.
-     * \param [out] allocated_poses_per_row the maximum number of poses per row
-     * \param [out] allocated_poses_per_column the maximum number of poses per
+     * \param [in] nr_poses_per_row the maximum number of poses per row
+     * \param [in] nr_poses_per_col the maximum number of poses per
      * column
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
      */
-    void allocate_memory_for_max_poses(int& allocated_poses,
-                                       int& allocated_poses_per_row,
-                                       int& allocated_poses_per_column,
-                                       bool adapt_to_constraints = false);
+    void allocate_memory_for_max_poses(int nr_poses,
+                                       int nr_poses_per_row,
+                                       int nr_poses_per_col);
 
     /// sets the number of poses to be weighted in the next weighting step
     /**
-     * \param [in][out] nr_poses the desired number of poses. Might be changed
-     * due to GPU constraints.
-     * \param [out] nr_poses_per_row the number of poses per row
-     * \param [out] nr_poses_per_column the number of poses per column
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
+     * \param [in] nr_poses the desired number of poses.
      */
-    void set_number_of_poses(int& nr_poses,
-                             int& nr_poses_per_row,
-                             int& nr_poses_per_column,
-                             bool adapt_to_constraints = false);
+    void set_number_of_poses(int nr_poses);
 
     // getters
     /// gets the maximum number of threads that can be handled with this GPU
@@ -310,11 +286,6 @@ private:
         occlusion_probabilities_set_, memory_allocated_;
     bool number_of_poses_set_, constants_initialized_;
 
-    void set_default_kernel_config(int& nr_poses_,
-                                   int& nr_poses_per_row,
-                                   int& nr_poses_per_column,
-                                   bool& nr_poses_changed,
-                                   bool adapt_to_constraints);
     // helper functions
     template <typename T>
     void allocate(T*& pointer, size_t size);

@@ -164,8 +164,8 @@ public:
         const float max_depth = 6.0f,
         const float exponential_rate = -log(0.5f))
         : camera_matrix_(camera_matrix),
-          n_rows_(n_rows),
-          n_cols_(n_cols),
+          nr_rows_(n_rows),
+          nr_cols_(n_cols),
           nr_max_poses_(max_sample_count),
           indices_(indices),
           initial_occlusion_prob_(initial_occlusion_prob),
@@ -180,7 +180,7 @@ public:
           observation_time_(0),
           Traits::Base(delta_time)
     {
-
+// TODO add adapt_to_constraints variable to constructor
 
 
         // set constants
@@ -207,22 +207,39 @@ public:
                                  indices_,
                                  shader_provider,
                                  camera_matrix_.cast<float>(),
-                                 n_rows_,
-                                 n_cols_,
+                                 nr_rows_,
+                                 nr_cols_,
                                  0.4,
                                  4));
 
 
-        cuda_ = boost::shared_ptr<CudaEvaluator>(new CudaEvaluator(n_rows_, n_cols_));
+        cuda_ = boost::shared_ptr<CudaEvaluator>(new CudaEvaluator(nr_rows_, nr_cols_));
 
-        BufferConfiguration bufferConfig = BufferConfiguration
+        bufferConfig_ = boost::shared_ptr<BufferConfiguration>(
+                            new BufferConfiguration(opengl_, cuda_,
+                                nr_max_poses_, nr_rows_, nr_cols_));
 
         // allocates memory and sets the dimensions of how many poses will be
         // rendered per row and per column in the texture
-        allocate_memory_for_max_poses();
+//        allocate_memory_for_max_poses();
+        int tmp_max_nr_poses;
+        if (bufferConfig_->allocate_memory(nr_max_poses_, tmp_max_nr_poses)) {
+                nr_max_poses_ = tmp_max_nr_poses;
+        } else {
+            exit(-1);
+        }
 
         // sets the resolution and reallocates the texture
-        set_resolution();
+//        set_resolution();
+        int tmp_nr_rows, tmp_nr_cols;
+        if (bufferConfig_->set_resolution(nr_rows_, nr_cols_,
+                                      tmp_nr_rows, tmp_nr_cols, tmp_max_nr_poses)) {
+            nr_rows_ = tmp_nr_rows;
+            nr_cols_ = tmp_nr_cols;
+            nr_max_poses_ = tmp_max_nr_poses;
+        } else {
+            exit(-1);
+        }
 
         register_resource();
 
@@ -239,7 +256,7 @@ public:
 
         count_ = 0;
 
-        occlusion_probs_.resize(n_rows_ * n_cols_);
+        occlusion_probs_.resize(nr_rows_ * nr_cols_);
 
 #ifdef PROFILING_ACTIVE
         for (int i = 0; i < NR_SUBTASKS_TO_MEASURE; i++)
@@ -259,7 +276,6 @@ public:
 #endif
 
         optimize_nr_threads_ = false;
-        adapt_to_constraints_ = false;
 
 #ifdef OPTIMIZE_NR_THREADS
         set_optimization_of_thread_nr(true);
@@ -309,7 +325,14 @@ public:
 
         nr_poses_ = deltas.size();
         std::vector<float> flog_likelihoods(nr_poses_, 0);
-        set_number_of_poses(nr_poses_);
+
+//       set_number_of_poses(nr_poses_);
+        int tmp_nr_poses;
+        if (bufferConfig_->set_nr_of_poses(nr_poses_, tmp_nr_poses)) {
+            nr_poses_ = tmp_nr_poses;
+        } else {
+            exit(-1);
+        }
 
         // transform occlusion indices from size_t to int
         std::vector<int> occlusion_indices_transformed(occlusion_indices.size(),
@@ -369,7 +392,15 @@ public:
             if (nr_threads_ <= max_nr_threads_)
             {
                 before_weighting_ = dbot::hf::get_wall_time();
-                cuda_->set_nr_threads(nr_threads_);
+//                cuda_->set_nr_threads(nr_threads_);
+
+                int tmp_nr_threads;
+                if (bufferConfig_->set_number_of_threads(nr_threads_, tmp_nr_threads)) {
+                    nr_threads_ = tmp_nr_threads;
+                } else {
+                    exit(-1);
+                }
+
                 optimization_runs_++;
             }
             else
@@ -475,9 +506,9 @@ public:
 
     /// activates automatic downgrading of the number of poses, if hardware
     /// limitations are reached
-    void set_adaptation_to_GPU_constraints(bool shouldAdapt)
+    void set_adaptation_to_GPU_constraints(bool should_adapt)
     {
-        adapt_to_constraints_ = shouldAdapt;
+        bufferConfig_->set_adapt_to_constraints(should_adapt);
     }
 
     /// returns the occlusion probabilities for each pixel for a given state
@@ -496,7 +527,7 @@ public:
         std::vector<double> occlusion_probs_double(occlusion_probs.begin(),
                                                    occlusion_probs.end());
         Eigen::Map<Observation> occlusion_probs_matrix(
-            &occlusion_probs_double[0], n_rows_, n_cols_);
+            &occlusion_probs_double[0], nr_rows_, nr_cols_);
 
         return occlusion_probs_matrix;
     }
@@ -525,7 +556,7 @@ public:
         for (int i = 0; i < depth_values_raw.size(); i++)
         {
             Eigen::Map<Observation> tmp(
-                &depth_values_raw_double[i][0], n_rows_, n_cols_);
+                &depth_values_raw_double[i][0], nr_rows_, nr_cols_);
             depth_values.push_back(tmp);
         }
 
@@ -597,149 +628,149 @@ public:
 
 private:
     const Eigen::Matrix3d camera_matrix_;
-    const size_t n_rows_;
-    const size_t n_cols_;
+    int nr_rows_;
+    int nr_cols_;
     int nr_max_poses_;
 
-    void allocate_memory_for_max_poses()
-    {
-        // allocates memory and sets the dimensions of how many poses will be
-        // rendered per row and per column in the texture
-        opengl_->allocate_textures_for_max_poses(nr_max_poses_,
-                                                 nr_poses_per_row_,
-                                                 nr_poses_per_column_,
-                                                 adapt_to_constraints_);
+//    void allocate_memory_for_max_poses()
+//    {
+//        // allocates memory and sets the dimensions of how many poses will be
+//        // rendered per row and per column in the texture
+//        opengl_->allocate_textures_for_max_poses(nr_max_poses_,
+//                                                 nr_poses_per_row_,
+//                                                 nr_poses_per_column_,
+//                                                 adapt_to_constraints_);
 
 
-        int tmp_max_nr_poses = nr_max_poses_;
-        int tmp_nr_poses_per_row = nr_poses_per_row_;
-        int tmp_nr_poses_per_column = nr_poses_per_column_;
+//        int tmp_max_nr_poses = nr_max_poses_;
+//        int tmp_nr_poses_per_row = nr_poses_per_row_;
+//        int tmp_nr_poses_per_column = nr_poses_per_column_;
 
-        cuda_->allocate_memory_for_max_poses(nr_max_poses_,
-                                             nr_poses_per_row_,
-                                             nr_poses_per_column_,
-                                             adapt_to_constraints_);
+//        cuda_->allocate_memory_for_max_poses(nr_max_poses_,
+//                                             nr_poses_per_row_,
+//                                             nr_poses_per_column_,
+//                                             adapt_to_constraints_);
 
 
-        // if number of poses gets limited by cuda, we have to reallocate the
-        // textures in OpenGL again
-        if (tmp_max_nr_poses != nr_max_poses_ ||
-            tmp_nr_poses_per_row != nr_poses_per_row_ ||
-            tmp_nr_poses_per_column != nr_poses_per_column_)
-        {
-            opengl_->allocate_textures_for_max_poses(nr_max_poses_,
-                                                     nr_poses_per_row_,
-                                                     nr_poses_per_column_,
-                                                     adapt_to_constraints_);
+//        // if number of poses gets limited by cuda, we have to reallocate the
+//        // textures in OpenGL again
+//        if (tmp_max_nr_poses != nr_max_poses_ ||
+//            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+//            tmp_nr_poses_per_column != nr_poses_per_column_)
+//        {
+//            opengl_->allocate_textures_for_max_poses(nr_max_poses_,
+//                                                     nr_poses_per_row_,
+//                                                     nr_poses_per_column_,
+//                                                     adapt_to_constraints_);
 
-        }
-    }
+//        }
+//    }
 
-    void set_resolution()
-    {
-        int tmp_max_nr_poses = nr_max_poses_;
-        int tmp_nr_poses_per_row = nr_poses_per_row_;
-        int tmp_nr_poses_per_column = nr_poses_per_column_;
+//    void set_resolution()
+//    {
+//        int tmp_max_nr_poses = nr_max_poses_;
+//        int tmp_nr_poses_per_row = nr_poses_per_row_;
+//        int tmp_nr_poses_per_column = nr_poses_per_column_;
 
-        opengl_->set_resolution(n_rows_,
-                                n_cols_,
-                                nr_max_poses_,
-                                nr_poses_per_row_,
-                                nr_poses_per_column_,
-                                adapt_to_constraints_);
+//        opengl_->set_resolution(nr_rows_,
+//                                nr_cols_,
+//                                nr_max_poses_,
+//                                nr_poses_per_row_,
+//                                nr_poses_per_column_,
+//                                adapt_to_constraints_);
 
-        if (tmp_max_nr_poses != nr_max_poses_ ||
-            tmp_nr_poses_per_row != nr_poses_per_row_ ||
-            tmp_nr_poses_per_column != nr_poses_per_column_)
-        {
-            std::cout << "OpenGL: setting resolution changes allocation to "
-                      << nr_max_poses_ << " poses in the form ("
-                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
-                      << ")" << std::endl;
-        }
+//        if (tmp_max_nr_poses != nr_max_poses_ ||
+//            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+//            tmp_nr_poses_per_column != nr_poses_per_column_)
+//        {
+//            std::cout << "OpenGL: setting resolution changes allocation to "
+//                      << nr_max_poses_ << " poses in the form ("
+//                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
+//                      << ")" << std::endl;
+//        }
 
-        tmp_max_nr_poses = nr_max_poses_;
-        tmp_nr_poses_per_row = nr_poses_per_row_;
-        tmp_nr_poses_per_column = nr_poses_per_column_;
+//        tmp_max_nr_poses = nr_max_poses_;
+//        tmp_nr_poses_per_row = nr_poses_per_row_;
+//        tmp_nr_poses_per_column = nr_poses_per_column_;
 
-        cuda_->set_resolution(n_rows_,
-                              n_cols_,
-                              nr_max_poses_,
-                              nr_poses_per_row_,
-                              nr_poses_per_column_,
-                              adapt_to_constraints_);
+//        cuda_->set_resolution(nr_rows_,
+//                              nr_cols_,
+//                              nr_max_poses_,
+//                              nr_poses_per_row_,
+//                              nr_poses_per_column_,
+//                              adapt_to_constraints_);
 
-        if (tmp_max_nr_poses != nr_max_poses_ ||
-            tmp_nr_poses_per_row != nr_poses_per_row_ ||
-            tmp_nr_poses_per_column != nr_poses_per_column_)
-        {
-            std::cout << "CUDA: setting resolution changes allocation to "
-                      << nr_max_poses_ << " poses in the form ("
-                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
-                      << ")" << std::endl;
-        }
+//        if (tmp_max_nr_poses != nr_max_poses_ ||
+//            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+//            tmp_nr_poses_per_column != nr_poses_per_column_)
+//        {
+//            std::cout << "CUDA: setting resolution changes allocation to "
+//                      << nr_max_poses_ << " poses in the form ("
+//                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
+//                      << ")" << std::endl;
+//        }
 
-        tmp_max_nr_poses = nr_max_poses_;
-        tmp_nr_poses_per_row = nr_poses_per_row_;
-        tmp_nr_poses_per_column = nr_poses_per_column_;
+//        tmp_max_nr_poses = nr_max_poses_;
+//        tmp_nr_poses_per_row = nr_poses_per_row_;
+//        tmp_nr_poses_per_column = nr_poses_per_column_;
 
-        // if number of poses gets limited by cuda, we have to reallocate the
-        // textures in OpenGL again
-        if (tmp_max_nr_poses != nr_max_poses_ ||
-            tmp_nr_poses_per_row != nr_poses_per_row_ ||
-            tmp_nr_poses_per_column != nr_poses_per_column_)
-        {
-            opengl_->set_resolution(n_rows_,
-                                    n_cols_,
-                                    nr_max_poses_,
-                                    nr_poses_per_row_,
-                                    nr_poses_per_column_,
-                                    adapt_to_constraints_);
+//        // if number of poses gets limited by cuda, we have to reallocate the
+//        // textures in OpenGL again
+//        if (tmp_max_nr_poses != nr_max_poses_ ||
+//            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+//            tmp_nr_poses_per_column != nr_poses_per_column_)
+//        {
+//            opengl_->set_resolution(nr_rows_,
+//                                    nr_cols_,
+//                                    nr_max_poses_,
+//                                    nr_poses_per_row_,
+//                                    nr_poses_per_column_,
+//                                    adapt_to_constraints_);
 
-            std::cout << "OpenGL adapts to CUDA restrictions: setting "
-                         "resolution changes allocation to "
-                      << nr_max_poses_ << " poses in the form ("
-                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
-                      << ")" << std::endl;
-        }
-    }
+//            std::cout << "OpenGL adapts to CUDA restrictions: setting "
+//                         "resolution changes allocation to "
+//                      << nr_max_poses_ << " poses in the form ("
+//                      << nr_poses_per_row_ << ", " << nr_poses_per_column_
+//                      << ")" << std::endl;
+//        }
+//    }
 
-    void set_number_of_poses(int nr_poses)
-    {
-        nr_poses_ = nr_poses;
-        opengl_->set_number_of_poses(nr_poses_,
-                                     nr_poses_per_row_,
-                                     nr_poses_per_column_,
-                                     adapt_to_constraints_);
+//    void set_number_of_poses(int nr_poses)
+//    {
+//        nr_poses_ = nr_poses;
+//        opengl_->set_number_of_poses(nr_poses_,
+//                                     nr_poses_per_row_,
+//                                     nr_poses_per_column_,
+//                                     adapt_to_constraints_);
 
-        int tmp_nr_poses = nr_poses_;
-        int tmp_nr_poses_per_row = nr_poses_per_row_;
-        int tmp_nr_poses_per_column = nr_poses_per_column_;
+//        int tmp_nr_poses = nr_poses_;
+//        int tmp_nr_poses_per_row = nr_poses_per_row_;
+//        int tmp_nr_poses_per_column = nr_poses_per_column_;
 
-        cuda_->set_number_of_poses(nr_poses_,
-                                   nr_poses_per_row_,
-                                   nr_poses_per_column_,
-                                   adapt_to_constraints_);
+//        cuda_->set_number_of_poses(nr_poses_,
+//                                   nr_poses_per_row_,
+//                                   nr_poses_per_column_,
+//                                   adapt_to_constraints_);
 
-        // if number of poses gets limited by cuda, we have to tell OpenGL about
-        // it
-        if (tmp_nr_poses != nr_poses_ ||
-            tmp_nr_poses_per_row != nr_poses_per_row_ ||
-            tmp_nr_poses_per_column != nr_poses_per_column_)
-        {
-            opengl_->set_number_of_poses(nr_poses_,
-                                         nr_poses_per_row_,
-                                         nr_poses_per_column_,
-                                         adapt_to_constraints_);
-        }
+//        // if number of poses gets limited by cuda, we have to tell OpenGL about
+//        // it
+//        if (tmp_nr_poses != nr_poses_ ||
+//            tmp_nr_poses_per_row != nr_poses_per_row_ ||
+//            tmp_nr_poses_per_column != nr_poses_per_column_)
+//        {
+//            opengl_->set_number_of_poses(nr_poses_,
+//                                         nr_poses_per_row_,
+//                                         nr_poses_per_column_,
+//                                         adapt_to_constraints_);
+//        }
 
-        if (nr_poses_ < nr_poses)
-        {
-            std::cout << "Number of poses was reduced to " << nr_poses_
-                      << " poses in the form (" << nr_poses_per_row_ << ", "
-                      << nr_poses_per_column_ << ")." << std::endl;
-        }
-    }
+//        if (nr_poses_ < nr_poses)
+//        {
+//            std::cout << "Number of poses was reduced to " << nr_poses_
+//                      << " poses in the form (" << nr_poses_per_row_ << ", "
+//                      << nr_poses_per_column_ << ")." << std::endl;
+//        }
+//    }
 
     void store_time(int task)
     {
@@ -796,6 +827,9 @@ private:
     // CUDA handle
     boost::shared_ptr<CudaEvaluator> cuda_;
 
+    // Buffer configuration handle
+    boost::shared_ptr<BufferConfiguration> bufferConfig_;
+
     // constants for likelihood evaluation in CUDA kernel
     double observation_time_;
     float initial_occlusion_prob_;
@@ -851,6 +885,5 @@ private:
     // optional flags for optimizing the #threads and for adapting to GPU
     // constraints
     bool optimize_nr_threads_;
-    bool adapt_to_constraints_;
 };
 }

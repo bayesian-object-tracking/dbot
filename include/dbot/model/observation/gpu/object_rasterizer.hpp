@@ -17,11 +17,14 @@
  * \date November 2015
  */
 
+#pragma once
+
 #include <vector>
 #include <Eigen/Dense>
 #include "GL/glew.h"
 
 #include <dbot/model/observation/gpu/shader_provider.hpp>
+#include <memory>
 
 /// renders the objects using openGL rasterization
 /** The objects that should be rendered have to be passed in the constructor and can then be rendered
@@ -96,15 +99,13 @@ public:
     void set_objects(std::vector<int> object_numbers);
 
     /// set a new resolution
-    /** This function reallocates the framebuffer textures. This is expensive, so only do it if necessary.
-     * \param [in]  n_rows the height of the image
-     * \param [in]  n_cols the width of the image
-     * \param [out] nr_poses the new number of poses (only changed when adapting to constraints)
-     * \param [out] nr_poses_per_row the new number of poses per row
-     * \param [out] nr_poses_per_column the new number of poses per column
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
+    /** This function sets a new resolution. You need to call
+     *  allocate_textures_for_max_poses afterwards to reallocate the textures
+     *  accordingly.
+     * \param [in]  nr_rows the height of the image
+     * \param [in]  nr_cols the width of the image
      */
-    void set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints = false);
+    void set_resolution(const int nr_rows, const int nr_cols);
 
     /// allocates memory on the GPU
     /** Use this function to allocate memory for the maximum number of poses that you will need throughout the filtering.
@@ -118,13 +119,10 @@ public:
 
     /// sets the number of poses that should be rendered in the next render call
     /** Use this function previously to every render call if you need to change the amount of poses.
-     * @param[in/out] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
-     * allocate_textures_for_max_poses(). Might be changed if adapt_to_constraints is activated.
-     * \param [out] nr_poses_per_row the number of poses that will be rendered per row of the texture
-     * \param [out] nr_poses_per_column the number of poses that will be rendered per column of the texture
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
+     * @param[in] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
+     * allocate_textures_for_max_poses().
      */
-    void set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints = false);
+    void set_number_of_poses(int nr_poses);
 
     /// returns the OpenGL framebuffer texture ID, which is needed for CUDA interoperation
     /** Use this function to retrieve the texture ID and pass it to the cudaGraphicsGLRegisterImage call.

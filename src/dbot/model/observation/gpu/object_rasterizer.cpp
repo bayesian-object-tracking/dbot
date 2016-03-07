@@ -304,7 +304,13 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
 
 
 void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > states) {
-
+   /* int nr_poses = states.size();
+    if (nr_poses > nr_max_poses_) {
+        std::cout << "ERROR (OPENGL): You tried to evaluate more poses ("
+                  << nr_poses << ") than specified by max_poses ("
+                  << nr_max_poses_ << ")." << std::endl;
+        exit(-1);
+    }*/
 
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
@@ -340,8 +346,9 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
 
     Matrix4f model_view_matrix;
 
-    for (int i = 0; i < nr_poses_per_column_ -1; i++) {
-        for (int j = 0; j < nr_poses_per_row_; j++) {
+
+    for (int i = 0; i < nr_poses_per_column_ ; i++) {
+        for (int j = 0; j < nr_poses_per_row_ && i * nr_max_poses_per_row_ + j < states.size(); j++) {
 
             glViewport(j * nr_cols_, (nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
             #ifdef DEBUG
@@ -361,26 +368,7 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
         }
     }
 
-    // render last row of poses
-    for (int j = 0; j < nr_poses_ - (nr_poses_per_row_ * (nr_poses_per_column_ - 1)); j++) {
 
-        glViewport(j * nr_cols_, 0, nr_cols_, nr_rows_);
-        #ifdef DEBUG
-            check_GL_errors("setting the viewport");
-        #endif
-
-        for (size_t k = 0; k < object_numbers_.size(); k++) {
-            int index = object_numbers_[k];
-
-            model_view_matrix = view_matrix_ * states[nr_poses_per_row_ * (nr_poses_per_column_ - 1) + j][index];
-            glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
-
-            glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
-            #ifdef DEBUG
-                check_GL_errors("render call");
-            #endif
-        }
-    }
 
 
 #ifdef PROFILING_ACTIVE
@@ -414,18 +402,20 @@ void ObjectRasterizer::set_objects(vector<int> object_numbers) {
 }
 
 
-void ObjectRasterizer::set_resolution(const int n_rows, const int n_cols,
-                                      int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints) {
-        nr_rows_ = n_rows;
-        nr_cols_ = n_cols;
+void ObjectRasterizer::set_resolution(const int nr_rows, const int nr_cols) {
+    if (nr_rows > max_texture_size_ || nr_cols_ > max_texture_size_) {
+        std::cout << "ERROR (OPENGL): Exceeding maximum texture size with a "
+                  << "resolution of " << nr_rows << " x " << nr_cols << std::endl;
+        exit(-1);
+    }
 
-        // reallocate textures
-        allocate_textures_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column, adapt_to_constraints);
+    nr_rows_ = nr_rows;
+    nr_cols_ = nr_cols;
 }
 
 void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
                                                        int nr_poses_per_row,
-                                                       int nr_poses_per_column) {
+                                                       int nr_poses_per_col) {
 
     if (nr_poses_per_row * nr_cols_ > max_texture_size_ ||
         nr_poses_per_col * nr_rows_ > max_texture_size_) {
@@ -439,31 +429,26 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
     nr_poses_ = nr_poses;
     nr_max_poses_per_row_ = nr_poses_per_row;
     nr_poses_per_row_ = nr_poses_per_row;
-    nr_max_poses_per_column_ = nr_poses_per_column;
-    nr_poses_per_column_ = nr_poses_per_column;
+    nr_max_poses_per_column_ = nr_poses_per_col;
+    nr_poses_per_column_ = nr_poses_per_col;
 
     reallocate_buffers();
 }
 
-void ObjectRasterizer::set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints) {
+void ObjectRasterizer::set_number_of_poses(int nr_poses) {
 
     if (nr_poses > nr_max_poses_) {
-        if (adapt_to_constraints) {
-            std::cout << "WARNING (OPENGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")."
-                      << "The number of poses was automatically reduced to " << nr_max_poses_ << "." << std::endl;
-            nr_poses = nr_max_poses_;
-        } else {
-            cout << "ERROR (OPENGL): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
-            exit(-1);
-        }
+        std::cout << "ERROR (OPENGL): You tried to evaluate more poses ("
+                  << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")."
+                  << std::endl;
+        exit(-1);
     }
 
-    nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
-    nr_poses_per_column = min(nr_max_poses_per_column_, (int) ceil(nr_poses / (float) nr_poses_per_row));
-
     nr_poses_ = nr_poses;
-    nr_poses_per_row_ = nr_poses_per_row;
-    nr_poses_per_column_ = nr_poses_per_column;
+    nr_poses_per_row_ = min(nr_max_poses_per_row_, nr_poses);
+    nr_poses_per_column_ = min(nr_max_poses_per_column_,
+                               (int) ceil(nr_poses / (float) nr_poses_per_row_));
+
 }
 
 
