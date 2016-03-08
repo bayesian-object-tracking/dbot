@@ -478,9 +478,18 @@ void CudaEvaluator::set_observations(const float* observations, const float obse
 
 
 
-void CudaEvaluator::set_occlusion_indices(const int* occlusion_indices) {
+void CudaEvaluator::set_occlusion_indices(const int* occlusion_indices,
+                                          const int array_size) {
 
-    cudaMemcpy(d_occlusion_indices_, occlusion_indices, nr_poses_ * sizeof(int), cudaMemcpyHostToDevice);
+    if (array_size != nr_poses_) {
+        std::cout << "ERROR (CUDA): The amount of occlusion indices sent to "
+                  << "the GPU does not correspond to the amount of poses that "
+                  << "are to be evaluated." << std::endl;
+        exit(-1);
+    }
+
+    cudaMemcpy(d_occlusion_indices_, occlusion_indices,
+               array_size * sizeof(int), cudaMemcpyHostToDevice);
 
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_indices -> d_occlusion_indices");
@@ -504,12 +513,16 @@ void CudaEvaluator::set_resolution(const int nr_rows, const int nr_cols) {
 }
 
 
-void CudaEvaluator::set_occlusion_probabilities(const float* occlusion_probabilities) {
+void CudaEvaluator::set_occlusion_probabilities(const float* occlusion_probabilities,
+                                                const int array_size) {
 
-        std::vector<float> occlusion_probabilities_local(
-            nr_rows_ * nr_cols_ * nr_poses_, occlusion_prob_default_);
+//        std::vector<float> occlusion_probabilities_local(
+//            nr_rows_ * nr_cols_ * nr_poses_, occlusion_prob_default_);
 
-    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities_local.data(), nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+//    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities_local.data(), nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities,
+               array_size * sizeof(float), cudaMemcpyHostToDevice);
 
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_probabilities -> d_occlusion_probs_");
@@ -606,15 +619,11 @@ void CudaEvaluator::set_number_of_poses(int nr_poses) {
     }
 
     nr_poses_ = nr_poses;
-    nr_poses_per_row_ = min(nr_max_poses_per_row_, nr_poses);
-    nr_poses_per_column_ = min(nr_max_poses_per_column_,
-                               (int) ceil(nr_poses / (float) nr_poses_per_row_));
+    int nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
+    int nr_poses_per_column = min(nr_max_poses_per_column_,
+                               (int) ceil(nr_poses / (float) nr_poses_per_row));
 
-    grid_dimension_ = dim3(nr_poses_per_row_, nr_poses_per_column_);
-
-//    std::cout << "CUDA: Number of poses: " << nr_poses_ << ". "
-//              << "per row: " << nr_poses_per_row_
-//              << ", per col: " << nr_poses_per_column_ << std::endl;
+    grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_column);
 
     number_of_poses_set_ = true;
 }

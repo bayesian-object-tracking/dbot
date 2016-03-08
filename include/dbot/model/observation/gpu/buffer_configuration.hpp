@@ -41,6 +41,11 @@ public:
                        int& new_nr_poses);
   bool set_number_of_threads(const int nr_threads,
                              int& new_nr_threads);
+
+  /// Enable automatic adaptation to GPU constraints
+  /** \param [in] should_adapt whether or not the number of poses should
+   *  be downgraded in case the GPU hardware limits are reached
+   */
   void set_adapt_to_constraints(bool should_adapt);
 
 private:

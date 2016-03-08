@@ -128,10 +128,11 @@ public:
     /// sets the indices to the occlusion array for every state
     /**
      * \param [in] occlusion_indices [state_nr] = {index}. For each state, this
-     * gives the index
-     * into the occlusion array.
+     * gives the index into the occlusion array.
+     * \param [in] array_size the number of values contained in occlusion_indices
      */
-    void set_occlusion_indices(const int* occlusion_indices);
+    void set_occlusion_indices(const int* occlusion_indices,
+                               const int array_size);
 
     /// sets the resolution for the images to be compared
     /** Be sure to call allocate_memory_for_max_poses afterwards to reallocate
@@ -144,10 +145,12 @@ public:
     /// sets the occlusion probabilities for all pixels for all states
     /**
     * \param [in] occlusion_probabilities a 1D-array of occlusion probabilities
-    * which should contain
-    * nr_rows * nr_cols * nr_poses values.
+    * which should contain array_size values.
+    * \param [in] array_size the number of values contained in
+    * occlusion_probabilities
     */
-    void set_occlusion_probabilities(const float* occlusion_probabilities);
+    void set_occlusion_probabilities(const float* occlusion_probabilities,
+                                     const int array_size);
 
     /// maps the texture array to an actual texture reference
     /**
@@ -258,11 +261,8 @@ private:
     int nr_max_poses_per_row_;
     int nr_max_poses_per_column_;
 
-    // actual number of poses and their arrangement in the OpenGL texture
-    // (current frame)
+    // actual number of poses for the current frame
     int nr_poses_;
-    int nr_poses_per_row_;
-    int nr_poses_per_column_;
 
     // block and grid arrangement of the CUDA kernels
     int nr_threads_;

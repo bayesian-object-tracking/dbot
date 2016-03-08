@@ -37,9 +37,8 @@ BufferConfiguration::BufferConfiguration(boost::shared_ptr<ObjectRasterizer> ras
     nr_rows_(nr_rows)
 {
     max_texture_size_opengl_ = rasterizer_->get_max_texture_size();
-    max_texture_size_opengl_ = 1000;
     cuda_device_properties_ = evaluator_->get_device_properties();
-    adapt_to_constraints_ = true;
+    adapt_to_constraints_ = false;
 }
 
 
@@ -64,8 +63,8 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
                           "maximum texture size", STR(max_nr_poses),
                           STR(max_nr_poses_));
         } else {
-            issue_message(ERROR, "maximum number of poses at resolution"
-                          + STR(nr_rows_) + " x " + STR(nr_cols_),
+            issue_message(ERROR, "maximum number of poses (at resolution "
+                          + STR(nr_rows_) + " x " + STR(nr_cols_) + ")",
                         "maximum texture size", STR(max_nr_poses));
             return false;
         }
@@ -145,7 +144,6 @@ bool BufferConfiguration::set_nr_of_poses(const int nr_poses,
     }
 
     evaluator_->set_number_of_poses(new_nr_poses);
-    rasterizer_->set_number_of_poses(new_nr_poses);
 
     return true;
 }
@@ -269,7 +267,7 @@ void BufferConfiguration::issue_message(const BufferConfiguration::message_type 
     std::cout << std::endl << type << ": "
               << "The " << problem_quantity << " you requested ("
               << original_value  << ") could not be set. It is constrained by "
-              << constraint;
+              << constraint << ".";
 
     if (foo == WARNING) {
         std::cout << ". The " << problem_quantity << " was reduced to "

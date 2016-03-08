@@ -299,18 +299,21 @@ ObjectRasterizer::ObjectRasterizer(const std::vector<std::vector<Eigen::Vector3f
 void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > states,
                               std::vector<std::vector<float> > depth_values) {
     render(states);
-    depth_values = get_depth_values();
+    depth_values = get_depth_values(states.size());
 }
 
 
 void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > states) {
-   /* int nr_poses = states.size();
-    if (nr_poses > nr_max_poses_) {
+
+    nr_poses_ = states.size();
+    if (nr_poses_ > nr_max_poses_) {
         std::cout << "ERROR (OPENGL): You tried to evaluate more poses ("
-                  << nr_poses << ") than specified by max_poses ("
+                  << nr_poses_ << ") than specified by max_poses ("
                   << nr_max_poses_ << ")." << std::endl;
         exit(-1);
-    }*/
+    }
+
+    std::cout << "OPENGL: Number of poses: " << nr_poses_ << std::endl;
 
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
@@ -346,21 +349,18 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
 
     Matrix4f model_view_matrix;
 
-//    std::cout << "OpenGL: Before Rendering: #poses: " << nr_poses_
-//              << ", per row: " << nr_poses_per_row_ << ", per col: " << nr_poses_per_column_
-//              << std::endl;
 
-    for (int i = 0; i < nr_poses_per_column_ ; i++) {
-        for (int j = 0; j < nr_poses_per_row_ && i * nr_max_poses_per_row_ + j < states.size(); j++) {
+    for (int i = 0; i < nr_max_poses_per_column_ ; i++) {
+        for (int j = 0; j < nr_max_poses_per_row_ && i * nr_max_poses_per_row_ + j < nr_poses_; j++) {
 
-            glViewport(j * nr_cols_, (nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
+            glViewport(j * nr_cols_, (nr_max_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
             #ifdef DEBUG
                 check_GL_errors("setting the viewport");
             #endif
             for (size_t k = 0; k < object_numbers_.size(); k++) {
                 int index = object_numbers_[k];
 
-                model_view_matrix = view_matrix_ * states[nr_poses_per_row_ * i + j][index];
+                model_view_matrix = view_matrix_ * states[nr_max_poses_per_row_ * i + j][index];
                 glUniformMatrix4fv(model_view_matrix_ID_, 1, GL_FALSE, model_view_matrix.data());
 
                 glDrawElements(GL_TRIANGLES, indices_per_object_[index], GL_UNSIGNED_INT, (void*) (start_position_[index] * sizeof(uint)));
@@ -370,8 +370,6 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
             }
         }
     }
-
-
 
 
 #ifdef PROFILING_ACTIVE
@@ -406,7 +404,7 @@ void ObjectRasterizer::set_objects(vector<int> object_numbers) {
 
 
 void ObjectRasterizer::set_resolution(const int nr_rows, const int nr_cols) {
-    if (nr_rows > max_texture_size_ || nr_cols_ > max_texture_size_) {
+    if (nr_rows > max_texture_size_ || nr_cols > max_texture_size_) {
         std::cout << "ERROR (OPENGL): Exceeding maximum texture size with a "
                   << "resolution of " << nr_rows << " x " << nr_cols << std::endl;
         exit(-1);
@@ -431,11 +429,8 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
     }
 
     nr_max_poses_ = nr_poses;
-    nr_poses_ = nr_poses;
     nr_max_poses_per_row_ = nr_poses_per_row;
-    nr_poses_per_row_ = nr_poses_per_row;
     nr_max_poses_per_column_ = nr_poses_per_col;
-    nr_poses_per_column_ = nr_poses_per_col;
 
     reallocate_buffers();
 
@@ -444,25 +439,6 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
               << ", per col: " << nr_poses_per_col << std::endl;
 }
 
-void ObjectRasterizer::set_number_of_poses(int nr_poses) {
-
-    if (nr_poses > nr_max_poses_) {
-        std::cout << "ERROR (OPENGL): You tried to evaluate more poses ("
-                  << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")."
-                  << std::endl;
-        exit(-1);
-    }
-
-    nr_poses_ = nr_poses;
-    nr_poses_per_row_ = min(nr_max_poses_per_row_, nr_poses);
-    nr_poses_per_column_ = min(nr_max_poses_per_column_,
-                               (int) ceil(nr_poses / (float) nr_poses_per_row_));
-
-//    std::cout << "OpenGL: Number of poses: " << nr_poses_ << ". "
-//              << "per row: " << nr_poses_per_row_
-//              << ", per col: " << nr_poses_per_column_ << std::endl;
-
-}
 
 
 GLuint ObjectRasterizer::get_framebuffer_texture() {
@@ -471,7 +447,13 @@ GLuint ObjectRasterizer::get_framebuffer_texture() {
 
 
 
-vector<vector<float> > ObjectRasterizer::get_depth_values() {
+vector<vector<float> > ObjectRasterizer::get_depth_values(int nr_poses) {
+
+    if (nr_poses > nr_poses_) {
+        std::cout << "ERROR (OPENGL): You tried to read back the depth values "
+                  << "of more poses than you previously rendered." << std::endl;
+        exit(-1);
+    }
 
     // ===================== ATTACH TEXTURE TO FRAMEBUFFER ================ //
 
@@ -487,44 +469,46 @@ vector<vector<float> > ObjectRasterizer::get_depth_values() {
     glBindTexture(GL_TEXTURE_2D, framebuffer_texture_for_all_poses_);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, 0);
 
-    GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    // TODO needs to be updated
+
+//    GLfloat *pixel_depth = (GLfloat*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 
 
-    if (pixel_depth != (GLfloat*) NULL) {
-        vector<float> depth_image(nr_rows_ * nr_cols_ * nr_poses_per_row_ * nr_poses_per_column_, numeric_limits<float>::max());
+//    if (pixel_depth != (GLfloat*) NULL) {
+//        vector<float> depth_image(nr_rows_ * nr_cols_ * nr_poses_per_row_ * nr_poses_per_column_, numeric_limits<float>::max());
 
-        int pixels_per_row_texture = nr_max_poses_per_row_ * nr_cols_;
-        int pixels_per_row_extracted = nr_poses_per_row_ * nr_cols_;
-        int highest_pixel_per_col = (nr_poses_per_column_ * nr_rows_) - 1;
+//        int pixels_per_row_texture = nr_max_poses_per_row_ * nr_cols_;
+//        int pixels_per_row_extracted = nr_poses_per_row_ * nr_cols_;
+//        int highest_pixel_per_col = (nr_poses_per_column_ * nr_rows_) - 1;
 
-        // reading OpenGL texture into an array on the CPU (inverted rows)
-        for (int row = 0; row < nr_poses_per_column_ * nr_rows_; row++) {
-            int inverted_row = highest_pixel_per_col - row;
+//        // reading OpenGL texture into an array on the CPU (inverted rows)
+//        for (int row = 0; row < nr_poses_per_column_ * nr_rows_; row++) {
+//            int inverted_row = highest_pixel_per_col - row;
 
-            for (int col = 0; col < nr_poses_per_row_ * nr_cols_; col++) {
-                depth_image[row * pixels_per_row_extracted  + col] = pixel_depth[inverted_row * pixels_per_row_texture + col];
-            }
-        }
+//            for (int col = 0; col < nr_poses_per_row_ * nr_cols_; col++) {
+//                depth_image[row * pixels_per_row_extracted  + col] = pixel_depth[inverted_row * pixels_per_row_texture + col];
+//            }
+//        }
 
-        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+//        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 
-        // subdividing this array into an array per pose
-        vector<vector<float> > depth_image_per_pose (nr_poses_, vector<float> (nr_rows_ * nr_cols_, 0));
+//        // subdividing this array into an array per pose
+//        vector<vector<float> > depth_image_per_pose (nr_poses, vector<float> (nr_rows_ * nr_cols_, 0));
 
-        for (int pose_y = 0; pose_y < nr_poses_per_column_; pose_y++) {
-            for (int pose_x = 0; pose_x < nr_poses_per_row_ && pose_y * nr_poses_per_row_ + pose_x < nr_poses_; pose_x++) {
-                for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
+//        for (int pose_y = 0; pose_y < nr_poses_per_column_; pose_y++) {
+//            for (int pose_x = 0; pose_x < nr_poses_per_row_ && pose_y * nr_poses_per_row_ + pose_x < nr_poses; pose_x++) {
+//                for (int i = 0; i < nr_rows_ * nr_cols_; i++) {
 
-                    depth_image_per_pose[pose_y * nr_poses_per_row_ + pose_x][i] = depth_image[(pose_y * nr_rows_ + (i / nr_cols_)) * pixels_per_row_extracted + pose_x * nr_cols_ + (i % nr_cols_)];
-                }
-            }
-        }
+//                    depth_image_per_pose[pose_y * nr_poses_per_row_ + pose_x][i] = depth_image[(pose_y * nr_rows_ + (i / nr_cols_)) * pixels_per_row_extracted + pose_x * nr_cols_ + (i % nr_cols_)];
+//                }
+//            }
+//        }
 
-        return depth_image_per_pose;
+//        return depth_image_per_pose;
 
-    } else {
-        cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
-    }
+//    } else {
+//        cout << "WARNING: Could not map Pixel Pack Buffer." << endl;
+//    }
 
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 

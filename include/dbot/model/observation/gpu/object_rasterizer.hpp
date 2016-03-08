@@ -117,12 +117,6 @@ public:
                                          int nr_poses_per_row,
                                          int nr_poses_per_col);
 
-    /// sets the number of poses that should be rendered in the next render call
-    /** Use this function previously to every render call if you need to change the amount of poses.
-     * @param[in] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
-     * allocate_textures_for_max_poses().
-     */
-    void set_number_of_poses(int nr_poses);
 
     /// returns the OpenGL framebuffer texture ID, which is needed for CUDA interoperation
     /** Use this function to retrieve the texture ID and pass it to the cudaGraphicsGLRegisterImage call.
@@ -134,7 +128,7 @@ public:
     /** This function should only be used for debugging. It will be extremely slow.
      * @return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
      */
-    std::vector<std::vector<float> > get_depth_values();
+    std::vector<std::vector<float> > get_depth_values(int nr_poses);
 
     /// returns the constant and per-pose memory needs that OpenGL will have (in bytes)
     /**
@@ -166,10 +160,8 @@ private:
     float near_plane_;
     float far_plane_;
 
-    // actual number of poses to render (current frame)
+    // number of poses in the current render call
     int nr_poses_;
-    int nr_poses_per_row_;
-    int nr_poses_per_column_;
 
     // maximum number of poses that can be rendered in one call
     int nr_max_poses_;
