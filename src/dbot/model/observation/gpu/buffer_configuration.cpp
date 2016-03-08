@@ -46,22 +46,24 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
                                           int& new_max_nr_poses) {
 
     // TODO maybe check whether nr poses has changed at all
+    max_nr_poses_ = max_nr_poses;
 
     int max_nr_poses_per_row, max_nr_poses_per_col;
 
-    compute_grid_layout(max_nr_poses, max_nr_poses_per_row, max_nr_poses_per_col);
+    compute_grid_layout(max_nr_poses_, max_nr_poses_per_row, max_nr_poses_per_col);
 
+    int tmp_max_nr_poses_1;
     bool constrained_by_texture_size =
-        check_against_texture_size_constraint(max_nr_poses, max_nr_poses_per_row,
-                                              max_nr_poses_per_col, new_max_nr_poses);
+        check_against_texture_size_constraint(max_nr_poses_, max_nr_poses_per_row,
+                                              max_nr_poses_per_col, tmp_max_nr_poses_1);
 
     if (constrained_by_texture_size) {
         if (adapt_to_constraints_) {
-            max_nr_poses_ = new_max_nr_poses;
             issue_message(WARNING, "maximum number of poses (at resolution "
                           + STR(nr_rows_) + " x " + STR(nr_cols_) + ")",
-                          "maximum texture size", STR(max_nr_poses),
-                          STR(max_nr_poses_));
+                          "maximum texture size", STR(max_nr_poses_),
+                          STR(tmp_max_nr_poses_1));
+            max_nr_poses_ = tmp_max_nr_poses_1;
         } else {
             issue_message(ERROR, "maximum number of poses (at resolution "
                           + STR(nr_rows_) + " x " + STR(nr_cols_) + ")",
@@ -72,8 +74,9 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
 
     int new_max_nr_poses_per_row, new_max_nr_poses_per_col;
 
+    int tmp_max_nr_poses_2;
     bool constrained_by_global_memory =
-        check_against_global_memory_constraint(max_nr_poses_, new_max_nr_poses,
+        check_against_global_memory_constraint(max_nr_poses_, tmp_max_nr_poses_2,
                                                new_max_nr_poses_per_row,
                                                new_max_nr_poses_per_col);
 
@@ -82,8 +85,8 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
         if (adapt_to_constraints_) {
             issue_message(WARNING, "maximum number of poses",
                           "global memory size", STR(max_nr_poses_),
-                          STR(new_max_nr_poses));
-            max_nr_poses_ = new_max_nr_poses;
+                          STR(tmp_max_nr_poses_2));
+            max_nr_poses_ = tmp_max_nr_poses_2;
             max_nr_poses_per_row = new_max_nr_poses_per_row;
             max_nr_poses_per_col = new_max_nr_poses_per_col;
         } else {
@@ -186,7 +189,7 @@ bool BufferConfiguration::check_against_texture_size_constraint(const int nr_pos
                                                                 const int nr_poses_per_col,
                                                                 int& new_nr_poses) {
 
-    new_nr_poses = nr_poses_per_row * nr_poses_per_col;
+    new_nr_poses = std::min(nr_poses_per_row * nr_poses_per_col, nr_poses);
 
     return new_nr_poses < nr_poses;
 }
