@@ -20,7 +20,7 @@
 #pragma once
 
 #define PROFILING_ACTIVE
-//#define OPTIMIZE_NR_THREADS
+#define OPTIMIZE_NR_THREADS
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
@@ -148,8 +148,8 @@ public:
      */
     KinectImageObservationModelGPU(
         const CameraMatrix& camera_matrix,
-        const size_t& n_rows,
-        const size_t& n_cols,
+        const size_t& nr_rows,
+        const size_t& nr_cols,
         const size_t& max_sample_count,
         const std::vector<std::vector<Eigen::Vector3d>> vertices_double,
         const std::vector<std::vector<std::vector<int>>> indices,
@@ -164,8 +164,8 @@ public:
         const float max_depth = 6.0f,
         const float exponential_rate = -log(0.5f))
         : camera_matrix_(camera_matrix),
-          nr_rows_(n_rows),
-          nr_cols_(n_cols),
+          nr_rows_(nr_rows),
+          nr_cols_(nr_cols),
           nr_max_poses_(max_sample_count),
           indices_(indices),
           initial_occlusion_prob_(initial_occlusion_prob),
@@ -229,13 +229,10 @@ public:
             exit(-1);
         }
 
+
         // sets the resolution and reallocates the texture
 //        set_resolution();
-        int tmp_nr_rows, tmp_nr_cols;
-        if (bufferConfig_->set_resolution(nr_rows_, nr_cols_,
-                                      tmp_nr_rows, tmp_nr_cols, tmp_max_nr_poses)) {
-            nr_rows_ = tmp_nr_rows;
-            nr_cols_ = tmp_nr_cols;
+        if (bufferConfig_->set_resolution(nr_rows_, nr_cols_, tmp_max_nr_poses)) {
             nr_max_poses_ = tmp_max_nr_poses;
         } else {
             exit(-1);
@@ -326,6 +323,8 @@ public:
         nr_poses_ = deltas.size();
         std::vector<float> flog_likelihoods(nr_poses_, 0);
 
+
+
 //       set_number_of_poses(nr_poses_);
         int tmp_nr_poses;
         if (bufferConfig_->set_nr_of_poses(nr_poses_, tmp_nr_poses)) {
@@ -333,6 +332,8 @@ public:
         } else {
             exit(-1);
         }
+
+
 
         // transform occlusion indices from size_t to int
         std::vector<int> occlusion_indices_transformed(occlusion_indices.size(),

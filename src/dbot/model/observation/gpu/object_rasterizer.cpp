@@ -346,6 +346,9 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
 
     Matrix4f model_view_matrix;
 
+//    std::cout << "OpenGL: Before Rendering: #poses: " << nr_poses_
+//              << ", per row: " << nr_poses_per_row_ << ", per col: " << nr_poses_per_column_
+//              << std::endl;
 
     for (int i = 0; i < nr_poses_per_column_ ; i++) {
         for (int j = 0; j < nr_poses_per_row_ && i * nr_max_poses_per_row_ + j < states.size(); j++) {
@@ -411,6 +414,8 @@ void ObjectRasterizer::set_resolution(const int nr_rows, const int nr_cols) {
 
     nr_rows_ = nr_rows;
     nr_cols_ = nr_cols;
+
+    std::cout << "OpenGL: Resolution: " << nr_rows_ << " x " << nr_cols_ << std::endl;
 }
 
 void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
@@ -433,6 +438,10 @@ void ObjectRasterizer::allocate_textures_for_max_poses(int nr_poses,
     nr_poses_per_column_ = nr_poses_per_col;
 
     reallocate_buffers();
+
+    std::cout << "OpenGL: Allocated memory for " << nr_poses << " poses. "
+              << "per row: " << nr_poses_per_row
+              << ", per col: " << nr_poses_per_col << std::endl;
 }
 
 void ObjectRasterizer::set_number_of_poses(int nr_poses) {
@@ -448,6 +457,10 @@ void ObjectRasterizer::set_number_of_poses(int nr_poses) {
     nr_poses_per_row_ = min(nr_max_poses_per_row_, nr_poses);
     nr_poses_per_column_ = min(nr_max_poses_per_column_,
                                (int) ceil(nr_poses / (float) nr_poses_per_row_));
+
+//    std::cout << "OpenGL: Number of poses: " << nr_poses_ << ". "
+//              << "per row: " << nr_poses_per_row_
+//              << ", per col: " << nr_poses_per_column_ << std::endl;
 
 }
 

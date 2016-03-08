@@ -36,7 +36,6 @@ public:
   bool allocate_memory(int max_nr_poses,
                        int& new_max_nr_poses);
   bool set_resolution(const int nr_rows, const int nr_cols,
-                       int& new_nr_rows, int& new_nr_cols,
                        int& new_max_nr_poses);
   bool set_nr_of_poses(const int nr_poses,
                        int& new_nr_poses);
@@ -59,7 +58,7 @@ private:
                                               int& new_nr_poses,
                                               int& new_nr_poses_per_row,
                                               int& new_nr_poses_per_col);
-  bool check_against_thread_constraints(const int nr_threads,
+  bool check_against_thread_constraint(const int nr_threads,
                                         int& new_nr_threads);
   void issue_message(const BufferConfiguration::message_type foo,
                      const std::string problem_quantity,

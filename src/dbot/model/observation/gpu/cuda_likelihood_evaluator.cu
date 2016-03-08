@@ -395,6 +395,10 @@ void CudaEvaluator::weigh_poses(const bool update_occlusions, vector<float> &log
         double delta_time = observation_time_ - occlusion_time_;
         if(update_occlusions) occlusion_time_ = observation_time_;
 
+//        std::cout << "CUDA: Weighting: #poses: " << nr_poses_ << ", grid dimensions: "
+//                  << grid_dimension_.x << " x " << grid_dimension_.y << " x "
+//                  << grid_dimension_.z << ", resolution: " << nr_rows_ << " x " << nr_cols_ << std::endl;
+
         evaluate_kernel <<< grid_dimension_, nr_threads_ >>> (d_observations_, d_occlusion_probs_, d_occlusion_probs_copy_, d_occlusion_indices_, nr_cols_ * nr_rows_,
                                                d_log_likelihoods_, delta_time, nr_poses_, nr_rows_, nr_cols_, update_occlusions);
         #ifdef DEBUG
@@ -450,6 +454,8 @@ void CudaEvaluator::set_nr_threads(const int nr_threads) {
     }
 
     nr_threads_ = nr_threads;
+
+    std::cout << "CUDA: Threads: " << nr_threads_ << std::endl;
 }
 
 
@@ -492,6 +498,8 @@ void CudaEvaluator::set_resolution(const int nr_rows, const int nr_cols) {
 
     nr_rows_ = nr_rows;
     nr_cols_ = nr_cols;
+
+    std::cout << "CUDA: Resolution: " << nr_rows_ << " x " << nr_cols_ << std::endl;
 
 }
 
@@ -581,6 +589,10 @@ void CudaEvaluator::allocate_memory_for_max_poses(int nr_poses,
         check_cuda_error("cudaDeviceSynchronize allocate_memory_for_max_poses");
     #endif
 
+    std::cout << "CUDA: Allocated memory for " << nr_poses << " poses. "
+              << "per row: " << nr_poses_per_row
+              << ", per col: " << nr_poses_per_col << std::endl;
+
     memory_allocated_ = true;
 }
 
@@ -599,6 +611,10 @@ void CudaEvaluator::set_number_of_poses(int nr_poses) {
                                (int) ceil(nr_poses / (float) nr_poses_per_row_));
 
     grid_dimension_ = dim3(nr_poses_per_row_, nr_poses_per_column_);
+
+//    std::cout << "CUDA: Number of poses: " << nr_poses_ << ". "
+//              << "per row: " << nr_poses_per_row_
+//              << ", per col: " << nr_poses_per_column_ << std::endl;
 
     number_of_poses_set_ = true;
 }

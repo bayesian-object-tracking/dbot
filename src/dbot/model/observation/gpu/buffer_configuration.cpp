@@ -19,11 +19,11 @@
 
 #include <dbot/model/observation/gpu/buffer_configuration.hpp>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 #include <sstream>
 
-#define STR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+#define STR(x) boost::lexical_cast<std::string>(x)
 
 BufferConfiguration::BufferConfiguration(boost::shared_ptr<ObjectRasterizer> rasterizer,
                                          boost::shared_ptr<CudaEvaluator> evaluator,
@@ -37,6 +37,7 @@ BufferConfiguration::BufferConfiguration(boost::shared_ptr<ObjectRasterizer> ras
     nr_rows_(nr_rows)
 {
     max_texture_size_opengl_ = rasterizer_->get_max_texture_size();
+    max_texture_size_opengl_ = 1000;
     cuda_device_properties_ = evaluator_->get_device_properties();
     adapt_to_constraints_ = true;
 }
@@ -58,11 +59,13 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
     if (constrained_by_texture_size) {
         if (adapt_to_constraints_) {
             max_nr_poses_ = new_max_nr_poses;
-            issue_message(WARNING, "maximum number of poses",
+            issue_message(WARNING, "maximum number of poses (at resolution "
+                          + STR(nr_rows_) + " x " + STR(nr_cols_) + ")",
                           "maximum texture size", STR(max_nr_poses),
                           STR(max_nr_poses_));
         } else {
-            issue_message(ERROR, "maximum number of poses",
+            issue_message(ERROR, "maximum number of poses at resolution"
+                          + STR(nr_rows_) + " x " + STR(nr_cols_),
                         "maximum texture size", STR(max_nr_poses));
             return false;
         }
@@ -71,24 +74,29 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
     int new_max_nr_poses_per_row, new_max_nr_poses_per_col;
 
     bool constrained_by_global_memory =
-        check_against_global_memory_constraint(max_nr_poses_, new_max_nr_poses_per_row,
-                                               new_max_nr_poses_per_col, new_max_nr_poses);
+        check_against_global_memory_constraint(max_nr_poses_, new_max_nr_poses,
+                                               new_max_nr_poses_per_row,
+                                               new_max_nr_poses_per_col);
 
 
     if (constrained_by_global_memory) {
         if (adapt_to_constraints_) {
+            issue_message(WARNING, "maximum number of poses",
+                          "global memory size", STR(max_nr_poses_),
+                          STR(new_max_nr_poses));
             max_nr_poses_ = new_max_nr_poses;
             max_nr_poses_per_row = new_max_nr_poses_per_row;
             max_nr_poses_per_col = new_max_nr_poses_per_col;
-            issue_message(WARNING, "maximum number of poses",
-                          "global memory size", STR(max_nr_poses),
-                          STR(max_nr_poses_));
         } else {
             issue_message(ERROR, "maximum number of poses",
                         "global memory size", STR(max_nr_poses));
             return false;
         }
     }
+
+    std::cout << "BufferConfig: Allocated memory for " << max_nr_poses_ << " poses. "
+              << "per row: " << max_nr_poses_per_row
+              << ", per col: " << max_nr_poses_per_col << std::endl;
 
     evaluator_->allocate_memory_for_max_poses(max_nr_poses_,
                                               max_nr_poses_per_row,
@@ -105,60 +113,16 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
 }
 
 bool BufferConfiguration::set_resolution(const int nr_rows, const int nr_cols,
-                                         int& new_nr_rows, int& new_nr_cols,
                                          int& new_max_nr_poses) {
 
-// TODO maybe check whether resolution has changed at all
+    nr_rows_ = nr_rows;
+    nr_cols_ = nr_cols;
 
-    // limit in height
-    int max_nr_rows = std::min(std::min(nr_rows, max_texture_size_opengl_),
-                          cuda_device_properties_.maxTexture2D[1]);
-
-    // resulting width
-    float ratio = nr_cols / (float) nr_rows;
-    int tmp_nr_cols = ratio * max_nr_rows;
-
-    // limit in width
-    int max_nr_cols = std::min(std::min(tmp_nr_cols, max_texture_size_opengl_),
-                          cuda_device_properties_.maxTexture2D[0]);
-
-    // update resulting height
-    max_nr_rows = max_nr_cols / ratio;
-
-    // scale down such that resolution is a power of two
-    new_nr_cols = pow(2, floor(log(max_nr_cols)));
-    new_nr_rows = pow(2, floor(log(max_nr_rows)));
-
-
-    bool constrained_by_texture_size = (nr_rows > new_nr_rows) ||
-                                       (nr_cols > new_nr_cols);
-
-    if (constrained_by_texture_size) {
-        if (adapt_to_constraints_) {
-            nr_rows_ = new_nr_rows;
-            nr_cols_ = new_nr_cols;
-            issue_message(WARNING, "resolution", "maximum texture size",
-                          nr_rows + " x " + nr_cols,
-                          nr_rows_ + " x " + nr_cols_);
-        } else {
-            issue_message(ERROR, "resolution", "maximum texture size",
-                        nr_rows + " x " + nr_cols);
-            return false;
-        }
-    } else {
-        nr_rows_ = nr_rows;
-        nr_cols_ = nr_cols;
-    }
-
-
-    evaluator_->set_resolution(nr_rows_, nr_cols_);
-    rasterizer_->set_resolution(nr_rows_, nr_cols_);
+    evaluator_->set_resolution(nr_rows, nr_cols);
+    rasterizer_->set_resolution(nr_rows, nr_cols);
 
     bool successfully_allocated_memory = allocate_memory(max_nr_poses_,
                                                          new_max_nr_poses);
-
-    new_nr_rows = nr_rows_;
-    new_nr_cols = nr_cols_;
 
     return successfully_allocated_memory;
 }
@@ -183,8 +147,6 @@ bool BufferConfiguration::set_nr_of_poses(const int nr_poses,
     evaluator_->set_number_of_poses(new_nr_poses);
     rasterizer_->set_number_of_poses(new_nr_poses);
 
-    new_nr_poses = max_nr_poses_;
-
     return true;
 }
 
@@ -193,7 +155,7 @@ bool BufferConfiguration::set_number_of_threads(const int nr_threads,
                                                 int& new_nr_threads) {
 
     bool constrained_by_thread_limit
-        = check_against_thread_constraints(nr_threads, new_nr_threads);
+        = check_against_thread_constraint(nr_threads, new_nr_threads);
 
     if (constrained_by_thread_limit) {
         if (adapt_to_constraints_) {
@@ -269,6 +231,7 @@ bool BufferConfiguration::check_against_global_memory_constraint(const int nr_po
 
     int memory_needs = constant_needs + per_pose_needs * nr_poses;
 
+
     new_nr_poses = std::min(nr_poses,
                        (int) (cuda_device_properties_.totalGlobalMem - constant_needs)
                         / per_pose_needs);
@@ -281,10 +244,12 @@ bool BufferConfiguration::check_against_global_memory_constraint(const int nr_po
 
 
 
-bool BufferConfiguration::check_against_thread_constraints(const int nr_threads,
+bool BufferConfiguration::check_against_thread_constraint(const int nr_threads,
                                                            int& new_nr_threads) {
 
-    new_nr_threads = std::min(nr_threads, cuda_device_properties_.maxThreadsDim[0]);
+
+    new_nr_threads = std::min(nr_threads,
+                              cuda_device_properties_.maxThreadsDim[0]);
     return new_nr_threads < nr_threads;
 }
 
