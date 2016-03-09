@@ -48,7 +48,7 @@ public:
      *     The number of columns in each camera image
      */
     CudaEvaluator(const int nr_rows,
-               const int nr_cols);
+                  const int nr_cols);
 
     /**
      * \brief Destructor which frees the memory used on the GPU
@@ -200,15 +200,6 @@ public:
        maximum texture size, warp size etc. */
     cudaDeviceProp get_device_properties();
 
-    /// returns the amount of memory (in bytes) that will be used by CUDA
-    /**
-     * \param [in] max_nr_poses the maximum number of poses to be evaluated
-     * \param [in] nr_rows the vertical resolution per pose rendering
-     * \param [in] nr_cols the horizontal resolution per pose rendering
-     *
-     * \return the amount of memory needed by CUDA in bytes
-     */
-    int query_memory_needs_in_bytes(int max_nr_poses, int nr_rows, int nr_cols);
 
     /// returns the constant and per-pose memory needs that CUDA will have (in bytes)
     /**
@@ -257,9 +248,9 @@ private:
     int nr_rows_;
 
     // maximum number of poses and their arrangement in the OpenGL texture
-    int nr_max_poses_;
-    int nr_max_poses_per_row_;
-    int nr_max_poses_per_column_;
+    int max_nr_poses_;
+    int max_nr_poses_per_row_;
+    int max_nr_poses_per_column_;
 
     // actual number of poses for the current frame
     int nr_poses_;

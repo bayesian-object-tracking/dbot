@@ -135,9 +135,6 @@ private:
   int max_nr_poses_;
   int max_nr_poses_per_row_;
   int max_nr_poses_per_col_;
-  int nr_poses_;
-  int nr_poses_per_row_;
-  int nr_poses_per_column_;
   int nr_cols_;
   int nr_rows_;
   int nr_threads_;

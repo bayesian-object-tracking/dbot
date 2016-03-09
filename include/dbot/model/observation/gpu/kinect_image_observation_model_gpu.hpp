@@ -375,6 +375,7 @@ public:
 
         opengl_->render(poses);
 
+
 #ifdef PROFILING_ACTIVE
         store_time(RENDERING);
 #endif

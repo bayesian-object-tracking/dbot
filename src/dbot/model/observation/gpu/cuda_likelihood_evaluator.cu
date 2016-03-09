@@ -395,9 +395,6 @@ void CudaEvaluator::weigh_poses(const bool update_occlusions, vector<float> &log
         double delta_time = observation_time_ - occlusion_time_;
         if(update_occlusions) occlusion_time_ = observation_time_;
 
-//        std::cout << "CUDA: Weighting: #poses: " << nr_poses_ << ", grid dimensions: "
-//                  << grid_dimension_.x << " x " << grid_dimension_.y << " x "
-//                  << grid_dimension_.z << ", resolution: " << nr_rows_ << " x " << nr_cols_ << std::endl;
 
         evaluate_kernel <<< grid_dimension_, nr_threads_ >>> (d_observations_, d_occlusion_probs_, d_occlusion_probs_copy_, d_occlusion_indices_, nr_cols_ * nr_rows_,
                                                d_log_likelihoods_, delta_time, nr_poses_, nr_rows_, nr_cols_, update_occlusions);
@@ -508,8 +505,6 @@ void CudaEvaluator::set_resolution(const int nr_rows, const int nr_cols) {
     nr_rows_ = nr_rows;
     nr_cols_ = nr_cols;
 
-    std::cout << "CUDA: Resolution: " << nr_rows_ << " x " << nr_cols_ << std::endl;
-
 }
 
 
@@ -574,22 +569,22 @@ void CudaEvaluator::allocate_memory_for_max_poses(int nr_poses,
         exit(-1);
     }
 
-    nr_max_poses_ = nr_poses;
-    nr_max_poses_per_row_ = nr_poses_per_row;
-    nr_max_poses_per_column_ = nr_poses_per_col;
+    max_nr_poses_ = nr_poses;
+    max_nr_poses_per_row_ = nr_poses_per_row;
+    max_nr_poses_per_column_ = nr_poses_per_col;
 
     grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_col);
 
 
     // reallocate arrays
-    allocate(d_log_likelihoods_, sizeof(float) * nr_max_poses_);
-    allocate(d_occlusion_indices_, sizeof(int) * nr_max_poses_);
-    int size_occlusion_probs = nr_rows_ * nr_cols_ * nr_max_poses_ * sizeof(float);
+    allocate(d_log_likelihoods_, sizeof(float) * max_nr_poses_);
+    allocate(d_occlusion_indices_, sizeof(int) * max_nr_poses_);
+    int size_occlusion_probs = nr_rows_ * nr_cols_ * max_nr_poses_ * sizeof(float);
     allocate(d_occlusion_probs_, size_occlusion_probs);
     allocate(d_occlusion_probs_copy_, size_occlusion_probs);
     allocate(d_observations_, nr_rows_ * nr_cols_ *sizeof(float));
 
-    vector<float> initial_occlusion_probs (nr_rows_ * nr_cols_ * nr_max_poses_,
+    vector<float> initial_occlusion_probs (nr_rows_ * nr_cols_ * max_nr_poses_,
                                            occlusion_prob_default_);
 
     cudaMemcpy(d_occlusion_probs_, &initial_occlusion_probs[0], size_occlusion_probs, cudaMemcpyHostToDevice);
@@ -602,25 +597,21 @@ void CudaEvaluator::allocate_memory_for_max_poses(int nr_poses,
         check_cuda_error("cudaDeviceSynchronize allocate_memory_for_max_poses");
     #endif
 
-    std::cout << "CUDA: Allocated memory for " << nr_poses << " poses. "
-              << "per row: " << nr_poses_per_row
-              << ", per col: " << nr_poses_per_col << std::endl;
-
     memory_allocated_ = true;
 }
 
 
 void CudaEvaluator::set_number_of_poses(int nr_poses) {
-    if (nr_poses > nr_max_poses_) {
+    if (nr_poses > max_nr_poses_) {
         std::cout << "ERROR (CUDA): You tried to evaluate more poses ("
                   << nr_poses << ") than specified by max_poses ("
-                  << nr_max_poses_ << ")" << std::endl;
+                  << max_nr_poses_ << ")" << std::endl;
         exit(-1);
     }
 
     nr_poses_ = nr_poses;
-    int nr_poses_per_row = min(nr_max_poses_per_row_, nr_poses);
-    int nr_poses_per_column = min(nr_max_poses_per_column_,
+    int nr_poses_per_row = min(max_nr_poses_per_row_, nr_poses);
+    int nr_poses_per_column = min(max_nr_poses_per_column_,
                                (int) ceil(nr_poses / (float) nr_poses_per_row));
 
     grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_column);

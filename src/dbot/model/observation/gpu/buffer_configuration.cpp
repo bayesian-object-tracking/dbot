@@ -45,7 +45,6 @@ BufferConfiguration::BufferConfiguration(boost::shared_ptr<ObjectRasterizer> ras
 bool BufferConfiguration::allocate_memory(const int max_nr_poses,
                                           int& new_max_nr_poses) {
 
-    // TODO maybe check whether nr poses has changed at all
     max_nr_poses_ = max_nr_poses;
 
     int max_nr_poses_per_row, max_nr_poses_per_col;
@@ -96,10 +95,6 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
         }
     }
 
-    std::cout << "BufferConfig: Allocated memory for " << max_nr_poses_ << " poses. "
-              << "per row: " << max_nr_poses_per_row
-              << ", per col: " << max_nr_poses_per_col << std::endl;
-
     evaluator_->allocate_memory_for_max_poses(max_nr_poses_,
                                               max_nr_poses_per_row,
                                               max_nr_poses_per_col);
@@ -108,7 +103,6 @@ bool BufferConfiguration::allocate_memory(const int max_nr_poses,
                                                  max_nr_poses_per_row,
                                                  max_nr_poses_per_col);
 
-    // TODO: When to pass nr_cols, nr_rows? Pass inside this allocation call?
 
     new_max_nr_poses = max_nr_poses_;
     return true;
@@ -181,8 +175,9 @@ void BufferConfiguration::set_adapt_to_constraints(bool should_adapt) {
     adapt_to_constraints_ = should_adapt;
 }
 
+// ========================================================== //
 // ========= Functions for checking GPU constraints ========= //
-
+// ========================================================== //
 
 bool BufferConfiguration::check_against_texture_size_constraint(const int nr_poses,
                                                                 const int nr_poses_per_row,
