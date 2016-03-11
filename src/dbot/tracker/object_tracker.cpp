@@ -77,11 +77,9 @@ auto ObjectTracker::track(const Obsrv& image) -> State
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    INIT_PROFILING
     move_average(to_model_coordinate_system(on_track(image)),
                  moving_average_,
                  update_rate_);
-    MEASURE_FLUSH("filter step");
 
     return moving_average_;
 }

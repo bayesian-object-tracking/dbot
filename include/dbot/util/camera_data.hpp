@@ -48,7 +48,7 @@ public:
     /**
      * \brief Creates a CameraData using the specified data provider
      */
-    CameraData(std::shared_ptr<CameraDataProvider>& data_provider);
+    CameraData(const std::shared_ptr<CameraDataProvider>& data_provider);
 
     /**
      * \brief Default virtual destructor
