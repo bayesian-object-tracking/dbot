@@ -17,14 +17,18 @@
  * \date November 2015
  */
 
+#pragma once
+
 #include <vector>
 #include <Eigen/Dense>
 #include "GL/glew.h"
 
 #include <dbot/model/observation/gpu/shader_provider.hpp>
+#include <memory>
 
-/// renders the objects using openGL rasterization
-/** The objects that should be rendered have to be passed in the constructor and can then be rendered
+ /**
+ * \brief renders the objects using openGL rasterization.
+ * The objects that should be rendered have to be passed in the constructor and can then be rendered
  * in different poses with the render() function. The resulting depth values are stored in a texture
  * whose values can be obtained with get_depth_values(). Alternatively, get_framebuffer_texture() returns
  * the ID of the texture for mapping it into CUDA.
@@ -32,9 +36,9 @@
 class ObjectRasterizer
 {
 public:
-    /// constructor which takes the vertices and indices that describe the objects as input. The paths to the
-    /// shader files and the instrinsic camera matrix also have to be passed here.
     /**
+     * \brief constructor which takes the vertices and indices that describe the objects as input. The paths to the
+     * shader files and the instrinsic camera matrix also have to be passed here.
      * \param [in]  vertices [object_nr][vertex_nr] = {x, y, z}. This list should contain, for each object,
      * a list of 3-dimensional vectors that specify the corners of the triangles of the object mesh.
      * \param [in]  indices [object_nr][index_nr][0 - 2] = {index}. This list should contain the indices
@@ -59,87 +63,90 @@ public:
                      const float near_plane = 0.4,
                      const float far_plane = 4);
 
-    /// destructor which deletes the buffers and programs used by openGL
+    /** destructor which deletes the buffers and programs used by openGL */
     ~ObjectRasterizer();
 
 
-    /// render the objects in all given states and return the depth for all relevant pixels of each rendered object
-    /** This function renders all poses (of all objects) into one large texture. Reading back the depth values
+    /**
+     * \brief render the objects in all given states and return the depth for all pixels of each rendered object.
+     * This function renders all poses (of all objects) into one large texture. Reading back the depth values
      * is a relatively slow process, so this function should mainly be used for debugging. If you are using
      * CUDA to further process the depth values, please use the other render() function.
      * \param [in]  states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
      * and the translation for each object per pose.
-     * \param [out] intersect_indices [pose_nr][0 - nr_relevant_pixels] = {pixel_nr}. This list should be empty when passed
-     * to the function. Afterwards, it will contain the pixel numbers of all pixels that were rendered to, per pose. Pixels
-     * that have a depth value of 0 will be ignored.
-     * \param [out] depth [pose_nr][0 - nr_relevant_pixels] = {depth_value}. This list should be empty when passed to the function.
-     * Afterwards, it will contain the depth value of all pixels that were rendered to, per pose. Pixels
-     * that have a depth value of 0 will be ignored.
+     * \param [out] depth_values [pose_nr][0 - nr_pixels] = {depth value of that pixel}
      */
     void render(const std::vector<std::vector<Eigen::Matrix4f> > states,
-                std::vector<std::vector<float> > depth_values);
+                std::vector<std::vector<float> >& depth_values);
 
-    /// render the objects in all given states into a texture that can then be accessed by CUDA
-    /** This function renders all poses (of all objects) into one large texture, which can then be mapped into the CUDA
+    /**
+     * \brief render the objects in all given states into a texture that can then be accessed by CUDA.
+     * This function renders all poses (of all objects) into one large texture, which can then be mapped into the CUDA
      * context. To get the ID of the texture, call get_texture_ID().
      * \param [in]  states [pose_nr][object_nr][0 - 6] = {qw, qx, qy, qz, tx, ty, tz}. This should contain the quaternion
      * and the translation for each object per pose.
      */
     void render(const std::vector<std::vector<Eigen::Matrix4f> > states);
 
-    /// sets the objects that should be rendered.
-    /** This function only needs to be called if any objects initially passed in the constructor should be left out when rendering.
+    /**
+     * \brief sets the objects that should be rendered.
+     * This function only needs to be called if any objects initially passed in the constructor should be ignored when rendering.
      * \param [in]  object_numbers [0 - nr_objects] = {object_nr}. This list should contain the indices of all objects that
      * should be rendered when calling render(). For example, [0,1,4,5] will only render objects 0,1,4 and 5 (whose vertices
      * were passed in the constructor).
      */
     void set_objects(std::vector<int> object_numbers);
 
-    /// set a new resolution
-    /** This function reallocates the framebuffer textures. This is expensive, so only do it if necessary.
-     * \param [in]  n_rows the height of the image
-     * \param [in]  n_cols the width of the image
-     * \param [out] nr_poses the new number of poses (only changed when adapting to constraints)
-     * \param [out] nr_poses_per_row the new number of poses per row
-     * \param [out] nr_poses_per_column the new number of poses per column
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
+    /**
+     * \brief set a new resolution.
+     * \param [in]  nr_rows the height of the image
+     * \param [in]  nr_cols the width of the image
      */
-    void set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints = false);
+    void set_resolution(const int nr_rows, const int nr_cols);
 
-    /// allocates memory on the GPU
-    /** Use this function to allocate memory for the maximum number of poses that you will need throughout the filtering.
-     * @param[in,out] allocated_poses number of poses for which space should be allocated. Might be changed by the function
-     * if there are space restrictions posed by OpenGL.
-     * \param [out] allocated_poses_per_row the number of poses that will be rendered per row of the texture
-     * \param [out] allocated_poses_per_column the number of poses that will be rendered per column of the texture
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program if constraints are not met
+    /**
+     * \brief allocates memory on the GPU.
+     * Use this function to allocate memory for the maximum number of poses that you will need throughout the filtering.
+     * \param[in] nr_poses number of poses for which space should be allocated.
+     * \param [in] nr_poses_per_row the number of poses that will be rendered per row of the texture
+     * \param [in] nr_poses_per_col the number of poses that will be rendered per column of the texture
      */
-    void allocate_textures_for_max_poses(int& allocated_poses,
-                                         int& allocated_poses_per_row,
-                                         int& allocated_poses_per_column,
-                                         const bool adapt_to_constraints = false);
+    void allocate_textures_for_max_poses(int nr_poses,
+                                         int nr_poses_per_row,
+                                         int nr_poses_per_col);
 
-    /// sets the number of poses that should be rendered in the next render call
-    /** Use this function previously to every render call if you need to change the amount of poses.
-     * @param[in/out] nr_poses amount of poses that should be rendered. Cannot exceed the maximum number of poses set with
-     * allocate_textures_for_max_poses(). Might be changed if adapt_to_constraints is activated.
-     * \param [out] nr_poses_per_row the number of poses that will be rendered per row of the texture
-     * \param [out] nr_poses_per_column the number of poses that will be rendered per column of the texture
-     * \param [in]  adapt_to_constraints whether to automatically adapt to GPU constraints or quit the program instead
-     */
-    void set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, const bool adapt_to_constraints = false);
 
-    /// returns the OpenGL framebuffer texture ID, which is needed for CUDA interoperation
-    /** Use this function to retrieve the texture ID and pass it to the cudaGraphicsGLRegisterImage call.
-     * @return The texture ID
+    /**
+     * \brief returns the OpenGL framebuffer texture ID, which is needed for CUDA interoperation.
+     * Use this function to retrieve the texture ID and pass it to the cudaGraphicsGLRegisterImage call.
+     * \return The texture ID
      */
     GLuint get_framebuffer_texture();
 
-    /// returns the rendered depth values of all poses
-    /** This function should only be used for debugging. It will be extremely slow.
-     * @return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
+    /**
+     * \brief returns the rendered depth values of all poses.
+     * This function should only be used for debugging. It will be extremely slow.
+     * \return [pose_nr][0 - nr_pixels] = {depth value of that pixel}
      */
-    std::vector<std::vector<float> > get_depth_values();
+    std::vector<std::vector<float> > get_depth_values(int nr_poses);
+
+    /**
+     * \brief returns the constant and per-pose memory needs that OpenGL will have (in bytes)
+     * \param [in] nr_rows the vertical resolution per pose rendering
+     * \param [in] nr_cols the horizontal resolution per pose rendering
+     * \param [out] constant_need the amount of memory that OpenGL will need,
+     * independently of the number of poses (in bytes)
+     * \param [out] per_pose_need the amount of memory that OpenGL will need
+     * per pose (in bytes)
+     */
+    void get_memory_need_parameters(int nr_rows, int nr_cols,
+                                    int& constant_need, int& per_pose_need);
+
+    /**
+     * \brief returns the maximum texture size that OpenGL supports with this GPU
+     * \return The maximum texture size that can be allocated
+     */
+    int get_max_texture_size();
 
 private:
     // GPU constraints
@@ -153,15 +160,13 @@ private:
     float near_plane_;
     float far_plane_;
 
-    // actual number of poses to render (current frame)
+    // number of poses in the current render call
     int nr_poses_;
-    int nr_poses_per_row_;
-    int nr_poses_per_column_;
 
     // maximum number of poses that can be rendered in one call
-    int nr_max_poses_;
-    int nr_max_poses_per_row_;
-    int nr_max_poses_per_column_;
+    int max_nr_poses_;
+    int max_nr_poses_per_row_;
+    int max_nr_poses_per_column_;
 
     // needed for OpenGL time measurement
     static const int NR_SUBROUTINES_TO_MEASURE = 4;
@@ -171,9 +176,6 @@ private:
     std::vector<double> time_measurement_;
     int nr_calls_;
     bool initial_run_;  // the first run should not count
-
-    // shade code provider
-//    dbot::ShaderProvider shader_provider_;
 
     // lists of all vertices and indices of all objects
     std::vector<float> vertices_list_;

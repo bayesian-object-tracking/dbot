@@ -22,8 +22,6 @@
 #include <curand_kernel.h>
 #include <vector>
 
-namespace fil
-{
 /**
  * \brief This class provides a parallel implementation of the weighting step on
  *        the GPU.
@@ -38,7 +36,7 @@ namespace fil
  * occlusion indices (after resampling)
  *  before you call the weigh_poses() function.
  */
-class CudaFilter
+class CudaEvaluator
 {
 public:
     /**
@@ -49,13 +47,13 @@ public:
      * \param [in] nr_cols
      *     The number of columns in each camera image
      */
-    CudaFilter(const int nr_rows,
-               const int nr_cols);
+    CudaEvaluator(const int nr_rows,
+                  const int nr_cols);
 
     /**
      * \brief Destructor which frees the memory used on the GPU
      */
-    ~CudaFilter();
+    ~CudaEvaluator();
 
     /**
      * \brief This function has to be called once in the beginning, before
@@ -130,39 +128,29 @@ public:
     /// sets the indices to the occlusion array for every state
     /**
      * \param [in] occlusion_indices [state_nr] = {index}. For each state, this
-     * gives the index
-     * into the occlusion array.
+     * gives the index into the occlusion array.
+     * \param [in] array_size the number of values contained in occlusion_indices
      */
-    void set_occlusion_indices(const int* occlusion_indices);
+    void set_occlusion_indices(const int* occlusion_indices,
+                               const int array_size);
 
     /// sets the resolution for the images to be compared
-    /** This function might downgrade the number of poses or change the
-     * arrangement of the
-     *  poses in the grid due to the resolution change.
+    /** Be sure to call allocate_memory_for_max_poses afterwards to reallocate
+     *  the buffers according to the new resolution.
      * \param [in] n_rows the number of rows in an image
      * \param [in] n_cols the number of columns in an image
-     * \param [out] nr_poses the number of poses that will be weighted
-     * \param [out] nr_poses_per_row the number of poses per row that will be
-     * weighted
-     * \param [out] nr_poses_per_column the number of poses per column that will
-     * be weighted
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
      */
-    void set_resolution(const int n_rows,
-                        const int n_cols,
-                        int& nr_poses,
-                        int& nr_poses_per_row,
-                        int& nr_poses_per_column,
-                        bool adapt_to_constraints = false);
+    void set_resolution(const int nr_rows, const int nr_cols);
 
     /// sets the occlusion probabilities for all pixels for all states
     /**
     * \param [in] occlusion_probabilities a 1D-array of occlusion probabilities
-    * which should contain
-    * nr_rows * nr_cols * nr_poses values.
+    * which should contain array_size values.
+    * \param [in] array_size the number of values contained in
+    * occlusion_probabilities
     */
-    void set_occlusion_probabilities(const float* occlusion_probabilities);
+    void set_occlusion_probabilities(const float* occlusion_probabilities,
+                                     const int array_size);
 
     /// maps the texture array to an actual texture reference
     /**
@@ -173,34 +161,23 @@ public:
     /// allocates the maximum amount of memory that will ever be needed by CUDA
     /// during runtime
     /**
-     * \param [in][out] allocated_poses the maximum number of poses that will
+     * \param [in] nr_poses the maximum number of poses that will
      * ever be evaluated in one weighting step.
      * This number might be lowered if GPU contraints do now allow this number
      * of poses.
-     * \param [out] allocated_poses_per_row the maximum number of poses per row
-     * \param [out] allocated_poses_per_column the maximum number of poses per
+     * \param [in] nr_poses_per_row the maximum number of poses per row
+     * \param [in] nr_poses_per_col the maximum number of poses per
      * column
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
      */
-    void allocate_memory_for_max_poses(int& allocated_poses,
-                                       int& allocated_poses_per_row,
-                                       int& allocated_poses_per_column,
-                                       bool adapt_to_constraints = false);
+    void allocate_memory_for_max_poses(int nr_poses,
+                                       int nr_poses_per_row,
+                                       int nr_poses_per_col);
 
     /// sets the number of poses to be weighted in the next weighting step
     /**
-     * \param [in][out] nr_poses the desired number of poses. Might be changed
-     * due to GPU constraints.
-     * \param [out] nr_poses_per_row the number of poses per row
-     * \param [out] nr_poses_per_column the number of poses per column
-     * \param [in] adapt_to_constraints whether to automatically adapt to GPU
-     * constraints or quit the program if constraints are not met
+     * \param [in] nr_poses the desired number of poses.
      */
-    void set_number_of_poses(int& nr_poses,
-                             int& nr_poses_per_row,
-                             int& nr_poses_per_column,
-                             bool adapt_to_constraints = false);
+    void set_number_of_poses(int nr_poses);
 
     // getters
     /// gets the maximum number of threads that can be handled with this GPU
@@ -216,6 +193,32 @@ public:
      * concurrently on a CUDA streaming multiprocessor
      */
     int get_warp_size();
+
+    /// gets the GPU properties obtained by CUDA
+    /**
+     * \return the device properties = i.e. maximum number of allowed threads,
+       maximum texture size, warp size etc. */
+    cudaDeviceProp get_device_properties();
+
+
+    /// returns the constant and per-pose memory needs that CUDA will have (in bytes)
+    /**
+     * \param [in] nr_rows the vertical resolution per pose rendering
+     * \param [in] nr_cols the horizontal resolution per pose rendering
+     * \param [out] constant_need the amount of memory that CUDA will need,
+     * independently of the number of poses (in bytes)
+     * \param [out] per_pose_need the amount of memory that CUDA will need
+     * per pose (in bytes)
+     */
+    void get_memory_need_parameters(int nr_rows, int nr_cols,
+                                    int& constant_need, int& per_pose_need);
+
+    /// gets the default number of threads that should be used for the
+    /// evaluation kernel
+    /**
+     * \return the default number of threads
+     */
+    int get_default_nr_threads();
 
     /// gets the occlusion probabilities of a particular state
     /**
@@ -245,18 +248,15 @@ private:
     int nr_rows_;
 
     // maximum number of poses and their arrangement in the OpenGL texture
-    int nr_max_poses_;
-    int nr_max_poses_per_row_;
-    int nr_max_poses_per_column_;
+    int max_nr_poses_;
+    int max_nr_poses_per_row_;
+    int max_nr_poses_per_column_;
 
-    // actual number of poses and their arrangement in the OpenGL texture
-    // (current frame)
+    // actual number of poses for the current frame
     int nr_poses_;
-    int nr_poses_per_row_;
-    int nr_poses_per_column_;
 
     // block and grid arrangement of the CUDA kernels
-    int nr_threads_, n_blocks_;
+    int nr_threads_;
     dim3 grid_dimension_;
 
     // occlusion probability default value
@@ -277,14 +277,8 @@ private:
         occlusion_probabilities_set_, memory_allocated_;
     bool number_of_poses_set_, constants_initialized_;
 
-    void set_default_kernel_config(int& nr_poses_,
-                                   int& nr_poses_per_row,
-                                   int& nr_poses_per_column,
-                                   bool& nr_poses_changed,
-                                   bool adapt_to_constraints);
     // helper functions
     template <typename T>
     void allocate(T*& pointer, size_t size);
     void check_cuda_error(const char* msg);
 };
-}

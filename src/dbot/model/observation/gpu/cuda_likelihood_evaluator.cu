@@ -39,9 +39,6 @@
 
 using namespace std;
 
-namespace fil
-{
-
 // ====================== CUDA CONSTANT VALUES ======================= //
 
 
@@ -248,7 +245,7 @@ __global__ void evaluate_kernel(float *observations, float* old_occlusion_probs,
 // ************************************************************************************** //
 
 
-CudaFilter::CudaFilter(const int nr_rows,
+CudaEvaluator::CudaEvaluator(const int nr_rows,
                        const int nr_cols) :
 
     nr_rows_(nr_rows),
@@ -299,11 +296,12 @@ CudaFilter::CudaFilter(const int nr_rows,
     d_log_likelihoods_ = NULL;
     d_occlusion_indices_ = NULL;
 
+    set_nr_threads(DEFAULT_NR_THREADS);
 }
 
 
 
-void CudaFilter::init(const float initial_occlusion_prob, const float p_occluded_occluded, const float p_occluded_visible,
+void CudaEvaluator::init(const float initial_occlusion_prob, const float p_occluded_occluded, const float p_occluded_visible,
                       const float tail_weight, const float model_sigma, const float sigma_factor, const float max_depth, const float exponential_rate) {
 
     occlusion_time_ = 0;
@@ -382,6 +380,7 @@ void CudaFilter::init(const float initial_occlusion_prob, const float p_occluded
         check_cuda_error("cudaMemcpyToSymbol exponential_rate -> g_exponential_rate");
     #endif
 
+
     constants_initialized_ = true;
 }
 
@@ -389,12 +388,13 @@ void CudaFilter::init(const float initial_occlusion_prob, const float p_occluded
 
 
 
-void CudaFilter::weigh_poses(const bool update_occlusions, vector<float> &log_likelihoods) {
+void CudaEvaluator::weigh_poses(const bool update_occlusions, vector<float> &log_likelihoods) {
     if (observations_set_ && occlusion_indices_set_ && occlusion_probabilities_set_
             && memory_allocated_ && number_of_poses_set_ && constants_initialized_) {
 
         double delta_time = observation_time_ - occlusion_time_;
         if(update_occlusions) occlusion_time_ = observation_time_;
+
 
         evaluate_kernel <<< grid_dimension_, nr_threads_ >>> (d_observations_, d_occlusion_probs_, d_occlusion_probs_copy_, d_occlusion_indices_, nr_cols_ * nr_rows_,
                                                d_log_likelihoods_, delta_time, nr_poses_, nr_rows_, nr_cols_, update_occlusions);
@@ -439,16 +439,25 @@ void CudaFilter::weigh_poses(const bool update_occlusions, vector<float> &log_li
 
 
 // ===================================================================================== //
-// =============================== CUDA FILTER SETTERS ================================= //
+// =============================== CUDA EVALUATOR SETTERS ================================= //
 // ===================================================================================== //
 
-void CudaFilter::set_nr_threads(const int nr_threads) {
-    nr_threads_ = min(nr_threads, cuda_device_properties_.maxThreadsDim[0]);
+void CudaEvaluator::set_nr_threads(const int nr_threads) {
+    if (nr_threads > cuda_device_properties_.maxThreadsDim[0]) {
+        std::cout << "ERROR (CUDA): The number of threads you requested ("
+                  << nr_threads << ") is not supported my CUDA. Max #threads: "
+                  << cuda_device_properties_.maxThreadsDim[0] << std::endl;
+        exit(-1);
+    }
+
+    nr_threads_ = nr_threads;
+
+    std::cout << "CUDA: Threads: " << nr_threads_ << std::endl;
 }
 
 
 
-void CudaFilter::set_observations(const float* observations, const float observation_time) {
+void CudaEvaluator::set_observations(const float* observations, const float observation_time) {
 
     observation_time_ = observation_time;
 
@@ -466,9 +475,18 @@ void CudaFilter::set_observations(const float* observations, const float observa
 
 
 
-void CudaFilter::set_occlusion_indices(const int* occlusion_indices) {
+void CudaEvaluator::set_occlusion_indices(const int* occlusion_indices,
+                                          const int array_size) {
 
-    cudaMemcpy(d_occlusion_indices_, occlusion_indices, nr_poses_ * sizeof(int), cudaMemcpyHostToDevice);
+    if (array_size != nr_poses_) {
+        std::cout << "ERROR (CUDA): The amount of occlusion indices sent to "
+                  << "the GPU does not correspond to the amount of poses that "
+                  << "are to be evaluated." << std::endl;
+        exit(-1);
+    }
+
+    cudaMemcpy(d_occlusion_indices_, occlusion_indices,
+               array_size * sizeof(int), cudaMemcpyHostToDevice);
 
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_indices -> d_occlusion_indices");
@@ -482,23 +500,24 @@ void CudaFilter::set_occlusion_indices(const int* occlusion_indices) {
 }
 
 
-void CudaFilter::set_resolution(const int n_rows, const int n_cols, int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, bool adapt_to_constraints) {
+void CudaEvaluator::set_resolution(const int nr_rows, const int nr_cols) {
 
-    nr_rows_ = n_rows;
-    nr_cols_ = n_cols;
+    nr_rows_ = nr_rows;
+    nr_cols_ = nr_cols;
 
-    // reallocate buffers
-    allocate(d_observations_, nr_cols_ * nr_rows_ * sizeof(float));
-    allocate_memory_for_max_poses(nr_poses, nr_poses_per_row, nr_poses_per_column, adapt_to_constraints);
 }
 
 
-void CudaFilter::set_occlusion_probabilities(const float* occlusion_probabilities) {
+void CudaEvaluator::set_occlusion_probabilities(const float* occlusion_probabilities,
+                                                const int array_size) {
 
-        std::vector<float> occlusion_probabilities_local(
-            nr_rows_ * nr_cols_ * nr_poses_, occlusion_prob_default_);
+//        std::vector<float> occlusion_probabilities_local(
+//            nr_rows_ * nr_cols_ * nr_poses_, occlusion_prob_default_);
 
-    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities_local.data(), nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+//    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities_local.data(), nr_rows_ * nr_cols_ * nr_poses_ * sizeof(float), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(d_occlusion_probs_, occlusion_probabilities,
+               array_size * sizeof(float), cudaMemcpyHostToDevice);
 
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_probabilities -> d_occlusion_probs_");
@@ -512,7 +531,7 @@ void CudaFilter::set_occlusion_probabilities(const float* occlusion_probabilitie
 }
 
 
-void CudaFilter::map_texture_to_texture_array(const cudaArray_t texture_array) {
+void CudaEvaluator::map_texture_to_texture_array(const cudaArray_t texture_array) {
 
     d_texture_array_ = texture_array;
     cudaBindTextureToArray(texture_reference, d_texture_array_);
@@ -523,104 +542,52 @@ void CudaFilter::map_texture_to_texture_array(const cudaArray_t texture_array) {
 }
 
 
-void CudaFilter::allocate_memory_for_max_poses(int& allocated_poses,
-                                               int& allocated_poses_per_row,
-                                               int& allocated_poses_per_column,
-                                               bool adapt_to_constraints) {
+void CudaEvaluator::allocate_memory_for_max_poses(int nr_poses,
+                                                  int nr_poses_per_row,
+                                                  int nr_poses_per_col) {
 
-    // check limitation by global memory
-    size_t size_of_log_likelihoods = sizeof(float) * allocated_poses;
-    size_t size_of_resampling_indices = sizeof(int) * allocated_poses;
-    size_t size_of_occlusion_indices = sizeof(int) * allocated_poses;
-    size_t size_of_occlusion_probs = nr_rows_ * nr_cols_ * allocated_poses * sizeof(float);
-    size_t size_of_opengl_textures = size_of_occlusion_probs * 2;
-    size_t size_of_observations = nr_cols_ * nr_rows_ * sizeof(float);
+    // check limitation by global memory size
+    int constant_need, per_pose_need;
+    get_memory_need_parameters(nr_rows_, nr_cols_,
+                               constant_need, per_pose_need);
+    int memory_needs = constant_need + nr_poses * per_pose_need;
 
-    size_t total_size = size_of_log_likelihoods + size_of_resampling_indices + size_of_occlusion_indices
-                      + size_of_occlusion_probs * 2 + size_of_opengl_textures + size_of_observations;
-
-    if (total_size > cuda_device_properties_.totalGlobalMem) {
-        if (adapt_to_constraints) {
-            std::cout << "WARNING (CUDA): The space (" << total_size << " B) for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
-                      << "The limit is global memory size (" << cuda_device_properties_.totalGlobalMem
-                      << " B) retrieved from CUDA properties." << std::endl;
-
-            size_t size_depending_on_nr_poses = (sizeof(float) + sizeof(int) * 2 + nr_rows_ * nr_cols_ * sizeof(float) * 4);
-            allocated_poses = min(allocated_poses, (int) floor((cuda_device_properties_.totalGlobalMem - size_of_observations) / size_depending_on_nr_poses));
-            allocated_poses_per_column = ceil(allocated_poses / allocated_poses_per_row);
-
-            std::cout << "Instead, space (" << allocated_poses * size_depending_on_nr_poses + size_of_observations << " B) for " << allocated_poses << " poses was allocated. " << std::endl;
-        } else {
-            std::cout << "ERROR (CUDA): The space (" << total_size << " B) for the number of maximum poses you requested (" << allocated_poses << ") cannot be allocated. "
-                      << "The limit is global memory size (" << cuda_device_properties_.totalGlobalMem
-                      << " B) retrieved from CUDA properties." << std::endl;
-            exit(-1);
-        }
+    if (memory_needs > cuda_device_properties_.totalGlobalMem) {
+        std::cout << "ERROR (CUDA): Not enough memory to allocate " << nr_poses
+                  << " poses." << std::endl;
+        exit(-1);
     }
 
-
-    // check limitation by texture size
-    if (cuda_device_properties_.maxTexture2D[0] <= allocated_poses_per_row * nr_cols_) {
-        if (adapt_to_constraints) {
-
-            std::cout << "WARNING (CUDA): The max poses you requested (" << allocated_poses << ") could not be allocated." << std::endl;
-
-            allocated_poses_per_row = cuda_device_properties_.maxTexture2D[0] / nr_cols_;
-            allocated_poses_per_column = ceil(allocated_poses / allocated_poses_per_row);
-
-            if (cuda_device_properties_.maxTexture2D[1] <= allocated_poses_per_column * nr_rows_) {
-                allocated_poses_per_column = cuda_device_properties_.maxTexture2D[1] / nr_rows_;
-            }
-
-            allocated_poses = min(allocated_poses, allocated_poses_per_row * allocated_poses_per_column);
-
-            std::cout << "The limit is max texture size (" << cuda_device_properties_.maxTexture2D[0]
-                      << ", " << cuda_device_properties_.maxTexture2D[1] << ") retrieved from CUDA properties. "
-                      << "Number of poses was reduced to (" << allocated_poses_per_row << ", "
-                      << allocated_poses_per_column << "), a total of " << allocated_poses << std::endl;
-
-
-        } else {
-            std::cout << "ERROR (CUDA): The max poses you requested (" << allocated_poses << ") could not be allocated."
-                      << "The limit is max texture size (" << cuda_device_properties_.maxTexture2D[0]
-                      << ", " << cuda_device_properties_.maxTexture2D[1] << ") retrieved from CUDA properties. " << std::endl;
-            exit(-1);
-        }
+    // check limitation by texture and grid size
+    if (nr_poses_per_row * nr_cols_ > cuda_device_properties_.maxTexture2D[0] ||
+        nr_poses_per_col * nr_rows_ > cuda_device_properties_.maxTexture2D[1] ||
+        nr_poses_per_row > cuda_device_properties_.maxGridSize[0] ||
+        nr_poses_per_col > cuda_device_properties_.maxGridSize[1]) {
+        std::cout << "ERROR (CUDA): Exceeding maximum texture or grid size with"
+                  << nr_poses_per_row << " x " << nr_poses_per_col << " poses"
+                  << " at resolution " << nr_rows_ << " x " << nr_cols_ << std::endl;
+        exit(-1);
     }
 
-    nr_max_poses_ = allocated_poses;
-    nr_max_poses_per_row_ = allocated_poses_per_row;
-    nr_max_poses_per_column_ = allocated_poses_per_column;
+    max_nr_poses_ = nr_poses;
+    max_nr_poses_per_row_ = nr_poses_per_row;
+    max_nr_poses_per_column_ = nr_poses_per_col;
 
-
-    bool nr_poses_changed = false;
-    set_default_kernel_config(nr_max_poses_, nr_max_poses_per_row_, nr_max_poses_per_column_, nr_poses_changed, adapt_to_constraints);
-
-    allocated_poses = nr_max_poses_;
-    allocated_poses_per_row = nr_max_poses_per_row_;
-    allocated_poses_per_column = nr_max_poses_per_column_;
-
-    nr_poses_ = nr_max_poses_;
-    nr_poses_per_row_ = nr_max_poses_per_row_;
-    nr_poses_per_column_ = nr_max_poses_per_column_;
-
-    if (nr_poses_changed) {
-        size_of_log_likelihoods = sizeof(float) * nr_max_poses_;
-        size_of_resampling_indices = sizeof(int) * nr_max_poses_;
-        size_of_occlusion_indices = sizeof(int) * nr_max_poses_;
-        size_of_occlusion_probs = nr_rows_ * nr_cols_ * nr_max_poses_ * sizeof(float);
-    }
+    grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_col);
 
 
     // reallocate arrays
-    allocate(d_log_likelihoods_, size_of_log_likelihoods);
-    allocate(d_occlusion_indices_, size_of_occlusion_indices);
-    allocate(d_occlusion_probs_, size_of_occlusion_probs);
-    allocate(d_occlusion_probs_copy_, size_of_occlusion_probs);
+    allocate(d_log_likelihoods_, sizeof(float) * max_nr_poses_);
+    allocate(d_occlusion_indices_, sizeof(int) * max_nr_poses_);
+    int size_occlusion_probs = nr_rows_ * nr_cols_ * max_nr_poses_ * sizeof(float);
+    allocate(d_occlusion_probs_, size_occlusion_probs);
+    allocate(d_occlusion_probs_copy_, size_occlusion_probs);
+    allocate(d_observations_, nr_rows_ * nr_cols_ *sizeof(float));
 
-    vector<float> initial_occlusion_probs (nr_rows_ * nr_cols_ * nr_max_poses_, occlusion_prob_default_);
+    vector<float> initial_occlusion_probs (nr_rows_ * nr_cols_ * max_nr_poses_,
+                                           occlusion_prob_default_);
 
-    cudaMemcpy(d_occlusion_probs_, &initial_occlusion_probs[0], size_of_occlusion_probs, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_occlusion_probs_, &initial_occlusion_probs[0], size_occlusion_probs, cudaMemcpyHostToDevice);
     #ifdef DEBUG
         check_cuda_error("cudaMemcpy occlusion_prob_default_ -> d_occlusion_probs_");
     #endif
@@ -634,100 +601,58 @@ void CudaFilter::allocate_memory_for_max_poses(int& allocated_poses,
 }
 
 
-void CudaFilter::set_number_of_poses(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column, bool adapt_to_constraints) {
-    if (nr_poses > nr_max_poses_) {
-        if (adapt_to_constraints) {
-            std::cout << "WARNING (CUDA): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")."
-                      << "The number of poses was automatically reduced to " << nr_max_poses_ << "." << std::endl;
-            nr_poses = nr_max_poses_;
-        } else {
-
-            cout << "ERROR (CUDA): You tried to evaluate more poses (" << nr_poses << ") than specified by max_poses (" << nr_max_poses_ << ")" << endl;
-            exit(-1);
-        }
+void CudaEvaluator::set_number_of_poses(int nr_poses) {
+    if (nr_poses > max_nr_poses_) {
+        std::cout << "ERROR (CUDA): You tried to evaluate more poses ("
+                  << nr_poses << ") than specified by max_poses ("
+                  << max_nr_poses_ << ")" << std::endl;
+        exit(-1);
     }
-
-    if (nr_max_poses_per_row_ < nr_poses_per_row) {
-        nr_poses_per_row = nr_max_poses_per_row_;
-        nr_poses_per_column = ceil(nr_poses / nr_poses_per_row);
-        if (nr_max_poses_per_column_ < nr_poses_per_column) {
-            nr_poses_per_column = nr_max_poses_per_column_;
-        }
-
-        std::cout << "WARNING (CUDA): Number of poses was reduced to (" << nr_poses_per_row << ", "
-                  << nr_poses_per_column << ") because of the maximum number of poses set in the beginning." << std::endl;
-    }
-
-    nr_poses = min(nr_poses, nr_poses_per_row * nr_poses_per_column);
 
     nr_poses_ = nr_poses;
-    nr_poses_per_row_ = nr_poses_per_row;
-    nr_poses_per_column_ = nr_poses_per_column;
+    int nr_poses_per_row = min(max_nr_poses_per_row_, nr_poses);
+    int nr_poses_per_column = min(max_nr_poses_per_column_,
+                               (int) ceil(nr_poses / (float) nr_poses_per_row));
 
-
-    bool nr_poses_changed = false;
-    set_default_kernel_config(nr_poses_, nr_poses_per_row_, nr_poses_per_column_, nr_poses_changed, adapt_to_constraints);
-
-    nr_poses = nr_poses_;
-    nr_poses_per_row = nr_poses_per_row_;
-    nr_poses_per_column = nr_poses_per_column_;
+    grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_column);
 
     number_of_poses_set_ = true;
 }
 
 
 
-void CudaFilter::set_default_kernel_config(int& nr_poses, int& nr_poses_per_row, int& nr_poses_per_column,
-                                           bool& nr_poses_changed, bool adapt_to_constraints) {
-    nr_threads_ = min(DEFAULT_NR_THREADS, cuda_device_properties_.maxThreadsDim[0]);
-
-    // check for grid dimension limitations
-    if (cuda_device_properties_.maxGridSize[0] < nr_poses_per_row) {
-        nr_poses_per_row = cuda_device_properties_.maxGridSize[0];
-        nr_poses_per_column = ceil(nr_poses / nr_poses_per_row);
-        if (cuda_device_properties_.maxGridSize[1] < nr_poses_per_column) {
-            nr_poses_per_column = cuda_device_properties_.maxGridSize[1];
-        }
-
-        nr_poses = min(nr_poses, nr_poses_per_row * nr_poses_per_column);
-
-        nr_poses_changed = true;
-
-        if (adapt_to_constraints) {
-            std::cout << "WARNING (CUDA): Number of poses was reduced to (" << nr_poses_per_row << ", "
-                      << nr_poses_per_column << ") because of the maximum grid size ("
-                      << cuda_device_properties_.maxGridSize[0] << ", " << cuda_device_properties_.maxGridSize[1]
-                      << ") retrieved from CUDA properties." << std::endl;
-        } else {
-            std::cout << "ERROR (CUDA): Number of poses exceeded maximum grid size specified by GPU: "
-                      << cuda_device_properties_.maxGridSize[0] << ", " << cuda_device_properties_.maxGridSize[1] << "." << std::endl;
-            exit(-1);
-        }
-    }
-
-
-    grid_dimension_ = dim3(nr_poses_per_row, nr_poses_per_column);
-
-
-}
-
 
 
 
 // ===================================================================================== //
-// =============================== CUDA FILTER GETTERS ================================= //
+// =============================== CUDA EVALUATOR GETTERS ================================= //
 // ===================================================================================== //
 
 
-int CudaFilter::get_max_nr_threads() {
+int CudaEvaluator::get_max_nr_threads() {
     return cuda_device_properties_.maxThreadsDim[0];
 }
 
-int CudaFilter::get_warp_size() {
+int CudaEvaluator::get_default_nr_threads() {
+    return DEFAULT_NR_THREADS;
+}
+
+int CudaEvaluator::get_warp_size() {
     return cuda_device_properties_.warpSize;
 }
 
-vector<float> CudaFilter::get_occlusion_probabilities(int state_id) {
+cudaDeviceProp CudaEvaluator::get_device_properties() {
+    return cuda_device_properties_;
+}
+
+
+void CudaEvaluator::get_memory_need_parameters(int nr_rows, int nr_cols,
+                                int& constant_need, int& per_pose_need) {
+    constant_need = nr_rows * nr_cols * sizeof(float);
+    per_pose_need = (3 + 2 * nr_rows * nr_cols) * sizeof(float);
+}
+
+vector<float> CudaEvaluator::get_occlusion_probabilities(int state_id) {
     float* occlusion_probabilities = (float*) malloc(nr_rows_ * nr_cols_ * sizeof(float));
     int offset = state_id * nr_rows_ * nr_cols_;
     cudaMemcpy(occlusion_probabilities, d_occlusion_probs_ + offset, nr_rows_ * nr_cols_ * sizeof(float), cudaMemcpyDeviceToHost);
@@ -746,14 +671,15 @@ vector<float> CudaFilter::get_occlusion_probabilities(int state_id) {
 
 
 
+
 // ===================================================================================== //
-// ========================== CUDA FILTER HELPER FUNCTIONS ============================= //
+// ========================== CUDA EVALUATOR HELPER FUNCTIONS ============================= //
 // ===================================================================================== //
 
 
 
 
-template <typename T> void CudaFilter::allocate(T * &pointer, size_t size) {
+template <typename T> void CudaEvaluator::allocate(T * &pointer, size_t size) {
     cudaFree(pointer);
     cudaMalloc((void **) &pointer, size);
 #ifdef DEBUG
@@ -763,7 +689,7 @@ template <typename T> void CudaFilter::allocate(T * &pointer, size_t size) {
 
 
 
-void CudaFilter::check_cuda_error(const char *msg)
+void CudaEvaluator::check_cuda_error(const char *msg)
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err)
@@ -774,13 +700,13 @@ void CudaFilter::check_cuda_error(const char *msg)
 }
 
 // ===================================================================================== //
-// ============================ CUDA FILTER DESTRUCTOR  ================================ //
+// ============================ CUDA EVALUATOR DESTRUCTOR  ================================ //
 // ===================================================================================== //
 
 
 
 
-CudaFilter::~CudaFilter() {
+CudaEvaluator::~CudaEvaluator() {
     cudaFree(d_occlusion_probs_);
     cudaFree(d_occlusion_probs_copy_);
     cudaFree(d_observations_);
@@ -788,4 +714,3 @@ CudaFilter::~CudaFilter() {
     cudaFree(d_occlusion_indices_);
 }
 
-}
