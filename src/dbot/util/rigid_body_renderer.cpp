@@ -265,6 +265,7 @@ void RigidBodyRenderer::Render(std::vector<float>& depth_image) const
     Render(camera_matrix_, n_rows_, n_cols_, depth_image);
 }
 
+
 std::vector<std::vector<RigidBodyRenderer::Vector> >
 RigidBodyRenderer::vertices() const
 {

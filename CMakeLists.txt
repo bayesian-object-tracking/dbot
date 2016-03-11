@@ -96,7 +96,7 @@ info_begin()
   info_item("Found CUDA" "${DBOT_FOUND_CUDA}")
   info_item("Found GLEW" "${DBOT_FOUND_GLEW}")
   info_item("Found OpenGL" "${DBOT_FOUND_OPENGL}")
-  info_item("GPU Support" "${DBOT_GPU_SUPPORT}")
+  info_item("Compiling with GPU Support" "${DBOT_GPU_SUPPORT}")
 info_end()
 
 ############################
@@ -149,6 +149,7 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
     ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
     ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/util/virtual_camera_data_provider.cpp
     ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
     ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
     ${dbot_SOURCE_DIR}/util/default_shader_provider.cpp
