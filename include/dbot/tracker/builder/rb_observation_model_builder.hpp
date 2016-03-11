@@ -69,6 +69,8 @@ auto RbObservationModelBuilder<State>::create_gpu_based_model() const
             object_model_->vertices(),
             object_model_->triangle_indices(),
             create_shader_provider(),
+            false,  // TODO should be a parameter from the config file
+            false,  // TODO should be a parameter from the config file
             params_.occlusion.initial_occlusion_prob,
             params_.delta_time,
             params_.occlusion.p_occluded_visible,
