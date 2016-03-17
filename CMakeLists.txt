@@ -23,7 +23,7 @@ add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
 ############################
 # Library Version          #
 ############################
-include(cmake/version.cmake)
+# include(cmake/version.cmake)
 
 ############################
 # Setup                    #
@@ -57,7 +57,7 @@ find_package(CUDA QUIET)
 find_package(GLEW QUIET)
 find_package(OpenGL QUIET)
 
-if(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
+if(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   include_directories(${GLEW_INCLUDE_DIRS})
   include_directories(${OpenGL_INCLUDE_DIRS})
   cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
@@ -77,42 +77,49 @@ if(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   # activate gpu implementations
   add_definitions(-DDBOT_BUILD_GPU=1)
   set(DBOT_GPU_SUPPORT "YES")
-else(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
+else(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   set(DBOT_GPU_SUPPORT "NO")
-endif(CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
+  set(DBOT_BUILD_GPU OFF)
+endif(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
 
 ############################
 # Library info summary     #
 ############################
-include(cmake/info.cmake)
+#include(cmake/info.cmake)
 
-info_yesorno(CUDA_FOUND DBOT_FOUND_CUDA)
-info_yesorno(GLEW_FOUND DBOT_FOUND_GLEW)
-info_yesorno(OPENGL_FOUND DBOT_FOUND_OPENGL)
+#info_yesorno(CUDA_FOUND DBOT_FOUND_CUDA)
+#info_yesorno(GLEW_FOUND DBOT_FOUND_GLEW)
+#info_yesorno(OPENGL_FOUND DBOT_FOUND_OPENGL)
 
-info_begin()
-  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
-  info_header("Setup")
-  info_item("Found CUDA" "${DBOT_FOUND_CUDA}")
-  info_item("Found GLEW" "${DBOT_FOUND_GLEW}")
-  info_item("Found OpenGL" "${DBOT_FOUND_OPENGL}")
-  info_item("Compiling with GPU Support" "${DBOT_GPU_SUPPORT}")
-info_end()
+#info_begin()
+#  info_project("::bot::dbot:: Depth Based Object Tracking Lib" ${PROJECT_VERSION})
+#  info_header("Setup")
+#  info_item("Found CUDA" "${DBOT_FOUND_CUDA}")
+#  info_item("Found GLEW" "${DBOT_FOUND_GLEW}")
+#  info_item("Found OpenGL" "${DBOT_FOUND_OPENGL}")
+#  info_item("Compiling with GPU Support" "${DBOT_GPU_SUPPORT}")
+#info_end()
 
 ############################
 # Dependencies             #
 ############################
 # Use catkin of available otherwise fall back to native cmake
 find_package(catkin QUIET COMPONENTS fl osr)
+
+set(DBOT_INCLUDE_DIRS "")
+if(DBOT_BUILD_GPU)
+  list(APPEND BDBOT_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+  list(APPEND BDBOT_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
+  list(APPEND BDBOT_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+  list(APPEND BDBOT_INCLUDE_DIRS ${OpenGL_INCLUDE_DIR})
+endif(DBOT_BUILD_GPU)
+
 if(catkin_FOUND)
   message(STATUS "Using catkin")
   catkin_package(
     INCLUDE_DIRS
       include
-      ${OpenGL_INCLUDE_DIRS}
-      ${GLEW_INCLUDE_DIRS}
-      ${CUDA_INCLUDE_DIRS}
-      ${CUDA_CUT_INCLUDE_DIRS}
+      ${DBOT_INCLUDE_DIRS}
     LIBRARIES
       ${dbot_LIBRARIES}
     CATKIN_DEPENDS
