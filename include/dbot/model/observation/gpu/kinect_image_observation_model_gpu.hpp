@@ -19,7 +19,7 @@
 
 #pragma once
 
-//#define PROFILING_ACTIVE
+#define PROFILING_ACTIVE
 //#define OPTIMIZE_NR_THREADS
 
 #include <vector>
