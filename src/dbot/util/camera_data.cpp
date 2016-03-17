@@ -26,7 +26,7 @@
 
 namespace dbot
 {
-CameraData::CameraData(std::shared_ptr<CameraDataProvider>& data_provider)
+CameraData::CameraData(const std::shared_ptr<CameraDataProvider> &data_provider)
     : data_provider_(std::move(data_provider))
 {
 }
