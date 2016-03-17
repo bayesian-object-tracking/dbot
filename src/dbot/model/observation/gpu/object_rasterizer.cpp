@@ -313,6 +313,8 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
         exit(-1);
     }
 
+    int nr_poses_per_col = ceil(nr_poses_ / (float) max_nr_poses_per_row_);
+
 #ifdef PROFILING_ACTIVE
     glBeginQuery(GL_TIME_ELAPSED, time_query_[ATTACH_TEXTURE]);
     nr_calls_++;
@@ -348,10 +350,10 @@ void ObjectRasterizer::render(const std::vector<std::vector<Eigen::Matrix4f> > s
     Matrix4f model_view_matrix;
 
 
-    for (int i = 0; i < max_nr_poses_per_column_ ; i++) {
+    for (int i = 0; i < nr_poses_per_col ; i++) {
         for (int j = 0; j < max_nr_poses_per_row_ && i * max_nr_poses_per_row_ + j < nr_poses_; j++) {
 
-            glViewport(j * nr_cols_, (max_nr_poses_per_column_ - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
+            glViewport(j * nr_cols_, (nr_poses_per_col - 1 - i) * nr_rows_, nr_cols_, nr_rows_);
             #ifdef DEBUG
                 check_GL_errors("setting the viewport");
             #endif

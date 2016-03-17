@@ -620,7 +620,7 @@ void CudaEvaluator::set_number_of_poses(int nr_poses) {
         if (nr_poses > max_nr_poses_) {
             std::cout << "ERROR (CUDA): You tried to evaluate more poses ("
                       << nr_poses << ") than specified by max_poses ("
-                      << max_nr_poses_ << ")" << std::endl;
+                      << max_nr_poses_ << ")." << std::endl;
             exit(-1);
         }
 

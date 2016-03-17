@@ -19,7 +19,7 @@
 
 #pragma once
 
-//#define PROFILING_ACTIVE
+#define PROFILING_ACTIVE
 //#define OPTIMIZE_NR_THREADS
 
 #include <vector>
@@ -95,9 +95,10 @@ public:
 
     typedef typename Eigen::Transform<fl::Real, 3, Eigen::Affine> Affine;
 
-    /// constructor which takes relevant constants and initializes the graphics
-    /// pipeline with them
     /**
+     * \brief constructor which takes relevant constants and initializes the graphics
+     * pipeline with them
+     *
      * \param [in] camera_matrix
      * 		matrix of the intrinsic parameters of the camera
      * \param [in] nr_rows
@@ -297,8 +298,9 @@ public:
 
 
 
-    /// computes the loglikelihoods for the given states
-    /** Make sure the observation image was set previously, as it is used for
+    /**
+     * \brief computes the loglikelihoods for the given states
+     * Make sure the observation image was set previously, as it is used for
      * comparison.
      * \param [in] deltas the states which should be evaluated
      * \param [in][out] occlusion_indices for each state, this should contain
@@ -352,12 +354,14 @@ public:
         store_time(SET_OCCLUSION_INDICES);
 #endif
 
+        int nr_objects = vertices_.size();
+
         std::vector<std::vector<Eigen::Matrix4f>> poses(
-            nr_poses_, std::vector<Eigen::Matrix4f>(vertices_.size()));
+            nr_poses_, std::vector<Eigen::Matrix4f>(nr_objects));
 
         for (size_t i_state = 0; i_state < size_t(nr_poses_); i_state++)
         {
-            for (size_t i_obj = 0; i_obj < vertices_.size(); i_obj++)
+            for (size_t i_obj = 0; i_obj < nr_objects; i_obj++)
             {
                 auto pose_0 = this->default_poses_.component(i_obj);
                 auto delta = deltas[i_state].component(i_obj);
@@ -468,9 +472,10 @@ public:
         return log_likelihoods;
     }
 
-    /// sets the observation image that should be used for comparison in the
-    /// next evaluation step
     /**
+     * \brief Sets the observation image that should be used for comparison in the
+     * next evaluation step
+     *
      * \param [in] image the image obtained from the camera
      */
     void set_observation(const Observation& image)
@@ -488,7 +493,7 @@ public:
         observations_set_ = true;
     }
 
-    /// resets the occlusion probabilities and observation time
+    /** \brief Resets the occlusion probabilities and observation time */
     virtual void reset()
     {
         float default_occlusion_probability = initial_occlusion_prob_;
@@ -504,15 +509,16 @@ public:
         observation_time_ = 0;
     }
 
-    /// activates automatic optimization of the number of threads
+    /** activates automatic optimization of the number of threads */
     void set_optimization_of_thread_nr(bool shouldOptimize)
     {
         optimize_nr_threads_ = shouldOptimize;
     }
 
 
-    /// returns the occlusion probabilities for each pixel for a given state
     /**
+     * \brief Returns the occlusion probabilities for each pixel for a given state
+     *
      * \param [in] index the index into the state array of the state you are
      * interested in
      * \return an Eigen Matrix containing the occlusion probabilities for each
@@ -532,8 +538,9 @@ public:
         return occlusion_probs_matrix;
     }
 
-    /// returns the depth values of the rendered states
     /**
+     * \brief Returns the depth values of the rendered states
+     *
      * \return an Eigen Matrix containing the depth values per pixel, stored in
      * a 1D array denoting the respective pose
       */
@@ -566,8 +573,8 @@ public:
 
 
 
-    /// The destructor. If profiling is activated, the time measurements are
-    /// processed and printed out here
+    /** \brief The destructor. If profiling is activated, the time measurements are
+     * processed and printed out here */
     ~KinectImageObservationModelGPU() noexcept
     {
 #ifdef PROFILING_ACTIVE
