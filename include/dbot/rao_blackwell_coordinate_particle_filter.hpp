@@ -166,7 +166,12 @@ public:
         for (int i = 0; i < belief_.size(); i++)
             belief_.location(i) = samples[i];
 
-        indices_ = IntArray::Zero(samples.size());
+        indices_ = IntArray::Zero(belief_.size());
+        loglikes_ = RealArray::Zero(belief_.size());
+        noises_ = std::vector<Noise>(
+            belief_.size(), Noise::Zero(process_model_->noise_dimension()));
+        old_particles_ = belief_.locations();
+
         observation_model_->reset();
     }
 
