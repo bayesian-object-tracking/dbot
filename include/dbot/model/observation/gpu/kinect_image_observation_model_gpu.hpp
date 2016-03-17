@@ -216,6 +216,15 @@ public:
 
         cuda_ = boost::shared_ptr<CudaEvaluator>(new CudaEvaluator(nr_rows_, nr_cols_));
 
+        cuda_->init(initial_occlusion_prob_,
+                    p_occluded_occluded,
+                    p_occluded_visible,
+                    tail_weight_,
+                    model_sigma_,
+                    sigma_factor_,
+                    max_depth_,
+                    exponential_rate_);
+
         bufferConfig_ = boost::shared_ptr<BufferConfiguration>(
                             new BufferConfiguration(opengl_, cuda_,
                                 nr_max_poses_, nr_rows_, nr_cols_));
@@ -243,14 +252,7 @@ public:
 
         reset();
 
-        cuda_->init(initial_occlusion_prob_,
-                    p_occluded_occluded,
-                    p_occluded_visible,
-                    tail_weight_,
-                    model_sigma_,
-                    sigma_factor_,
-                    max_depth_,
-                    exponential_rate_);
+
 
         count_ = 0;
 

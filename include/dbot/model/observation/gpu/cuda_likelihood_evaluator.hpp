@@ -26,9 +26,14 @@
  * \brief This class provides a parallel implementation of the weighting step on
  *        the GPU.
  *
- * After initializing the class and setting the execution parameters like the
- * number of poses and the resolution, you can weigh poses with the
- * weigh_poses() function.
+ * Some functions have to be called in a particular order:
+ * init -> allocate_memory_for_max_poses -> set_number_of_poses       }
+ *                                       -> set_occlusion_indices     } -> weigh_poses
+ *                                       -> set_observations          }
+ * map_texture_to_texture_array    ---------------------------------  }
+ *
+ * allocate_memory_for_max_poses -> set_occlusion_probabilities
+ *                               -> get_occlusion_probabilities
  *
  * Make sure to
  *  always render the poses first with opengl, then map the texture into CUDA,
@@ -57,7 +62,7 @@ public:
 
     /**
      * \brief This function has to be called once in the beginning, before
-     *        calling the weigh_poses() function.
+     *        calling the allocate_memory_for_max_poses() function.
      *
      * Copies constants to GPU memory and initializes some memory-related values
      *
@@ -108,7 +113,7 @@ public:
     // setters
 
     /**
-     * Sets the number of threads used for the CUDA weighting kernel to the
+     * \brief Sets the number of threads used for the CUDA weighting kernel to the
      * desired number.  A default of 128 is used if nothing is specified here.
      *
      * \param [in] nr_threads
@@ -116,8 +121,9 @@ public:
      */
     void set_nr_threads(const int nr_threads);
 
-    /// copies the observation image from the camera to the GPU for comparison
     /**
+     * \brief Copies the observation image from the camera to the GPU for comparison
+     *
      * \param [in] observations a pointer to the observation values
      * \param [in] observation_time the time at which this observation was
      * captured
@@ -125,8 +131,9 @@ public:
     void set_observations(const float* observations,
                           const float observation_time);
 
-    /// sets the indices to the occlusion array for every state
     /**
+     * \brief Sets the indices to the occlusion array for every state
+     *
      * \param [in] occlusion_indices [state_nr] = {index}. For each state, this
      * gives the index into the occlusion array.
      * \param [in] array_size the number of values contained in occlusion_indices
@@ -134,16 +141,17 @@ public:
     void set_occlusion_indices(const int* occlusion_indices,
                                const int array_size);
 
-    /// sets the resolution for the images to be compared
-    /** Be sure to call allocate_memory_for_max_poses afterwards to reallocate
-     *  the buffers according to the new resolution.
+    /**
+     * \brief Sets the resolution for the images to be compared
+     * Be sure to call allocate_memory_for_max_poses afterwards to reallocate
+     * the buffers according to the new resolution.
      * \param [in] n_rows the number of rows in an image
      * \param [in] n_cols the number of columns in an image
      */
     void set_resolution(const int nr_rows, const int nr_cols);
 
-    /// sets the occlusion probabilities for all pixels for all states
     /**
+    * \brief Sets the occlusion probabilities for all pixels for all states
     * \param [in] occlusion_probabilities a 1D-array of occlusion probabilities
     * which should contain array_size values.
     * \param [in] array_size the number of values contained in
@@ -152,15 +160,17 @@ public:
     void set_occlusion_probabilities(const float* occlusion_probabilities,
                                      const int array_size);
 
-    /// maps the texture array to an actual texture reference
     /**
+     * \brief Maps the texture array to an actual texture reference
+     *
      * \param [in] texture_array the cudaArray retrieved from OpenGL
      */
     void map_texture_to_texture_array(const cudaArray_t texture_array);
 
-    /// allocates the maximum amount of memory that will ever be needed by CUDA
-    /// during runtime
     /**
+     * \brief Allocates the maximum amount of memory that will ever be needed by CUDA
+     * during runtime
+     *
      * \param [in] nr_poses the maximum number of poses that will
      * ever be evaluated in one weighting step.
      * This number might be lowered if GPU contraints do now allow this number
@@ -173,36 +183,41 @@ public:
                                        int nr_poses_per_row,
                                        int nr_poses_per_col);
 
-    /// sets the number of poses to be weighted in the next weighting step
     /**
+     * \brief Sets the number of poses to be weighted in the next weighting step
+     *
      * \param [in] nr_poses the desired number of poses.
      */
     void set_number_of_poses(int nr_poses);
 
     // getters
-    /// gets the maximum number of threads that can be handled with this GPU
     /**
+     * \brief Gets the maximum number of threads that can be handled with this GPU
+     *
      * \return the maximum number of threads that can be scheduled per block on
      * the GPU
      */
     int get_max_nr_threads();
 
-    /// gets the warp size of this GPU
     /**
+     * \brief Gets the warp size of this GPU
+     *
      * \return the warp size = the number of threads that are executed
      * concurrently on a CUDA streaming multiprocessor
      */
     int get_warp_size();
 
-    /// gets the GPU properties obtained by CUDA
     /**
+     * \brief Gets the GPU properties obtained by CUDA
+     *
      * \return the device properties = i.e. maximum number of allowed threads,
        maximum texture size, warp size etc. */
     cudaDeviceProp get_device_properties();
 
 
-    /// returns the constant and per-pose memory needs that CUDA will have (in bytes)
     /**
+     * \brief Returns the constant and per-pose memory needs that CUDA will have (in bytes)
+     *
      * \param [in] nr_rows the vertical resolution per pose rendering
      * \param [in] nr_cols the horizontal resolution per pose rendering
      * \param [out] constant_need the amount of memory that CUDA will need,
@@ -213,15 +228,17 @@ public:
     void get_memory_need_parameters(int nr_rows, int nr_cols,
                                     int& constant_need, int& per_pose_need);
 
-    /// gets the default number of threads that should be used for the
-    /// evaluation kernel
     /**
+     * \brief Gets the default number of threads that should be used for the
+     * evaluation kernel
+     *
      * \return the default number of threads
      */
     int get_default_nr_threads();
 
-    /// gets the occlusion probabilities of a particular state
     /**
+     * \brief Gets the occlusion probabilities of a particular state
+     *
      * \param [in] state_id the index into the state array
      * \return a 1D array containing the occlusion probability for each pixel
      */
@@ -239,6 +256,9 @@ private:
                                 // the occlusion probabilities array, which
                                 // contains the occlusion probabilities for that
                                 // particular pose.
+
+    int occlusion_probs_size_;
+    int observations_size_;
 
     // for OpenGL interop
     cudaArray_t d_texture_array_;
@@ -269,13 +289,10 @@ private:
 
     // CUDA device properties
     cudaDeviceProp cuda_device_properties_;
-    int warp_size_;
-    int n_mps_;
 
     // bool to ensure correct usage of public functions
-    bool observations_set_, occlusion_indices_set_,
-        occlusion_probabilities_set_, memory_allocated_;
-    bool number_of_poses_set_, constants_initialized_;
+    bool observations_set_, occlusion_indices_set_, memory_allocated_;
+    bool number_of_poses_set_, constants_initialized_, texture_array_mapped_;
 
     // helper functions
     template <typename T>
