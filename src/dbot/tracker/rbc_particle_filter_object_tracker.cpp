@@ -11,6 +11,16 @@
  * file distributed with this source code.
  */
 
+/*
+ * This file implements a part of the algorithm published in:
+ *
+ * M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
+ * Probabilistic Object Tracking using a Range Camera
+ * IEEE Intl Conf on Intelligent Robots and Systems, 2013
+ * http://arxiv.org/abs/1505.00241
+ *
+ */
+
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
 
 namespace dbot
