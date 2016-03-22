@@ -11,6 +11,16 @@
  * file distributed with this source code.
  */
 
+/*
+ * This file implements a part of the algorithm published in:
+ *
+ * J. Issac, M. Wuthrich, C. Garcia Cifuentes, J. Bohg, S. Trimpe, S. Schaal
+ * Depth-Based Object Tracking Using a Robust Gaussian Filter
+ * IEEE Intl Conf on Robotics and Automation, 2016
+ * http://arxiv.org/abs/1602.06157
+ *
+ */
+
 #include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
 
 namespace dbot

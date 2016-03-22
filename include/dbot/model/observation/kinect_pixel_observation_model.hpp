@@ -11,6 +11,16 @@
  * file distributed with this source code.
  */
 
+/*
+ * This file implements a part of the algorithm published in:
+ *
+ * M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
+ * Probabilistic Object Tracking using a Range Camera
+ * IEEE Intl Conf on Intelligent Robots and Systems, 2013
+ * http://arxiv.org/abs/1505.00241
+ *
+ */
+
 /**
  * \file kinect_pixel_observation_model.hpp
  * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
@@ -20,12 +30,6 @@
 
 #include <cmath>
 #include <Eigen/Dense>
-
-//#include <fast_filtering/distributions/interfaces/evaluation.hpp>
-//#include <fast_filtering/distributions/exponential_distribution.hpp>
-//#include <fast_filtering/distributions/uniform_distribution.hpp>
-//#include <fast_filtering/distributions/truncated_gaussian.hpp>
-
 #include <iostream>
 
 namespace dbot
@@ -44,7 +48,6 @@ struct Traits<KinectPixelObservationModel>
 {
     typedef double Scalar;
     typedef double Observation;
-    //    typedef Evaluation<Observation, Scalar>   EvaluationBase;
 };
 }
 
@@ -55,7 +58,6 @@ struct Traits<KinectPixelObservationModel>
  * \ingroup observation_models
  */
 class KinectPixelObservationModel
-//        :public internal::Traits<KinectPixelObservationModel>::EvaluationBase
 {
 public:
     typedef

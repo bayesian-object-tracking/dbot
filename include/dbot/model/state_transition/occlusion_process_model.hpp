@@ -11,6 +11,16 @@
  * file distributed with this source code.
  */
 
+/*
+ * This file implements a part of the algorithm published in:
+ *
+ * M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal.
+ * Probabilistic Object Tracking using a Range Camera
+ * IEEE Intl Conf on Intelligent Robots and Systems, 2013
+ * http://arxiv.org/abs/1505.00241
+ *
+ */
+
 /**
  * \date May 2014
  * \file occlusion_process_model.hpp
