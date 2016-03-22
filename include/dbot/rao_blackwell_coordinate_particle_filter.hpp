@@ -180,7 +180,7 @@ public:
         return observation_model_;
     }
 
-    std::shared_ptr<ObservationModel> process_model()
+    std::shared_ptr<ProcessModel> process_model()
     {
         return process_model_;
     }
