@@ -63,6 +63,14 @@ public:
                                IntArray& indices,
                                const bool& update = false) = 0;
 
+    // compute the loglikelihoods without keeping track of the occulsions
+    virtual RealArray loglikes(const StateArray& deviations)
+    {
+        reset();
+        IntArray zero_indices = IntArray::Zero(deviations.size());
+        return loglikes(deviations, zero_indices, false);
+    }
+
     /// accessors **************************************************************
     virtual void set_observation(const Observation& image) = 0;
     virtual PoseArray& integrated_poses() { return default_poses_; }
