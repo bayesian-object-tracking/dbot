@@ -130,4 +130,11 @@ void ObjectResourceIdentifier::meshes(const std::vector<std::string>& meshes_)
 {
     this->meshes_ = meshes_;
 }
+
+void ObjectResourceIdentifier::mesh(const std::string& mesh_)
+{
+   this->meshes_.clear();
+   this->meshes_.push_back(mesh_);
+}
+
 }
