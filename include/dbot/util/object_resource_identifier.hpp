@@ -150,6 +150,11 @@ public:
      */
     void meshes(const std::vector<std::string>& meshes_);
 
+    /**
+     * \brief Sets mesh filename
+     */
+    void mesh(const std::string& mesh_);
+
 private:
     /**
      * \brief package name if using catkin (ros) packages.
@@ -158,11 +163,6 @@ private:
      *   "package://<PACKAGE>/<path>/<meshes[i]>"
      */
     std::string package_;
-
-    /**
-     * \brief Top level package path which contains the objects.
-     */
-    std::string package_path_;
 
     /**
      * \brief Path within the package pointing to the mesh files
@@ -178,5 +178,10 @@ private:
      *   "package://<package>/<path>/<MESHES[i]>"
      */
     std::vector<std::string> meshes_;
+
+    /**
+     * \brief Top level package path which contains the objects.
+     */
+    std::string package_path_;
 };
 }
