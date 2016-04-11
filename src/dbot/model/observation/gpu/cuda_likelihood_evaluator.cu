@@ -277,7 +277,7 @@ CudaEvaluator::CudaEvaluator(const int nr_rows,
      * Requires that the CUDA device be specified by
      * cudaGLSetGLDevice() before any other runtime calls. */
 
-    cudaGLSetGLDevice( device_number );
+//    cudaGLSetGLDevice( device_number );
     #ifdef DEBUG
         check_cuda_error("cudaGLsetGLDevice");
     #endif
