@@ -50,9 +50,8 @@ void ObjectFileReader::Read()
 	file.open(filename_.c_str());
 
 	if(!file.is_open())
-	{
-		cout << "ERROR: the wavefront file " << filename_ << " could not be opened." << endl;
-		exit(-1);
+    {
+        throw CannotOpenWavefrontFileException(filename_);
 	}
 
 	string line;
