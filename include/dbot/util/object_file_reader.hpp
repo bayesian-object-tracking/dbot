@@ -27,8 +27,33 @@
 
 #include <Eigen/Core>
 
+#include <fl/exception/exception.hpp>
+
 namespace dbot
 {
+
+class CannotOpenWavefrontFileException:
+        public fl::Exception
+{
+public:
+    /**
+     * Creates an WrongSizeException with a customized message
+     */
+    CannotOpenWavefrontFileException(std::string msg)
+        : Exception()
+    {
+        info("File", msg);
+    }
+
+    /**
+     * \return Exception name
+     */
+    virtual std::string name() const noexcept
+    {
+        return "dbot::CannotOpenWavefrontFileException";
+    }
+
+};
 
 class ObjectFileReader
 {

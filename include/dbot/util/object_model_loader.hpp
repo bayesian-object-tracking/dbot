@@ -19,6 +19,7 @@
 
 namespace dbot
 {
+
 class ObjectModelLoader
 {
 public:
