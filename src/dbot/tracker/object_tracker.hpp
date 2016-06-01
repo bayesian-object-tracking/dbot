@@ -35,28 +35,6 @@
 
 namespace dbot
 {
-class ObjectTrackerAlgorithm
-{
-public:
-    typedef osr::FreeFloatingRigidBodiesState<> State;
-    //    typedef osr::PoseVelocityVector State;
-    typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Obsrv;
-    typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Noise;
-    typedef Eigen::Matrix<fl::Real, Eigen::Dynamic, 1> Input;
-
-public:
-    /**
-     * \brief Hook function which is called during tracking
-     * \return Current belief state
-     */
-    virtual State on_track(const Obsrv& image) = 0;
-
-    /**
-     * \brief Hook function which is called during initialization
-     * \return Initial belief state
-     */
-    virtual State on_initialize(const std::vector<State>& initial_states) = 0;
-};
 
 /**
  * \brief Abstract ObjectTracker context
@@ -85,6 +63,8 @@ public:
     ObjectTracker(const std::shared_ptr<ObjectModel>& object_model,
                   const std::shared_ptr<CameraData>& camera_data,
                   double update_rate);
+
+    virtual ~ObjectTracker() { }
 
     /**
      * \brief Hook function which is called during tracking

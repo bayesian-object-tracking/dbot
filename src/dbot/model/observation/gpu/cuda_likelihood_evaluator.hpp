@@ -68,7 +68,7 @@ public:
     /**
      * \brief Destructor which frees the memory used on the GPU
      */
-    ~CudaEvaluator();
+    virtual ~CudaEvaluator();
 
     /**
      * \brief This function has to be called once in the beginning, before
