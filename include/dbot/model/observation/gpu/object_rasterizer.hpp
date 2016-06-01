@@ -22,6 +22,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "GL/glew.h"
+#include <GL/glx.h>
 
 #include <dbot/model/observation/gpu/shader_provider.hpp>
 #include <memory>
@@ -149,6 +150,11 @@ public:
     int get_max_texture_size();
 
 private:
+    // OpenGL context variables
+    Display* dpy_;
+    GLXContext ctx_;
+
+
     // GPU constraints
     GLint max_texture_size_;
 

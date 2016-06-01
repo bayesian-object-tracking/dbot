@@ -587,6 +587,9 @@ public:
      * processed and printed out here */
     virtual ~KinectImageObservationModelGPU() noexcept
     {
+
+        unregister_resource();
+
 #ifdef PROFILING_ACTIVE
 
         count_ -= optimization_runs_;
