@@ -128,9 +128,6 @@ public:
         model.noise_matrix(B);
         model.input_matrix(C);
 
-        PV(model.dynamics_matrix());
-        PV(model.noise_matrix());
-
         return model;
     }
 
@@ -171,10 +168,6 @@ public:
         part_B.middleRows(3, 3) = tmp.middleRows(6, 3);
         part_B.middleRows(6, 3) = tmp.middleRows(3, 3);
 
-        PV(part_A);
-        PV(part_B);
-        PV(part_part_B);
-
         for (int i = 0; i < param_.part_count; ++i)
         {
             A.block(i * 12, i * 12, 12, 12) = part_A;
@@ -184,9 +177,6 @@ public:
         model.dynamics_matrix(A);
         model.noise_matrix(B);
         model.input_matrix(C);
-
-        PV(A);
-        PV(B);
 
         return model;
     }

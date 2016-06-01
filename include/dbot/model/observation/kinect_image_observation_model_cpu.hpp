@@ -125,7 +125,7 @@ public:
         reset();
     }
 
-    ~KinectImageObservationModelCPU() noexcept {}
+    virtual ~KinectImageObservationModelCPU() noexcept {}
     RealArray loglikes(const StateArray& deltas,
                        IntArray& indices,
                        const bool& update = false)

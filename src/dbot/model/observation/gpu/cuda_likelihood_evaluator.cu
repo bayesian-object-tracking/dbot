@@ -750,5 +750,6 @@ CudaEvaluator::~CudaEvaluator() {
     cudaFree(d_observations_);
     cudaFree(d_log_likelihoods_);
     cudaFree(d_occlusion_indices_);
+    cudaDeviceReset();
 }
 

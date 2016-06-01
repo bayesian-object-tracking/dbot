@@ -585,7 +585,7 @@ public:
 
     /** \brief The destructor. If profiling is activated, the time measurements are
      * processed and printed out here */
-    ~KinectImageObservationModelGPU() noexcept
+    virtual ~KinectImageObservationModelGPU() noexcept
     {
 #ifdef PROFILING_ACTIVE
 

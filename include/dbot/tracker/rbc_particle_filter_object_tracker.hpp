@@ -69,6 +69,8 @@ public:
         int evaluation_count,
         double update_rate);
 
+    virtual ~RbcParticleFilterObjectTracker() { }
+
     /**
      * \brief perform a single filter step
      *
