@@ -202,4 +202,4 @@ endif(DBOT_BUILD_GPU)
 ############################
 enable_testing()
 include(${CMAKE_MODULE_PATH}/gtest.cmake)
-add_subdirectory(tests)
+add_subdirectory(test)
