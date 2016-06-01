@@ -36,7 +36,7 @@ set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
 # parent scope variables; exported at the end
-set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
+set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src)
 set(dbot_LIBRARIES ${dbot_LIBRARY})
 
 ############################
@@ -106,20 +106,19 @@ endif(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
 # Use catkin of available otherwise fall back to native cmake
 find_package(catkin QUIET COMPONENTS fl osr)
 
-set(DBOT_INCLUDE_DIRS "")
 if(DBOT_BUILD_GPU)
-  list(APPEND DBOT_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
-  list(APPEND DBOT_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
-  list(APPEND DBOT_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
-  list(APPEND DBOT_INCLUDE_DIRS ${OpenGL_INCLUDE_DIR})
+  list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
+  list(APPEND dbot_INCLUDE_DIRS ${CUDA_CUT_INCLUDE_DIRS})
+  list(APPEND dbot_INCLUDE_DIRS ${GLEW_INCLUDE_DIRS})
+  list(APPEND dbot_INCLUDE_DIRS ${OpenGL_INCLUDE_DIR})
 endif(DBOT_BUILD_GPU)
 
 if(catkin_FOUND)
   message(STATUS "Using catkin")
   catkin_package(
     INCLUDE_DIRS
-      include
-      ${DBOT_INCLUDE_DIRS}
+      src 
+      ${dbot_INCLUDE_DIRS}
     LIBRARIES
       ${dbot_LIBRARIES}
     CATKIN_DEPENDS
@@ -142,11 +141,10 @@ endif(catkin_FOUND)
 include_directories(${dbot_INCLUDE_DIRS})
 
 set(dbot_SOURCE_DIR src/${PROJECT_NAME})
-set(dbot_HEADER_DIR include/${PROJECT_NAME})
 
 file(GLOB_RECURSE dbot_HEADERS
-    ${dbot_HEADER_DIR}/*.hpp
-    ${dbot_HEADER_DIR}/*.h)
+    ${dbot_SOURCE_DIR}/*.hpp
+    ${dbot_SOURCE_DIR}/*.h)
 
 # Build dbot library
 set(dbot_SOURCES    
