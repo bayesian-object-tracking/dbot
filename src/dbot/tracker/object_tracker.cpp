@@ -17,10 +17,8 @@
 namespace dbot
 {
 ObjectTracker::ObjectTracker(const std::shared_ptr<ObjectModel> &object_model,
-                             const std::shared_ptr<CameraData> &camera_data,
                              double update_rate)
     : object_model_(object_model),
-      camera_data_(camera_data),
       update_rate_(update_rate),
       moving_average_(object_model_->count_parts())
 {
@@ -37,11 +35,6 @@ void ObjectTracker::initialize(const std::vector<State>& initial_states)
     }
 
     moving_average_ = to_model_coordinate_system(on_initialize(states));
-}
-
-const std::shared_ptr<CameraData>& ObjectTracker::camera_data() const
-{
-    return camera_data_;
 }
 
 void ObjectTracker::move_average(const ObjectTracker::State& new_state,

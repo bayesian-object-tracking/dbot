@@ -41,7 +41,7 @@ RmsGaussianFilterTrackerBuilder::build()
     auto filter = create_filter(object_model);
 
     auto tracker = std::make_shared<RmsGaussianFilterObjectTracker>(
-        filter, object_model, camera_data_, param_.update_rate);
+        filter, object_model, param_.update_rate);
 
     return tracker;
 }

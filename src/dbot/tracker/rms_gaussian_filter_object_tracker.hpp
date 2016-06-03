@@ -30,7 +30,7 @@
 #pragma once
 
 #include <dbot/tracker/object_tracker.hpp>
-#include <dbot/model/observation/depth_pixel_observation_model.hpp>
+#include <dbot/model/depth_pixel_observation_model.hpp>
 
 #include <fl/util/types.hpp>
 #include <fl/model/process/linear_state_transition_model.hpp>
@@ -94,7 +94,6 @@ public:
     RmsGaussianFilterObjectTracker(
         const std::shared_ptr<Filter>& filter,
         const std::shared_ptr<ObjectModel>& object_model,
-        const std::shared_ptr<CameraData>& camera_data,
         double update_rate);
 
     /**

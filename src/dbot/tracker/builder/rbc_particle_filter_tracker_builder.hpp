@@ -77,18 +77,15 @@ public:
     /**
      * \brief Creates a RbcParticleFilterTrackerBuilder
      * \param param			Builder and sub-builder parameters
-     * \param camera_data	Tracker camera data object
      */
     RbcParticleFilterTrackerBuilder(
         const std::shared_ptr<StateTransitionBuilder>& state_transition_builder,
         const std::shared_ptr<ObservationModelBuilder>& obsrv_model_builder,
         const std::shared_ptr<ObjectModel>& object_model,
-        const std::shared_ptr<CameraData>& camera_data,
         const Parameters& params)
         : state_transition_builder_(state_transition_builder),
           obsrv_model_builder_(obsrv_model_builder),
           object_model_(object_model),
-          camera_data_(camera_data),
           params_(params)
     {
     }
@@ -103,7 +100,6 @@ public:
         auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
             filter,
             object_model_,
-            camera_data_,
             params_.evaluation_count,
             params_.moving_average_update_rate);
 
@@ -162,7 +158,6 @@ protected:
     std::shared_ptr<StateTransitionBuilder> state_transition_builder_;
     std::shared_ptr<ObservationModelBuilder> obsrv_model_builder_;
     std::shared_ptr<ObjectModel> object_model_;
-    std::shared_ptr<CameraData> camera_data_;
     Parameters params_;
 };
 }

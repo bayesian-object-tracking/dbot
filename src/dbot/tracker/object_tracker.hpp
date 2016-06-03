@@ -26,7 +26,6 @@
 #include <memory>
 #include <mutex>
 
-#include <dbot/util/camera_data.hpp>
 #include <dbot/util/object_model.hpp>
 
 #include <osr/pose_vector.hpp>
@@ -55,13 +54,10 @@ public:
      *     Rbc particle filter instance
      * \param object_model
      *     Object model instance
-     * \param camera_data
-     *     Camera data container
      * \param update_rate
      *     Moving average update rate
      */
     ObjectTracker(const std::shared_ptr<ObjectModel>& object_model,
-                  const std::shared_ptr<CameraData>& camera_data,
                   double update_rate);
 
     virtual ~ObjectTracker() { }
@@ -111,11 +107,6 @@ public:
     State to_model_coordinate_system(const State& state);
 
     /**
-     * \brief Returns camera data
-     */
-    const std::shared_ptr<CameraData> &camera_data() const;
-
-    /**
      * \brief Updates the moving average with the new state using the specified
      *        update rate. The update rate is the weight on the new state. That
      *        is the new moving average is (1-update_rate) * moving_average +
@@ -139,7 +130,6 @@ public:
 
 protected:
     std::shared_ptr<ObjectModel> object_model_;
-    std::shared_ptr<CameraData> camera_data_;
     State moving_average_;
     double update_rate_;
     std::mutex mutex_;

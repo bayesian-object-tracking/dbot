@@ -65,7 +65,6 @@ public:
     RbcParticleFilterObjectTracker(
         const std::shared_ptr<Filter>& filter,
         const std::shared_ptr<ObjectModel>& object_model,
-        const std::shared_ptr<CameraData>& camera_data,
         int evaluation_count,
         double update_rate);
 
