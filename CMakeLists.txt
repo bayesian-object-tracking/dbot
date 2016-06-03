@@ -181,14 +181,11 @@ target_link_libraries(${dbot_LIBRARY}
 
 # Build dbot GPU library
 if(DBOT_BUILD_GPU)
-    set(dbot_SOURCE_DIR_GPU
-        ${dbot_SOURCE_DIR}/model/observation/gpu)
-
     cuda_add_library(${dbot_LIBRARY_GPU} SHARED
-        ${dbot_SOURCE_DIR}/model/observation/gpu/cuda_likelihood_evaluator.cu
-        ${dbot_SOURCE_DIR}/model/observation/gpu/shader.cpp
-        ${dbot_SOURCE_DIR}/model/observation/gpu/object_rasterizer.cpp
-        ${dbot_SOURCE_DIR}/model/observation/gpu/buffer_configuration.cpp)
+        ${dbot_SOURCE_DIR}/gpu/cuda_likelihood_evaluator.cu
+        ${dbot_SOURCE_DIR}/gpu/shader.cpp
+        ${dbot_SOURCE_DIR}/gpu/object_rasterizer.cpp
+        ${dbot_SOURCE_DIR}/gpu/buffer_configuration.cpp)
 
     target_link_libraries(${dbot_LIBRARY_GPU}
         ${catkin_LIBRARIES}

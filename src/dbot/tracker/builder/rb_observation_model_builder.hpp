@@ -30,10 +30,10 @@
 #pragma once
 
 #include <dbot/tracker/builder/rb_observation_model_builder.h>
-#include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
+#include <dbot/model/kinect_image_observation_model_cpu.hpp>
 
 #ifdef DBOT_BUILD_GPU
-#include <dbot/model/observation/gpu/kinect_image_observation_model_gpu.hpp>
+#include <dbot/gpu/kinect_image_observation_model_gpu.hpp>
 #endif
 
 

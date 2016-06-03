@@ -38,13 +38,13 @@
 #include "Eigen/Core"
 
 #include <osr/pose_vector.hpp>
-#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_observation_model.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
 #include <dbot/util/traits.hpp>
-#include <dbot/model/observation/gpu/object_rasterizer.hpp>
-#include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
-#include <dbot/model/observation/gpu/buffer_configuration.hpp>
+#include <dbot/gpu/object_rasterizer.hpp>
+#include <dbot/gpu/cuda_likelihood_evaluator.hpp>
+#include <dbot/gpu/buffer_configuration.hpp>
 
 #include <limits>
 #include <stdio.h>

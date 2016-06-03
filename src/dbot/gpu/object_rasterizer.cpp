@@ -21,8 +21,8 @@
 #include <GL/glew.h>
 #include <GL/glx.h>
 #include <dbot/util/helper_functions.hpp>
-#include <dbot/model/observation/gpu/shader.hpp>
-#include <dbot/model/observation/gpu/object_rasterizer.hpp>
+#include <dbot/gpu/shader.hpp>
+#include <dbot/gpu/object_rasterizer.hpp>
 
 using namespace std;
 using namespace Eigen;

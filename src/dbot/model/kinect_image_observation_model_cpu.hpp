@@ -37,11 +37,11 @@
 #include <fl/util/assertions.hpp>
 #include <dbot/util/traits.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
-#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_observation_model.hpp>
 
 #include <dbot/util/rigid_body_renderer.hpp>
-#include <dbot/model/observation/kinect_pixel_observation_model.hpp>
-#include <dbot/model/state_transition/occlusion_process_model.hpp>
+#include <dbot/model/kinect_pixel_observation_model.hpp>
+#include <dbot/model/occlusion_process_model.hpp>
 
 namespace dbot
 {

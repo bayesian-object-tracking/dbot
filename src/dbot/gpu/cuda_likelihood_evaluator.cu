@@ -32,7 +32,7 @@
 #define VECTOR_DIM 3
 #define MATRIX_DIM 9
 
-#include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
+#include <dbot/gpu/cuda_likelihood_evaluator.hpp>
 #include <GL/glut.h>
 #include <fl/util/profiling.hpp>
 

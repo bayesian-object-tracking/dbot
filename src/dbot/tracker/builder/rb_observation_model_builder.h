@@ -41,8 +41,8 @@
 #include <dbot/util/file_shader_provider.hpp>
 #include <dbot/util/default_shader_provider.hpp>
 #include <dbot/util/rigid_body_renderer.hpp>
-#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
-#include <dbot/model/observation/kinect_image_observation_model_cpu.hpp>
+#include <dbot/model/rao_blackwell_observation_model.hpp>
+#include <dbot/model/kinect_image_observation_model_cpu.hpp>
 
 namespace dbot
 {

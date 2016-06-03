@@ -17,7 +17,7 @@
  * \date March 2016
  */
 
-#include <dbot/model/observation/gpu/buffer_configuration.hpp>
+#include <dbot/gpu/buffer_configuration.hpp>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 

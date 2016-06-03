@@ -24,7 +24,7 @@
 #include <memory>
 #include <GL/glew.h>
 
-#include <dbot/model/observation/gpu/shader_provider.hpp>
+#include <dbot/gpu/shader_provider.hpp>
 
 GLuint LoadShaders(const std::shared_ptr<dbot::ShaderProvider> &shaderProvider);
 GLuint CreateShader(GLenum eShaderType, const std::string& shaderCode);

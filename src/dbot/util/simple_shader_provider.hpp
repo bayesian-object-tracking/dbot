@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include <dbot/model/observation/gpu/shader_provider.hpp>
+#include <dbot/gpu/shader_provider.hpp>
 
 namespace dbot
 {

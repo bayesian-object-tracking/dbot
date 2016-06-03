@@ -28,7 +28,7 @@
 #include <string.h>
 #include <GL/glew.h>
 
-#include <dbot/model/observation/gpu/shader.hpp>
+#include <dbot/gpu/shader.hpp>
 
 GLuint LoadShaders(const std::shared_ptr<dbot::ShaderProvider>& shaderProvider)
 {

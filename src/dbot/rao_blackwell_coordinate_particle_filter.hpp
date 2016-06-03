@@ -37,7 +37,7 @@
 #include <fl/util/profiling.hpp>
 
 #include <dbot/util/traits.hpp>
-#include <dbot/model/observation/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_observation_model.hpp>
 
 namespace dbot
 {

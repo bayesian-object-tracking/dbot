@@ -31,6 +31,7 @@
 
 #include <exception>
 
+#include <dbot/util/camera_data.hpp>
 #include <dbot/util/object_resource_identifier.hpp>
 #include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
 #include <dbot/tracker/builder/object_transition_model_builder.hpp>
@@ -89,7 +90,7 @@ public:
      */
     std::shared_ptr<RmsGaussianFilterObjectTracker> build();
 
-private:
+protected:
     /**
      * \brief Creates an instance of the Rbc particle filter
      */
@@ -129,7 +130,7 @@ private:
     std::shared_ptr<ObjectModel> create_object_model(
         const ObjectResourceIdentifier& ori) const;
 
-private:
+protected:
     Parameters param_;
     std::shared_ptr<dbot::CameraData> camera_data_;
 };

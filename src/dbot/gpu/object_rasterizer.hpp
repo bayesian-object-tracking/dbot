@@ -24,7 +24,7 @@
 #include "GL/glew.h"
 #include <GL/glx.h>
 
-#include <dbot/model/observation/gpu/shader_provider.hpp>
+#include <dbot/gpu/shader_provider.hpp>
 #include <memory>
 
  /**

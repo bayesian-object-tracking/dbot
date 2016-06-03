@@ -21,8 +21,8 @@
 #pragma once
 
 
-#include <dbot/model/observation/gpu/object_rasterizer.hpp>
-#include <dbot/model/observation/gpu/cuda_likelihood_evaluator.hpp>
+#include <dbot/gpu/object_rasterizer.hpp>
+#include <dbot/gpu/cuda_likelihood_evaluator.hpp>
 #include "boost/shared_ptr.hpp"
 
 /**
