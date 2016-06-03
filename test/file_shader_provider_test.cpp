@@ -22,7 +22,7 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 
-#include <dbot/util/file_shader_provider.hpp>
+#include <dbot/common/file_shader_provider.hpp>
 
 std::string write_temp_file(const std::string& content)
 {

@@ -36,7 +36,7 @@
 #include <fl/distribution/discrete_distribution.hpp>
 #include <fl/util/profiling.hpp>
 
-#include <dbot/util/traits.hpp>
+#include <dbot/common/traits.hpp>
 #include <dbot/model/rao_blackwell_observation_model.hpp>
 
 namespace dbot

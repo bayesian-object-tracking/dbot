@@ -30,7 +30,7 @@
 #pragma once
 
 #include <dbot/tracker/object_tracker.hpp>
-#include <dbot/model/depth_pixel_observation_model.hpp>
+#include <dbot/model/depth_pixel_model.hpp>
 
 #include <fl/util/types.hpp>
 #include <fl/model/process/linear_state_transition_model.hpp>
@@ -52,7 +52,7 @@ public:
     /* - Observation Model                                                  - */
     /* ---------------------------------------------------------------------- */
     // Pixel Level: Body model
-    typedef fl::DepthPixelObservationModel<State> PixelModel;
+    typedef fl::DepthPixelModel<State> PixelModel;
 
     // Pixel Level: Tail model
     typedef fl::UniformObservationModel<State> TailModel;

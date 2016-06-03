@@ -20,7 +20,7 @@
 #include <Eigen/Geometry> // there is a clash with Success enum and in X.h
 #include <GL/glew.h>
 #include <GL/glx.h>
-#include <dbot/util/helper_functions.hpp>
+#include <dbot/common/helper_functions.hpp>
 #include <dbot/gpu/shader.hpp>
 #include <dbot/gpu/object_rasterizer.hpp>
 

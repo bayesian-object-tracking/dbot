@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include <dbot/util/simple_shader_provider.hpp>
+#include <dbot/common/simple_shader_provider.hpp>
 
 TEST(SimpleShaderProviderTests, without_geometry_shaders)
 {

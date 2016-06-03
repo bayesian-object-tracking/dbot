@@ -152,23 +152,23 @@ file(GLOB_RECURSE dbot_HEADERS
 
 # Build dbot library
 set(dbot_SOURCES    
-    ${dbot_SOURCE_DIR}/util/camera_data.cpp
-    ${dbot_SOURCE_DIR}/util/object_model.cpp
-    ${dbot_SOURCE_DIR}/util/object_file_reader.cpp
-    ${dbot_SOURCE_DIR}/util/rigid_body_renderer.cpp
-    ${dbot_SOURCE_DIR}/util/object_resource_identifier.cpp
-    ${dbot_SOURCE_DIR}/util/simple_camera_data_provider.cpp
-    ${dbot_SOURCE_DIR}/util/virtual_camera_data_provider.cpp
-    ${dbot_SOURCE_DIR}/util/simple_wavefront_object_loader.cpp
-    ${dbot_SOURCE_DIR}/util/simple_shader_provider.cpp
-    ${dbot_SOURCE_DIR}/util/default_shader_provider.cpp
-    ${dbot_SOURCE_DIR}/util/file_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/common/camera_data.cpp
+    ${dbot_SOURCE_DIR}/common/object_model.cpp
+    ${dbot_SOURCE_DIR}/common/object_file_reader.cpp
+    ${dbot_SOURCE_DIR}/common/rigid_body_renderer.cpp
+    ${dbot_SOURCE_DIR}/common/object_resource_identifier.cpp
+    ${dbot_SOURCE_DIR}/common/simple_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/common/virtual_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/common/simple_wavefront_object_loader.cpp
+    ${dbot_SOURCE_DIR}/common/simple_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/common/default_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/common/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
-    ${dbot_SOURCE_DIR}/tracker/builder/rb_observation_model_builder.cpp
-    ${dbot_SOURCE_DIR}/tracker/builder/rbc_particle_filter_tracker_builder.cpp
-    ${dbot_SOURCE_DIR}/tracker/builder/rms_gaussian_filter_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/builder/rb_observation_model_builder.cpp
+    ${dbot_SOURCE_DIR}/builder/rbc_particle_filter_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/builder/rms_gaussian_filter_tracker_builder.cpp
 )
 
 add_library(${dbot_LIBRARY} SHARED

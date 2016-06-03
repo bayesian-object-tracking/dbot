@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include <dbot/util/object_resource_identifier.hpp>
+#include <dbot/common/object_resource_identifier.hpp>
 
 TEST(ObjectResourceIndentifierTests, package_long_path)
 {
