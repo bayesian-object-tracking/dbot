@@ -80,7 +80,7 @@ public:
      * \param image
      *     Current observation image
      */
-    State track(const Obsrv& image);
+    virtual State track(const Obsrv& image);
 
     /**
      * \brief Initializes the particle filter with the given initial states and
@@ -88,7 +88,7 @@ public:
      * @param initial_states
      * @param evaluation_count
      */
-    void initialize(const std::vector<State>& initial_states);
+    virtual void initialize(const std::vector<State>& initial_states);
 
     /**
      * \brief Transforms the given state or pose in the model coordinate system
