@@ -36,7 +36,7 @@ set(dbot_LIBRARY ${PROJECT_NAME})
 set(dbot_LIBRARY_GPU ${dbot_LIBRARY}_gpu)
 
 # parent scope variables; exported at the end
-set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src)
+set(dbot_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/source)
 set(dbot_LIBRARIES ${dbot_LIBRARY})
 
 ############################
@@ -121,7 +121,6 @@ if(catkin_FOUND)
   message(STATUS "Using catkin")
   catkin_package(
     INCLUDE_DIRS
-      src 
       ${dbot_INCLUDE_DIRS}
     LIBRARIES
       ${dbot_LIBRARIES}
@@ -144,7 +143,7 @@ endif(catkin_FOUND)
 ############################
 include_directories(${dbot_INCLUDE_DIRS})
 
-set(dbot_SOURCE_DIR src/${PROJECT_NAME})
+set(dbot_SOURCE_DIR source/${PROJECT_NAME})
 
 file(GLOB_RECURSE dbot_HEADERS
     ${dbot_SOURCE_DIR}/*.hpp
@@ -152,17 +151,17 @@ file(GLOB_RECURSE dbot_HEADERS
 
 # Build dbot library
 set(dbot_SOURCES    
-    ${dbot_SOURCE_DIR}/common/camera_data.cpp
-    ${dbot_SOURCE_DIR}/common/object_model.cpp
-    ${dbot_SOURCE_DIR}/common/object_file_reader.cpp
-    ${dbot_SOURCE_DIR}/common/rigid_body_renderer.cpp
-    ${dbot_SOURCE_DIR}/common/object_resource_identifier.cpp
-    ${dbot_SOURCE_DIR}/common/simple_camera_data_provider.cpp
-    ${dbot_SOURCE_DIR}/common/virtual_camera_data_provider.cpp
-    ${dbot_SOURCE_DIR}/common/simple_wavefront_object_loader.cpp
-    ${dbot_SOURCE_DIR}/common/simple_shader_provider.cpp
-    ${dbot_SOURCE_DIR}/common/default_shader_provider.cpp
-    ${dbot_SOURCE_DIR}/common/file_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/camera_data.cpp
+    ${dbot_SOURCE_DIR}/object_model.cpp
+    ${dbot_SOURCE_DIR}/object_file_reader.cpp
+    ${dbot_SOURCE_DIR}/rigid_body_renderer.cpp
+    ${dbot_SOURCE_DIR}/object_resource_identifier.cpp
+    ${dbot_SOURCE_DIR}/simple_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/virtual_camera_data_provider.cpp
+    ${dbot_SOURCE_DIR}/simple_wavefront_object_loader.cpp
+    ${dbot_SOURCE_DIR}/simple_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/default_shader_provider.cpp
+    ${dbot_SOURCE_DIR}/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
