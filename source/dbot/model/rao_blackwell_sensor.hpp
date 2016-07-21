@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rao_blackwell_observation_model.hpp
+ * \file rao_blackwell_sensor.hpp
  * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  */
 

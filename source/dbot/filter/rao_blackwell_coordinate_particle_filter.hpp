@@ -37,7 +37,7 @@
 #include <fl/util/profiling.hpp>
 
 #include <dbot/traits.hpp>
-#include <dbot/model/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_sensor.hpp>
 
 namespace dbot
 {
@@ -60,12 +60,12 @@ public:
 public:
     /// constructor and destructor *********************************************
     RaoBlackwellCoordinateParticleFilter(
-        const std::shared_ptr<Transition> process_model,
-        const std::shared_ptr<Sensor> observation_model,
+        const std::shared_ptr<Transition> transition,
+        const std::shared_ptr<Sensor> sensor,
         const std::vector<std::vector<int>>& sampling_blocks,
         const fl::Real& max_kl_divergence = 0)
-        : observation_model_(observation_model),
-          process_model_(process_model),
+        : sensor_(sensor),
+          transition_(transition),
           max_kl_divergence_(max_kl_divergence)
     {
         sampling_blocks_ = sampling_blocks;
@@ -76,11 +76,11 @@ public:
         {
             dimension += sampling_blocks_[i].size();
         }
-        if (dimension != process_model_->noise_dimension())
+        if (dimension != transition_->noise_dimension())
         {
             std::cout << "the dimension of the sampling blocks is " << dimension
                       << " while the dimension of the noise is "
-                      << process_model_->noise_dimension() << std::endl;
+                      << transition_->noise_dimension() << std::endl;
             exit(-1);
         }
     }
@@ -88,11 +88,11 @@ public:
     /// the filter functions ***************************************************
     void filter(const Observation& observation, const Input& input)
     {
-        observation_model_->set_observation(observation);
+        sensor_->set_observation(observation);
 
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(
-            belief_.size(), Noise::Zero(process_model_->noise_dimension()));
+            belief_.size(), Noise::Zero(transition_->noise_dimension()));
         old_particles_ = belief_.locations();
         for (size_t i_block = 0; i_block < sampling_blocks_.size(); i_block++)
         {
@@ -109,13 +109,13 @@ public:
             // propagate using partial noise -----------------------------------
             for (size_t i_sampl = 0; i_sampl < belief_.size(); i_sampl++)
             {
-                belief_.location(i_sampl) = process_model_->state(
+                belief_.location(i_sampl) = transition_->state(
                     old_particles_[i_sampl], noises_[i_sampl], input);
             }
 
             // compute likelihood ----------------------------------------------
             bool update = (i_block == sampling_blocks_.size() - 1);
-            RealArray new_loglikes = observation_model_->loglikes(
+            RealArray new_loglikes = sensor_->loglikes(
                 belief_.locations(), indices_, update);
 
             // update the weights and resample if necessary --------------------
@@ -166,20 +166,20 @@ public:
         indices_ = IntArray::Zero(belief_.size());
         loglikes_ = RealArray::Zero(belief_.size());
         noises_ = std::vector<Noise>(
-            belief_.size(), Noise::Zero(process_model_->noise_dimension()));
+            belief_.size(), Noise::Zero(transition_->noise_dimension()));
         old_particles_ = belief_.locations();
 
-        observation_model_->reset();
+        sensor_->reset();
     }
 
-    std::shared_ptr<Sensor> observation_model()
+    std::shared_ptr<Sensor> sensor()
     {
-        return observation_model_;
+        return sensor_;
     }
 
-    std::shared_ptr<Transition> process_model()
+    std::shared_ptr<Transition> transition()
     {
-        return process_model_;
+        return transition_;
     }
 
 private:
@@ -192,8 +192,8 @@ private:
     RealArray loglikes_;
 
     // models
-    std::shared_ptr<Sensor> observation_model_;
-    std::shared_ptr<Transition> process_model_;
+    std::shared_ptr<Sensor> sensor_;
+    std::shared_ptr<Transition> transition_;
 
     // parameters
     std::vector<std::vector<int>> sampling_blocks_;

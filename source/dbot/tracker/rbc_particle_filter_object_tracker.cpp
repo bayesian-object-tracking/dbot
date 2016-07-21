@@ -50,7 +50,7 @@ auto RbcParticleFilterObjectTracker::on_initialize(
         filter_->belief().location(i).center_around_zero(delta_mean);
     }
 
-    auto& integrated_poses = filter_->observation_model()->integrated_poses();
+    auto& integrated_poses = filter_->sensor()->integrated_poses();
     integrated_poses.apply_delta(delta_mean);
 
     return integrated_poses;
@@ -67,7 +67,7 @@ auto RbcParticleFilterObjectTracker::on_track(const Obsrv& image) -> State
         filter_->belief().location(i).center_around_zero(delta_mean);
     }
 
-    auto& integrated_poses = filter_->observation_model()->integrated_poses();
+    auto& integrated_poses = filter_->sensor()->integrated_poses();
     integrated_poses.apply_delta(delta_mean);
 
     return integrated_poses;

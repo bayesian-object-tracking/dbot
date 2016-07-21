@@ -38,7 +38,7 @@
 #include "Eigen/Core"
 
 #include <osr/pose_vector.hpp>
-#include <dbot/model/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_sensor.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
 
 #include <dbot/traits.hpp>
@@ -86,7 +86,7 @@ struct Traits<KinectImageModelGPU<State>>
  * \class ImageSensorGPU
  *
  * \ingroup distributions
- * \ingroup observation_models
+ * \ingroup sensors
  */
 template <typename State>
 class KinectImageModelGPU

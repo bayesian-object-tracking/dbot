@@ -37,7 +37,7 @@
 #include <fl/util/assertions.hpp>
 #include <dbot/traits.hpp>
 #include <osr/free_floating_rigid_bodies_state.hpp>
-#include <dbot/model/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_sensor.hpp>
 
 #include <dbot/rigid_body_renderer.hpp>
 #include <dbot/model/kinect_pixel_model.hpp>
@@ -74,7 +74,7 @@ struct Traits<KinectImageModel<Scalar, State, OBJECTS>>
  * \class ImageSensorCPU
  *
  * \ingroup distributions
- * \ingroup observation_models
+ * \ingroup sensors
  */
 template <typename Scalar, typename State, int OBJECTS = -1>
 class KinectImageModel
@@ -103,8 +103,8 @@ public:
         const size_t& n_rows,
         const size_t& n_cols,
         const ObjectRendererPtr object_renderer,
-        const PixelSensorPtr observation_model,
-        const OcclusionModelPtr occlusion_process_model,
+        const PixelSensorPtr sensor,
+        const OcclusionModelPtr occlusion_transition,
         const float& initial_occlusion,
         const double& delta_time)
         : camera_matrix_(camera_matrix),
@@ -112,8 +112,8 @@ public:
           n_cols_(n_cols),
           initial_occlusion_(initial_occlusion),
           object_model_(object_renderer),
-          observation_model_(observation_model),
-          occlusion_process_model_(occlusion_process_model),
+          sensor_(sensor),
+          occlusion_transition_(occlusion_transition),
           observation_time_(0),
           Base(delta_time)
     {
@@ -179,28 +179,28 @@ public:
                                         occlusion_times_[indices[i_state]]
                                                         [intersect_indices[i]];
 
-                    occlusion_process_model_->Condition(
+                    occlusion_transition_->Condition(
                         delta_time,
                         occlusions_[indices[i_state]][intersect_indices[i]]);
 
                     float occlusion =
-                        occlusion_process_model_->MapStandardGaussian();
+                        occlusion_transition_->MapStandardGaussian();
 
-                    observation_model_->Condition(predictions[i], false);
+                    sensor_->Condition(predictions[i], false);
                     float p_obsIpred_vis =
-                        observation_model_->Probability(
+                        sensor_->Probability(
                             observations_[intersect_indices[i]]) *
                         (1.0 - occlusion);
 
-                    observation_model_->Condition(predictions[i], true);
+                    sensor_->Condition(predictions[i], true);
                     float p_obsIpred_occl =
-                        observation_model_->Probability(
+                        sensor_->Probability(
                             observations_[intersect_indices[i]]) *
                         occlusion;
 
-                    observation_model_->Condition(
+                    sensor_->Condition(
                         std::numeric_limits<float>::infinity(), true);
-                    float p_obsIinf = observation_model_->Probability(
+                    float p_obsIinf = sensor_->Probability(
                         observations_[intersect_indices[i]]);
 
                     log_likes[i_state] +=
@@ -276,8 +276,8 @@ private:
 
     // models
     ObjectRendererPtr object_model_;
-    PixelSensorPtr observation_model_;
-    OcclusionModelPtr occlusion_process_model_;
+    PixelSensorPtr sensor_;
+    OcclusionModelPtr occlusion_transition_;
 
     // occlusion parameters
     std::vector<std::vector<float>> occlusions_;

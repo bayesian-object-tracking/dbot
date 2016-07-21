@@ -34,8 +34,8 @@
 #include <dbot/object_model_loader.hpp>
 #include <dbot/object_resource_identifier.hpp>
 #include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
-#include <dbot/builder/object_transition_model_builder.hpp>
-#include <dbot/builder/rb_observation_model_builder.h>
+#include <dbot/builder/object_transition_builder.hpp>
+#include <dbot/builder/rb_sensor_builder.h>
 
 namespace dbot
 {
@@ -79,12 +79,12 @@ public:
      * \param param			Builder and sub-builder parameters
      */
     RbcParticleFilterTrackerBuilder(
-        const std::shared_ptr<TransitionBuilder>& state_transition_builder,
-        const std::shared_ptr<SensorBuilder>& obsrv_model_builder,
+        const std::shared_ptr<TransitionBuilder>& transition_builder,
+        const std::shared_ptr<SensorBuilder>& sensor_builder,
         const std::shared_ptr<ObjectModel>& object_model,
         const Parameters& params)
-        : state_transition_builder_(state_transition_builder),
-          obsrv_model_builder_(obsrv_model_builder),
+        : transition_builder_(transition_builder),
+          sensor_builder_(sensor_builder),
           object_model_(object_model),
           params_(params)
     {
@@ -116,16 +116,16 @@ public:
         const std::shared_ptr<ObjectModel>& object_model,
         double max_kl_divergence)
     {
-        auto state_transition_model = state_transition_builder_->build();
-        auto obsrv_model = obsrv_model_builder_->build();
+        auto transition = transition_builder_->build();
+        auto sensor = sensor_builder_->build();
 
         auto sampling_blocks =
             create_sampling_blocks(object_model->count_parts(),
-                                   state_transition_model->noise_dimension() /
+                                   transition->noise_dimension() /
                                        object_model->count_parts());
 
-        auto filter = std::shared_ptr<Filter>(new Filter(state_transition_model,
-                                                         obsrv_model,
+        auto filter = std::shared_ptr<Filter>(new Filter(transition,
+                                                         sensor,
                                                          sampling_blocks,
                                                          max_kl_divergence));
         return filter;
@@ -155,8 +155,8 @@ public:
     }
 
 protected:
-    std::shared_ptr<TransitionBuilder> state_transition_builder_;
-    std::shared_ptr<SensorBuilder> obsrv_model_builder_;
+    std::shared_ptr<TransitionBuilder> transition_builder_;
+    std::shared_ptr<SensorBuilder> sensor_builder_;
     std::shared_ptr<ObjectModel> object_model_;
     Parameters params_;
 };

@@ -34,7 +34,7 @@
 #include <dbot/camera_data.hpp>
 #include <dbot/object_resource_identifier.hpp>
 #include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
-#include <dbot/builder/object_transition_model_builder.hpp>
+#include <dbot/builder/object_transition_builder.hpp>
 
 namespace dbot
 {
@@ -101,7 +101,7 @@ protected:
      * \brief Creates a Linear object transition function used in the
      *        filter
      */
-    Transition create_object_transition_model(
+    Transition create_object_transition(
         const ObjectTransitionBuilder<State>::Parameters& param)
         const;
 
@@ -112,7 +112,7 @@ protected:
      * \throws NoGpuSupportException if compile with DBOT_BUILD_GPU=OFF and
      *         attempting to build a tracker with GPU support
      */
-    Sensor create_obsrv_model(
+    Sensor create_sensor(
         const std::shared_ptr<ObjectModel>& object_model,
         const std::shared_ptr<CameraData>& camera_data,
         const Parameters::Observation& param) const;

@@ -55,7 +55,7 @@ struct Traits<KinectPixelModel>
  * \class KinectSensor
  *
  * \ingroup distributions
- * \ingroup observation_models
+ * \ingroup sensors
  */
 class KinectPixelModel
 {

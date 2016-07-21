@@ -37,7 +37,7 @@ namespace dbot
  * \class OcclusionProcess
  *
  * \ingroup distributions
- * \ingroup process_models
+ * \ingroup transitions
  */
 class OcclusionModel
 {

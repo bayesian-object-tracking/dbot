@@ -29,9 +29,9 @@
 //{
 //RbcParticleFilterTrackerBuilder::RbcParticleFilterTrackerBuilder(
 //    const std::shared_ptr<TransitionFunctionBuilder>&
-//        state_transition_builder,
+//        transition_builder,
 //    const CameraData& camera_data)
-//    : state_transition_builder_(state_transition_builder),
+//    : transition_builder_(transition_builder),
 //      camera_data_(camera_data)
 //{
 //}
@@ -43,7 +43,7 @@
 //    const ObjectModel& object_model,
 //    double max_kl_divergence) -> std::shared_ptr<Filter>
 
-//auto RbcParticleFilterTrackerBuilder::create_object_transition_model() const
+//auto RbcParticleFilterTrackerBuilder::create_object_transition() const
 //    -> std::shared_ptr<Transition>
 
 

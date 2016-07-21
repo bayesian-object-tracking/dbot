@@ -5,8 +5,8 @@ namespace fl
 /**
  \defgroup filters Filter Algorithms
  \defgroup distributions Distributions
- \defgroup observation_models Observation Models
- \defgroup process_models Process Models
+ \defgroup sensors Observation Models
+ \defgroup transitions Process Models
  \defgroup numeric_integration Numeric Integration
 
  \defgroup traits Traits

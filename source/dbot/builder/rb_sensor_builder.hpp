@@ -22,14 +22,14 @@
  */
 
 /**
- * \file rb_observation_model_builder.hpp
+ * \file rb_sensor_builder.hpp
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
 #pragma once
 
-#include <dbot/builder/rb_observation_model_builder.h>
+#include <dbot/builder/rb_sensor_builder.h>
 #include <dbot/model/kinect_image_model.hpp>
 
 #ifdef DBOT_BUILD_GPU
@@ -51,18 +51,18 @@ RbSensorBuilder<State>::RbSensorBuilder(
 template <typename State>
 auto RbSensorBuilder<State>::build() const -> std::shared_ptr<Model>
 {
-    std::shared_ptr<Model> obsrv_model;
+    std::shared_ptr<Model> sensor;
 
     if (params_.use_gpu)
     {
-        obsrv_model = create_gpu_based_model();
+        sensor = create_gpu_based_model();
     }
     else
     {
-        obsrv_model = create_cpu_based_model();
+        sensor = create_cpu_based_model();
     }
 
-    return obsrv_model;
+    return sensor;
 }
 
 template <typename State>
@@ -70,7 +70,7 @@ auto RbSensorBuilder<State>::create_gpu_based_model() const
     -> std::shared_ptr<Model>
 {
 #ifdef DBOT_BUILD_GPU
-    auto observation_model =
+    auto sensor =
         std::shared_ptr<Model>(new dbot::KinectImageModelGPU<State>(
             camera_data_->camera_matrix(),
             camera_data_->resolution().height,
@@ -89,7 +89,7 @@ auto RbSensorBuilder<State>::create_gpu_based_model() const
             params_.kinect.model_sigma,
             params_.kinect.sigma_factor));
 
-    return observation_model;
+    return sensor;
 #else
     throw NoGpuSupportException();
 #endif
@@ -118,7 +118,7 @@ auto RbSensorBuilder<State>::create_cpu_based_model() const
     auto occlusion_process = create_occlusion_process();
     auto renderer = create_renderer();
 
-    auto observation_model = std::shared_ptr<Model>(
+    auto sensor = std::shared_ptr<Model>(
         new dbot::KinectImageModel<fl::Real, State>(
             camera_data_->camera_matrix(),
             camera_data_->resolution().height,
@@ -129,18 +129,18 @@ auto RbSensorBuilder<State>::create_cpu_based_model() const
             params_.occlusion.initial_occlusion_prob,
             params_.delta_time));
 
-    return observation_model;
+    return sensor;
 }
 
 template <typename State>
 auto RbSensorBuilder<State>::create_pixel_model() const
     -> std::shared_ptr<KinectPixelModel>
 {
-    std::shared_ptr<KinectPixelModel> kinect_pixel_observation_model(
+    std::shared_ptr<KinectPixelModel> kinect_pixel_sensor(
         new KinectPixelModel(params_.kinect.tail_weight,
                                         params_.kinect.model_sigma,
                                         params_.kinect.sigma_factor));
-    return kinect_pixel_observation_model;
+    return kinect_pixel_sensor;
 }
 
 template <typename State>

@@ -52,14 +52,14 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
     /* ------------------------------ */
     /* - State transition model     - */
     /* ------------------------------ */
-    auto state_transition_model =
-        create_object_transition_model(param_.object_transition);
+    auto transition =
+        create_object_transition(param_.object_transition);
 
     /* ------------------------------ */
     /* - Observation model          - */
     /* ------------------------------ */
-    auto obsrv_model =
-        create_obsrv_model(object_model, camera_data_, param_.observation);
+    auto sensor =
+        create_sensor(object_model, camera_data_, param_.observation);
 
     /* ------------------------------ */
     /* - Quadrature                 - */
@@ -70,12 +70,12 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
     /* - Filter                     - */
     /* ------------------------------ */
     auto filter = std::shared_ptr<Filter>(
-        new Filter(state_transition_model, obsrv_model, quadrature));
+        new Filter(transition, sensor, quadrature));
 
     return filter;
 }
 
-auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
+auto RmsGaussianFilterTrackerBuilder::create_sensor(
     const std::shared_ptr<ObjectModel>& object_model,
     const std::shared_ptr<CameraData>& camera_data,
     const Parameters::Observation& param) const -> Sensor
@@ -86,14 +86,14 @@ auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
 
     auto renderer = create_renderer(object_model);
 
-    auto pixel_obsrv_model = PixelModel(
+    auto pixel_sensor = PixelModel(
         renderer, param.bg_depth, param.fg_noise_std, param.bg_noise_std);
 
-    auto tail_obsrv_model =
+    auto tail_sensor =
         TailModel(param.uniform_tail_min, param.uniform_tail_max);
 
     auto body_tail_pixel_model =
-        BodyTailModel(pixel_obsrv_model, tail_obsrv_model, param.tail_weight);
+        BodyTailModel(pixel_sensor, tail_sensor, param.tail_weight);
 
     return Sensor(body_tail_pixel_model, camera_data->pixels());
 }
@@ -108,7 +108,7 @@ RmsGaussianFilterTrackerBuilder::create_object_model(
     return object_model;
 }
 
-auto RmsGaussianFilterTrackerBuilder::create_object_transition_model(
+auto RmsGaussianFilterTrackerBuilder::create_object_transition(
     const ObjectTransitionBuilder<RmsGaussianFilterTrackerBuilder::State>::
         Parameters& param) const -> Transition
 {

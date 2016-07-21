@@ -50,7 +50,7 @@ auto RmsGaussianFilterObjectTracker::on_initialize(
 auto RmsGaussianFilterObjectTracker::on_track(const Obsrv& obsrv) -> State
 {
     State old_pose = belief_.mean();
-    filter_->obsrv_model().local_obsrv_model().body_model().nominal_pose(
+    filter_->sensor().local_sensor().body_model().nominal_pose(
         old_pose);
 
     State zero_pose = belief_.mean();

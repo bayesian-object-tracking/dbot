@@ -41,8 +41,8 @@
 #include <fl/distribution/gaussian.hpp>
 #include <fl/distribution/uniform_distribution.hpp>
 #include <fl/distribution/cauchy_distribution.hpp>
-#include <fl/model/observation/interface/observation_density.hpp>
-#include <fl/model/observation/interface/observation_function.hpp>
+#include <fl/model/sensor/interface/sensor_density.hpp>
+#include <fl/model/sensor/interface/sensor_function.hpp>
 
 #include <dbot/rigid_body_renderer.hpp>
 

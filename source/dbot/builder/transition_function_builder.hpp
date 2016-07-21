@@ -12,7 +12,7 @@
  */
 
 /**
- * \file state_transition_function_builder.hpp
+ * \file transition_function_builder.hpp
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
@@ -23,7 +23,7 @@
 
 #include <Eigen/Dense>
 
-#include <fl/model/process/interface/state_transition_function.hpp>
+#include <fl/model/transition/interface/transition_function.hpp>
 
 namespace dbot
 {

@@ -33,9 +33,9 @@
 #include <dbot/model/depth_pixel_model.hpp>
 
 #include <fl/util/types.hpp>
-#include <fl/model/process/linear_state_transition_model.hpp>
-#include <fl/model/observation/uniform_observation_model.hpp>
-#include <fl/model/observation/body_tail_observation_model.hpp>
+#include <fl/model/transition/linear_transition.hpp>
+#include <fl/model/sensor/uniform_sensor.hpp>
+#include <fl/model/sensor/body_tail_sensor.hpp>
 #include <fl/filter/gaussian/robust_multi_sensor_gaussian_filter.hpp>
 
 namespace dbot

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rb_observation_model_builder.h
+ * \file rb_sensor_builder.h
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
@@ -41,7 +41,7 @@
 #include <dbot/file_shader_provider.hpp>
 #include <dbot/default_shader_provider.hpp>
 #include <dbot/rigid_body_renderer.hpp>
-#include <dbot/model/rao_blackwell_observation_model.hpp>
+#include <dbot/model/rao_blackwell_sensor.hpp>
 #include <dbot/model/kinect_image_model.hpp>
 
 namespace dbot
