@@ -65,7 +65,7 @@ class KinectImageModelGPU;
 namespace internal
 {
 /**
- * ImageObservationModelGPU distribution traits specialization
+ * ImageSensorGPU distribution traits specialization
  * \internal
  */
 template <typename State>
@@ -74,7 +74,7 @@ struct Traits<KinectImageModelGPU<State>>
     typedef double Scalar;
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> Observation;
 
-    typedef RbObservationModel<State> Base;
+    typedef RbSensor<State> Base;
 
     typedef typename Eigen::Matrix<Scalar, 3, 3> CameraMatrix;
 };
@@ -83,7 +83,7 @@ struct Traits<KinectImageModelGPU<State>>
 
 
 /**
- * \class ImageObservationModelGPU
+ * \class ImageSensorGPU
  *
  * \ingroup distributions
  * \ingroup observation_models

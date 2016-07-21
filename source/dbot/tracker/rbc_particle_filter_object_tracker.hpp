@@ -43,11 +43,11 @@ namespace dbot
 class RbcParticleFilterObjectTracker : public ObjectTracker
 {
 public:
-    typedef fl::StateTransitionFunction<State, Noise, Input> StateTransition;
-    typedef RbObservationModel<State> ObservationModel;
+    typedef fl::TransitionFunction<State, Noise, Input> Transition;
+    typedef RbSensor<State> Sensor;
 
-    typedef RaoBlackwellCoordinateParticleFilter<StateTransition,
-                                                 ObservationModel> Filter;
+    typedef RaoBlackwellCoordinateParticleFilter<Transition,
+                                                 Sensor> Filter;
 
 public:
     /**

@@ -52,18 +52,18 @@ public:
     typedef typename Tracker::Input Input;
 
     /* == Model Builder Interfaces ========================================== */
-    typedef StateTransitionFunctionBuilder<State, Noise, Input>
-        StateTransitionBuilder;
-    typedef RbObservationModelBuilder<State> ObservationModelBuilder;
+    typedef TransitionFunctionBuilder<State, Noise, Input>
+        TransitionBuilder;
+    typedef RbSensorBuilder<State> SensorBuilder;
 
     /* == Model Interfaces ================================================== */
-    typedef fl::StateTransitionFunction<State, Noise, Input> StateTransition;
-    typedef RbObservationModel<State> ObservationModel;
-    typedef typename ObservationModel::Observation Obsrv;
+    typedef fl::TransitionFunction<State, Noise, Input> Transition;
+    typedef RbSensor<State> Sensor;
+    typedef typename Sensor::Observation Obsrv;
 
     /* == Filter algorithm ================================================== */
-    typedef RaoBlackwellCoordinateParticleFilter<StateTransition,
-                                                 ObservationModel> Filter;
+    typedef RaoBlackwellCoordinateParticleFilter<Transition,
+                                                 Sensor> Filter;
 
     /* == Tracker parameters ================================================ */
     struct Parameters
@@ -79,8 +79,8 @@ public:
      * \param param			Builder and sub-builder parameters
      */
     RbcParticleFilterTrackerBuilder(
-        const std::shared_ptr<StateTransitionBuilder>& state_transition_builder,
-        const std::shared_ptr<ObservationModelBuilder>& obsrv_model_builder,
+        const std::shared_ptr<TransitionBuilder>& state_transition_builder,
+        const std::shared_ptr<SensorBuilder>& obsrv_model_builder,
         const std::shared_ptr<ObjectModel>& object_model,
         const Parameters& params)
         : state_transition_builder_(state_transition_builder),
@@ -155,8 +155,8 @@ public:
     }
 
 protected:
-    std::shared_ptr<StateTransitionBuilder> state_transition_builder_;
-    std::shared_ptr<ObservationModelBuilder> obsrv_model_builder_;
+    std::shared_ptr<TransitionBuilder> state_transition_builder_;
+    std::shared_ptr<SensorBuilder> obsrv_model_builder_;
     std::shared_ptr<ObjectModel> object_model_;
     Parameters params_;
 };

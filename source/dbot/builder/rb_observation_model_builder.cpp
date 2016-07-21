@@ -35,5 +35,5 @@
 
 namespace dbot
 {
-template class RbObservationModelBuilder<osr::FreeFloatingRigidBodiesState<>>;
+template class RbSensorBuilder<osr::FreeFloatingRigidBodiesState<>>;
 }

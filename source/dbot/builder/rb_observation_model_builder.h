@@ -59,7 +59,7 @@ class NoGpuSupportException : public std::exception
 };
 
 template <typename State>
-class RbObservationModelBuilder
+class RbSensorBuilder
 {
 public:
     struct Parameters
@@ -92,10 +92,10 @@ public:
         std::string geometry_shader_file;
     };
 
-    typedef RbObservationModel<State> Model;
+    typedef RbSensor<State> Model;
 
 public:
-    RbObservationModelBuilder(const std::shared_ptr<ObjectModel>& object_model,
+    RbSensorBuilder(const std::shared_ptr<ObjectModel>& object_model,
                               const std::shared_ptr<CameraData>& camera_data,
                               const Parameters& params);
 

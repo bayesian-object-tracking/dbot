@@ -46,7 +46,7 @@ public:
     /* ---------------------------------------------------------------------- */
     /* - State Transition Model                                             - */
     /* ---------------------------------------------------------------------- */
-    typedef fl::LinearStateTransitionModel<State, Noise, Input> StateTransition;
+    typedef fl::LinearTransition<State, Noise, Input> Transition;
 
     /* ---------------------------------------------------------------------- */
     /* - Observation Model                                                  - */
@@ -55,14 +55,14 @@ public:
     typedef fl::DepthPixelModel<State> PixelModel;
 
     // Pixel Level: Tail model
-    typedef fl::UniformObservationModel<State> TailModel;
+    typedef fl::UniformSensor<State> TailModel;
 
     // Pixel Level: Body-Tail model
-    typedef fl::BodyTailObsrvModel<PixelModel, TailModel> BodyTailPixelModel;
+    typedef fl::BodyTailSensor<PixelModel, TailModel> BodyTailPixelModel;
 
     // Image Level: create many of BodyTailPixelModel
-    typedef fl::JointObservationModel<
-        fl::MultipleOf<BodyTailPixelModel, Eigen::Dynamic>> ObservationModel;
+    typedef fl::JointSensor<
+        fl::MultipleOf<BodyTailPixelModel, Eigen::Dynamic>> Sensor;
 
     /* ---------------------------------------------------------------------- */
     /* - Quadrature                                                         - */
@@ -72,8 +72,8 @@ public:
     /* ---------------------------------------------------------------------- */
     /* - Filter                                                             - */
     /* ---------------------------------------------------------------------- */
-    typedef fl::RobustMultiSensorGaussianFilter<StateTransition,
-                                                ObservationModel,
+    typedef fl::RobustMultiSensorGaussianFilter<Transition,
+                                                Sensor,
                                                 Quadrature> Filter;
 
     typedef typename fl::Traits<Filter>::Belief Belief;

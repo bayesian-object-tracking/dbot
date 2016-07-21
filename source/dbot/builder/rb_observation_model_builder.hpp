@@ -40,7 +40,7 @@
 namespace dbot
 {
 template <typename State>
-RbObservationModelBuilder<State>::RbObservationModelBuilder(
+RbSensorBuilder<State>::RbSensorBuilder(
     const std::shared_ptr<ObjectModel>& object_model,
     const std::shared_ptr<CameraData>& camera_data,
     const Parameters& params)
@@ -49,7 +49,7 @@ RbObservationModelBuilder<State>::RbObservationModelBuilder(
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::build() const -> std::shared_ptr<Model>
+auto RbSensorBuilder<State>::build() const -> std::shared_ptr<Model>
 {
     std::shared_ptr<Model> obsrv_model;
 
@@ -66,7 +66,7 @@ auto RbObservationModelBuilder<State>::build() const -> std::shared_ptr<Model>
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_gpu_based_model() const
+auto RbSensorBuilder<State>::create_gpu_based_model() const
     -> std::shared_ptr<Model>
 {
 #ifdef DBOT_BUILD_GPU
@@ -96,7 +96,7 @@ auto RbObservationModelBuilder<State>::create_gpu_based_model() const
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_shader_provider() const
+auto RbSensorBuilder<State>::create_shader_provider() const
     -> std::shared_ptr<ShaderProvider>
 {
     if (params_.use_custom_shaders)
@@ -111,7 +111,7 @@ auto RbObservationModelBuilder<State>::create_shader_provider() const
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_cpu_based_model() const
+auto RbSensorBuilder<State>::create_cpu_based_model() const
     -> std::shared_ptr<Model>
 {
     auto pixel_model = create_pixel_model();
@@ -133,7 +133,7 @@ auto RbObservationModelBuilder<State>::create_cpu_based_model() const
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_pixel_model() const
+auto RbSensorBuilder<State>::create_pixel_model() const
     -> std::shared_ptr<KinectPixelModel>
 {
     std::shared_ptr<KinectPixelModel> kinect_pixel_observation_model(
@@ -144,7 +144,7 @@ auto RbObservationModelBuilder<State>::create_pixel_model() const
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_occlusion_process() const
+auto RbSensorBuilder<State>::create_occlusion_process() const
     -> std::shared_ptr<OcclusionModel>
 {
     std::shared_ptr<OcclusionModel> occlusion_process(
@@ -155,7 +155,7 @@ auto RbObservationModelBuilder<State>::create_occlusion_process() const
 }
 
 template <typename State>
-auto RbObservationModelBuilder<State>::create_renderer() const
+auto RbSensorBuilder<State>::create_renderer() const
     -> std::shared_ptr<RigidBodyRenderer>
 {
     std::shared_ptr<RigidBodyRenderer> renderer(new RigidBodyRenderer(

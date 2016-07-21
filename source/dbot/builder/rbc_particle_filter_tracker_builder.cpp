@@ -28,7 +28,7 @@
 //namespace dbot
 //{
 //RbcParticleFilterTrackerBuilder::RbcParticleFilterTrackerBuilder(
-//    const std::shared_ptr<StateTransitionFunctionBuilder>&
+//    const std::shared_ptr<TransitionFunctionBuilder>&
 //        state_transition_builder,
 //    const CameraData& camera_data)
 //    : state_transition_builder_(state_transition_builder),
@@ -44,7 +44,7 @@
 //    double max_kl_divergence) -> std::shared_ptr<Filter>
 
 //auto RbcParticleFilterTrackerBuilder::create_object_transition_model() const
-//    -> std::shared_ptr<StateTransition>
+//    -> std::shared_ptr<Transition>
 
 
 //ObjectModel RbcParticleFilterTrackerBuilder::create_object_model(

@@ -41,7 +41,7 @@ namespace dbot
 /// \todo this observation model is now specific to rigid body rendering,
 /// terminology should be adapted accordingly.
 template <typename State_>
-class RbObservationModel
+class RbSensor
 {
 public:
     typedef State_ State;
@@ -56,8 +56,8 @@ public:
 
 public:
     /// constructor and destructor *********************************************
-    RbObservationModel(const fl::Real& delta_time) : delta_time_(delta_time) {}
-    virtual ~RbObservationModel() noexcept {}
+    RbSensor(const fl::Real& delta_time) : delta_time_(delta_time) {}
+    virtual ~RbSensor() noexcept {}
     /// likelihood computation *************************************************
     virtual RealArray loglikes(const StateArray& deviations,
                                IntArray& indices,

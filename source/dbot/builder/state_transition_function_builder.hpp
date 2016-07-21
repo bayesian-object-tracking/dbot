@@ -29,10 +29,10 @@ namespace dbot
 {
 
 template <typename State, typename Noise, typename Input>
-class StateTransitionFunctionBuilder
+class TransitionFunctionBuilder
 {
 public:
-    typedef fl::StateTransitionFunction<State, Noise, Input> Model;
+    typedef fl::TransitionFunction<State, Noise, Input> Model;
 
 public:
     virtual std::shared_ptr<Model> build() const = 0;

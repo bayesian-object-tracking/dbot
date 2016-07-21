@@ -50,8 +50,8 @@ public:
     typedef RmsGaussianFilterObjectTracker::Obsrv Obsrv;
     typedef RmsGaussianFilterObjectTracker::Filter Filter;
     typedef RmsGaussianFilterObjectTracker::Quadrature Quadrature;
-    typedef RmsGaussianFilterObjectTracker::StateTransition StateTransition;
-    typedef RmsGaussianFilterObjectTracker::ObservationModel ObservationModel;
+    typedef RmsGaussianFilterObjectTracker::Transition Transition;
+    typedef RmsGaussianFilterObjectTracker::Sensor Sensor;
 
     struct Parameters
     {
@@ -71,7 +71,7 @@ public:
 
         ObjectResourceIdentifier ori;
         Observation observation;
-        ObjectTransitionModelBuilder<State>::Parameters
+        ObjectTransitionBuilder<State>::Parameters
             object_transition;
     };
 
@@ -101,8 +101,8 @@ protected:
      * \brief Creates a Linear object transition function used in the
      *        filter
      */
-    StateTransition create_object_transition_model(
-        const ObjectTransitionModelBuilder<State>::Parameters& param)
+    Transition create_object_transition_model(
+        const ObjectTransitionBuilder<State>::Parameters& param)
         const;
 
     /**
@@ -112,7 +112,7 @@ protected:
      * \throws NoGpuSupportException if compile with DBOT_BUILD_GPU=OFF and
      *         attempting to build a tracker with GPU support
      */
-    ObservationModel create_obsrv_model(
+    Sensor create_obsrv_model(
         const std::shared_ptr<ObjectModel>& object_model,
         const std::shared_ptr<CameraData>& camera_data,
         const Parameters::Observation& param) const;

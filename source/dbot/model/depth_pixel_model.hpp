@@ -52,8 +52,8 @@ namespace fl
 {
 template <typename State_>
 class DepthPixelModel
-    : public ObservationFunction<Vector1d, State_, Vector1d>,
-      public ObservationDensity<Vector1d, State_>,
+    : public SensorFunction<Vector1d, State_, Vector1d>,
+      public SensorDensity<Vector1d, State_>,
       public Descriptor
 {
 public:

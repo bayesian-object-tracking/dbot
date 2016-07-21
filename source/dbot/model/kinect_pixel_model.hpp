@@ -40,7 +40,7 @@ class KinectPixelModel;
 namespace internal
 {
 /**
- * KinectObservationModel distribution traits specialization
+ * KinectSensor distribution traits specialization
  * \internal
  */
 template <>
@@ -52,7 +52,7 @@ struct Traits<KinectPixelModel>
 }
 
 /**
- * \class KinectObservationModel
+ * \class KinectSensor
  *
  * \ingroup distributions
  * \ingroup observation_models

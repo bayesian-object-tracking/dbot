@@ -56,18 +56,18 @@ struct ObjectStateTrait
 };
 
 template <typename State>
-class ObjectTransitionModelBuilder
-    : public StateTransitionFunctionBuilder<
+class ObjectTransitionBuilder
+    : public TransitionFunctionBuilder<
           State,
           typename ObjectStateTrait<State>::Noise,
           typename ObjectStateTrait<State>::Input>
 {
 public:
-    typedef fl::StateTransitionFunction<State,
+    typedef fl::TransitionFunction<State,
                                         typename ObjectStateTrait<State>::Noise,
                                         typename ObjectStateTrait<State>::Input>
         Model;
-    typedef fl::LinearStateTransitionModel<
+    typedef fl::LinearTransition<
         State,
         typename ObjectStateTrait<State>::Noise,
         typename ObjectStateTrait<State>::Input> DerivedModel;
@@ -80,7 +80,7 @@ public:
         int part_count;
     };
 
-    ObjectTransitionModelBuilder(const Parameters& param) : param_(param) {}
+    ObjectTransitionBuilder(const Parameters& param) : param_(param) {}
     virtual std::shared_ptr<Model> build() const
     {
         auto model = std::shared_ptr<DerivedModel>(

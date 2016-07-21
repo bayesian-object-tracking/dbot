@@ -41,27 +41,27 @@
 
 namespace dbot
 {
-template <typename ProcessModel, typename ObservationModel>
+template <typename Transition, typename Sensor>
 class RaoBlackwellCoordinateParticleFilter
 {
 public:
-    typedef typename ProcessModel::State State;
-    typedef typename ProcessModel::Input Input;
-    typedef typename ProcessModel::Noise Noise;
+    typedef typename Transition::State State;
+    typedef typename Transition::Input Input;
+    typedef typename Transition::Noise Noise;
 
     typedef Eigen::Array<State, -1, 1> StateArray;
     typedef Eigen::Array<fl::Real, -1, 1> RealArray;
     typedef Eigen::Array<int, -1, 1> IntArray;
 
-    typedef typename ObservationModel::Observation Observation;
+    typedef typename Sensor::Observation Observation;
 
     typedef fl::DiscreteDistribution<State> Belief;
 
 public:
     /// constructor and destructor *********************************************
     RaoBlackwellCoordinateParticleFilter(
-        const std::shared_ptr<ProcessModel> process_model,
-        const std::shared_ptr<ObservationModel> observation_model,
+        const std::shared_ptr<Transition> process_model,
+        const std::shared_ptr<Sensor> observation_model,
         const std::vector<std::vector<int>>& sampling_blocks,
         const fl::Real& max_kl_divergence = 0)
         : observation_model_(observation_model),
@@ -172,12 +172,12 @@ public:
         observation_model_->reset();
     }
 
-    std::shared_ptr<ObservationModel> observation_model()
+    std::shared_ptr<Sensor> observation_model()
     {
         return observation_model_;
     }
 
-    std::shared_ptr<ProcessModel> process_model()
+    std::shared_ptr<Transition> process_model()
     {
         return process_model_;
     }
@@ -192,8 +192,8 @@ private:
     RealArray loglikes_;
 
     // models
-    std::shared_ptr<ObservationModel> observation_model_;
-    std::shared_ptr<ProcessModel> process_model_;
+    std::shared_ptr<Sensor> observation_model_;
+    std::shared_ptr<Transition> process_model_;
 
     // parameters
     std::vector<std::vector<int>> sampling_blocks_;

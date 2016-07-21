@@ -53,25 +53,25 @@ class KinectImageModel;
 namespace internal
 {
 /**
- * ImageObservationModelCPU distribution traits specialization
+ * ImageSensorCPU distribution traits specialization
  * \internal
  */
 template <typename Scalar, typename State, int OBJECTS>
 struct Traits<KinectImageModel<Scalar, State, OBJECTS>>
 {
-    typedef RbObservationModel<State> ObservationModelBase;
-    typedef typename ObservationModelBase::Observation Observation;
+    typedef RbSensor<State> SensorBase;
+    typedef typename SensorBase::Observation Observation;
 
     typedef std::shared_ptr<dbot::RigidBodyRenderer> ObjectRendererPtr;
     typedef std::shared_ptr<dbot::KinectPixelModel>
-        PixelObservationModelPtr;
+        PixelSensorPtr;
     typedef std::shared_ptr<dbot::OcclusionModel>
         OcclusionModelPtr;
 };
 }
 
 /**
- * \class ImageObservationModelCPU
+ * \class ImageSensorCPU
  *
  * \ingroup distributions
  * \ingroup observation_models
@@ -79,16 +79,16 @@ struct Traits<KinectImageModel<Scalar, State, OBJECTS>>
 template <typename Scalar, typename State, int OBJECTS = -1>
 class KinectImageModel
     : public internal::Traits<
-          KinectImageModel<Scalar, State>>::ObservationModelBase
+          KinectImageModel<Scalar, State>>::SensorBase
 {
 public:
     typedef internal::Traits<KinectImageModel<Scalar, State>>
         Traits;
 
-    typedef typename Traits::ObservationModelBase Base;
+    typedef typename Traits::SensorBase Base;
     typedef typename Traits::Observation Observation;
     typedef typename Traits::ObjectRendererPtr ObjectRendererPtr;
-    typedef typename Traits::PixelObservationModelPtr PixelObservationModelPtr;
+    typedef typename Traits::PixelSensorPtr PixelSensorPtr;
     typedef typename Traits::OcclusionModelPtr OcclusionModelPtr;
 
     typedef typename Base::StateArray StateArray;
@@ -103,7 +103,7 @@ public:
         const size_t& n_rows,
         const size_t& n_cols,
         const ObjectRendererPtr object_renderer,
-        const PixelObservationModelPtr observation_model,
+        const PixelSensorPtr observation_model,
         const OcclusionModelPtr occlusion_process_model,
         const float& initial_occlusion,
         const double& delta_time)
@@ -276,7 +276,7 @@ private:
 
     // models
     ObjectRendererPtr object_model_;
-    PixelObservationModelPtr observation_model_;
+    PixelSensorPtr observation_model_;
     OcclusionModelPtr occlusion_process_model_;
 
     // occlusion parameters

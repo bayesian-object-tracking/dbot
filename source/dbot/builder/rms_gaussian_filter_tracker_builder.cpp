@@ -78,7 +78,7 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
 auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
     const std::shared_ptr<ObjectModel>& object_model,
     const std::shared_ptr<CameraData>& camera_data,
-    const Parameters::Observation& param) const -> ObservationModel
+    const Parameters::Observation& param) const -> Sensor
 {
     typedef RmsGaussianFilterObjectTracker::PixelModel PixelModel;
     typedef RmsGaussianFilterObjectTracker::TailModel TailModel;
@@ -95,7 +95,7 @@ auto RmsGaussianFilterTrackerBuilder::create_obsrv_model(
     auto body_tail_pixel_model =
         BodyTailModel(pixel_obsrv_model, tail_obsrv_model, param.tail_weight);
 
-    return ObservationModel(body_tail_pixel_model, camera_data->pixels());
+    return Sensor(body_tail_pixel_model, camera_data->pixels());
 }
 
 std::shared_ptr<ObjectModel>
@@ -109,10 +109,10 @@ RmsGaussianFilterTrackerBuilder::create_object_model(
 }
 
 auto RmsGaussianFilterTrackerBuilder::create_object_transition_model(
-    const ObjectTransitionModelBuilder<RmsGaussianFilterTrackerBuilder::State>::
-        Parameters& param) const -> StateTransition
+    const ObjectTransitionBuilder<RmsGaussianFilterTrackerBuilder::State>::
+        Parameters& param) const -> Transition
 {
-    ObjectTransitionModelBuilder<State> process_builder(param);
+    ObjectTransitionBuilder<State> process_builder(param);
     auto process = process_builder.build_model();
 
     return process;
