@@ -58,7 +58,8 @@ public:
      *     Moving average update rate
      */
     ObjectTracker(const std::shared_ptr<ObjectModel>& object_model,
-                  double update_rate);
+                  double update_rate,
+                  bool center_object_frame);
 
     virtual ~ObjectTracker() { }
 
@@ -132,6 +133,7 @@ protected:
     std::shared_ptr<ObjectModel> object_model_;
     State moving_average_;
     double update_rate_;
+    bool center_object_frame_;
     std::mutex mutex_;
 };
 }

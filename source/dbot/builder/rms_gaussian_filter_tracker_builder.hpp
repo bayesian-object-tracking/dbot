@@ -56,7 +56,8 @@ public:
     struct Parameters
     {
         double ut_alpha;
-        double update_rate;
+        double moving_average_update_rate;
+        bool center_object_frame;
 
         struct Observation
         {

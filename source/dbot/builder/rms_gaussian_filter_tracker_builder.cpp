@@ -41,7 +41,10 @@ RmsGaussianFilterTrackerBuilder::build()
     auto filter = create_filter(object_model);
 
     auto tracker = std::make_shared<RmsGaussianFilterObjectTracker>(
-        filter, object_model, param_.update_rate);
+        filter,
+        object_model,
+        param_.moving_average_update_rate,
+        param_.center_object_frame);
 
     return tracker;
 }
@@ -52,14 +55,12 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
     /* ------------------------------ */
     /* - State transition model     - */
     /* ------------------------------ */
-    auto transition =
-        create_object_transition(param_.object_transition);
+    auto transition = create_object_transition(param_.object_transition);
 
     /* ------------------------------ */
     /* - Observation model          - */
     /* ------------------------------ */
-    auto sensor =
-        create_sensor(object_model, camera_data_, param_.observation);
+    auto sensor = create_sensor(object_model, camera_data_, param_.observation);
 
     /* ------------------------------ */
     /* - Quadrature                 - */
@@ -69,8 +70,8 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
     /* ------------------------------ */
     /* - Filter                     - */
     /* ------------------------------ */
-    auto filter = std::shared_ptr<Filter>(
-        new Filter(transition, sensor, quadrature));
+    auto filter =
+        std::shared_ptr<Filter>(new Filter(transition, sensor, quadrature));
 
     return filter;
 }
@@ -103,14 +104,17 @@ RmsGaussianFilterTrackerBuilder::create_object_model(
     const ObjectResourceIdentifier& ori) const
 {
     auto object_model = std::make_shared<ObjectModel>(
-        std::shared_ptr<ObjectModelLoader>(new SimpleWavefrontObjectModelLoader(ori)), true);
+        std::shared_ptr<ObjectModelLoader>(
+            new SimpleWavefrontObjectModelLoader(ori)),
+        param_.center_object_frame);
 
     return object_model;
 }
 
 auto RmsGaussianFilterTrackerBuilder::create_object_transition(
-    const ObjectTransitionBuilder<RmsGaussianFilterTrackerBuilder::State>::
-        Parameters& param) const -> Transition
+    const ObjectTransitionBuilder<
+        RmsGaussianFilterTrackerBuilder::State>::Parameters& param) const
+    -> Transition
 {
     ObjectTransitionBuilder<State> process_builder(param);
     auto process = process_builder.build_model();

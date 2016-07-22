@@ -17,9 +17,11 @@
 namespace dbot
 {
 ObjectTracker::ObjectTracker(const std::shared_ptr<ObjectModel> &object_model,
-                             double update_rate)
+                             double update_rate,
+                             bool center_object_frame)
     : object_model_(object_model),
       update_rate_(update_rate),
+      center_object_frame_(center_object_frame),
       moving_average_(object_model_->count_parts())
 {
 }
@@ -80,6 +82,8 @@ auto ObjectTracker::track(const Obsrv& image) -> State
 auto ObjectTracker::to_center_coordinate_system(
     const ObjectTracker::State& state) -> State
 {
+    if (!center_object_frame_) return state;
+
     State centered_state = state;
     for (size_t j = 0; j < state.count(); j++)
     {
@@ -90,10 +94,13 @@ auto ObjectTracker::to_center_coordinate_system(
 
     return centered_state;
 }
+    
 
 auto ObjectTracker::to_model_coordinate_system(
     const ObjectTracker::State& state) -> State
 {
+    if (!center_object_frame_) return state;
+
     State model_state = state;
     for (size_t j = 0; j < state.count(); j++)
     {

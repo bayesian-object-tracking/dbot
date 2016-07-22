@@ -29,8 +29,9 @@ RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
     const std::shared_ptr<ObjectModel>& object_model,
     int evaluation_count,
-    double update_rate)
-    : ObjectTracker(object_model, update_rate),
+    double update_rate,
+    bool center_object_frame)
+    : ObjectTracker(object_model, update_rate, center_object_frame),
       filter_(filter),
       evaluation_count_(evaluation_count)
 {
@@ -40,7 +41,6 @@ auto RbcParticleFilterObjectTracker::on_initialize(
     const std::vector<State>& initial_states) -> State
 {
     filter_->set_particles(initial_states);
-    // filter_->filter(camera_data_->depth_image_vector(), zero_input());
     filter_->resample(evaluation_count_ / object_model_->count_parts());
 
     State delta_mean = filter_->belief().mean();

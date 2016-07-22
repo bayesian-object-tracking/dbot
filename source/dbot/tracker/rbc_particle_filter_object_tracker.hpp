@@ -66,7 +66,9 @@ public:
         const std::shared_ptr<Filter>& filter,
         const std::shared_ptr<ObjectModel>& object_model,
         int evaluation_count,
-        double update_rate);
+        double update_rate,
+        bool center_object_frame);
+    
 
     virtual ~RbcParticleFilterObjectTracker() { }
 

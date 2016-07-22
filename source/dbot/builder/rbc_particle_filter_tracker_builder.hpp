@@ -71,6 +71,7 @@ public:
         int evaluation_count;
         double moving_average_update_rate;
         double max_kl_divergence;
+        bool center_object_frame;
     };
 
 public:
@@ -101,7 +102,8 @@ public:
             filter,
             object_model_,
             params_.evaluation_count,
-            params_.moving_average_update_rate);
+            params_.moving_average_update_rate,
+            params_.center_object_frame);        
 
         return tracker;
     }

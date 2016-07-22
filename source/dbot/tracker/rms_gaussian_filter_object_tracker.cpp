@@ -28,8 +28,9 @@ namespace dbot
 RmsGaussianFilterObjectTracker::RmsGaussianFilterObjectTracker(
     const std::shared_ptr<Filter>& filter,
     const std::shared_ptr<ObjectModel>& object_model,
-    double update_rate)
-    : ObjectTracker(object_model, update_rate),
+    double update_rate,
+    bool center_object_frame)
+    : ObjectTracker(object_model, update_rate, center_object_frame),
       filter_(filter),
       belief_(filter_->create_belief())
 {
