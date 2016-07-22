@@ -41,7 +41,7 @@ auto RbcParticleFilterObjectTracker::on_initialize(
     const std::vector<State>& initial_states) -> State
 {
     filter_->set_particles(initial_states);
-    filter_->resample(evaluation_count_ / object_model_->count_parts());
+    filter_->resample(evaluation_count_ / filter_->sampling_blocks().size());
 
     State delta_mean = filter_->belief().mean();
 

@@ -155,6 +155,12 @@ public:
         loglikes_ = loglikes;
     }
 
+    /// accessors **************************************************************
+    std::vector<std::vector<int>> sampling_blocks() const
+    {
+        return sampling_blocks_;
+    }
+
     /// mutators ***************************************************************
     Belief& belief() { return belief_; }
     void set_particles(const std::vector<State>& samples)
