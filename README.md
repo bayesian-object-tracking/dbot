@@ -43,6 +43,6 @@ If no CUDA enabled device is available, you can deactivate the GPU implementatio
 
 # How to use dbot
 
-Checkout the ros nodes of each tracker in dbot_ros package for exact usage of the filters.
+Checkout the ros nodes of each tracker in [dbot_ros](https://github.com/bayesian-object-tracking/dbot_ros) package for exact usage of the filters.
 
  
