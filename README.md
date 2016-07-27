@@ -32,6 +32,7 @@ The core of this library are two probabilistic tracker
      $ cd $HOME
      $ mkdir -p projects/tracking/src  
      $ cd projects/tracking/src
+     $ git clone git@github.com:filtering-library/fl.git
      $ git clone git@github.com:bayesian-object-tracking/dbot.git
      $ cd ..
      $ catkin_make -DCMAKE_BUILD_TYPE=Release -DDBOT_BUILD_GPU=On
