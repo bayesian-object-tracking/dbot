@@ -17,6 +17,8 @@ The core of this library are two probabilistic tracker
 
    http://arxiv.org/abs/1602.06157
 
+All trackers require mesh models in Wavefront (.obj) format.
+
 # Requirements
  * Ubuntu 12.04
  * C++0x or C++11 Compiler (gcc-4.6 or later)
