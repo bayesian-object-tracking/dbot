@@ -17,7 +17,7 @@ The core of this library are two probabilistic tracker
 
    http://arxiv.org/abs/1602.06157
 
-All trackers require mesh models in Wavefront (.obj) format.
+All trackers require mesh models of the tracked objects in Wavefront (.obj) format.
 
 # Requirements
  * Ubuntu 12.04
