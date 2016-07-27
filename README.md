@@ -41,6 +41,8 @@ If no CUDA enabled device is available, you can deactivate the GPU implementatio
      $ catkin_make -DCMAKE_BUILD_TYPE=Release -DDBOT_BUILD_GPU=Off
 
 
+# How to use dbot
 
+Checkout the ros nodes of each tracker in dbot_ros package for exact usage of the filters.
 
  
