@@ -22,6 +22,10 @@ The core of this library are two probabilistic tracker
  * C++0x or C++11 Compiler (gcc-4.6 or later)
  * [CUDA](https://developer.nvidia.com/cuda-downloads) 6.5 or later (optional)
  
+## Dependecies
+ * [Filtering library](https://github.com/filtering-library/fl) (fl)
+ * [Eigen](http://eigen.tuxfamily.org/) 3.2.1 or later
+ 
 # Compiling
  The cmake package uses [Catkin](https://github.com/ros/catkin). If you have installed ROS groovy or later, then you most likely have catkin installed already.
 
