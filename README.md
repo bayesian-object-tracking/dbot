@@ -6,6 +6,8 @@ The core of this library are two probabilistic tracker
   [M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal. Probabilistic Object Tracking using a Range Camera IEEE Intl Conf on Intelligent Robots and Systems, 2013]
 
   http://arxiv.org/abs/1505.00241
+  
+  This tracker can run on a pure CPU system or optionally run on GPU using CUDA 6.5 or later
 
  * A Parametric Tracker Based on Robust Multi-Sensor Gaussian Filter Tracker
  
@@ -14,3 +16,27 @@ The core of this library are two probabilistic tracker
    IEEE Intl Conf on Robotics and Automation, 2016] 
 
    http://arxiv.org/abs/1602.06157
+
+# Requirements
+ * Ubuntu 12.04
+ * C++0x or C++11 Compiler (gcc-4.6 or later)
+ * [CUDA](https://developer.nvidia.com/cuda-downloads) 6.5 or later (optional)
+ 
+# Compiling
+ The cmake package uses [Catkin](https://github.com/ros/catkin). If you have installed ROS groovy or later, then you most likely have catkin installed already.
+
+     $ cd $HOME
+     $ mkdir -p projects/tracking/src  
+     $ cd projects/tracking/src
+     $ git clone git@github.com:bayesian-object-tracking/dbot.git
+     $ cd ..
+     $ catkin_make -DCMAKE_BUILD_TYPE=Release -DDBOT_BUILD_GPU=On
+
+If no CUDA enabled device is available, you can deactivate the GPU implementation via 
+
+     $ catkin_make -DCMAKE_BUILD_TYPE=Release -DDBOT_BUILD_GPU=Off
+
+
+
+
+ 
