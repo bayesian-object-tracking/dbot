@@ -32,7 +32,7 @@
 
 #include <fl/model/transition/interface/transition_function.hpp>
 
-#include <dbot/tracker/object_tracker.hpp>
+#include <dbot/tracker/tracker.hpp>
 #include <dbot/filter/rao_blackwell_coordinate_particle_filter.hpp>
 
 namespace dbot
@@ -40,14 +40,13 @@ namespace dbot
 /**
  * \brief ParticleTracker
  */
-class ParticleTracker : public ObjectTracker
+class ParticleTracker : public Tracker
 {
 public:
     typedef fl::TransitionFunction<State, Noise, Input> Transition;
     typedef RbSensor<State> Sensor;
 
-    typedef RaoBlackwellCoordinateParticleFilter<Transition,
-                                                 Sensor> Filter;
+    typedef RaoBlackwellCoordinateParticleFilter<Transition, Sensor> Filter;
 
 public:
     /**

@@ -162,7 +162,7 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/simple_shader_provider.cpp
     ${dbot_SOURCE_DIR}/default_shader_provider.cpp
     ${dbot_SOURCE_DIR}/file_shader_provider.cpp
-    ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/particle_tracker.cpp
     ${dbot_SOURCE_DIR}/tracker/gaussian_tracker.cpp
     ${dbot_SOURCE_DIR}/builder/rb_sensor_builder.cpp

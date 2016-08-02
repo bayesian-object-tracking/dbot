@@ -38,7 +38,7 @@ namespace dbot
 /**
  * \brief Abstract ObjectTracker context
  */
-class ObjectTracker
+class Tracker
 {
 public:
     typedef osr::FreeFloatingRigidBodiesState<> State;
@@ -57,11 +57,11 @@ public:
      * \param update_rate
      *     Moving average update rate
      */
-    ObjectTracker(const std::shared_ptr<ObjectModel>& object_model,
+    Tracker(const std::shared_ptr<ObjectModel>& object_model,
                   double update_rate,
                   bool center_object_frame);
 
-    virtual ~ObjectTracker() { }
+    virtual ~Tracker() { }
 
     /**
      * \brief Hook function which is called during tracking

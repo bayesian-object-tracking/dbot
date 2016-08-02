@@ -31,7 +31,7 @@ ParticleTracker::ParticleTracker(
     int evaluation_count,
     double update_rate,
     bool center_object_frame)
-    : ObjectTracker(object_model, update_rate, center_object_frame),
+    : Tracker(object_model, update_rate, center_object_frame),
       filter_(filter),
       evaluation_count_(evaluation_count)
 {

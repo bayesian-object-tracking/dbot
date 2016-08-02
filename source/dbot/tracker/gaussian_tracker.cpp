@@ -30,7 +30,7 @@ GaussianTracker::GaussianTracker(
     const std::shared_ptr<ObjectModel>& object_model,
     double update_rate,
     bool center_object_frame)
-    : ObjectTracker(object_model, update_rate, center_object_frame),
+    : Tracker(object_model, update_rate, center_object_frame),
       filter_(filter),
       belief_(filter_->create_belief())
 {

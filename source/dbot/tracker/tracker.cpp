@@ -12,11 +12,11 @@
  */
 
 #include <fl/util/profiling.hpp>
-#include <dbot/tracker/object_tracker.hpp>
+#include <dbot/tracker/tracker.hpp>
 
 namespace dbot
 {
-ObjectTracker::ObjectTracker(const std::shared_ptr<ObjectModel> &object_model,
+Tracker::Tracker(const std::shared_ptr<ObjectModel> &object_model,
                              double update_rate,
                              bool center_object_frame)
     : object_model_(object_model),
@@ -26,7 +26,7 @@ ObjectTracker::ObjectTracker(const std::shared_ptr<ObjectModel> &object_model,
 {
 }
 
-void ObjectTracker::initialize(const std::vector<State>& initial_states)
+void Tracker::initialize(const std::vector<State>& initial_states)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -39,8 +39,8 @@ void ObjectTracker::initialize(const std::vector<State>& initial_states)
     moving_average_ = to_model_coordinate_system(on_initialize(states));
 }
 
-void ObjectTracker::move_average(const ObjectTracker::State& new_state,
-                                 ObjectTracker::State& moving_average,
+void Tracker::move_average(const Tracker::State& new_state,
+                                 Tracker::State& moving_average,
                                  double update_rate)
 {
     for (int i = 0; i < moving_average.count(); i++)
@@ -68,7 +68,7 @@ void ObjectTracker::move_average(const ObjectTracker::State& new_state,
     }
 }
 
-auto ObjectTracker::track(const Obsrv& image) -> State
+auto Tracker::track(const Obsrv& image) -> State
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -79,8 +79,8 @@ auto ObjectTracker::track(const Obsrv& image) -> State
     return moving_average_;
 }
 
-auto ObjectTracker::to_center_coordinate_system(
-    const ObjectTracker::State& state) -> State
+auto Tracker::to_center_coordinate_system(
+    const Tracker::State& state) -> State
 {
     if (!center_object_frame_) return state;
 
@@ -96,8 +96,8 @@ auto ObjectTracker::to_center_coordinate_system(
 }
     
 
-auto ObjectTracker::to_model_coordinate_system(
-    const ObjectTracker::State& state) -> State
+auto Tracker::to_model_coordinate_system(
+    const Tracker::State& state) -> State
 {
     if (!center_object_frame_) return state;
 
@@ -112,7 +112,7 @@ auto ObjectTracker::to_model_coordinate_system(
     return model_state;
 }
 
-ObjectTracker::Input ObjectTracker::zero_input() const
+Tracker::Input Tracker::zero_input() const
 {
     return Input::Zero(1);
 }

@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <dbot/tracker/object_tracker.hpp>
+#include <dbot/tracker/tracker.hpp>
 #include <dbot/model/depth_pixel_model.hpp>
 
 #include <fl/util/types.hpp>
@@ -40,7 +40,7 @@
 
 namespace dbot
 {
-class GaussianTracker : public ObjectTracker
+class GaussianTracker : public Tracker
 {
 public:
     /* ---------------------------------------------------------------------- */
