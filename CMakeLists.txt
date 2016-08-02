@@ -163,11 +163,11 @@ set(dbot_SOURCES
     ${dbot_SOURCE_DIR}/default_shader_provider.cpp
     ${dbot_SOURCE_DIR}/file_shader_provider.cpp
     ${dbot_SOURCE_DIR}/tracker/object_tracker.cpp
-    ${dbot_SOURCE_DIR}/tracker/rbc_particle_filter_object_tracker.cpp
-    ${dbot_SOURCE_DIR}/tracker/rms_gaussian_filter_object_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/particle_tracker.cpp
+    ${dbot_SOURCE_DIR}/tracker/gaussian_tracker.cpp
     ${dbot_SOURCE_DIR}/builder/rb_sensor_builder.cpp
-    ${dbot_SOURCE_DIR}/builder/rbc_particle_filter_tracker_builder.cpp
-    ${dbot_SOURCE_DIR}/builder/rms_gaussian_filter_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/builder/particle_tracker_builder.cpp
+    ${dbot_SOURCE_DIR}/builder/gaussian_tracker_builder.cpp
 )
 
 add_library(${dbot_LIBRARY} SHARED

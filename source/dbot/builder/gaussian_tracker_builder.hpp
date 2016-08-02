@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rms_gaussian_filter_tracker_builder.hpp
+ * \file gaussian_tracker_builder.hpp
  * \date December 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
@@ -33,7 +33,7 @@
 
 #include <dbot/camera_data.hpp>
 #include <dbot/object_resource_identifier.hpp>
-#include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
+#include <dbot/tracker/gaussian_tracker.hpp>
 #include <dbot/builder/object_transition_builder.hpp>
 
 namespace dbot
@@ -44,14 +44,14 @@ namespace dbot
 class RmsGaussianFilterTrackerBuilder
 {
 public:
-    typedef RmsGaussianFilterObjectTracker::State State;
-    typedef RmsGaussianFilterObjectTracker::Input Input;
-    typedef RmsGaussianFilterObjectTracker::Noise Noise;
-    typedef RmsGaussianFilterObjectTracker::Obsrv Obsrv;
-    typedef RmsGaussianFilterObjectTracker::Filter Filter;
-    typedef RmsGaussianFilterObjectTracker::Quadrature Quadrature;
-    typedef RmsGaussianFilterObjectTracker::Transition Transition;
-    typedef RmsGaussianFilterObjectTracker::Sensor Sensor;
+    typedef GaussianTracker::State State;
+    typedef GaussianTracker::Input Input;
+    typedef GaussianTracker::Noise Noise;
+    typedef GaussianTracker::Obsrv Obsrv;
+    typedef GaussianTracker::Filter Filter;
+    typedef GaussianTracker::Quadrature Quadrature;
+    typedef GaussianTracker::Transition Transition;
+    typedef GaussianTracker::Sensor Sensor;
 
     struct Parameters
     {
@@ -89,7 +89,7 @@ public:
     /**
      * \brief Builds the Rbc PF tracker
      */
-    std::shared_ptr<RmsGaussianFilterObjectTracker> build();
+    std::shared_ptr<GaussianTracker> build();
 
 protected:
     /**

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rbc_particle_filter_tracker_builder.hpp
+ * \file particle_tracker_builder.hpp
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
@@ -33,7 +33,7 @@
 
 #include <dbot/object_model_loader.hpp>
 #include <dbot/object_resource_identifier.hpp>
-#include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
+#include <dbot/tracker/particle_tracker.hpp>
 #include <dbot/builder/object_transition_builder.hpp>
 #include <dbot/builder/rb_sensor_builder.h>
 
@@ -94,11 +94,11 @@ public:
     /**
      * \brief Builds the Rbc PF tracker
      */
-    std::shared_ptr<RbcParticleFilterObjectTracker> build()
+    std::shared_ptr<ParticleTracker> build()
     {
         auto filter = create_filter(object_model_, params_.max_kl_divergence);
 
-        auto tracker = std::make_shared<RbcParticleFilterObjectTracker>(
+        auto tracker = std::make_shared<ParticleTracker>(
             filter,
             object_model_,
             params_.evaluation_count,

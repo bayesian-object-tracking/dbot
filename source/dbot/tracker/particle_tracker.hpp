@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rbc_particle_filter_object_tracker.hpp
+ * \file particle_tracker.hpp
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
@@ -38,9 +38,9 @@
 namespace dbot
 {
 /**
- * \brief RbcParticleFilterObjectTracker
+ * \brief ParticleTracker
  */
-class RbcParticleFilterObjectTracker : public ObjectTracker
+class ParticleTracker : public ObjectTracker
 {
 public:
     typedef fl::TransitionFunction<State, Noise, Input> Transition;
@@ -62,7 +62,7 @@ public:
      * \param update_rate
      *     Moving average update rate
      */
-    RbcParticleFilterObjectTracker(
+    ParticleTracker(
         const std::shared_ptr<Filter>& filter,
         const std::shared_ptr<ObjectModel>& object_model,
         int evaluation_count,
@@ -70,7 +70,7 @@ public:
         bool center_object_frame);
     
 
-    virtual ~RbcParticleFilterObjectTracker() { }
+    virtual ~ParticleTracker() { }
 
     /**
      * \brief perform a single filter step

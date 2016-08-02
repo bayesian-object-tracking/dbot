@@ -22,7 +22,7 @@
  */
 
 #include <dbot/simple_wavefront_object_loader.hpp>
-#include <dbot/builder/rms_gaussian_filter_tracker_builder.hpp>
+#include <dbot/builder/gaussian_tracker_builder.hpp>
 
 namespace dbot
 {
@@ -33,14 +33,14 @@ RmsGaussianFilterTrackerBuilder::RmsGaussianFilterTrackerBuilder(
 {
 }
 
-std::shared_ptr<RmsGaussianFilterObjectTracker>
+std::shared_ptr<GaussianTracker>
 RmsGaussianFilterTrackerBuilder::build()
 {
     auto object_model = create_object_model(param_.ori);
 
     auto filter = create_filter(object_model);
 
-    auto tracker = std::make_shared<RmsGaussianFilterObjectTracker>(
+    auto tracker = std::make_shared<GaussianTracker>(
         filter,
         object_model,
         param_.moving_average_update_rate,
@@ -81,9 +81,9 @@ auto RmsGaussianFilterTrackerBuilder::create_sensor(
     const std::shared_ptr<CameraData>& camera_data,
     const Parameters::Observation& param) const -> Sensor
 {
-    typedef RmsGaussianFilterObjectTracker::PixelModel PixelModel;
-    typedef RmsGaussianFilterObjectTracker::TailModel TailModel;
-    typedef RmsGaussianFilterObjectTracker::BodyTailPixelModel BodyTailModel;
+    typedef GaussianTracker::PixelModel PixelModel;
+    typedef GaussianTracker::TailModel TailModel;
+    typedef GaussianTracker::BodyTailPixelModel BodyTailModel;
 
     auto renderer = create_renderer(object_model);
 

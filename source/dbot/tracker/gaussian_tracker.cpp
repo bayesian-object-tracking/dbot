@@ -21,11 +21,11 @@
  *
  */
 
-#include <dbot/tracker/rms_gaussian_filter_object_tracker.hpp>
+#include <dbot/tracker/gaussian_tracker.hpp>
 
 namespace dbot
 {
-RmsGaussianFilterObjectTracker::RmsGaussianFilterObjectTracker(
+GaussianTracker::GaussianTracker(
     const std::shared_ptr<Filter>& filter,
     const std::shared_ptr<ObjectModel>& object_model,
     double update_rate,
@@ -36,7 +36,7 @@ RmsGaussianFilterObjectTracker::RmsGaussianFilterObjectTracker(
 {
 }
 
-auto RmsGaussianFilterObjectTracker::on_initialize(
+auto GaussianTracker::on_initialize(
     const std::vector<State>& initial_states) -> State
 {
     auto initial_cov = belief_.covariance();
@@ -48,7 +48,7 @@ auto RmsGaussianFilterObjectTracker::on_initialize(
     return belief_.mean();
 }
 
-auto RmsGaussianFilterObjectTracker::on_track(const Obsrv& obsrv) -> State
+auto GaussianTracker::on_track(const Obsrv& obsrv) -> State
 {
     State old_pose = belief_.mean();
     filter_->sensor().local_sensor().body_model().nominal_pose(

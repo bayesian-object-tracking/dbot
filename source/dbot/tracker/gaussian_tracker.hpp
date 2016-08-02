@@ -22,7 +22,7 @@
  */
 
 /**
- * \file rms_gaussian_filter_object_tracker.hpp
+ * \file gaussian_tracker.hpp
  * \author Jan Issc (jan.issac@gmail.com)
  * \date December 2015
  */
@@ -40,7 +40,7 @@
 
 namespace dbot
 {
-class RmsGaussianFilterObjectTracker : public ObjectTracker
+class GaussianTracker : public ObjectTracker
 {
 public:
     /* ---------------------------------------------------------------------- */
@@ -91,7 +91,7 @@ public:
      * \param update_rate
      *     Moving average update rate
      */
-    RmsGaussianFilterObjectTracker(
+    GaussianTracker(
         const std::shared_ptr<Filter>& filter,
         const std::shared_ptr<ObjectModel>& object_model,
         double update_rate,

@@ -21,11 +21,11 @@
  *
  */
 
-#include <dbot/tracker/rbc_particle_filter_object_tracker.hpp>
+#include <dbot/tracker/particle_tracker.hpp>
 
 namespace dbot
 {
-RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
+ParticleTracker::ParticleTracker(
     const std::shared_ptr<Filter>& filter,
     const std::shared_ptr<ObjectModel>& object_model,
     int evaluation_count,
@@ -37,7 +37,7 @@ RbcParticleFilterObjectTracker::RbcParticleFilterObjectTracker(
 {
 }
 
-auto RbcParticleFilterObjectTracker::on_initialize(
+auto ParticleTracker::on_initialize(
     const std::vector<State>& initial_states) -> State
 {
     filter_->set_particles(initial_states);
@@ -56,7 +56,7 @@ auto RbcParticleFilterObjectTracker::on_initialize(
     return integrated_poses;
 }
 
-auto RbcParticleFilterObjectTracker::on_track(const Obsrv& image) -> State
+auto ParticleTracker::on_track(const Obsrv& image) -> State
 {
     filter_->filter(image, zero_input());
 

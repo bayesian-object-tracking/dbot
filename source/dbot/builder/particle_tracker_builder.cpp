@@ -22,7 +22,7 @@
  */
 
 #include <dbot/simple_wavefront_object_loader.hpp>
-#include <dbot/builder/rbc_particle_filter_tracker_builder.hpp>
+#include <dbot/builder/particle_tracker_builder.hpp>
 
 
 //namespace dbot
@@ -36,7 +36,7 @@
 //{
 //}
 
-//std::shared_ptr<RbcParticleFilterObjectTracker>
+//std::shared_ptr<ParticleTracker>
 //RbcParticleFilterTrackerBuilder::build()
 
 //auto RbcParticleFilterTrackerBuilder::create_filter(
