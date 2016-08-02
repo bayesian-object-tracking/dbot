@@ -41,7 +41,7 @@ namespace dbot
 /**
  * \brief Represents an Rbc Particle filter based tracker builder
  */
-class RmsGaussianFilterTrackerBuilder
+class GaussianTrackerBuilder
 {
 public:
     typedef GaussianTracker::State State;
@@ -78,11 +78,11 @@ public:
 
 public:
     /**
-     * \brief Creates a RbcParticleFilterTrackerBuilder
+     * \brief Creates a ParticleTrackerBuilder
      * \param param			Builder and sub-builder parameters
      * \param camera_data	Tracker camera data object
      */
-    RmsGaussianFilterTrackerBuilder(
+    GaussianTrackerBuilder(
         const Parameters& param,
         const std::shared_ptr<CameraData>& camera_data);
 

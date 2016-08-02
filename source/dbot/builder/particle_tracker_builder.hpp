@@ -44,7 +44,7 @@ namespace dbot
  * \brief Represents an Rbc Particle filter based tracker builder
  */
 template <typename Tracker>
-class RbcParticleFilterTrackerBuilder
+class ParticleTrackerBuilder
 {
 public:
     typedef typename Tracker::State State;
@@ -76,10 +76,10 @@ public:
 
 public:
     /**
-     * \brief Creates a RbcParticleFilterTrackerBuilder
+     * \brief Creates a ParticleTrackerBuilder
      * \param param			Builder and sub-builder parameters
      */
-    RbcParticleFilterTrackerBuilder(
+    ParticleTrackerBuilder(
         const std::shared_ptr<TransitionBuilder>& transition_builder,
         const std::shared_ptr<SensorBuilder>& sensor_builder,
         const std::shared_ptr<ObjectModel>& object_model,

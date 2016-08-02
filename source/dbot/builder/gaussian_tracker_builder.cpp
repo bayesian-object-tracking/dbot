@@ -26,7 +26,7 @@
 
 namespace dbot
 {
-RmsGaussianFilterTrackerBuilder::RmsGaussianFilterTrackerBuilder(
+GaussianTrackerBuilder::GaussianTrackerBuilder(
     const Parameters& param,
     const std::shared_ptr<CameraData>& camera_data)
     : param_(param), camera_data_(camera_data)
@@ -34,7 +34,7 @@ RmsGaussianFilterTrackerBuilder::RmsGaussianFilterTrackerBuilder(
 }
 
 std::shared_ptr<GaussianTracker>
-RmsGaussianFilterTrackerBuilder::build()
+GaussianTrackerBuilder::build()
 {
     auto object_model = create_object_model(param_.ori);
 
@@ -49,7 +49,7 @@ RmsGaussianFilterTrackerBuilder::build()
     return tracker;
 }
 
-auto RmsGaussianFilterTrackerBuilder::create_filter(
+auto GaussianTrackerBuilder::create_filter(
     const std::shared_ptr<ObjectModel>& object_model) -> std::shared_ptr<Filter>
 {
     /* ------------------------------ */
@@ -76,7 +76,7 @@ auto RmsGaussianFilterTrackerBuilder::create_filter(
     return filter;
 }
 
-auto RmsGaussianFilterTrackerBuilder::create_sensor(
+auto GaussianTrackerBuilder::create_sensor(
     const std::shared_ptr<ObjectModel>& object_model,
     const std::shared_ptr<CameraData>& camera_data,
     const Parameters::Observation& param) const -> Sensor
@@ -100,7 +100,7 @@ auto RmsGaussianFilterTrackerBuilder::create_sensor(
 }
 
 std::shared_ptr<ObjectModel>
-RmsGaussianFilterTrackerBuilder::create_object_model(
+GaussianTrackerBuilder::create_object_model(
     const ObjectResourceIdentifier& ori) const
 {
     auto object_model = std::make_shared<ObjectModel>(
@@ -111,9 +111,9 @@ RmsGaussianFilterTrackerBuilder::create_object_model(
     return object_model;
 }
 
-auto RmsGaussianFilterTrackerBuilder::create_object_transition(
+auto GaussianTrackerBuilder::create_object_transition(
     const ObjectTransitionBuilder<
-        RmsGaussianFilterTrackerBuilder::State>::Parameters& param) const
+        GaussianTrackerBuilder::State>::Parameters& param) const
     -> Transition
 {
     ObjectTransitionBuilder<State> process_builder(param);
@@ -123,7 +123,7 @@ auto RmsGaussianFilterTrackerBuilder::create_object_transition(
 }
 
 std::shared_ptr<RigidBodyRenderer>
-RmsGaussianFilterTrackerBuilder::create_renderer(
+GaussianTrackerBuilder::create_renderer(
     const std::shared_ptr<ObjectModel>& object_model) const
 {
     std::shared_ptr<RigidBodyRenderer> renderer(

@@ -27,7 +27,7 @@
 
 //namespace dbot
 //{
-//RbcParticleFilterTrackerBuilder::RbcParticleFilterTrackerBuilder(
+//ParticleTrackerBuilder::ParticleTrackerBuilder(
 //    const std::shared_ptr<TransitionFunctionBuilder>&
 //        transition_builder,
 //    const CameraData& camera_data)
@@ -37,21 +37,21 @@
 //}
 
 //std::shared_ptr<ParticleTracker>
-//RbcParticleFilterTrackerBuilder::build()
+//ParticleTrackerBuilder::build()
 
-//auto RbcParticleFilterTrackerBuilder::create_filter(
+//auto ParticleTrackerBuilder::create_filter(
 //    const ObjectModel& object_model,
 //    double max_kl_divergence) -> std::shared_ptr<Filter>
 
-//auto RbcParticleFilterTrackerBuilder::create_object_transition() const
+//auto ParticleTrackerBuilder::create_object_transition() const
 //    -> std::shared_ptr<Transition>
 
 
-//ObjectModel RbcParticleFilterTrackerBuilder::create_object_model(
+//ObjectModel ParticleTrackerBuilder::create_object_model(
 //    const ObjectResourceIdentifier& ori) const
 
 //std::vector<std::vector<size_t>>
-//RbcParticleFilterTrackerBuilder::create_sampling_blocks(int blocks,
+//ParticleTrackerBuilder::create_sampling_blocks(int blocks,
 //                                                        int block_size) const
 //{
 //    std::vector<std::vector<size_t>> sampling_blocks(params_.ori.count_meshes());
