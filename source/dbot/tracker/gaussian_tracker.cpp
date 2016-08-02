@@ -50,12 +50,15 @@ auto GaussianTracker::on_initialize(
 
 auto GaussianTracker::on_track(const Obsrv& obsrv) -> State
 {
+    // the following is approximately ok, but to be correct in a differential
+    // geometry sense, the covariance matrix would also have to change due
+    // to the parallel transport
+
     State old_pose = belief_.mean();
-    filter_->sensor().local_sensor().body_model().nominal_pose(
-        old_pose);
+    filter_->sensor().local_sensor().body_model().nominal_pose(old_pose);
 
     State zero_pose = belief_.mean();
-    zero_pose.component(0).set_zero_pose();
+    zero_pose.set_zero_pose();
     belief_.mean(zero_pose);
 
     filter_->predict(belief_, zero_input(), belief_);

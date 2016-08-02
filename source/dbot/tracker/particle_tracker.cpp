@@ -47,7 +47,7 @@ auto ParticleTracker::on_initialize(
 
     for (size_t i = 0; i < filter_->belief().size(); i++)
     {
-        filter_->belief().location(i).center_around_zero(delta_mean);
+        filter_->belief().location(i).subtract(delta_mean);
     }
 
     auto& integrated_poses = filter_->sensor()->integrated_poses();
@@ -64,7 +64,7 @@ auto ParticleTracker::on_track(const Obsrv& image) -> State
 
     for (size_t i = 0; i < filter_->belief().size(); i++)
     {
-        filter_->belief().location(i).center_around_zero(delta_mean);
+        filter_->belief().location(i).subtract(delta_mean);
     }
 
     auto& integrated_poses = filter_->sensor()->integrated_poses();
