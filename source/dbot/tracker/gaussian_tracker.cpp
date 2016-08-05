@@ -54,6 +54,9 @@ auto GaussianTracker::on_track(const Obsrv& obsrv) -> State
     // geometry sense, the covariance matrix would also have to change due
     // to the parallel transport
 
+
+    /// \todo: this transformation has to be checked and shoudl not be done here
+
     State old_pose = belief_.mean();
     filter_->sensor().local_sensor().body_model().nominal_pose(old_pose);
 

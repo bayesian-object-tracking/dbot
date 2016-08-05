@@ -52,6 +52,8 @@ public:
     typedef Eigen::Array<int, -1, 1> IntArray;
     typedef Eigen::Matrix<fl::Real, -1, 1> RealVector;
 //    typedef State PoseArray;
+
+    /// \todo: this should be a different type, only containing poses
     typedef osr::FreeFloatingRigidBodiesState<> PoseArray;
 
 public:

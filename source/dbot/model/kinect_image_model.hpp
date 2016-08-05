@@ -45,7 +45,6 @@
 
 namespace dbot
 {
-/// \todo get rid of traits
 // Forward declarations
 template <typename Scalar, typename State, int OBJECTS>
 class KinectImageModel;
@@ -152,8 +151,12 @@ public:
                 auto delta = deltas[i_state].component(i_obj);
 
                 osr::PoseVector pose;
-                pose.orientation() = delta.orientation() * pose_0.orientation();
-                pose.position() = delta.position() + pose_0.position();
+
+                /// \todo: this should be done through the the apply_delta
+                /// function
+                pose.position() = pose_0.orientation().rotation_matrix()
+                        * delta.position() + pose_0.position();
+                pose.orientation() = pose_0.orientation() * delta.orientation();
 
                 poses[i_obj] = pose.affine();
             }

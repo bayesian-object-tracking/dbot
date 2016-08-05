@@ -189,13 +189,20 @@ private:
         if (render_cache_.find(current_state) == render_cache_.end())
         {
             State current_pose = current_state;
-            current_pose.component(0).orientation() =
-                current_state.component(0).orientation() *
-                nominal_pose_.component(0).orientation();
+
+
+            /// \todo: this transformation should not be done in here
 
             current_pose.component(0).position() =
-                current_state.component(0).position() +
+                nominal_pose_.component(0).orientation().rotation_matrix() *
+                    current_state.component(0).position() +
                 nominal_pose_.component(0).position();
+
+            current_pose.component(0).orientation() =
+                nominal_pose_.component(0).orientation() *
+                current_state.component(0).orientation();
+
+
 
             std::lock_guard<std::mutex> lock(*mutex);
             map(current_pose, render_cache_[current_state]);
