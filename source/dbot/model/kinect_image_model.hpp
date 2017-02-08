@@ -33,10 +33,10 @@
 
 #include <Eigen/Core>
 
-#include <osr/pose_vector.hpp>
+#include <dbot/pose/pose_vector.hpp>
 #include <fl/util/assertions.hpp>
 #include <dbot/traits.hpp>
-#include <osr/free_floating_rigid_bodies_state.hpp>
+#include <dbot/pose/free_floating_rigid_bodies_state.hpp>
 #include <dbot/model/rao_blackwell_sensor.hpp>
 
 #include <dbot/rigid_body_renderer.hpp>

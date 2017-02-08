@@ -46,7 +46,7 @@
 
 #include <dbot/rigid_body_renderer.hpp>
 
-#include <osr/pose_hashing.hpp>
+#include <dbot/pose/pose_hashing.hpp>
 
 namespace fl
 {

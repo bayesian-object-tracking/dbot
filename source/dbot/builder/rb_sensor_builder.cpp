@@ -27,7 +27,7 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include <osr/free_floating_rigid_bodies_state.hpp>
+#include <dbot/pose/free_floating_rigid_bodies_state.hpp>
 
 #include <dbot/builder/rb_sensor_builder.h>
 #include <dbot/builder/rb_sensor_builder.hpp>

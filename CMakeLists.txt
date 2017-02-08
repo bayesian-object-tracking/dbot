@@ -108,7 +108,7 @@ endif(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
 # Dependencies             #
 ############################
 # Use catkin of available otherwise fall back to native cmake
-find_package(catkin QUIET COMPONENTS fl osr)
+find_package(catkin QUIET COMPONENTS fl)
 
 if(DBOT_BUILD_GPU)
   list(APPEND dbot_INCLUDE_DIRS ${CUDA_INCLUDE_DIRS})
@@ -125,7 +125,6 @@ if(catkin_FOUND)
     LIBRARIES
       ${dbot_LIBRARIES}
     CATKIN_DEPENDS
-      osr
       fl
     DEPENDS
       Eigen)

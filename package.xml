@@ -8,7 +8,7 @@
 
   <license>GNU GPL</license>
 
-  <url type="website">https://github.com/bayesian-object-tracking</url>
+  <url type="website">https://github.com/bayesian-object-tracking/dbot</url>
 
   <author email="manuel.wuthrich@gmail.com">Manuel Wuethrich</author>
   <author email="jan.issac@gmail.com">Jan Issac</author>
@@ -16,9 +16,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>fl</build_depend>
-  <build_depend>osr</build_depend>
   <run_depend>fl</run_depend>
-  <run_depend>osr</run_depend>
 
   <export>
     <!-- <metapackage/> -->

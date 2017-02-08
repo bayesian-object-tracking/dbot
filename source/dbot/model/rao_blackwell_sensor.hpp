@@ -31,10 +31,10 @@
 #include <Eigen/Core>
 
 #include <fl/util/types.hpp>
-#include <osr/pose_vector.hpp>
-#include <osr/pose_velocity_vector.hpp>
-#include <osr/composed_vector.hpp>
-#include <osr/free_floating_rigid_bodies_state.hpp>
+#include <dbot/pose/pose_vector.hpp>
+#include <dbot/pose/pose_velocity_vector.hpp>
+#include <dbot/pose/composed_vector.hpp>
+#include <dbot/pose/free_floating_rigid_bodies_state.hpp>
 
 namespace dbot
 {
