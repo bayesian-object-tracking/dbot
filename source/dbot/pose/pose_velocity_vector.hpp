@@ -20,8 +20,8 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <osr/pose_vector.hpp>
-#include <osr/euler_vector.hpp>
+#include <dbot/pose/pose_vector.hpp>
+#include <dbot/pose/euler_vector.hpp>
 namespace osr
 {
 /// basic functionality for both vectors and blocks ****************************

@@ -20,7 +20,7 @@
 
 #include <Eigen/Dense>
 
-#include <osr/rigid_bodies_state.hpp>
+#include <dbot/pose/rigid_bodies_state.hpp>
 
 namespace osr
 {

@@ -21,9 +21,9 @@
 #include <cstdlib>
 #include <Eigen/Dense>
 
-#include <osr/pose_vector.hpp>
-#include <osr/pose_velocity_vector.hpp>
-#include <osr/free_floating_rigid_bodies_state.hpp>
+#include <dbot/pose/pose_vector.hpp>
+#include <dbot/pose/pose_velocity_vector.hpp>
+#include <dbot/pose/free_floating_rigid_bodies_state.hpp>
 
 
 namespace osr

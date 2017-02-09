@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 #include <Eigen/Core>
-#include <osr/euler_vector.hpp>
+#include <dbot/pose/euler_vector.hpp>
 
 using namespace osr;
 typedef double Real;

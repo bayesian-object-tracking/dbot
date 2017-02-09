@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 #include <Eigen/Core>
-#include <osr/pose_velocity_vector.hpp>
+#include <dbot/pose/pose_velocity_vector.hpp>
 
 using namespace osr;
 typedef double Real;

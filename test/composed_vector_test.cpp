@@ -20,8 +20,8 @@
 
 #include <Eigen/Core>
 
-#include <osr/composed_vector.hpp>
-#include <osr/pose_vector.hpp>
+#include <dbot/pose/composed_vector.hpp>
+#include <dbot/pose/pose_vector.hpp>
 
 using namespace osr;
 typedef double Real;
