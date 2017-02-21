@@ -21,7 +21,7 @@
  *
  */
 
-#include <dbot/tracker/gaussian_tracker.hpp>
+#include <dbot/tracker/gaussian_tracker.h>
 
 namespace dbot
 {

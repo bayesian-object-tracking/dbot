@@ -16,12 +16,11 @@
  * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  */
 
+#include <Eigen/Core>
+#include <dbot/pose/euler_vector.h>
 #include <gtest/gtest.h>
 
-#include <Eigen/Core>
-#include <dbot/pose/euler_vector.hpp>
-
-using namespace osr;
+using namespace dbot;
 typedef double Real;
 
 typedef EulerVector::RotationMatrix RotationMatrix;

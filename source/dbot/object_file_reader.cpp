@@ -12,7 +12,7 @@
  */
 
 /**
- * \file object_file_reader.hpp
+ * \file object_file_reader.h
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
@@ -21,7 +21,7 @@
 #include <fstream>
 #include <math.h>
 
-#include <dbot/object_file_reader.hpp>
+#include <dbot/object_file_reader.h>
 
 using namespace std;
 using namespace Eigen;

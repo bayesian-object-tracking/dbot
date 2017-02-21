@@ -21,7 +21,7 @@
  *
  */
 
-#include <dbot/tracker/particle_tracker.hpp>
+#include <dbot/tracker/particle_tracker.h>
 
 namespace dbot
 {

@@ -12,12 +12,12 @@
  */
 
 /**
- * \file simple_camera_data_provider.hpp
+ * \file simple_camera_data_provider.h
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include <dbot/simple_camera_data_provider.hpp>
+#include <dbot/simple_camera_data_provider.h>
 
 namespace dbot
 {

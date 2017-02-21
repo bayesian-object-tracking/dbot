@@ -17,7 +17,7 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include <dbot/object_model.hpp>
+#include <dbot/object_model.h>
 
 namespace dbot
 {

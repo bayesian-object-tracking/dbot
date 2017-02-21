@@ -17,18 +17,16 @@
  * \date November 2015
  */
 
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
+#include <GL/glew.h>
 #include <algorithm>
-
+#include <dbot/gpu/shader.h>
+#include <fstream>
+#include <iostream>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <GL/glew.h>
-
-#include <dbot/gpu/shader.hpp>
+#include <string>
+#include <vector>
 
 GLuint LoadShaders(const std::shared_ptr<dbot::ShaderProvider>& shaderProvider)
 {

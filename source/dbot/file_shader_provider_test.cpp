@@ -17,12 +17,10 @@
  * \date Dec 2015
  */
 
-#include <gtest/gtest.h>
-
-#include <fstream>
 #include <boost/filesystem.hpp>
-
-#include <dbot/file_shader_provider.hpp>
+#include <dbot/file_shader_provider.h>
+#include <fstream>
+#include <gtest/gtest.h>
 
 std::string write_temp_file(const std::string& content)
 {
@@ -46,8 +44,7 @@ TEST(FileShaderProviderTests, without_geometry_shaders)
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);
 
-    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"),
-              0);
+    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"), 0);
 
     EXPECT_TRUE(shader_provider.geometry_shader().empty());
     EXPECT_FALSE(shader_provider.has_geometry_shader());
@@ -59,19 +56,16 @@ TEST(FileShaderProviderTests, with_geometry_shaders)
     std::string vertex_shader_file = write_temp_file("vertex shader code");
     std::string geometry_shader_file = write_temp_file("geometry shader code");
 
-    dbot::FileShaderProvider shader_provider(fragment_shader_file,
-                                             vertex_shader_file,
-                                             geometry_shader_file);
+    dbot::FileShaderProvider shader_provider(
+        fragment_shader_file, vertex_shader_file, geometry_shader_file);
 
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);
 
-    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"),
-              0);
+    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"), 0);
 
     EXPECT_EQ(shader_provider.geometry_shader().compare("geometry shader code"),
               0);
 
     EXPECT_TRUE(shader_provider.has_geometry_shader());
 }
-

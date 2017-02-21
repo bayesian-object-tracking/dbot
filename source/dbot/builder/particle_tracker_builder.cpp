@@ -21,48 +21,5 @@
  *
  */
 
-#include <dbot/simple_wavefront_object_loader.hpp>
-#include <dbot/builder/particle_tracker_builder.hpp>
-
-
-//namespace dbot
-//{
-//ParticleTrackerBuilder::ParticleTrackerBuilder(
-//    const std::shared_ptr<TransitionFunctionBuilder>&
-//        transition_builder,
-//    const CameraData& camera_data)
-//    : transition_builder_(transition_builder),
-//      camera_data_(camera_data)
-//{
-//}
-
-//std::shared_ptr<ParticleTracker>
-//ParticleTrackerBuilder::build()
-
-//auto ParticleTrackerBuilder::create_filter(
-//    const ObjectModel& object_model,
-//    double max_kl_divergence) -> std::shared_ptr<Filter>
-
-//auto ParticleTrackerBuilder::create_object_transition() const
-//    -> std::shared_ptr<Transition>
-
-
-//ObjectModel ParticleTrackerBuilder::create_object_model(
-//    const ObjectResourceIdentifier& ori) const
-
-//std::vector<std::vector<size_t>>
-//ParticleTrackerBuilder::create_sampling_blocks(int blocks,
-//                                                        int block_size) const
-//{
-//    std::vector<std::vector<size_t>> sampling_blocks(params_.ori.count_meshes());
-//    for (int i = 0; i < blocks; ++i)
-//    {
-//        for (int k = 0; k < block_size; ++k)
-//        {
-//            sampling_blocks[i].push_back(i * block_size + k);
-//        }
-//    }
-
-//    return sampling_blocks;
-//}
-//}
+#include <dbot/builder/particle_tracker_builder.h>
+#include <dbot/simple_wavefront_object_loader.h>

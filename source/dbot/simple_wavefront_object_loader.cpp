@@ -12,12 +12,12 @@
  */
 
 /**
- * \file simple_wavefront_object_model_loader.hpp
+ * \file simple_wavefront_object_model_loader.h
  * \date November 2015
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include <dbot/simple_wavefront_object_loader.hpp>
+#include <dbot/simple_wavefront_object_loader.h>
 
 namespace dbot
 {

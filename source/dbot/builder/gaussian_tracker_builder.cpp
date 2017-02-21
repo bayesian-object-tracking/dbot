@@ -21,8 +21,8 @@
  *
  */
 
-#include <dbot/simple_wavefront_object_loader.hpp>
-#include <dbot/builder/gaussian_tracker_builder.hpp>
+#include <dbot/builder/gaussian_tracker_builder.h>
+#include <dbot/simple_wavefront_object_loader.h>
 
 namespace dbot
 {
@@ -33,18 +33,17 @@ GaussianTrackerBuilder::GaussianTrackerBuilder(
 {
 }
 
-std::shared_ptr<GaussianTracker>
-GaussianTrackerBuilder::build()
+std::shared_ptr<GaussianTracker> GaussianTrackerBuilder::build()
 {
     auto object_model = create_object_model(param_.ori);
 
     auto filter = create_filter(object_model);
 
-    auto tracker = std::make_shared<GaussianTracker>(
-        filter,
-        object_model,
-        param_.moving_average_update_rate,
-        param_.center_object_frame);
+    auto tracker =
+        std::make_shared<GaussianTracker>(filter,
+                                          object_model,
+                                          param_.moving_average_update_rate,
+                                          param_.center_object_frame);
 
     return tracker;
 }
@@ -99,8 +98,7 @@ auto GaussianTrackerBuilder::create_sensor(
     return Sensor(body_tail_pixel_model, camera_data->pixels());
 }
 
-std::shared_ptr<ObjectModel>
-GaussianTrackerBuilder::create_object_model(
+std::shared_ptr<ObjectModel> GaussianTrackerBuilder::create_object_model(
     const ObjectResourceIdentifier& ori) const
 {
     auto object_model = std::make_shared<ObjectModel>(
@@ -112,9 +110,8 @@ GaussianTrackerBuilder::create_object_model(
 }
 
 auto GaussianTrackerBuilder::create_object_transition(
-    const ObjectTransitionBuilder<
-        GaussianTrackerBuilder::State>::Parameters& param) const
-    -> Transition
+    const ObjectTransitionBuilder<GaussianTrackerBuilder::State>::Parameters&
+        param) const -> Transition
 {
     ObjectTransitionBuilder<State> process_builder(param);
     auto process = process_builder.build_model();
@@ -122,8 +119,7 @@ auto GaussianTrackerBuilder::create_object_transition(
     return process;
 }
 
-std::shared_ptr<RigidBodyRenderer>
-GaussianTrackerBuilder::create_renderer(
+std::shared_ptr<RigidBodyRenderer> GaussianTrackerBuilder::create_renderer(
     const std::shared_ptr<ObjectModel>& object_model) const
 {
     std::shared_ptr<RigidBodyRenderer> renderer(

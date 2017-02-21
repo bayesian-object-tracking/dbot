@@ -17,7 +17,7 @@
  * \date November 2015
  */
 
-#include <dbot/object_resource_identifier.hpp>
+#include <dbot/object_resource_identifier.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>

@@ -16,14 +16,12 @@
  * \author Manuel Wuthrich (manuel.wuthrich@gmail.com)
  */
 
+#include <Eigen/Core>
+#include <dbot/pose/composed_vector.h>
+#include <dbot/pose/pose_vector.h>
 #include <gtest/gtest.h>
 
-#include <Eigen/Core>
-
-#include <dbot/pose/composed_vector.hpp>
-#include <dbot/pose/pose_vector.hpp>
-
-using namespace osr;
+using namespace dbot;
 typedef double Real;
 
 TEST(composed_vector, count_dynamic_size)

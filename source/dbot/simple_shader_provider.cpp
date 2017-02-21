@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include <dbot/simple_shader_provider.hpp>
+#include <dbot/simple_shader_provider.h>
 
 namespace dbot
 {

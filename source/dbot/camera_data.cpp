@@ -21,8 +21,8 @@
 
 #include <Eigen/Dense>
 
-#include <dbot/camera_data.hpp>
-#include <dbot/camera_data_provider.hpp>
+#include <dbot/camera_data.h>
+#include <dbot/camera_data_provider.h>
 
 namespace dbot
 {

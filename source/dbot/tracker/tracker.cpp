@@ -12,7 +12,7 @@
  */
 
 #include <fl/util/profiling.hpp>
-#include <dbot/tracker/tracker.hpp>
+#include <dbot/tracker/tracker.h>
 
 namespace dbot
 {

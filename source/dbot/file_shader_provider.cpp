@@ -12,7 +12,7 @@
  */
 
 /**
- * \file file_shader_provider.hpp
+ * \file file_shader_provider.h
  * \date Dec 2015
  * \author Claudia Pfreundt (claudilein@gmail.com)
  * \author Jan Issac (jan.issac@gmail.com)
@@ -21,7 +21,7 @@
 #include <string>
 #include <fstream>
 
-#include <dbot/file_shader_provider.hpp>
+#include <dbot/file_shader_provider.h>
 
 namespace dbot
 {

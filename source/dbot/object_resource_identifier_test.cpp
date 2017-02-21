@@ -12,14 +12,14 @@
  */
 
 /**
- * \file object_resource_identifier.hpp
+ * \file object_resource_identifier.h
  * \author Jan Issc (jan.issac@gmail.com)
  * \date November 2015
  */
 
 #include <gtest/gtest.h>
 
-#include <dbot/object_resource_identifier.hpp>
+#include <dbot/object_resource_identifier.h>
 
 TEST(ObjectResourceIndentifierTests, package_long_path)
 {

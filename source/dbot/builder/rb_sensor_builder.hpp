@@ -30,12 +30,11 @@
 #pragma once
 
 #include <dbot/builder/rb_sensor_builder.h>
-#include <dbot/model/kinect_image_model.hpp>
+#include <dbot/model/kinect_image_model.h>
 
 #ifdef DBOT_BUILD_GPU
-#include <dbot/gpu/kinect_image_model_gpu.hpp>
+#include <dbot/gpu/kinect_image_model_gpu.h>
 #endif
-
 
 namespace dbot
 {
@@ -70,24 +69,23 @@ auto RbSensorBuilder<State>::create_gpu_based_model() const
     -> std::shared_ptr<Model>
 {
 #ifdef DBOT_BUILD_GPU
-    auto sensor =
-        std::shared_ptr<Model>(new dbot::KinectImageModelGPU<State>(
-            camera_data_->camera_matrix(),
-            camera_data_->resolution().height,
-            camera_data_->resolution().width,
-            params_.sample_count,
-            object_model_->vertices(),
-            object_model_->triangle_indices(),
-            create_shader_provider(),
-            false,  // TODO should be a parameter from the config file
-            false,  // TODO should be a parameter from the config file
-            params_.occlusion.initial_occlusion_prob,
-            params_.delta_time,
-            params_.occlusion.p_occluded_visible,
-            params_.occlusion.p_occluded_occluded,
-            params_.kinect.tail_weight,
-            params_.kinect.model_sigma,
-            params_.kinect.sigma_factor));
+    auto sensor = std::shared_ptr<Model>(new dbot::KinectImageModelGPU<State>(
+        camera_data_->camera_matrix(),
+        camera_data_->resolution().height,
+        camera_data_->resolution().width,
+        params_.sample_count,
+        object_model_->vertices(),
+        object_model_->triangle_indices(),
+        create_shader_provider(),
+        false,  // TODO should be a parameter from the config file
+        false,  // TODO should be a parameter from the config file
+        params_.occlusion.initial_occlusion_prob,
+        params_.delta_time,
+        params_.occlusion.p_occluded_visible,
+        params_.occlusion.p_occluded_occluded,
+        params_.kinect.tail_weight,
+        params_.kinect.model_sigma,
+        params_.kinect.sigma_factor));
 
     return sensor;
 #else
@@ -118,8 +116,8 @@ auto RbSensorBuilder<State>::create_cpu_based_model() const
     auto occlusion_process = create_occlusion_process();
     auto renderer = create_renderer();
 
-    auto sensor = std::shared_ptr<Model>(
-        new dbot::KinectImageModel<fl::Real, State>(
+    auto sensor =
+        std::shared_ptr<Model>(new dbot::KinectImageModel<fl::Real, State>(
             camera_data_->camera_matrix(),
             camera_data_->resolution().height,
             camera_data_->resolution().width,
@@ -138,8 +136,8 @@ auto RbSensorBuilder<State>::create_pixel_model() const
 {
     std::shared_ptr<KinectPixelModel> kinect_pixel_sensor(
         new KinectPixelModel(params_.kinect.tail_weight,
-                                        params_.kinect.model_sigma,
-                                        params_.kinect.sigma_factor));
+                             params_.kinect.model_sigma,
+                             params_.kinect.sigma_factor));
     return kinect_pixel_sensor;
 }
 
@@ -149,7 +147,7 @@ auto RbSensorBuilder<State>::create_occlusion_process() const
 {
     std::shared_ptr<OcclusionModel> occlusion_process(
         new OcclusionModel(params_.occlusion.p_occluded_visible,
-                                  params_.occlusion.p_occluded_occluded));
+                           params_.occlusion.p_occluded_occluded));
 
     return occlusion_process;
 }

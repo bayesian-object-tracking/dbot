@@ -17,9 +17,8 @@
  * \date Dec 2015
  */
 
+#include <dbot/simple_shader_provider.h>
 #include <gtest/gtest.h>
-
-#include <dbot/simple_shader_provider.hpp>
 
 TEST(SimpleShaderProviderTests, without_geometry_shaders)
 {
@@ -29,8 +28,7 @@ TEST(SimpleShaderProviderTests, without_geometry_shaders)
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);
 
-    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"),
-              0);
+    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"), 0);
 
     EXPECT_TRUE(shader_provider.geometry_shader().empty());
     EXPECT_FALSE(shader_provider.has_geometry_shader());
@@ -38,15 +36,13 @@ TEST(SimpleShaderProviderTests, without_geometry_shaders)
 
 TEST(SimpleShaderProviderTests, with_geometry_shaders)
 {
-    dbot::SimpleShaderProvider shader_provider("fragment shader code",
-                                               "vertex shader code",
-                                               "geometry shader code");
+    dbot::SimpleShaderProvider shader_provider(
+        "fragment shader code", "vertex shader code", "geometry shader code");
 
     EXPECT_EQ(shader_provider.fragment_shader().compare("fragment shader code"),
               0);
 
-    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"),
-              0);
+    EXPECT_EQ(shader_provider.vertex_shader().compare("vertex shader code"), 0);
 
     EXPECT_EQ(shader_provider.geometry_shader().compare("geometry shader code"),
               0);

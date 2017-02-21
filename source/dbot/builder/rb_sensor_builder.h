@@ -29,20 +29,20 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Eigen/Dense>
-
-#include <ros/ros.h>
+#include <dbot/camera_data.h>
+#include <dbot/default_shader_provider.h>
+#include <dbot/file_shader_provider.h>
+#include <dbot/model/kinect_image_model.h>
+#include <dbot/model/kinect_pixel_model.h>
+#include <dbot/model/occlusion_model.h>
+#include <dbot/model/rao_blackwell_sensor.h>
+#include <dbot/object_model.h>
+#include <dbot/pose/euler_vector.h>
+#include <dbot/rigid_body_renderer.h>
+#include <memory>
 #include <ros/package.h>
-
-#include <dbot/camera_data.hpp>
-#include <dbot/object_model.hpp>
-#include <dbot/file_shader_provider.hpp>
-#include <dbot/default_shader_provider.hpp>
-#include <dbot/rigid_body_renderer.hpp>
-#include <dbot/model/rao_blackwell_sensor.hpp>
-#include <dbot/model/kinect_image_model.hpp>
+#include <ros/ros.h>
 
 namespace dbot
 {
@@ -96,8 +96,8 @@ public:
 
 public:
     RbSensorBuilder(const std::shared_ptr<ObjectModel>& object_model,
-                              const std::shared_ptr<CameraData>& camera_data,
-                              const Parameters& params);
+                    const std::shared_ptr<CameraData>& camera_data,
+                    const Parameters& params);
 
     virtual std::shared_ptr<Model> build() const;
 
@@ -110,11 +110,9 @@ public:
 public:
     /* CPU model factor functions */
     virtual std::shared_ptr<Model> create_cpu_based_model() const;
-    virtual std::shared_ptr<KinectPixelModel> create_pixel_model()
-        const;
+    virtual std::shared_ptr<KinectPixelModel> create_pixel_model() const;
 
-    virtual std::shared_ptr<OcclusionModel> create_occlusion_process()
-        const;
+    virtual std::shared_ptr<OcclusionModel> create_occlusion_process() const;
 
     virtual std::shared_ptr<RigidBodyRenderer> create_renderer() const;
 

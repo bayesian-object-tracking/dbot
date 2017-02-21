@@ -12,13 +12,13 @@
  */
 
 /**
- * \file ros_camera_data_provider.hpp
+ * \file ros_camera_data_provider.h
  * \author Jan Issc (jan.issac@gmail.com)
  * \date December 2015
  */
 
 #include <fl/util/profiling.hpp>
-#include <dbot/virtual_camera_data_provider.hpp>
+#include <dbot/virtual_camera_data_provider.h>
 
 namespace dbot
 {

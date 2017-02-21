@@ -27,13 +27,11 @@
  * \author Jan Issac (jan.issac@gmail.com)
  */
 
-#include <dbot/pose/free_floating_rigid_bodies_state.hpp>
-
 #include <dbot/builder/rb_sensor_builder.h>
 #include <dbot/builder/rb_sensor_builder.hpp>
-
+#include <dbot/pose/free_floating_rigid_bodies_state.h>
 
 namespace dbot
 {
-template class RbSensorBuilder<osr::FreeFloatingRigidBodiesState<>>;
+template class RbSensorBuilder<dbot::FreeFloatingRigidBodiesState<>>;
 }
