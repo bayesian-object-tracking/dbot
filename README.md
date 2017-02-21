@@ -21,7 +21,6 @@ All trackers require mesh models of the tracked objects in Wavefront (.obj) form
 
 # Requirements
  * Ubuntu 14.04
- * C++0x Compiler (gcc-4.6 or later)
  * C++11 Compiler (gcc-4.7 or later)
  * [CUDA](https://developer.nvidia.com/cuda-downloads) 6.5 or later (optional)
  
