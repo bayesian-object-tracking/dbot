@@ -2,20 +2,40 @@
 
 The core of this library are two probabilistic tracker
  * A Non-Parametric Tracker Based on Rao-Blackwellized Coordinate Descent Particle Filter
+   
+   http://arxiv.org/abs/1505.00241
+   
+   This tracker can run on a pure CPU system or optionally run on GPU using CUDA 6.5 or later
+
+```
+   inproceedings{wuthrich-iros-2013,
+     title = {Probabilistic Object Tracking Using a Range Camera},
+     author = {W{\"u}thrich, M. and Pastor, P. and Kalakrishnan, M. and Bohg, J. and Schaal, S.},
+     booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems},
+     pages = {3195-3202},
+     publisher = {IEEE},
+     month = nov,
+     year = {2013},
+     month_numeric = {11}
+  }
+```
  
-  [M. Wuthrich, P. Pastor, M. Kalakrishnan, J. Bohg, and S. Schaal. Probabilistic Object Tracking using a Range Camera IEEE Intl Conf on Intelligent Robots and Systems, 2013]
-
-  http://arxiv.org/abs/1505.00241
-  
-  This tracker can run on a pure CPU system or optionally run on GPU using CUDA 6.5 or later
-
  * A Parametric Tracker Based on Robust Multi-Sensor Gaussian Filter Tracker
- 
-   [J. Issac, M. Wuthrich, C. Garcia Cifuentes, J. Bohg, S. Trimpe, S. Schaal
-   Depth-Based Object Tracking Using a Robust Gaussian Filter
-   IEEE Intl Conf on Robotics and Automation, 2016] 
 
    http://arxiv.org/abs/1602.06157
+   
+```
+   @inproceedings{jan_ICRA_2016,
+     title = {Depth-based Object Tracking Using a Robust Gaussian Filter},
+     author = {Issac, Jan and W{\"u}thrich, Manuel and Garcia Cifuentes, Cristina and Bohg, Jeannette and Trimpe, Sebastian and Schaal, Stefan},
+     booktitle = {Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) 2016},
+     publisher = {IEEE},
+     month = may,
+     year = {2016},
+     url = {http://arxiv.org/abs/1602.06157},
+     month_numeric = {5}
+   }
+```
 
 All trackers require mesh models of the tracked objects in Wavefront (.obj) format.
 
