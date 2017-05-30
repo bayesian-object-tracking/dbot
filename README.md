@@ -1,9 +1,7 @@
 # Depth Based Object Tracking Library (dbot)
 
-The core of this library are two probabilistic tracker
- * A Non-Parametric Tracker Based on Rao-Blackwellized Coordinate Descent Particle Filter
-   
-   http://arxiv.org/abs/1505.00241
+This library implements two different object tracking algorithms:
+ * A Particle Filter based Tracker (https://am.is.tuebingen.mpg.de/publications/wuthrich_iicirs_2013)
    
    This tracker can run on a pure CPU system or optionally run on GPU using CUDA 6.5 or later
 
@@ -20,9 +18,7 @@ The core of this library are two probabilistic tracker
   }
 ```
  
- * A Parametric Tracker Based on Robust Multi-Sensor Gaussian Filter Tracker
-
-   http://arxiv.org/abs/1602.06157
+ * A Gaussian Filter based Tracker (https://am.is.tuebingen.mpg.de/publications/jan_icra_2016)
    
 ```
    @inproceedings{jan_ICRA_2016,
@@ -37,7 +33,8 @@ The core of this library are two probabilistic tracker
    }
 ```
 
-All trackers require mesh models of the tracked objects in Wavefront (.obj) format.
+All trackers require mesh models of the tracked objects in Wavefront (.obj) format. 
+To get started, we recommend that you follow the instructions at https://github.com/bayesian-object-tracking/getting_started.
 
 # Requirements
  * Ubuntu 14.04
