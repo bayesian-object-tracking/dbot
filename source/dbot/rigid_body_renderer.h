@@ -13,12 +13,10 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
-
 #include <Eigen/Dense>
-
 #include <dbot/pose/rigid_bodies_state.h>
+#include <memory>
+#include <vector>
 
 namespace dbot
 {

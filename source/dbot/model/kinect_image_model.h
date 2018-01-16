@@ -165,7 +165,7 @@ public:
             // compute likelihoods ---------------------------------------------
             for (size_t i = 0; i < size_t(predictions.size()); i++)
             {
-                if (isnan(observations_[intersect_indices[i]]))
+                if (std::isnan(observations_[intersect_indices[i]]))
                 {
                     log_likes[i_state] += log(1.);
                 }

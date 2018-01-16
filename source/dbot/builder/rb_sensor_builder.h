@@ -41,8 +41,6 @@
 #include <dbot/pose/euler_vector.h>
 #include <dbot/rigid_body_renderer.h>
 #include <memory>
-#include <ros/package.h>
-#include <ros/ros.h>
 
 namespace dbot
 {

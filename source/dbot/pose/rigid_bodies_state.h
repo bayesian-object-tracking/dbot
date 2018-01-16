@@ -19,7 +19,6 @@
 #pragma once
 
 #include <Eigen/Dense>
-
 #include "pose_velocity_vector.h"
 
 namespace dbot

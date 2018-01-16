@@ -88,7 +88,7 @@ public:
         Scalar sigma = model_sigma_ + sigma_factor_ * observation * observation;
         if (!occlusion_)
         {
-            if (isinf(prediction_))  // if the prediction_ is infinite we return
+            if (std::isinf(prediction_))  // if the prediction_ is infinite we return
                                      // the limit
                 probability = tail_weight_ / max_depth_;
             else
@@ -100,7 +100,7 @@ public:
         }
         else
         {
-            if (isinf(prediction_))  // if the prediction_ is infinite we return
+            if (std::isinf(prediction_))  // if the prediction_ is infinite we return
                                      // the limit
             {
                 probability =
