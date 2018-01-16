@@ -10,8 +10,8 @@ option(DBOT_BUILD_GPU "Compile CUDA enabled trackers" ON)
 # Flags                    #
 ############################
 # Enable c++11 GCC 4.7 or greater required
-add_definitions(-std=c++11 -fno-omit-frame-pointer)
-add_definitions(-DPROFILING_ON=1 -fPIC) #print profiling output
+add_definitions(-std=c++11 -fno-omit-frame-pointer -fPIC)
+add_definitions(-DPROFILING_ON=1) #print profiling output
 
 #add_definitions(-Wall)
 #add_definitions(-Wno-unused-local-typedefs)
@@ -43,13 +43,12 @@ set(dbot_LIBRARIES ${dbot_LIBRARY})
 # Dependencies             #
 ############################
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 3.2 EXACT REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+# add_definitions(${EIGEN3_DEFINITIONS})
+
 find_package(Boost REQUIRED COMPONENTS system filesystem)
-
-include_directories(${Eigen_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-
-add_definitions(${Eigen_DEFINITIONS})
 
 # GPU libs
 set(GLEW_DIR ${CMAKE_MODULE_PATH})
@@ -60,7 +59,6 @@ find_package(OpenGL QUIET)
 if(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   include_directories(${GLEW_INCLUDE_DIRS})
   include_directories(${OpenGL_INCLUDE_DIRS})
-  cuda_include_directories(${CUDA_CUT_INCLUDE_DIRS})
 
   link_directories(${OpenGL_LIBRARY_DIRS})
   link_directories(${GLEW_LIBRARY_DIRS})
@@ -71,8 +69,8 @@ if(DBOT_BUILD_GPU AND CUDA_FOUND AND GLEW_FOUND AND OPENGL_FOUND)
   # enable cuda debug information with -g -G -O0, to use with cuda-dbg use
   # --ptxas-options=-v to see number of registers, local, shared and constant
   # memory used in kernels
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_20)
-  list(APPEND dbot_LIBRARIES ${dbot_LIBRARY_GPU})
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O2 -arch=sm_30)
+  list(APPEND dbot_LIBRARIES ${dbot_LIBRARY_GPU} ${CUDA_CUDART_LIBRARY})
 
   # activate gpu implementations
   add_definitions(-DDBOT_BUILD_GPU=1)
@@ -127,7 +125,9 @@ if(catkin_FOUND)
     CATKIN_DEPENDS
       fl
     DEPENDS
-      Eigen)
+      Boost
+      # CUDA
+      )
   list(APPEND dbot_INCLUDE_DIRS ${catkin_INCLUDE_DIRS})
 else(catkin_FOUND)
   find_package(fl REQUIRED)
@@ -190,6 +190,7 @@ if(DBOT_BUILD_GPU)
         ${OPENGL_LIBRARIES}
         ${GLFW_LIBRARY}
         ${GLEW_LIBRARIES})
+        # ${CUDA_CUDART_LIBRARY})
 endif(DBOT_BUILD_GPU)
 
 ############################
