@@ -165,7 +165,8 @@ public:
             // compute likelihoods ---------------------------------------------
             for (size_t i = 0; i < size_t(predictions.size()); i++)
             {
-                if (std::isnan(observations_[intersect_indices[i]]))
+	      // invalid depth pixel encoded as NANs in Kinect1/Xtion but as 0.0 for Kinect2
+                if (std::isnan(observations_[intersect_indices[i]]) || observations_[intersect_indices[i]]==0.0)
                 {
                     log_likes[i_state] += log(1.);
                 }
