@@ -17,6 +17,7 @@
 #include <dbot/pose/rigid_bodies_state.h>
 #include <memory>
 #include <vector>
+#include <map>
 
 namespace dbot
 {
@@ -52,6 +53,12 @@ public:
                 int n_cols,
                 std::vector<float>& depth_image) const;
 
+    void Render(Matrix camera_matrix,
+		int n_rows,
+		int n_cols,
+		std::vector<float>& depth_image,
+		std::vector<Eigen::MatrixXd>& data) const;
+    
     void Render(std::vector<float>& depth_image) const;
 
     template <typename RigidbodyState>
