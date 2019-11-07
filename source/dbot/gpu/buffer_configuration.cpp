@@ -238,7 +238,7 @@ void BufferConfiguration::compute_grid_layout(const int nr_poses,
                  cuda_device_properties_.maxGridSize[1]);
 
     nr_poses_per_row = floor(max_texture_size_x / nr_cols_);
-    nr_poses_per_col = std::min(floor(max_texture_size_y / nr_rows_),
+    nr_poses_per_col = std::min<int>(floor(max_texture_size_y / nr_rows_),
                                 ceil(nr_poses / (float)nr_poses_per_row));
 }
 
