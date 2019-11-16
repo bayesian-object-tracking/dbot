@@ -137,10 +137,11 @@ public:
 
 /// implementation for blocks **************************************************
 template <typename Vector>
-class EulerBlock : public EulerBase<Eigen::VectorBlock<Vector, 3>>
+class EulerBlock : public EulerBase<Eigen::Block<Vector, 3, 1>>
 {
 public:
-    typedef Eigen::VectorBlock<Vector, 3> Block;
+    typedef Eigen::Block<Vector, 3, 1> Block;
+
     typedef EulerBase<Block> Base;
 
     using Base::operator=;

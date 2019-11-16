@@ -27,7 +27,7 @@ typedef double Real;
 TEST(composed_vector, count_dynamic_size)
 {
     typedef Eigen::VectorXd Vector;
-    typedef Eigen::VectorBlock<Vector, 4> Block;
+    typedef Eigen::Block<Vector, 4,1> Block;
 
     ComposedVector<Block, Vector> vector;
 
@@ -44,7 +44,7 @@ TEST(composed_vector, count_dynamic_size)
 TEST(composed_vector, count_fixed_size)
 {
     typedef Eigen::Matrix<Real, 16, 1> Vector;
-    typedef Eigen::VectorBlock<Vector, 4> Block;
+    typedef Eigen::Block<Vector, 4,1> Block;
 
     ComposedVector<Block, Vector> vector;
 
@@ -54,7 +54,7 @@ TEST(composed_vector, count_fixed_size)
 TEST(composed_vector, recount_dynamic_size)
 {
     typedef Eigen::VectorXd Vector;
-    typedef Eigen::VectorBlock<Vector, 4> Block;
+    typedef Eigen::Block<Vector, 4,1> Block;
 
     ComposedVector<Block, Vector> vector;
 
