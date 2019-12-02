@@ -33,7 +33,6 @@
 #include <fl/util/types.hpp>
 #include <dbot/pose/pose_vector.h>
 #include <dbot/pose/pose_velocity_vector.h>
-#include <dbot/pose/composed_vector.h>
 #include <dbot/pose/free_floating_rigid_bodies_state.h>
 
 namespace dbot

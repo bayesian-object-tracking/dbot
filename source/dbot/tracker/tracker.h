@@ -21,7 +21,6 @@
 
 #include <Eigen/Dense>
 #include <dbot/object_model.h>
-#include <dbot/pose/composed_vector.h>
 #include <dbot/pose/free_floating_rigid_bodies_state.h>
 #include <dbot/pose/pose_vector.h>
 #include <memory>
