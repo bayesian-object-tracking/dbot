@@ -137,17 +137,18 @@ public:
 
 /// implementation for blocks **************************************************
 template <typename Vector>
-class EulerBlock : public EulerBase<Eigen::VectorBlock<Vector, 3>>
+class EulerBlock : public EulerBase<Eigen::Block<Vector, 3, 1>>
 {
-public:
-    typedef Eigen::VectorBlock<Vector, 3> Block;
+private:
+    typedef Eigen::Block<Vector, 3, 1> Block;
     typedef EulerBase<Block> Base;
 
+public:
     using Base::operator=;
 
     // constructor and destructor **********************************************
     EulerBlock(const Block& block) : Base(block) {}
-    EulerBlock(Vector& vector, int start) : Base(Block(vector, start)) {}
+    EulerBlock(Vector& vector, int start) : Base(Block(vector, start, 0)){}
     virtual ~EulerBlock() noexcept {}
 };
 }

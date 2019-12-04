@@ -41,8 +41,11 @@ public:
 
     // types *******************************************************************
     typedef Eigen::Matrix<Real, VELOCITY_SIZE, 1> VelocityVector;
-    typedef Eigen::VectorBlock<Base, VELOCITY_SIZE> VelocityBlock;
 
+private:
+    typedef Eigen::Block<Base, VELOCITY_SIZE, 1> VelocityBlock;
+
+public:
     // constructor and destructor **********************************************
     PoseVelocityBase(const Base& vector) : Base(vector) {}
     virtual ~PoseVelocityBase() noexcept {}
@@ -110,11 +113,11 @@ public:
     }
     VelocityBlock linear_velocity()
     {
-        return VelocityBlock(*this, LINEAR_VELOCITY_INDEX);
+        return VelocityBlock(*this, LINEAR_VELOCITY_INDEX, 0);
     }
     VelocityBlock angular_velocity()
     {
-        return VelocityBlock(*this, ANGULAR_VELOCITY_INDEX);
+        return VelocityBlock(*this, ANGULAR_VELOCITY_INDEX, 0);
     }
 
     template <typename PoseType>
@@ -152,17 +155,18 @@ public:
 /// implementation for blocks **************************************************
 template <typename Vector>
 class PoseVelocityBlock
-    : public PoseVelocityBase<Eigen::VectorBlock<Vector, 12>>
+    : public PoseVelocityBase<Eigen::Block<Vector, 12, 1>>
 {
-public:
-    typedef Eigen::VectorBlock<Vector, 12> Block;
+private:
+    typedef Eigen::Block<Vector, 12, 1> Block;
     typedef PoseVelocityBase<Block> Base;
 
+public:
     using Base::operator=;
 
     // constructor and destructor **********************************************
     PoseVelocityBlock(const Block& block) : Base(block) {}
-    PoseVelocityBlock(Vector& vector, int start) : Base(Block(vector, start)) {}
+    PoseVelocityBlock(Vector& vector, int start) : Base(Block(vector, start, 0)) {}
     virtual ~PoseVelocityBlock() noexcept {}
 };
 }

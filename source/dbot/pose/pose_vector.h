@@ -42,7 +42,8 @@ public:
     typedef Eigen::Matrix<Real, 4, 4> HomogeneousMatrix;
     typedef typename Eigen::Transform<Real, 3, Eigen::Affine> Affine;
 
-    typedef Eigen::VectorBlock<Base, BLOCK_SIZE> PositionBlock;
+    typedef Eigen::Block<Base, BLOCK_SIZE, 1> PositionBlock;
+    
     typedef EulerBlock<Base> OrientationBlock;
 
     typedef PoseBase<Eigen::Matrix<Real, 6, 1>> PoseVector;
@@ -90,7 +91,7 @@ public:
     }
 
     // mutators ****************************************************************
-    PositionBlock position() { return PositionBlock(*this, POSITION_INDEX); }
+    PositionBlock position() { return PositionBlock(*this, POSITION_INDEX, 0); }
     OrientationBlock orientation()
     {
         return OrientationBlock(*this, EULER_VECTOR_INDEX);
@@ -156,17 +157,18 @@ public:
 
 /// implementation for blocks **************************************************
 template <typename Vector>
-class PoseBlock : public PoseBase<Eigen::VectorBlock<Vector, 6>>
+class PoseBlock : public PoseBase<Eigen::Block<Vector, 6, 1>>
 {
-public:
-    typedef Eigen::VectorBlock<Vector, 6> Block;
+private:
+    typedef Eigen::Block<Vector, 6, 1> Block;
     typedef PoseBase<Block> Base;
 
+public:
     using Base::operator=;
 
     // constructor and destructor **********************************************
     PoseBlock(const Block& block) : Base(block) {}
-    PoseBlock(Vector& vector, int start) : Base(Block(vector, start)) {}
+    PoseBlock(Vector& vector, int start) : Base(Block(vector, start, 0)) {}
     virtual ~PoseBlock() noexcept {}
 };
 }
