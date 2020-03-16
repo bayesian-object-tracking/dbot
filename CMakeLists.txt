@@ -144,10 +144,6 @@ include_directories(${dbot_INCLUDE_DIRS})
 
 set(dbot_SOURCE_DIR source/${PROJECT_NAME})
 
-file(GLOB_RECURSE dbot_HEADERS
-    ${dbot_SOURCE_DIR}/*.hpp
-    ${dbot_SOURCE_DIR}/*.h)
-
 # Build dbot library
 set(dbot_SOURCES    
     ${dbot_SOURCE_DIR}/camera_data.cpp
@@ -170,7 +166,6 @@ set(dbot_SOURCES
 )
 
 add_library(${dbot_LIBRARY} SHARED
-    ${dbot_HEADERS}
     ${dbot_SOURCES})
 
 target_link_libraries(${dbot_LIBRARY}
